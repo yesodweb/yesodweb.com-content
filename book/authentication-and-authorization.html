@@ -1,0 +1,420 @@
+<!DOCTYPE HTML>
+<html><head><title>Authentication and Authorization</title></head><body><header><h1>Authentication and Authorization</h1></header><article id="file154-authentication-and-authorization">
+        <p class="hascomments" id="file154-authentication-and-authorization/x-3">Authentication and authorization are two very related, and yet separate, concepts. While
+            the former deals with identifying a user, the latter determines what a user is allowed
+            to do. Unfortunately, since both terms are often abbreviated as &quot;auth,&quot; the concepts are
+            often conflated.</p>
+        <p class="hascomments" id="file154-authentication-and-authorization/x-4">Yesod provides built-in support for a number of third-party authentication systems, such
+            as OpenID, BrowserID and OAuth. These are systems where your application trusts some
+            external system for validating a user&#39;s credentials. Additionally, there is support for
+            more commonly used username/password and email/password systems. The former route
+            ensures simplicity for users (no new passwords to remember) and implementors (no need to
+            deal with an entire security architecture), while the latter gives the developer more
+            control.</p>
+        <p class="hascomments" id="file154-authentication-and-authorization/x-5">On the authorization side, we are able to take advantage of REST and type-safe URLs to
+            create simple, declarative systems. Since all authorization code is written in Haskell,
+            you have the full flexibility of the language at your disposal.</p>
+        <p class="hascomments" id="file154-authentication-and-authorization/x-6">This chapter will cover how to set up an &quot;auth&quot; solution in Yesod and discuss some
+            trade-offs in the different authentication options.</p><p class="hascomments" id="file154-authentication-and-authorization/outline">This chapter is just an outline. It will contain the sections:</p><ul id="file154-authentication-and-authorization/x1"><li id="file154-authentication-and-authorization/x2">Authentication</li><li id="file154-authentication-and-authorization/x3">Authorization</li><li id="file154-authentication-and-authorization/x4">Auth stuff (isAuthorized, isWriteRequest, authRoute)</li></ul><aside class="note" id="file154-authentication-and-authorization/x5">Logout does not invalidate session.</aside><section class="subtopic" id="file149-overview"><h1>Overview</h1>
+  <p class="hascomments" id="file149-overview/x-3">The <dfn class="apiname" id="file149-overview/x-4">yesod-auth</dfn> package provides a unified interface for a number of
+   different authentication plugins. The only real requirement for these backends is that they
+   identify a user based on some unique string. In OpenID, for instance, this would be the actual
+   OpenID value. In BrowserID, it&#39;s the email address. For HashDB (which uses a hashed database of
+   passwords), it&#39;s the username.</p>
+  <p class="hascomments" id="file149-overview/x-5">Each authentication plugin provides its own system for logging in, whether it be via passing
+   tokens with an external site or a simple email/password form. After a successful login, the
+   plugin sets a value in the user&#39;s session to indicate his/her AuthId. This AuthId is usually a
+   Persistent ID from a table used for keeping track of users.</p>
+  <p class="hascomments" id="file149-overview/x-6">There are a few functions available for querying a user&#39;s AuthId, most commonly
+    <code id="file149-overview/x-7">maybeAuthId</code>, <code id="file149-overview/x-8">requireAuthId</code>, <code id="file149-overview/x-9">maybeAuth</code> and
+    <code id="file149-overview/x-10">requireAuth</code>. The require versions will redirect to a login page if the user is
+   not logged in, while the second set of functions (the ones <b id="file149-overview/x-11">not</b> ending in Id) give both the
+   table ID <i id="file149-overview/x-12">and</i> entity value.</p>
+  <p class="hascomments" id="file149-overview/x-13">Since all of the storage of AuthId is built on top of sessions, all of the rules from there
+   apply. In particular, the data is stored in an encrypted, HMACed client cookie, which
+   automatically times out after a certain configurable period of inactivity. Additionally, since
+   there is no server-side component to sessions, logging out simply deletes the data from the
+   session cookie; if a user reuses an older cookie value, the session will still be valid.</p>
+  <aside class="note" id="file149-overview/x-14">There are plans to add in a server-side component to sessions which would allow forced
+   logout. This will almost certainly be implemented before a 1.0 release of Yesod.</aside>
+  <p class="hascomments" id="file149-overview/x-15">On the flip side, authorization is handled by a few methods inside the Yesod typeclass. For
+   every request, these methods are run to determine if access should be allowed, denied, or if the
+   user needs to be authenticated. By default, these methods allow access for every request.
+   Alternatively, you can implement authorization in a more ad-hoc way by adding calls to
+   requireAuth and the like within individual handler functions, though this undermines many of the
+   benefits of a declarative authorization system.</p>
+ </section><section class="subtopic" id="file150-concept_d1y_t2f_p2"><h1>Authenticate Me</h1>
+  <p class="hascomments" id="file150-concept_d1y_t2f_p2/x-3">Let&#39;s jump right in with an example of authentication.</p>
+  <pre class="codeblock" id="file150-concept_d1y_t2f_p2/x-4">{-# LANGUAGE OverloadedStrings, TemplateHaskell, TypeFamilies,
+             MultiParamTypeClasses, QuasiQuotes #-}
+import Yesod
+import Yesod.Auth
+import Yesod.Auth.BrowserId
+import Yesod.Auth.GoogleEmail
+import Data.Text (Text)
+
+data MyAuthSite = MyAuthSite
+
+mkYesod &quot;MyAuthSite&quot; [parseRoutes|
+/ RootR GET
+/auth AuthR Auth getAuth
+|]
+
+instance Yesod MyAuthSite where
+    -- Note: In order to log in with BrowserID, you must correctly
+    -- set your hostname here.
+    approot _ = &quot;http://localhost:3000&quot;
+
+instance YesodAuth MyAuthSite where
+    type AuthId MyAuthSite = Text
+    getAuthId = return . Just . credsIdent
+
+    loginDest _ = RootR
+    logoutDest _ = RootR
+
+    authPlugins =
+        [ authBrowserId&#39;
+        , authGoogleEmail
+        ]
+
+instance RenderMessage MyAuthSite FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+getRootR :: Handler RepHtml
+getRootR = do
+    maid &lt;- maybeAuthId
+    defaultLayout [whamlet|
+&lt;p&gt;Your current auth ID: #{show maid}
+$maybe _ &lt;- maid
+    &lt;p&gt;
+        &lt;a href=@{AuthR LogoutR}&gt;Logout
+$nothing
+    &lt;p&gt;
+        &lt;a href=@{AuthR LoginR}&gt;Go to the login page
+|]
+
+main :: IO ()
+main = warpDebug 3000 MyAuthSite</pre>
+  <p class="hascomments" id="file150-concept_d1y_t2f_p2/x-5">We&#39;ll start with the route declarations. First we declare our standard <code id="file150-concept_d1y_t2f_p2/x-6">RootR</code>
+   route, and then we set up the authentication subsite. Remember that a subsite needs four
+   parameters: the path to the subsite, the route name, the subsite name, and a function to get the
+   subsite value. In other words, based on the line:</p>
+  <pre class="codeblock" id="file150-concept_d1y_t2f_p2/x-7">/auth AuthR Auth getAuth</pre>
+  <p class="hascomments" id="file150-concept_d1y_t2f_p2/x-8">We need to have <code id="file150-concept_d1y_t2f_p2/x-9">getAuth :: MyAuthSite -&gt; Auth</code>. While we haven&#39;t written that
+   function ourselves, <dfn class="apiname" id="file150-concept_d1y_t2f_p2/x-10">yesod-auth</dfn> provides it automatically. With other subsites
+   (like static files), we provide configuration settings in the subsite value, and therefore need
+   to specify the get function. In the auth subsite, we specify these settings in a separate
+   typeclass, <code id="file150-concept_d1y_t2f_p2/x-11">YesodAuth</code>.</p>
+  <aside class="note" id="file150-concept_d1y_t2f_p2/x-12">Why not use the subsite value? There are a number of settings we would like to give for an
+   auth subsite, and doing so from a record type would be inconvenient. Also, since we want to have
+   an <code id="file150-concept_d1y_t2f_p2/x-13">AuthId</code> associated type, a typeclass is more natural.<p class="hascomments" id="file150-concept_d1y_t2f_p2/x-14">On the flip side, why
+    not use a typeclass for all subsites? It comes with a downside: you can then only have a single
+    instance per site, disallowing serving different sets of static files from different routes.
+    Also, the subsite value works better when we want to load data at app initialization.</p></aside>
+  <p class="hascomments" id="file150-concept_d1y_t2f_p2/x-15">So what exactly goes in this YesodAuth instance? There are five required declarations:</p>
+  <ul id="file150-concept_d1y_t2f_p2/ul_mgj_phf_p2">
+   <li id="file150-concept_d1y_t2f_p2/x-16">AuthId is an associated type. This is the value yesod-auth will give you when you ask if a
+    user is logged in (via maybeAuthId or requireAuthId). In our case, we&#39;re simply using Text, to
+    store the raw identifier- email address in our case, as we&#39;ll soon see.</li>
+   <li id="file150-concept_d1y_t2f_p2/x-17">getAuthId gets the actual AuthId from the <code id="file150-concept_d1y_t2f_p2/x-18">Creds</code> (credentials) data type.
+    This type has three pieces of information: the authentication backend used (browserid or
+    googleemail in our case), the actual identifier, and an associated list of arbitrary extra
+    information. Each backend provides different extra information, see their docs for more
+    information.</li>
+   <li id="file150-concept_d1y_t2f_p2/x-19">loginDest gives the route to redirect to after a successful login.</li>
+   <li id="file150-concept_d1y_t2f_p2/x-20">Likewise, logoutDest gives the route to redirect to after a logout.</li>
+   <li id="file150-concept_d1y_t2f_p2/x-21">Finally, authPlugins is a list of individual authentication backends to use. In our example,
+    we&#39;re using BrowserID, which logs in via Mozilla&#39;s BrowserID system, and Google Email, which
+    authenticates a user&#39;s email address using their Google account. The nice thing about these two
+    backends is:<ul id="file150-concept_d1y_t2f_p2/ul_xwj_f3f_p2">
+     <li id="file150-concept_d1y_t2f_p2/x-22">They require no set up, as opposed to Facebook or OAuth, which require setting up
+      credentials.</li>
+     <li id="file150-concept_d1y_t2f_p2/x-23">They use email addresses as identifiers, which people are comfortable with, as opposed to
+      OpenID, which uses a URL.</li>
+    </ul></li>
+  </ul>
+  <p class="hascomments" id="file150-concept_d1y_t2f_p2/x-24">In our RootR handler, we have some simple links to the login and logout pages, depending on
+   whether or not the user is logged in. Notice how we construct these subsite links: first we give
+   the subsite route name (AuthR), followed by the route within the subsite (LoginR and
+   LogoutR).</p>
+  <p class="hascomments" id="file150-concept_d1y_t2f_p2/x-25">The figures below show what the login process looks like from a user perspective.</p>
+  <figure id="file150-concept_d1y_t2f_p2/x-26"><figcaption>Initial page load</figcaption>
+   
+   <img id="file150-concept_d1y_t2f_p2/image_vw4_r3f_p2" src="images/initial-screen.png" />
+  </figure>
+  <figure id="file150-concept_d1y_t2f_p2/x-28"><figcaption>BrowserID login screen</figcaption>
+   
+   <img id="file150-concept_d1y_t2f_p2/image_jp4_t3f_p2" src="images/login-with-browserid.png" />
+  </figure>
+  <figure id="file150-concept_d1y_t2f_p2/x-30"><figcaption>Homepage after logging in</figcaption>
+   
+   <img id="file150-concept_d1y_t2f_p2/image_gz2_v3f_p2" src="images/after-login.png" />
+  </figure>
+ </section><section class="subtopic" id="file151-conceptId"><h1>Email</h1>
+  <p class="hascomments" id="file151-conceptId/x-3">For many use cases, third-party authentication of email will be sufficient. Occassionally,
+   you&#39;ll want users to actual create passwords on your site. The scaffolded site does not include
+   this setup, because:</p>
+  <ul id="file151-conceptId/ul_mmf_nsk_pe">
+   <li id="file151-conceptId/x-4">In order to securely accept passwords, you need to be running over SSL. Many users are not
+    serving their sites over SSL.</li>
+   <li id="file151-conceptId/x-5">While the email backend properly salts and hashes passwords, a compromised database could
+    still be problematic. Again, we make no assumptions that Yesod users are following secure
+    deployment practices.</li>
+   <li id="file151-conceptId/x-6">You need to have a working system for sending email. Many web servers these days are not
+    equipped to deal with all of the spam protection measures used by emai servers.<aside class="note" id="file151-conceptId/x-7">The example
+     below will use the system&#39;s built-in sendmail executable. If you would like
+     to avoid the hassle of dealing with an email server yourself, you can use Amazon SES. There is
+     a package called <dfn class="apiname" id="file151-conceptId/x-9">mime-mail-ses</dfn> which provides a drop-in replacement for the
+     sendmail code used below. This is the approach we use on the Haskellers.com site.</aside></li>
+  </ul>
+  <p class="hascomments" id="file151-conceptId/x-10">But assuming you are able to meet these demands, and you want to have a separate password login
+   specifically for your site, Yesod offers a built-in backend. It requires quite a bit of code to
+   set up, since it needs to store passwords securely in the database and send a number of different
+   emails to users (verify account, password retrieval, etc.).</p>
+  <p class="hascomments" id="file151-conceptId/x-11">Let&#39;s have a look at a site that provides email authentication, storing passwords in a
+   Persistent SQLite database.</p>
+  <pre class="codeblock" id="file151-conceptId/x-12">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes, GADTs,
+             TemplateHaskell, MultiParamTypeClasses, FlexibleContexts #-}
+import Yesod
+import Yesod.Auth
+import Yesod.Auth.Email
+import Database.Persist.Sqlite
+import Database.Persist.TH
+import Data.Text (Text)
+import Network.Mail.Mime
+import qualified Data.Text.Lazy.Encoding
+import Text.Shakespeare.Text (stext)
+import Text.Blaze.Renderer.Utf8 (renderHtml)
+import Text.Hamlet (shamlet)
+import Data.Maybe (isJust)
+import Control.Monad (join)
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persist|
+User
+    email Text
+    password Text Maybe -- Password may not be set yet
+    verkey Text Maybe -- Used for resetting passwords
+    verified Bool
+    UniqueUser email
+|]
+
+data MyEmailApp = MyEmailApp Connection
+
+mkYesod &quot;MyEmailApp&quot; [parseRoutes|
+/ RootR GET
+/auth AuthR Auth getAuth
+|]
+
+instance Yesod MyEmailApp where
+    -- Emails will include links, so be sure to include an approot so that
+    -- the links are valid!
+    approot _ = &quot;http://localhost:3000&quot;
+
+instance RenderMessage MyEmailApp FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+-- Set up Persistent
+instance YesodPersist MyEmailApp where
+    type YesodPersistBackend MyEmailApp = SqlPersist
+    runDB f = liftIOHandler $ do
+        MyEmailApp conn &lt;- getYesod
+        runSqlConn f conn
+
+instance YesodAuth MyEmailApp where
+    type AuthId MyEmailApp = UserId
+
+    loginDest _ = RootR
+    logoutDest _ = RootR
+    authPlugins = [authEmail]
+
+    -- Need to find the UserId for the given email address.
+    getAuthId creds = runDB $ do
+        x &lt;- insertBy $ User (credsIdent creds) Nothing Nothing False
+        return $ Just $
+            case x of
+                Left (userid, _) -&gt; userid -- newly added user
+                Right userid -&gt; userid -- existing user
+
+-- Here&#39;s all of the email-specific code
+instance YesodAuthEmail MyEmailApp where
+    type AuthEmailId MyEmailApp = UserId
+
+    addUnverified email verkey =
+        runDB $ insert $ User email Nothing (Just verkey) False
+
+    sendVerifyEmail email _ verurl =
+        liftIO $ renderSendMail (emptyMail $ Address Nothing &quot;noreply&quot;)
+            { mailTo = [Address Nothing email]
+            , mailHeaders =
+                [ (&quot;Subject&quot;, &quot;Verify your email address&quot;)
+                ]
+            , mailParts = [[textPart, htmlPart]]
+            }
+      where
+        textPart = Part
+            { partType = &quot;text/plain; charset=utf-8&quot;
+            , partEncoding = None
+            , partFilename = Nothing
+            , partContent = Data.Text.Lazy.Encoding.encodeUtf8 [stext|
+Please confirm your email address by clicking on the link below.
+
+\#{verurl}
+
+Thank you
+|]
+            , partHeaders = []
+            }
+        htmlPart = Part
+            { partType = &quot;text/html; charset=utf-8&quot;
+            , partEncoding = None
+            , partFilename = Nothing
+            , partContent = renderHtml [shamlet|
+&lt;p&gt;Please confirm your email address by clicking on the link below.
+&lt;p&gt;
+    &lt;a href=#{verurl}&gt;#{verurl}
+&lt;p&gt;Thank you
+|]
+            , partHeaders = []
+            }
+    getVerifyKey = runDB . fmap (join . fmap userVerkey) . get
+    setVerifyKey uid key = runDB $ update uid [UserVerkey =. Just key]
+    verifyAccount uid = runDB $ do
+        mu &lt;- get uid
+        case mu of
+            Nothing -&gt; return Nothing
+            Just u -&gt; do
+                update uid [UserVerified =. True]
+                return $ Just uid
+    getPassword = runDB . fmap (join . fmap userPassword) . get
+    setPassword uid pass = runDB $ update uid [UserPassword =. Just pass]
+    getEmailCreds email = runDB $ do
+        mu &lt;- getBy $ UniqueUser email
+        case mu of
+            Nothing -&gt; return Nothing
+            Just (uid, u) -&gt; return $ Just EmailCreds
+                { emailCredsId = uid
+                , emailCredsAuthId = Just uid
+                , emailCredsStatus = isJust $ userPassword u
+                , emailCredsVerkey = userVerkey u
+                }
+    getEmail = runDB . fmap (fmap userEmail) . get
+
+getRootR :: Handler RepHtml
+getRootR = do
+    maid &lt;- maybeAuthId
+    defaultLayout [whamlet|
+&lt;p&gt;Your current auth ID: #{show maid}
+$maybe _ &lt;- maid
+    &lt;p&gt;
+        &lt;a href=@{AuthR LogoutR}&gt;Logout
+$nothing
+    &lt;p&gt;
+        &lt;a href=@{AuthR LoginR}&gt;Go to the login page
+|]
+
+main :: IO ()
+main = withSqliteConn &quot;email.db3&quot; $ \conn -&gt; do
+    runSqlConn (runMigration migrateAll) conn
+    warpDebug 3000 $ MyEmailApp conn</pre>
+ </section><section class="subtopic" id="file152-conceptId"><h1>Authorization</h1>
+  <p class="hascomments" id="file152-conceptId/x-3">Once you can authenticate your users, you can use their credentials to <i id="file152-conceptId/x-4">authorize</i>
+   requests. Authorization in Yesod is simple and declarative: most of the time, you just need to
+   add the authRoute and isAuthorized methods to your Yesod typeclass instance. Let&#39;s see an
+   example.</p>
+  <pre class="codeblock" id="file152-conceptId/x-5">{-# LANGUAGE OverloadedStrings, TemplateHaskell, TypeFamilies,
+             MultiParamTypeClasses, QuasiQuotes #-}
+import Yesod
+import Yesod.Auth
+import Yesod.Auth.Dummy -- just for testing, don&#39;t use in real life!!!
+import Data.Text (Text)
+
+data MyAuthSite = MyAuthSite
+
+mkYesod &quot;MyAuthSite&quot; [parseRoutes|
+/ RootR GET POST
+/admin AdminR GET
+/auth AuthR Auth getAuth
+|]
+
+instance Yesod MyAuthSite where
+    approot _ = &quot;&quot;
+
+    authRoute _ = Just $ AuthR LoginR
+
+    -- route name, then a boolean indicating if it&#39;s a write request
+    isAuthorized RootR True = isAdmin
+    isAuthorized AdminR _ = isAdmin
+
+    -- anyone can access other pages
+    isAuthorized _ _ = return Authorized
+
+isAdmin = do
+    mu &lt;- maybeAuthId
+    return $ case mu of
+        Nothing -&gt; AuthenticationRequired
+        Just &quot;admin&quot; -&gt; Authorized
+        Just _ -&gt; Unauthorized &quot;You must be an admin&quot;
+
+instance YesodAuth MyAuthSite where
+    type AuthId MyAuthSite = Text
+    getAuthId = return . Just . credsIdent
+
+    loginDest _ = RootR
+    logoutDest _ = RootR
+
+    authPlugins = [authDummy]
+
+instance RenderMessage MyAuthSite FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+getRootR :: Handler RepHtml
+getRootR = do
+    maid &lt;- maybeAuthId
+    defaultLayout [whamlet|
+&lt;p&gt;Note: Log in as &quot;admin&quot; to be an administrator.
+&lt;p&gt;Your current auth ID: #{show maid}
+$maybe _ &lt;- maid
+    &lt;p&gt;
+        &lt;a href=@{AuthR LogoutR}&gt;Logout
+&lt;p&gt;
+    &lt;a href=@{AdminR}&gt;Go to admin page
+&lt;form method=post&gt;
+    Make a change (admins only)
+    \ #
+    &lt;input type=submit&gt;
+|]
+
+postRootR :: Handler ()
+postRootR = do
+    setMessage &quot;You made some change to the page&quot;
+    redirect RedirectTemporary RootR
+
+getAdminR :: Handler RepHtml
+getAdminR = defaultLayout [whamlet|
+&lt;p&gt;I guess you&#39;re an admin!
+&lt;p&gt;
+    &lt;a href=@{RootR}&gt;Return to homepage
+|]
+
+main :: IO ()
+main = warpDebug 3000 MyAuthSite</pre>
+  <p class="hascomments" id="file152-conceptId/x-6">authRoute should be your login page, almost always AuthR LoginR. isAuthorized is a function
+   that takes two parameters: the requested route, and whether or not the request was a &quot;write&quot;
+   request. You can actually change the meaning of what a write request is using the isWriteRequest
+   method, but the out-of-the-box version follows RESTful principles: anything but a GET, HEAD,
+   OPTIONS or TRACE request is a write request.</p>
+  <p class="hascomments" id="file152-conceptId/x-7">What&#39;s convenient about the body of isAuthorized is that you can run any Handler code you want.
+   This means you can:</p>
+  <ul id="file152-conceptId/ul_tew_ill_pe">
+   <li id="file152-conceptId/x-8">Access the filesystem (normal IO)</li>
+   <li id="file152-conceptId/x-9">Lookup values in the database</li>
+   <li id="file152-conceptId/x-10">Pull any session or request values you want</li>
+  </ul>
+  <p class="hascomments" id="file152-conceptId/x-11">Using these techniques, you can develop as sophisticated an authorization system as you like,
+   or even tie into existing systems used by your organization.</p>
+ </section><section class="subtopic" id="file153-conceptId"><h1>Conclusion</h1>
+  <p class="hascomments" id="file153-conceptId/x-3">This chapter covered the basics of setting up user authentication, as well as how the built-in
+   authorization functions provide a simple, declarative approach for users. While these are
+   complicated concepts, with many approaches, Yesod should provide you with the building blocks you
+   need to create your own customized auth solution.</p>
+ </section></article></body></html>

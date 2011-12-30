@@ -1,0 +1,402 @@
+<!DOCTYPE HTML>
+<html><head><title>Widgets</title></head><body><header><h1>Widgets</h1></header><article id="file53-widgets"><p class="hascomments" id="file53-widgets/i1">One of the challenges in web development is that we have to coordinate three different client-side technologies: HTML, CSS and Javascript. Worse still, we have to place these components in different locations on the page: CSS in a style tag in the head, Javascript in a script tag in the head, and HTML in the body. And never mind if you want to put your CSS and Javascript in separate files!</p><p class="hascomments" id="file53-widgets/i2">In practice, this works out fairly nicely when building a single page, because we can separate our structure (HTML), styling (CSS) and logic (Javascript). But when we want to build modular pieces of code that can be easily composed, it can be a headache to coordinate all three pieces separately. Widgets are Yesod&#39;s solution to the problem. They also help with the issue of including libraries, such as jQuery, one time only.</p><p class="hascomments" id="file53-widgets/i3">Our four template languages- Hamlet, Cassius, Lucius and Julius- provide the raw tools for constructing your output. Widgets provide the glue that allows them to work together seamlessly.</p><section class="subtopic" id="file44-synopsis"><h1>Synopsis</h1>
+  <pre class="codeblock" id="file44-synopsis/x1">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+import Yesod
+
+data W = W
+
+instance Yesod W where
+    approot _ = &quot;&quot;
+
+mkYesod &quot;W&quot; [parseRoutes|
+/ RootR GET
+|]
+
+-- START
+getRootR = defaultLayout $ do
+    setTitle &quot;My Page Title&quot;
+    toWidget [lucius| h1 { color: green; } |]
+    addScriptRemote &quot;https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js&quot;
+    toWidget [julius|
+$(function() {
+    $(&quot;h1&quot;).click(function(){ alert(&quot;You clicked on the heading!&quot;); });
+});
+|]
+    toWidgetHead [hamlet| &lt;meta name=keywords content=&quot;some sample keywords&quot;&gt;|]
+    toWidget [hamlet| &lt;h1&gt;Here&#39;s one way of including content |]
+    [whamlet| &lt;h2&gt;Here&#39;s another |]
+    toWidgetBody [julius| alert(&quot;This is included in the body itself&quot;); |]
+-- STOP
+
+main = warpDebug 3000 W</pre>
+  <p class="hascomments" id="file44-synopsis/x2">This produces the following HTML (indentation added):</p>
+  <pre class="codeblock" id="file44-synopsis/x3">&lt;!DOCTYPE html&gt; 
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;My Page Title&lt;/title&gt;
+        &lt;style&gt;h1 { color : green }&lt;/style&gt;
+        &lt;script src=&quot;https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js&quot;&gt;&lt;/script&gt;
+        &lt;script&gt;
+$(function() {
+    $(&quot;h1&quot;).click(function(){ alert(&quot;You clicked on the heading!&quot;); });
+});
+&lt;/script&gt;
+        &lt;meta name=&quot;keywords&quot; content=&quot;some sample keywords&quot;&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;h1&gt;Here&#39;s one way of including content &lt;/h1&gt;
+        &lt;h2&gt;Here&#39;s another &lt;/h2&gt;
+        &lt;script&gt; alert(&quot;This is included in the body itself&quot;); &lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</pre>
+ </section><section class="subtopic" id="file45-whats-in-a-widget"><h1>What&#39;s in a Widget?</h1><p class="hascomments" id="file45-whats-in-a-widget/ww1">At a very superficial level, an HTML document is just a
+            bunch of nested tags. This is the approach most HTML generation
+            tools take: you simply define hierarchies of tags and are done with
+            it. But let&#39;s imagine that I want to write a component of a page
+            for displaying the navbar. I want this to be &quot;plug and play&quot;: I
+            simply call the function at the right time, and the navbar is
+            inserted at the correct point in the hierarchy.</p><p class="hascomments" id="file45-whats-in-a-widget/ww2">This is where our superficial HTML generation breaks down.
+            Our navbar likely consists of some CSS and JavaScript in addition
+            to HTML. By the time we call the navbar function, we have already
+            rendered the &lt;head&gt; tag, so it is too late to add a new
+            &lt;style&gt; tag for our CSS declarations. Under normal
+            strategies, we would need to break up our navbar function into
+            three parts: HTML, CSS and JavaScript, and make sure that we always
+            call all three pieces.</p><p class="hascomments" id="file45-whats-in-a-widget/ww3">Widgets take a different approach. Instead of viewing an
+            HTML document as a monolithic tree of tags, widgets see a number of
+            distinct components in the page. In particular:</p><ul id="file45-whats-in-a-widget/x1"><li id="file45-whats-in-a-widget/x2">The title</li><li id="file45-whats-in-a-widget/x3">External stylesheets</li><li id="file45-whats-in-a-widget/x4">External Javascript</li><li id="file45-whats-in-a-widget/x5">CSS declarations</li><li id="file45-whats-in-a-widget/x6">Javascript code</li><li id="file45-whats-in-a-widget/x7">Arbitrary &lt;head&gt; content</li><li id="file45-whats-in-a-widget/x8">Arbitrary &lt;body&gt; content</li></ul><p class="hascomments" id="file45-whats-in-a-widget/ww4">Different components have different semantics. For example,
+            there can only be one title, but there can be multiple external
+            scripts and stylesheets. However, those external scripts and
+            stylesheets should only be included once. Arbitrary head and body
+            content, on the other hand, has no limitation (someone may want to
+            have five lorem ipsum blocks after all).</p><p class="hascomments" id="file45-whats-in-a-widget/ww5">The job of a widget is to hold onto these disparate
+            components and apply proper logic for combining different widgets
+            together. This consists of things like taking the first title set
+            and ignoring others, applying <code id="file45-whats-in-a-widget/x9">nub</code> to the list of
+            external scripts and stylesheets, and simply concatenating head and
+            body content.</p><aside class="note" id="file45-whats-in-a-widget/x10"><p class="hascomments" id="file45-whats-in-a-widget/ww6">In general, you should avoid nub since it has very bad
+                performance. Usually when you are looking for uniqueness, you
+                do not care about order, and therefore <code id="file45-whats-in-a-widget/x11">map head . group .  sort</code>
+                is more efficient than a call to nub. However,
+                in our case, order <i id="file45-whats-in-a-widget/x12">is</i> important: we would not want to
+                include jQuery UI before we include jQuery. Therefore, we are
+                stuck with nub.</p></aside></section><section class="subtopic" id="file46-constructing-widgets"><h1>Constructing Widgets</h1>
+  <p class="hascomments" id="file46-constructing-widgets/x1">In order to use widgets, you&#39;ll obviously need to be able to get your hands on them. The most
+   common way will be via the ToWidget typeclass, and its toWidget method. This allows you to
+   convert your Shakespearean templates directly to a Widget: Hamlet code will appear in the body,
+   Julius scripts inside a &lt;script&gt; tag in the head, and Cassius and Lucius in a &lt;style&gt;
+   tag.</p>
+  <aside class="note" id="file46-constructing-widgets/x2">You can actually override the default behavior and have the script and style code appear in
+   a separate file. The scaffolded site provides this for you automatically.</aside>
+  <p class="hascomments" id="file46-constructing-widgets/x3">But what if you want to add some &lt;meta&gt; tags, which need to appear in the head? Or if you
+   want some Javascript to appear in the body instead of the head? For these purposes, Yesod
+   provides two additional type classes: ToWidgetHead and ToWidgetBody. These work exactly as they
+   seem they should.</p>
+  <aside class="note" id="file46-constructing-widgets/x4">There is no ToWidgetBody instance for Lucius and Cassius, since you can&#39;t put a style tag in
+   the body.</aside>
+  <p class="hascomments" id="file46-constructing-widgets/x5">In addition, there are a number of other functions for creating specific kinds of Widgets:</p>
+  <dl id="file46-constructing-widgets/x6">
+   
+    <dt id="file46-constructing-widgets/x8">setTitle</dt>
+    <dd id="file46-constructing-widgets/x9">Turns some HTML into the page title.</dd>
+   
+   
+    <dt id="file46-constructing-widgets/x11">addCassiusMedia, addLuciusMedia</dt>
+    <dd id="file46-constructing-widgets/x12">Works the same as toWidget, but takes an additional parameter to indicate what kind of media
+     this applies to. Useful for creating print stylesheets, for instance.</dd>
+   
+   
+    <dt id="file46-constructing-widgets/x14">addStylesheet</dt>
+    <dd id="file46-constructing-widgets/x15">Adds a reference, via a &lt;link&gt; tag, to an external stylesheet. Takes a type-safe
+     URL.</dd>
+   
+   
+    <dt id="file46-constructing-widgets/x17">addStylesheetRemote</dt>
+    <dd id="file46-constructing-widgets/x18">Same as addStylesheet, but takes a normal URL. Useful for referring to files hosted on a
+     CDN, like Google&#39;s jQuery UI CSS files.</dd>
+   
+   
+    <dt id="file46-constructing-widgets/x20">addScript</dt>
+    <dd id="file46-constructing-widgets/x21">Adds a reference, via a &lt;script&gt; tag, to an external script. Takes a type-safe URL.</dd>
+   
+   
+    <dt id="file46-constructing-widgets/x23">addScriptRemote</dt>
+    <dd id="file46-constructing-widgets/x24">Same as addScript, but takes a normal URL. Useful for referring to files hosted on a CDN,
+     like Google&#39;s jQuery.</dd>
+   
+  </dl>
+ </section><section class="subtopic" id="file47-combining-widgets"><h1>Combining Widgets</h1>
+  <p class="hascomments" id="file47-combining-widgets/x1">The whole idea of widgets is to increase composability. You can easily take these individual pieces of
+   HTML, CSS and Javascript, combine them together into something more complicated, and then combine
+   these larger entities into complete pages. This all works naturally through the Monad instance of
+   Widgets, meaning you can just use do-notation to compose pieces together.</p>
+  <figure id="file47-combining-widgets/x2"><figcaption>Combining Widgets</figcaption>
+   
+   <pre class="codeblock" id="file47-combining-widgets/x4">myWidget1 = do
+    toWidget [hamlet|&lt;h1&gt;My Title|]
+    toWidget [lucius|h1 { color: green } |]
+
+myWidget2 = do
+    setTitle &quot;My Page Title&quot;
+    addScriptRemote &quot;http://www.example.com/script.js&quot;
+
+myWidget = do
+    myWidget1
+    myWidget2
+
+-- or, if you want
+myWidget&#39; = myWidget1 &gt;&gt; myWidget2</pre>
+  </figure>
+  <aside class="note" id="file47-combining-widgets/x5">If you&#39;re so inclined, there&#39;s also a Monoid instance of Widget, meaning you can use mconcat
+   or a Writer monad to build things up. In my experience, it&#39;s easiest and most natural to just use
+   do-notation.</aside>
+ </section><section class="subtopic" id="file48-generate-ids"><h1>Generate IDs</h1>
+  <p class="hascomments" id="file48-generate-ids/x1">If we&#39;re really going for true code reuse here, we&#39;re eventually going to run into name
+   conflicts. Let&#39;s say that there are two helper libraries that both use the class name &quot;foo&quot; to
+   affect styling. We want to avoid such a possibility. Therefore, we have the newIdent function.
+   This function automatically generates a word that is unique for this handler.</p>
+  <figure id="file48-generate-ids/x2"><figcaption>Using newIdent</figcaption>
+   
+   <pre class="codeblock" id="file48-generate-ids/x4">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+import Yesod
+
+data W = W
+
+instance Yesod W where
+    approot _ = &quot;&quot;
+
+mkYesod &quot;W&quot; [parseRoutes|
+/ RootR GET
+|]
+
+-- START
+getRootR = defaultLayout $ do
+    headerClass &lt;- lift newIdent
+    toWidget [hamlet|&lt;h1 .#{headerClass}&gt;My Header|]
+    toWidget [lucius| .#{headerClass} { color: green; } |]
+-- STOP
+
+main = warpDebug 3000 W</pre>
+  </figure>
+  <aside class="note" id="file48-generate-ids/x5">You might be wondering: what does lift mean? A Widget is a monad transformer,
+   sitting on top of a Handler. newIdent is a function of a handler, so we need to &quot;lift&quot; the
+   function from the Handler layer to the Widget layer to use it. We can actually use this same
+   approach to perform complex actions, like database queries, from within a widget. We&#39;ll cover
+   that when we discuss <a href="../../../topics/yesod-web-framework-book/yesods-monads/yesods-monads.html#file148-conceptIdyesods-monads">Yesod&#39;s monads</a>.</aside>
+ </section><section class="subtopic" id="file50-whamlet"><h1>whamlet</h1>
+  <p class="hascomments" id="file50-whamlet/x1">Let&#39;s say you&#39;ve got a fairly standard Hamlet template, that embeds another Hamlet template to
+   represent the footer:</p>
+  <pre class="codeblock" id="file50-whamlet/x2">page = [hamlet|
+&lt;p&gt;This is my page. I hope you enjoyed it.
+^{footer}
+|]
+
+footer = [hamlet|
+&lt;footer&gt;
+    &lt;p&gt;That&#39;s all folks!
+|]</pre>
+  <p class="hascomments" id="file50-whamlet/x3">That works fine if the footer is plain old HTML, but what if we want to add some style? Well,
+   we can easily spice up the footer by turning it into a Widget:</p>
+  <pre class="codeblock" id="file50-whamlet/x4">footer = do
+    toWidget [lucius| footer { font-weight: bold; text-align: center } |]
+    toWidget [hamlet|
+&lt;footer&gt;
+    &lt;p&gt;That&#39;s all folks!
+|]</pre>
+  <p class="hascomments" id="file50-whamlet/x5">But now we&#39;ve got a problem: a Hamlet template can only embed another Hamlet template; it knows
+   nothing about a Widget. This is where whamlet comes in. It takes exactly the same syntax as
+   normal Hamlet, and variable (#{...}) and URL (@{...}) interpolation are unchanged. But embedding
+   (^{...}) takes a widget, and the final result is a widget. To use it, we can just do:</p>
+  <pre class="codeblock" id="file50-whamlet/x6">page = [whamlet|
+&lt;p&gt;This is my page. I hope you enjoyed it.
+^{footer}
+|]</pre>
+  <p class="hascomments" id="file50-whamlet/x7">There is also whamletFile, if you would prefer to keep your template in a separate
+      file.</p>
+    <aside class="note" id="file50-whamlet/x-3">The scaffolded site has an even more convenient function, <code id="file50-whamlet/x-4">widgetFile</code>,
+      which will also include your Lucius, Cassius, and Julius files automatically. We&#39;ll cover that
+      in the <a href="../../../topics/yesod-web-framework-book/scaffolding-and-the-site-template/scaffolding-and-the-site-template.html#file166-scaffolding-and-the-site-templatescaffolding">scaffolding chapter</a>.</aside>
+ <section class="subtopic" id="file49-types"><h1>Types</h1>
+  <p class="hascomments" id="file49-types/x1">You may have noticed that I&#39;ve been avoiding type signatures so far. That&#39;s because there&#39;s a
+   little bit of a complication involved here. At the most basic level, all you need to know is that
+   the scaffolded site defines a type synonym called Widget which you will almost always use. The
+   technical details follow, but don&#39;t worry if it&#39;s a little hazy.</p>
+  <p class="hascomments" id="file49-types/x2">Earlier, we said that a Widget is a monad transformer around a Handler. Well, that&#39;s mostly
+   true, but we actually have a little more flexibility than that. We have a base datatype:
+    <code id="file49-types/x3">GGWidget master monad a</code>. The first parameter is the master site&#39;s foundation
+   datatype. We&#39;ll be covering the difference between master and subsites in much more detail later,
+   but for now, suffice it to say that the master foundation type is what uniquely represents your
+   application.</p>
+  <p class="hascomments" id="file49-types/x4">The second parameter is the inner monad. This in theory could be any monad, but as we&#39;ll see
+   soon, it&#39;s almost always a Handler. Finally, the last parameter is the value contained by the
+   GGWidget (remember, a GGWidget is a Monad).</p>
+  <p class="hascomments" id="file49-types/x5">In practice, you will almost never see a GGWidget; that extra flexibility is really only needed
+   internally to Yesod. What you will bump into occassionally is the GWidget, defined as
+    <code id="file49-types/x6">type GWidget sub master = GGWidget master (GHandler sub master)</code>. This spells
+   out that our GWidget has a subsite and master site foundation (explained in a second), and that
+   the inner monad is a GHandler, using the same sub and master sites.</p>
+  <p class="hascomments" id="file49-types/x7">So what&#39;s the deal with that sub/master stuff? Well, when you&#39;re writing some reusable code,
+   such as a CRUD application, you can write it as a subsite that can be embedded within any other
+   Yesod application. In such a case, we need to keep track of information for both the sub and
+   master sites. The simplest example is for the type-safe URLs: Yesod needs to know how to take a
+   route for your CRUD subsite and turn it into a route for the master site so that it can be
+   properly rendered.</p>
+  <p class="hascomments" id="file49-types/x8">However, that sub/master distinction only ever matters when you&#39;re interacting with subsites.
+   When you&#39;re writing your standard response code, you&#39;re dealing with just your application, and
+   so the sub and master sites will be the same. Since this is the most common case, the scaffolded
+   site declares a type synonym to help you out. Let&#39;s say your foundation type is MyCoolApp, it
+   will define <code id="file49-types/x9">type Widget = GWidget MyCoolApp MyCoolApp ()</code>. Therefore, we can get
+   some very user-friendly type signatures on our widgets:</p>
+  <pre class="codeblock" id="file49-types/x10">footer :: Widget
+footer = do
+    toWidget [lucius| footer { font-weight: bold; text-align: center } |]
+    toWidget [hamlet|
+&lt;footer&gt;
+    &lt;p&gt;That&#39;s all folks!
+|]
+
+page :: Widget
+page = [whamlet|
+&lt;p&gt;This is my page. I hope you enjoyed it.
+^{footer}
+|]</pre>
+  <p class="hascomments" id="file49-types/x11">And in case you were wondering: we have an almost identical breakdown for the Handler
+   datatypes: a less-used GGHandler, GHandler and finally a per-application Handler, defined as
+    <code id="file49-types/x12">type Handler = GHandler MyCoolApp MyCoolApp</code>.</p>
+ </section></section><section class="subtopic" id="file51-using-widgets"><h1>Using Widgets</h1>  <p class="hascomments" id="file51-using-widgets/x1">It&#39;s all well and good that we have these beautiful Widget datatypes, but how exactly
+            do we turn them into something the user can interact with? The most commonly used
+            function is defaultLayout, which essentially has the type signature <code id="file51-using-widgets/x2">Widget -&gt; Handler RepHtml</code>. (I say &quot;essentially&quot; because of the whole
+            GHandler issue.) RepHtml is a datatype containing some raw HTML output ready to be sent
+            over the wire.</p>
+  <p class="hascomments" id="file51-using-widgets/x3">defaultLayout is actually a typeclass method, which can be overridden for each application.
+   This is how Yesod apps are themed. So we&#39;re still left with the question: when we&#39;re inside
+   defaultLayout, how do we unwrap a Widget? The answer is widgetToPageContent. Let&#39;s look at some
+   (simplified) types:</p>
+  <pre class="codeblock" id="file51-using-widgets/x4">widgetToPageContent :: Widget -&gt; Handler (PageContent url)
+data PageContent url = PageContent
+    { pageTitle :: Html
+    , pageHead :: HtmlUrl url
+    , pageBody :: HtmlUrl url
+    }</pre>
+  <p class="hascomments" id="file51-using-widgets/x5">This is getting closer to what we need. We now have direct access to the HTML making up the
+   head and body, as well as the title. At this point, we can use Hamlet to combine them all
+   together into a single document, along with our site layout, and we use hamletToRepHtml to render
+   that Hamlet result into actual HTML that&#39;s ready to be shown to the user.</p>
+  <figure id="file51-using-widgets/x6"><figcaption>Using widgetToPageContent</figcaption>
+   
+   <pre class="codeblock" id="file51-using-widgets/x8">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+import Yesod
+
+data MyApp = MyApp
+
+mkYesod &quot;MyApp&quot; [parseRoutes|
+/ RootR GET
+|]
+
+getRootR = defaultLayout $ do
+    headerId &lt;- lift newIdent
+    toWidget [hamlet|&lt;h1 ##{headerId}&gt;My Header|]
+    toWidget [lucius| ##{headerId} { color: green; } |]
+-- START
+myLayout :: GWidget s MyApp () -&gt; GHandler s MyApp RepHtml
+myLayout widget = do
+    pc &lt;- widgetToPageContent widget
+    hamletToRepHtml [hamlet|
+!!!
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;#{pageTitle pc}
+        &lt;meta charset=utf-8&gt;
+        &lt;style&gt;body { font-family: verdana }
+        ^{pageHead pc}
+    &lt;body&gt;
+        &lt;article&gt;
+            ^{pageBody pc}
+|]
+
+instance Yesod MyApp where
+    approot _ = &quot;&quot;
+    defaultLayout = myLayout
+-- STOP
+
+main = warpDebug 3000 MyApp</pre>
+  </figure>
+  <aside class="note" id="file51-using-widgets/x9">You may have noticed that we used GWidget and GHandler instead of Widget and Handler. That&#39;s
+   because defaultLayout is a method that can be called by subsites to ensure that they get the same
+   styling as the master site. Therefore, we need to keep our types flexible here.</aside>
+  <p class="hascomments" id="file51-using-widgets/x10">This is all well and good, but there&#39;s one thing that bothers me: that style tag. There are a
+   few problems with it:</p>
+  <ul id="file51-using-widgets/ul_utj_zvv_jd">
+   <li id="file51-using-widgets/x11">Unlike Lucius or Cassius, it doesn&#39;t get compile-time checked for correctness.</li>
+   <li id="file51-using-widgets/x12">Granted that the current example is very simple, but in something more complicated we could
+    get into character escaping issues.</li>
+   <li id="file51-using-widgets/x13">We&#39;ll now have two style tags instead of one: the one produced by myLayout, and the one
+    generated in the pageHead based on the styles set in the widget.</li>
+  </ul>
+  <p class="hascomments" id="file51-using-widgets/x14">We have one more trick in our bag to address this: we apply some last-minute adjustments to the
+   widget itself before calling widgetToPageContent. It&#39;s actually very easy to do, we just use
+   do-notation again.</p>
+  <figure id="file51-using-widgets/x15"><figcaption>Last-Minute Widget Adjustment</figcaption>
+   
+   <pre class="codeblock" id="file51-using-widgets/x17">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+import Yesod
+
+data MyApp = MyApp
+
+mkYesod &quot;MyApp&quot; [parseRoutes|
+/ RootR GET
+|]
+
+getRootR = defaultLayout $ do
+    headerId &lt;- lift newIdent
+    toWidget [hamlet|&lt;h1 ##{headerId}&gt;My Header|]
+    toWidget [lucius| ##{headerId} { color: green; } |]
+-- START
+myLayout :: GWidget s MyApp () -&gt; GHandler s MyApp RepHtml
+myLayout widget = do
+    pc &lt;- widgetToPageContent $ do
+        widget
+        toWidget [lucius| body { font-family: verdana } |]
+    hamletToRepHtml [hamlet|
+!!!
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;#{pageTitle pc}
+        &lt;meta charset=utf-8&gt;
+        ^{pageHead pc}
+    &lt;body&gt;
+        &lt;article&gt;
+            ^{pageBody pc}
+|]
+-- STOP
+
+instance Yesod MyApp where
+    approot _ = &quot;&quot;
+    defaultLayout = myLayout
+
+main = warpDebug 3000 MyApp</pre>
+  </figure>
+ </section><section class="subtopic" id="file52-summary"><h1>Summary</h1>
+  <p class="hascomments" id="file52-summary/x-3">The basic building block of each page is a widget. Individual snippets of HTML, CSS, and
+   Javascript can be turned into widgets via the polymorphic <code id="file52-summary/x-4">toWidget</code> function.
+   Using do-notation, you can combine these individual widgets into larger widgets, eventually
+   containing all the content of your page.</p>
+  <p class="hascomments" id="file52-summary/x-5">Unwrapping these widgets is usually performed within the defaultLayout function, which can be
+   used to apply a unified look-and-feel to all your pages.</p>
+ </section></article></body></html>

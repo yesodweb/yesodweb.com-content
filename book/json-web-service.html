@@ -1,0 +1,103 @@
+<!DOCTYPE HTML>
+<html><head><title>Example: JSON Web Service</title></head><body><header><h1>Example: JSON Web Service</h1></header><article id="file184-json-web-service">
+  <p class="hascomments" id="file184-json-web-service/x1">Let&#39;s create a very simple web service: it takes a JSON request and returns a JSON response.
+   We&#39;re going to write the server in WAI/Warp, and the client in http-enumerator. We&#39;ll be using
+    <dfn class="apiname" id="file184-json-web-service/x2">aeson</dfn> for JSON parsing and rendering.</p>
+ <section class="subtopic" id="file182-server"><h1>Server</h1>
+  <p class="hascomments" id="file182-server/x1">WAI uses the <dfn class="apiname" id="file182-server/x2">enumerator</dfn> package to handle streaming request bodies, and
+   efficiently generates responses using <dfn class="apiname" id="file182-server/x3">blaze-builder</dfn>. <dfn class="apiname" id="file182-server/x4">aeson</dfn>
+   uses <dfn class="apiname" id="file182-server/x5">attoparsec</dfn> for parsing; by using <dfn class="apiname" id="file182-server/x6">attoparsec-enumerator</dfn>
+   we get easy interoperability with WAI. And aeson can encode JSON directly into a Builder. This
+   plays out as:</p>
+  <pre class="codeblock" id="file182-server/x7">{-# LANGUAGE OverloadedStrings #-}
+import Network.Wai (Response (ResponseBuilder), Application)
+import Network.HTTP.Types (status200, status400)
+import Network.Wai.Handler.Warp (run)
+import Data.Aeson.Parser (json)
+import Data.Attoparsec.Enumerator (iterParser)
+import Control.Monad.IO.Class (liftIO)
+import Data.Aeson (Value (Object, String))
+import Data.Aeson.Encode (fromValue)
+import Data.Enumerator (catchError, Iteratee)
+import Control.Exception (SomeException)
+import Data.ByteString (ByteString)
+import qualified Data.HashMap.Strict as Map
+import Data.Text (pack)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _ = flip catchError invalidJson $ do
+    value &lt;- iterParser json
+    newValue &lt;- liftIO $ modValue value
+    return $ ResponseBuilder
+        status200
+        [(&quot;Content-Type&quot;, &quot;application/json&quot;)]
+        $ fromValue newValue
+
+invalidJson :: SomeException -&gt; Iteratee ByteString IO Response
+invalidJson ex = return $ ResponseBuilder
+    status400
+    [(&quot;Content-Type&quot;, &quot;application/json&quot;)]
+    $ fromValue $ Object $ Map.fromList
+        [ (&quot;message&quot;, String $ pack $ show ex)
+        ]
+
+-- Application-specific logic would go here.
+modValue :: Value -&gt; IO Value
+modValue = return</pre>
+ </section><section class="subtopic" id="file183-client"><h1>Client</h1>
+  <p class="hascomments" id="file183-client/x1"><dfn class="apiname" id="file183-client/x2">http-enumerator</dfn> was written as a companion to WAI. It too
+            uses enumerator and blaze-builder pervasively, meaning we once again get easy interop
+            with aeson. A few extra comments for those not familiar with http-enumerator:</p>
+  <ul id="file183-client/ul_4be25b01-52e2-414f-ba22-d6c0b97232c8">
+   <li id="file183-client/x3">A <code id="file183-client/x4">Manager</code> is present to keep track of open connections, so that multiple
+    requests to the same server use the same connection. You usually want to use the
+     <code id="file183-client/x5">withManager</code> function to create and clean up this Manager, since it is
+    exception safe.</li>
+   <li id="file183-client/x6">We need to know the size of our request body, which can&#39;t be determined directly from a
+    Builder. Instead, we convert the Builder into a lazy ByteString and take the size from
+    there.</li>
+   <li id="file183-client/x7">There are a number of different functions for initiating a request. We use http, which allows
+    us to directly access the data stream. There are other higher level functions (such as httpLbs)
+    that let you ignore the issues of enumerators and get the entire body directly.</li>
+  </ul>
+  <pre class="codeblock" id="file183-client/x8">{-# LANGUAGE OverloadedStrings #-}
+import Network.HTTP.Enumerator
+    ( http, parseUrl, withManager, RequestBody (RequestBodyLBS)
+    , requestBody
+    )
+import Data.Aeson (Value (Object, String))
+import qualified Data.HashMap.Strict as Map
+import Data.Aeson.Parser (json)
+import Data.Attoparsec.Enumerator (iterParser)
+import Control.Monad.IO.Class (liftIO)
+import Data.Enumerator (run_)
+import Data.Aeson.Encode (fromValue)
+import Blaze.ByteString.Builder (toLazyByteString)
+
+main :: IO ()
+main = withManager $ \manager -&gt; do
+    value &lt;- makeValue
+    -- We need to know the size of the request body, so we convert to a
+    -- ByteString
+    let valueBS = toLazyByteString $ fromValue value
+    req&#39; &lt;- parseUrl &quot;http://localhost:3000/&quot;
+    let req = req&#39; { requestBody = RequestBodyLBS valueBS }
+    run_ $ flip (http req) manager $ \status headers -&gt; do
+        -- Might want to ensure we have a 200 status code and Content-Type is
+        -- application/json. We skip that here.
+        resValue &lt;- iterParser json
+        liftIO $ handleResponse resValue
+
+-- Application-specific function to make the request value
+makeValue :: IO Value
+makeValue = return $ Object $ Map.fromList
+    [ (&quot;foo&quot;, String &quot;bar&quot;)
+    ]
+
+-- Application-specific function to handle the response from the server
+handleResponse :: Value -&gt; IO ()
+handleResponse = print</pre>
+ </section></article></body></html>

@@ -1,0 +1,301 @@
+<!DOCTYPE HTML>
+<html><head><title>Yesod&#39;s Monads</title></head><body><header><h1>Yesod&#39;s Monads</h1></header><article id="file148-conceptId">
+  <p class="hascomments" id="file148-conceptId/x-3">As you&#39;ve read through this book, there have been a number of monads which have appeared:
+   Handler, Widget and something to do with Persistent (let&#39;s call it YesodDB for now). As with most
+   monads, each one provides some specific functionality: Handler gives access to the request and
+   allows you to send responses, a Widget contains HTML, CSS, and Javascript, and YesodDB let&#39;s you
+   make database queries.</p>
+  <p class="hascomments" id="file148-conceptId/x-4">So far, we&#39;ve presented some very straight-forward ways to use these monads: your main handler
+   will run in Handler, using runDB to execute a YesodDB, and defaultLayout to return a Widget,
+   which is turn was created by calls to toWidget.</p>
+  <p class="hascomments" id="file148-conceptId/x-5">However, if we have a deeper understanding of these types, we can achieve some fancier
+   results.</p>
+ <section class="subtopic" id="file144-transformers"><h1>Monad Transformers</h1>
+  <blockquote id="file144-transformers/x-3">Monads are like onions. Monads are <i id="file144-transformers/x-4">not</i> like cakes.<cite id="file144-transformers/x-5">Shrek, more or less</cite></blockquote>
+  <p class="hascomments" id="file144-transformers/x-6">Before we get into the heart of Yesod&#39;s monads, we need to understand a bit about monad
+   transformers. (If you already know all about monad transformers, you can likely skip this
+   section.) Different monads provide different functionality: Reader allows read-only access to
+   some piece of data throughout a computation, Error allows you to short-circuit computations, and
+   so on.</p>
+  <p class="hascomments" id="file144-transformers/x-7">Often times, however, you would like to be able to combine a few of these features together.
+   After all, why not have a computation with read-only access to some settings variable, that could
+   error out at any time? One approach to this would be to write a new monad like ReaderError, but
+   this has the obvious downside of exponential complexity: you&#39;ll need to write a new monad for
+   every single possible combination.</p>
+  <p class="hascomments" id="file144-transformers/x-8">Instead, we have monad transformer. In addition to Reader, we have ReaderT, which adds reader
+   functionality to any other monad. So we could represent our ReaderError as (conceptually):</p>
+  <pre class="codeblock" id="file144-transformers/x-9">type ReaderError = ReaderT Error</pre>
+  <p class="hascomments" id="file144-transformers/x-10">So in order to access our settings variable, we can use the <code id="file144-transformers/x-11">ask</code> function. But
+   what about short-circuiting a computation? We&#39;d like to use throwError, but that won&#39;t exactly
+   work. Instead, we need to <code id="file144-transformers/x-12">lift</code> our call into the next monad up. In other
+   words:</p>
+  <pre class="codeblock" id="file144-transformers/x-13">throwError :: errValue -&gt; Error
+lift . throwError :: errValue -&gt; ReaderT Error</pre>
+  <p class="hascomments" id="file144-transformers/x-14">So there are a few things you should pick up here:</p>
+  <ul id="file144-transformers/ul_d29d1697-acc1-4f67-8cc6-a1b8305f865a">
+   <li id="file144-transformers/x-15">A transformer can be used to add functionality to an existing monad.</li>
+   <li id="file144-transformers/x-16">A transformer must always wrap around an existing monad.</li>
+   <li id="file144-transformers/x-17">The functionality available in a wrapped monad will be dependendant not only on the monad
+    transformer, but also on the inner monad that is being wrapped.</li>
+  </ul>
+  <p class="hascomments" id="file144-transformers/x-18">A great example of that last point is the IO monad. No matter how many layers of transformers
+   you have around an IO, there&#39;s still an IO at the core, meaning you can perform I/O in any of
+   these <dfn id="file144-transformers/x-19">monad transformer stacks</dfn>. You&#39;ll often see code that looks like <code id="file144-transformers/x-20">liftIO
+    $ putStrLn &quot;Hello There!&quot;</code>.</p>
+ <section class="subtopic" id="file143-monad-control"><h1>monad-control</h1>
+  <p class="hascomments" id="file143-monad-control/x-3">This leads us to one last interesting point. It wouldn&#39;t normally make it into a monad
+   transformer introduction, but it is vitally important to the next few sections, so we&#39;ll cover it
+   here. Let&#39;s say that you have a function that takes an action as an argument. A typical example
+   would be <code id="file143-monad-control/x-4">try</code>:</p>
+  <pre class="codeblock" id="file143-monad-control/x-5">try :: IO a -&gt; IO (Either SomeException a)</pre>
+  <p class="hascomments" id="file143-monad-control/x-6">This function is used for catching and dealing with exceptions from a block of code. Let&#39;s say
+   that instead of a standard IO action, you have a <code id="file143-monad-control/x-7">ReaderT IO</code> action:</p>
+  <pre class="codeblock" id="file143-monad-control/x-8">myAction :: ReaderT ReaderValue IO SomeResult</pre>
+  <p class="hascomments" id="file143-monad-control/x-9">There&#39;s no way to pass this directly to the <code id="file143-monad-control/x-10">try</code> function, and therefore there
+   appears to be no way to catch the exceptions from <code id="file143-monad-control/x-11">myAction</code>. This is where the
+    <dfn class="apiname" id="file143-monad-control/x-12">monad-control</dfn> packages comes into play. It essentially <i id="file143-monad-control/x-13">inverts</i>
+   myAction, turning it into something like <code id="file143-monad-control/x-14">myActionInverted :: IO (ReaderValue -&gt;
+    SomeResult)</code>. It then passes this action to <code id="file143-monad-control/x-15">try</code>, gets back <code id="file143-monad-control/x-16">IO
+    (Either SomeException (ReaderValue -&gt; SomeResult))</code> and un-inverts it back to
+    <code id="file143-monad-control/x-17">ReaderT ReaderValue IO (Either SomeException SomeResult)</code>.</p>
+  <aside class="note" id="file143-monad-control/x-18">Don&#39;t worry too much about the details here. If you&#39;re really interested, there&#39;s a <a href="../../../topics/yesod-web-framework-book/monad-control-wrapper/monad-control.html#file226-monad-controlmonad-control">whole chapter
+    devoted to monad-control</a>.</aside>
+  <p class="hascomments" id="file143-monad-control/x-20">monad-control has built in support for a number of the standard monad transformers out there,
+   like ReaderT, WriterT, and StateT. However, there are some transformers for it is impossible to
+   provide such support. One example is ContT, for continuations. At some point in the past, Yesod
+   used the ContT monad transformers in defining Handler, and switched over to ErrorT for
+   specifically this reason.</p>
+  <p class="hascomments" id="file143-monad-control/x-21">But more importantly for our purposes today, is that there is no support for the Iteratee monad
+   transformer. This will become very important, very soon.</p>
+ </section></section><section class="subtopic" id="file145-the-three-transformers"><h1>The Three Transformers</h1>
+  <p class="hascomments" id="file145-the-three-transformers/x-3">In <dfn class="apiname" id="file145-the-three-transformers/x-4">persistent</dfn>, we have a typeclass called PersistBackend. This typeclass
+   defines all of the primitive operations you can perform on a database, like <code id="file145-the-three-transformers/x-5">get</code>
+   and <code id="file145-the-three-transformers/x-6">selectEnum</code>. This typeclass essentially looks like <code id="file145-the-three-transformers/x-7">class (Monad (b
+    m)) =&gt; PersistBackend b m</code>. <code id="file145-the-three-transformers/x-8">b</code> is the backend itself, and is in fact a
+   monad transformer, while <code id="file145-the-three-transformers/x-9">m</code> is the inner monad that <code id="file145-the-three-transformers/x-10">b</code> wraps
+   around. Both SQL and MongoDB have their own instances; in the case of SQL, it looks like:</p>
+  <pre class="codeblock" id="file145-the-three-transformers/x-11">instance MonadControlIO m =&gt; PersistBackend SqlPersist m</pre>
+  <p class="hascomments" id="file145-the-three-transformers/x-12">This means that you can run a SQL database with any underlying monad, so long as that
+   underlying monad supports <code id="file145-the-three-transformers/x-13">MonadControlIO</code>. That basically means any transformer
+   stack built around <code id="file145-the-three-transformers/x-14">IO</code>, as long as <code id="file145-the-three-transformers/x-15">ContT</code> and
+    <code id="file145-the-three-transformers/x-16">Iteratee</code> are not involved.</p>
+  <p class="hascomments" id="file145-the-three-transformers/x-17">In order to make it simpler to refer to the relevant Persistent transformer, the
+    <dfn class="apiname" id="file145-the-three-transformers/x-18">yesod-persistent</dfn> package defines the <code id="file145-the-three-transformers/x-19">YesodPersistBackend</code>
+   associated type. For example, if I have a site called <code id="file145-the-three-transformers/x-20">MyApp</code> and it uses SQL, I
+   would define something like <code id="file145-the-three-transformers/x-21">type instance YesodPersistBackend MyApp =
+   SqlPersist</code>.</p>
+  <p class="hascomments" id="file145-the-three-transformers/x-22">We&#39;ll come back to Persistent in a bit, but let&#39;s take a detour to Handlers. Our handler
+   functions need to have the ability to:</p>
+  <ul id="file145-the-three-transformers/ul_f01bc3c6-b615-4325-ac93-d2801797b130">
+   <li id="file145-the-three-transformers/x-23">Access the foundation value, render functions, and other static stuff</li>
+   <li id="file145-the-three-transformers/x-24">Read request-specific information, like headers</li>
+   <li id="file145-the-three-transformers/x-25"><b id="file145-the-three-transformers/x-26">Access the request body</b></li>
+   <li id="file145-the-three-transformers/x-27">Short-circuit responses like redirects and errors</li>
+   <li id="file145-the-three-transformers/x-28">Keep track of response headers and session updates</li>
+  </ul>
+  <p class="hascomments" id="file145-the-three-transformers/x-29">This is basically implemented with a combination of ReaderT, WriterT, StateT and ErrorT
+   transformers. The one thing that I want to focus on is the request body. In WAI, all applications
+   live inside an <code id="file145-the-three-transformers/x-30">Iteratee</code> monad, which gives them access to the request body. So a
+   naive implementation of our Handler monad would be:</p>
+  <pre class="codeblock" id="file145-the-three-transformers/x-31">type Handler = ReaderT RequestData (WriterT Headers (ErrorT Response (Iteratee ByteString IO)))</pre>
+  <p class="hascomments" id="file145-the-three-transformers/x-32">But this is actually problematic for two reasons:</p>
+  <ul id="file145-the-three-transformers/ul_31ea5dab-144d-4038-b710-a19c210bbd02">
+   <li id="file145-the-three-transformers/x-33">The RequestData will need to contain information specific to both the master and subsites, so
+    we need a type parameter to track that information.</li>
+   <li id="file145-the-three-transformers/x-34">As we mentioned above, the Persistent backends must wrap around an instance of
+    MonadControlIO, and since our Handler above is an Iteratee at its core, there is no
+    MonadControlIO instance.</li>
+  </ul>
+  <p class="hascomments" id="file145-the-three-transformers/x-35">The solution to both problems is simply providing more type parameters: one for the subsite
+   foundation type, one for the master site foundation type, and one for the inner monad. We call
+   this GGHandler, and it looks something like:</p>
+  <pre class="codeblock" id="file145-the-three-transformers/x-36">type GGHandler sub master monad =
+    ReaderT (RequestData sub master) (WriterT Headers (ErrorT Response monad))</pre>
+  <p class="hascomments" id="file145-the-three-transformers/x-37">For the common case of wrapping around an Iteratee, we provide the synonym <code id="file145-the-three-transformers/x-38">type
+    GHandler sub master = GGHandler sub master (Iteratee ByteString IO)</code>. And for each
+   application, we also get a synonym <code id="file145-the-three-transformers/x-39">type Handler = GHandler MyApp MyApp</code>.</p>
+  <p class="hascomments" id="file145-the-three-transformers/x-40">When we want to run our database actions, we&#39;ll have a SqlPersist wrapped around a GGHandler
+   with an IO at its core, i.e. <code id="file145-the-three-transformers/x-41">SqlPersist (GGHandler sub master IO)</code>. But in order
+   to include this action, we&#39;ll need to include it with the rest of our handler function, which
+   lives in the <code id="file145-the-three-transformers/x-42">GHandler sub master</code> monad. So how do we make the conversion?
+   Unwrapping the SqlPersist is simply a call to
+    <dfn class="apiname" id="file145-the-three-transformers/x-43">persistent:Database.Persist.GenericSql:runSqlPool</dfn>. But this leaves us with a
+    <code id="file145-the-three-transformers/x-44">GGHandler sub master IO</code>; how do we replace the <code id="file145-the-three-transformers/x-45">IO</code> with a
+    <code id="file145-the-three-transformers/x-46">Iteratee ByteString IO</code>?</p>
+  <p class="hascomments" id="file145-the-three-transformers/x-47">The answer is <dfn class="apiname" id="file145-the-three-transformers/x-48">yesod-core:Yesod.Handler:liftIOHandler</dfn>. This function is very
+   similar to the <code id="file145-the-three-transformers/x-49">liftIO</code> we mentioned earlier: it lifts any action living into an
+    <code id="file145-the-three-transformers/x-50">IO</code> monad into an arbitrary monad stack based on an <code id="file145-the-three-transformers/x-51">IO</code>. The
+   different is that <code id="file145-the-three-transformers/x-52">liftIOHandler</code> keeps the GGHandler wrapper as-is. For our
+   purposes, this means it is able to turn <code id="file145-the-three-transformers/x-53">GGHandler sub master IO</code> into
+    <code id="file145-the-three-transformers/x-54">GHandler sub master</code>. Combined with runSqlPool, we can now run database actions
+   inside our handlers.</p>
+  <aside class="note" id="file145-the-three-transformers/x-55">If you&#39;re paying very close attention, you might realize that <code id="file145-the-three-transformers/x-56">liftIOHandler</code>
+   isn&#39;t strictly necessary. Instead of that complication, we could just use a normal
+    <code id="file145-the-three-transformers/x-57">liftIO</code>, since database actions are not required to run inside a
+    <code id="file145-the-three-transformers/x-58">GGHandler</code> at all. However, by running inside <code id="file145-the-three-transformers/x-59">GGHandler</code>, your
+   database actions have the ability to access request information and, more importantly, send
+   short-circuit responses. This is vital to the implementation of <code id="file145-the-three-transformers/x-60">get404</code> and
+    <code id="file145-the-three-transformers/x-61">getBy404</code>. We&#39;ll also see other cases where this is functionality is very
+   powerful.</aside>
+  <p class="hascomments" id="file145-the-three-transformers/x-62">The final transformer is <code id="file145-the-three-transformers/x-63">GGWidget</code>. It is a monad transformer that is always
+   applied to <code id="file145-the-three-transformers/x-64">GGHandler</code>, it it actually has the exact same story of the latter
+   transformer. In particular, in comes in the same three varieties <code id="file145-the-three-transformers/x-65">GGWidget sub master
+    monad</code>, <code id="file145-the-three-transformers/x-66">GWidget sub master</code>, and <code id="file145-the-three-transformers/x-67">Widget</code>.</p>
+  <p class="hascomments" id="file145-the-three-transformers/x-68">Most of the time in Yesod code, and especially thus far in this book, widgets have been treated
+   has actionless containers that simply combine together HTML, CSS and Javascript. But if you look
+   at that last paragraph again, you&#39;ll realize that&#39;s not the way things have to be. Since a widget
+   is a transformer on top of a handler, anything you do in a handler can be done in a widget,
+   including database actions. All you have to do is lift.</p>
+ </section><section class="subtopic" id="file146-navbar"><h1>Example: Database-driven navbar</h1>
+  <p class="hascomments" id="file146-navbar/x-3">Let&#39;s put some of this new knowledge into action. We want to create a widget that generates its
+   output based on the contents of the database. Previously, our approach would have been to load up
+   the data in a Handler, and then pass that data into a widget. Now, we&#39;ll do the loading of data
+   in the widget itself. This is a boon for modularity, as this widget can now be used in any
+   handler we want, without any need to pass in the database contents.</p>
+  <pre class="codeblock" id="file146-navbar/x-4">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell, FlexibleContexts,
+             QuasiQuotes, TypeFamilies, MultiParamTypeClasses, GADTs #-}
+import Yesod
+import Database.Persist.Sqlite
+import Data.Text (Text)
+import Data.Time
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persist|
+Link
+    title Text
+    url Text
+    added UTCTime
+|]
+
+data Links = Links ConnectionPool
+
+mkYesod &quot;Links&quot; [parseRoutes|
+/ RootR GET
+/add-link AddLinkR POST
+|]
+
+instance Yesod Links where
+    approot _ = &quot;&quot;
+
+instance RenderMessage Links FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+instance YesodPersist Links where
+    type YesodPersistBackend Links = SqlPersist
+    runDB db = do
+        Links pool &lt;- getYesod
+        liftIOHandler $ runSqlPool db pool
+
+getRootR :: Handler RepHtml
+getRootR = defaultLayout [whamlet|
+&lt;form method=post action=@{AddLinkR}&gt;
+    &lt;p&gt;
+        Add a new link to #
+        &lt;input type=url name=url value=http://&gt;
+        \ titled #
+        &lt;input type=text name=title&gt;
+        \ #
+        &lt;input type=submit value=&quot;Add link&quot;&gt;
+&lt;h2&gt;Existing links
+^{existingLinks}
+|]
+
+existingLinks :: Widget
+existingLinks = do
+    links &lt;- lift $ runDB $ selectList [] [LimitTo 5, Desc LinkAdded]
+    [whamlet|
+&lt;ul&gt;
+    $forall link &lt;- links
+        &lt;li&gt;
+            &lt;a href=#{linkUrl $ snd link}&gt;#{linkTitle $ snd link}
+|]
+
+postAddLinkR :: Handler ()
+postAddLinkR = do
+    url &lt;- runInputPost $ ireq urlField &quot;url&quot;
+    title &lt;- runInputPost $ ireq textField &quot;title&quot;
+    now &lt;- liftIO getCurrentTime
+    runDB $ insert $ Link title url now
+    setMessage &quot;Link added&quot;
+    redirect RedirectTemporary RootR
+
+main :: IO ()
+main = withSqlitePool &quot;links.db3&quot; 10 $ \pool -&gt; do
+    runSqlPool (runMigration migrateAll) pool
+    warpDebug 3000 $ Links pool</pre>
+  <p class="hascomments" id="file146-navbar/x-5">Pay attention in particular to the <code id="file146-navbar/x-6">existingLinks</code> function. Notice how all we
+   needed to do was apply <code id="file146-navbar/x-7">lift</code> to a normal database action. And from within
+    <code id="file146-navbar/x-8">getRootR</code>, we treated <code id="file146-navbar/x-9">existingLinks</code> like any ordinary
+    <code id="file146-navbar/x-10">Widget</code>, no special parameters at all.</p>
+  <p class="hascomments" id="file146-navbar/x-11">You should also pay special attention to the <code id="file146-navbar/x-12">YesodPersist</code> instance. It should
+   make much more sense now that we&#39;ve explained <code id="file146-navbar/x-13">liftIOHandler</code>.</p>
+  <figure id="file146-navbar/x-14"><figcaption>Screenshot of the navbar</figcaption>
+      
+   <img id="file146-navbar/image_xpd_yzj_zd" src="images/navbar.png" />
+  </figure>
+ </section><section class="subtopic" id="file147-gets"><h1>Example: Request information</h1>
+  <p class="hascomments" id="file147-gets/x-3">Likewise, you can get request information. Here we can determine the sort order of a list based
+   on a GET parameter.</p>
+  <pre class="codeblock" id="file147-gets/x-4">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
+             QuasiQuotes, TypeFamilies, MultiParamTypeClasses, GADTs #-}
+import Yesod
+import Data.Text (Text)
+import Data.List (sortBy)
+import Data.Ord (comparing)
+
+data Person = Person
+    { personName :: Text
+    , personAge :: Int
+    }
+
+people :: [Person]
+people =
+    [ Person &quot;Miriam&quot; 25
+    , Person &quot;Eliezer&quot; 3
+    , Person &quot;Michael&quot; 26
+    , Person &quot;Gavriella&quot; 1
+    ]
+
+data People = People
+
+mkYesod &quot;People&quot; [parseRoutes|
+/ RootR GET
+|]
+
+instance Yesod People where
+    approot _ = &quot;&quot;
+
+instance RenderMessage People FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+
+getRootR :: Handler RepHtml
+getRootR = defaultLayout [whamlet|
+&lt;p&gt;
+    &lt;a href=&quot;?sort=name&quot;&gt;Sort by name
+    \ | #
+    &lt;a href=&quot;?sort=age&quot;&gt;Sort by age
+    \ | #
+    &lt;a href=&quot;?&quot;&gt;No sort
+^{showPeople}
+|]
+
+showPeople :: Widget
+showPeople = do
+    msort &lt;- lift $ runInputGet $ iopt textField &quot;sort&quot;
+    let people&#39; =
+            case msort of
+                Just &quot;name&quot; -&gt; sortBy (comparing personName) people
+                Just &quot;age&quot;  -&gt; sortBy (comparing personAge)  people
+                _           -&gt; people
+    [whamlet|
+&lt;dl&gt;
+    $forall person &lt;- people&#39;
+        &lt;dt&gt;#{personName person}
+        &lt;dd&gt;#{show $ personAge person}
+|]
+
+main :: IO ()
+main = warpDebug 3000 People</pre>
+  <p class="hascomments" id="file147-gets/x-5">Once again, all we need to do is <code id="file147-gets/x-6">lift</code> our normal Handler code (in this case,
+   runInputGet) to have it run in our Widget.</p>
+ </section></article></body></html>

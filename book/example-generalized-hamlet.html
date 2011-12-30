@@ -1,0 +1,54 @@
+<!DOCTYPE HTML>
+<html><head><title>Example: Generalized Hamlet</title></head><body><header><h1>Example: Generalized Hamlet</h1></header><article id="file179-example-generalized-hamlet"><pre class="codeblock" id="file179-example-generalized-hamlet/x1">This example shows how generalized hamlet templates allow the creation of
+different types of values. The key component here is the HamletValue typeclass.
+Yesod has instances for:
+
+* Html
+
+* Hamlet url (= (url -&gt; [(String, String)] -&gt; String) -&gt; Html)
+
+* GWidget s m ()
+
+This example uses all three. You are of course free in your own code to make
+your own instances.
+
+&gt; {-# LANGUAGE QuasiQuotes, TypeFamilies, MultiParamTypeClasses, OverloadedStrings, TemplateHaskell #-}
+&gt; import Yesod
+&gt; import Text.Hamlet (shamlet)
+&gt; data NewHamlet = NewHamlet
+&gt; mkYesod &quot;NewHamlet&quot; [parseRoutes|/ RootR GET|]
+&gt; instance Yesod NewHamlet where approot _ = &quot;&quot;
+&gt; 
+&gt; myHtml :: Html
+&gt; myHtml = [shamlet|&lt;p&gt;Just don&#39;t use any URLs in here!|]
+&gt;
+&gt; myInnerWidget :: Widget
+&gt; myInnerWidget = do
+&gt;     addHamlet [hamlet|
+&gt;   &lt;div #inner&gt;Inner widget
+&gt;   #{myHtml}
+&gt; |]
+&gt;     addCassius [cassius|
+&gt;#inner
+&gt;     color: red|]
+&gt; 
+&gt; myPlainTemplate :: HtmlUrl NewHamletRoute
+&gt; myPlainTemplate = [hamlet|
+&gt; &lt;p
+&gt;     &lt;a href=@{RootR}&gt;Link to home
+&gt; |]
+&gt; 
+&gt; myWidget :: Widget
+&gt; myWidget = [whamlet|
+&gt;     &lt;h1&gt;Embed another widget
+&gt;     \^{myInnerWidget}
+&gt;     &lt;h1&gt;Embed a Hamlet
+&gt;     \^{addHamlet myPlainTemplate}
+&gt; |]
+&gt; 
+&gt; getRootR :: Handler RepHtml
+&gt; getRootR = defaultLayout myWidget
+&gt; 
+&gt; main :: IO ()
+&gt; main = warpDebug 3000 NewHamlet
+</pre></article></body></html>
