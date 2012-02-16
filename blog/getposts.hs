@@ -56,7 +56,7 @@ data Post = Post
 
 instance Y.ToJSON Post where
     toJSON (Post time a title fp) = Y.object
-        [ "time" Y..= show time
+        [ "time" Y..= time
         , "author" Y..= a
         , "title" Y..= title
         , "path" Y..= F.encodeString fp
