@@ -1,0 +1,14 @@
+<p>Now that the first version of <a href="http://www.haskell.org/pipermail/haskell-cafe/2010-March/074271.html">Yesod Web Framework</a> has been released, I can start to think about the missing piece of the puzzle: the model. Currently, each of my sites built on Yesod uses a hand-rolled model layer. In <a href="http://www.search-once.com/">SearchOnce</a>, this was particularly ugly: a 900 line file with a bunch of SQL code.</p>
+<p>So I've been playing around with some ideas, and I just want to get them out for later reference. There's no code to back this one up yet, so don't expect anything concrete for a while!</p>
+<ul><li>Using YAML and quasi-quotation worked very nicely for URL dispatch in Yesod; I think that will be a good fit for defining models.</li>
+<li>Overall, Django model system is pretty good, probably follow that structure mostly.</li>
+<li>There's no reason to tie it down to SQL; I can imagine a YAML-file backend, or Amazon SimpleDB. At the same time, SQL should be a first-class citizen.</li>
+<li>Not sure if it should have schema-generation, you tell it the names of your tables, or an option for either one.</li>
+<li><a href="http://www.reddit.com/r/haskell/comments/b9fo2/anyone_else_ever_wanted_an_io_thunk/">IO thunks</a> would probably be a good idea for possibly expensive records (eg, in a one-to-many relationship).</li>
+<li>Speaking of relationships, is one-to-many and many-to-many sufficient? And how do you model many-to-many in Haskell?</li>
+<li>Probably want to use data-accessor or something similar.</li>
+<li>Maybe consider an IOList (or Stream) data structure: data IOList a = IONil | IOCons a (IO IOList).</li>
+<li>Have to figure out a way to interoperate with HStringTemplate, which might ultimately involve unsafePerformIO due to the purity of that library.</li>
+<li>Does data-object need to include a MonadObject data structure to help this out?</li>
+</ul>
+<p>Sorry for just spouting nonsense for now... if anyone has any ideas or recommendations of already-existent libraries, please let me know.</p>

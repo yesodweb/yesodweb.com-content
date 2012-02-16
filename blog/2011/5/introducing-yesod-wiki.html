@@ -1,0 +1,78 @@
+<h1>Welcome to the new Yesod Site</h1>  <p class="hascomments" id="file836-welcome-to-the-new-yesod-site-x1">I work for <a href="http://www.suite-sol.com">Suite
+    Solutions</a>, a company that provides professional services for implementing and maintaining
+   XML-based content lifecycles. Services include style sheet development for a multitude of output
+   formats in multiple languages, content conversion, training, consulting, information architecture
+   guidance, custom integration and support. We are working on ways to bridge the gap between
+   user-contributed web systems like wikis and the more traditional documentation systems in order
+   to provide an interactive, structured knowledgebase and allow technical authors to get feedback
+   directly from their reader community.</p>
+  <p class="hascomments" id="file836-welcome-to-the-new-yesod-site-x3">My company has graciously allowed me to use this system as the basis for a new Yesod
+   documentation site. I believe this new site will make it much easier for me to add content and
+   keep it up-to-date, and lower the barrier to entry for other contributors. This post will give an
+   introduction to the new system.</p>
+ <h1>Topic-based editing</h1>  <p class="hascomments" id="file838-topic-based-editing-x1">At Suite Solutions, our business is documentation. The vast majority of our clients author in a
+   data format called <a href="http://en.wikipedia.org/wiki/Darwin_Information_Typing_Architecture">DITA</a>. There are a number of very cool features about DITA, but for our
+   purposes today the most important is topic-based authoring.</p>
+  <p class="hascomments" id="file838-topic-based-editing-x3">Instead of authoring a book, or a blog post, or a FAQ, you author individual topics. These
+   topics are intended to be concise and cover a single idea. Then, to produce a larger document,
+   you organize these topics together into a map.</p>
+ <section .subtopic=""><h1>Why we need it</h1>
+  <p class="hascomments" id="file837-why-we-need-it-x1">I end up writing a large amount of content on Yesod:</p>
+  <ul id="file837-why-we-need-it-ul_f910c461-ab17-471b-979a-8962053f140d"><li id="file837-why-we-need-it-x2">The book</li>
+   <li id="file837-why-we-need-it-x3">Blog posts</li>
+   <li id="file837-why-we-need-it-x4">Answers to bug reports</li>
+   <li id="file837-why-we-need-it-x5">Email responses on question</li>
+  </ul>
+  <p class="hascomments" id="file837-why-we-need-it-x6">This results in a lot of duplicated content, which has two problems: wasted effort, and
+   out-of-date content. For example, I wrote a three part tutorial on enumerators not too long ago.
+   I then decided that it should be in the Yesod book. I copied the content over, updated it a bit,
+   and thought I was done. But there were a number of flaws with this:</p>
+  <ul id="file837-why-we-need-it-ul_f7092995-023e-4d87-b1c4-4df52c8faee3"><li id="file837-why-we-need-it-x7">Since the blog is written in Markdown, and the book in a special XML format, I had to spend a
+    significant amount of time converting.</li>
+   <li id="file837-why-we-need-it-x8">The blog posts were still sitting on the web for some unwitting souls to find and get
+    confused by the outdated information.</li>
+  </ul>
+  <p class="hascomments" id="file837-why-we-need-it-x9">With this new documentation system, we instead author topics and combine them into maps. Then,
+   these maps get published: as blog posts, in the book, or on their own. If the topics get updated
+   in one place, the changes propogate everywhere.</p>
+ </section><h1>Community</h1>  <p class="hascomments" id="file840-community-x1">We&#39;ve been trying to encourage more community-contributed documentation to Yesod for a while
+   now. However, there were a few roadblocks to would-be contributors:</p>
+  <ul id="file840-community-ul_a797e17e-e862-4f5a-afbc-f22db1324ec1"><li id="file840-community-x2">The <a href="http://wiki.yesodweb.com">Wiki</a> is not
+    tightly integrated with the main site.</li>
+   <li id="file840-community-x4">To get content into the book, you have to fork the yesoddocs repo on Github and send a pull
+    request.</li>
+  </ul>
+  <p class="hascomments" id="file840-community-x5">By turning the main site into a Wiki itself, it should be much easier to contribute. Individual
+   topics on the site can be authored in HTML, Markdown, plain text or DITA. Unlike most wikis, a
+   person&#39;s topics are their own. However, a user can mark a topic as &quot;world writeable&quot; to allow others to edit it as well.</p>
+  <p class="hascomments" id="file840-community-x6">The last piece in the puzzle is how to find relevant content. The solution we&#39;re using is
+   labels: over time, I&#39;ll be creating a hierarchy of different subjects (templates, handlers, REST,
+   who knows). As you create topics, simply apply the appropriate labels. And when someone wants to
+   find some content, they can use the <a href="http://www.yesodweb.com/browse">browse feature</a>.</p>
+ <section .subtopic=""><h1>Bye Old Comments</h1>  <p class="hascomments" id="file839-bye-old-comments-x1">The new site also brings with it changes to the comment system. You now need to be logged in to
+   comment. This may sound like a disadvantage, but at least in my experience it&#39;s irritating to
+   have to enter your name every time you make a comment.</p>
+  <p class="hascomments" id="file839-bye-old-comments-x2">But the bigger change under the hood is that comments are topics themselves. (Yes, that means
+   you could in theory comment on a comment.) This fits in very nicely with the philosophy we&#39;ve
+   been developing here: you could write a comment on the book, and others will be able to find it
+   in a normal search. Or relevant comments could be strung together into a map and published as a
+   blog post.</p>
+  <p class="hascomments" id="file839-bye-old-comments-x3">One downside is that I&#39;m not going to be migrating the existing comments from the book. Just to
+   make it clear, the comments on the book have been possibly the most important feedback in
+   refining its content, and I am very grateful to everyone who has contributed. Please keep it
+   up!</p>
+ </section><h1>Missing Features</h1>  <p class="hascomments" id="file841-missing-features-x1">This is a first release, so you should expect bugs. Also, the UI is very unrefined, especially
+   on the settings page. But in addition, there are a number of features we have in mind:</p>
+  <ul id="file841-missing-features-ul_0dc92482-314d-4a1c-a0d5-bd2946adc54d"><li id="file841-missing-features-x2">A built-in issue tracker. There are a few advantages to keeping issues on this site instead
+    of Github:<ul id="file841-missing-features-ul_461cb31e-7ad1-48c2-a3a8-b200fd75b33c"><li id="file841-missing-features-x3">No more confusiong about which project to assign the issue to.</li>
+     <li id="file841-missing-features-x4">Searching on the site for information will automatically find open issues.</li>
+     <li id="file841-missing-features-x5">If someone writes a detailed bug report and/or response, it will be easy to incorporate
+      that content in other sections of the site (e.g., FAQ, the book).</li>
+    </ul></li>
+   <li id="file841-missing-features-x6">More social features, such as upvoting topics, forking topics, etc.</li>
+   <li id="file841-missing-features-x7">Discussion pages. In fact, the comment system is basically a discussion system already, it
+    just needs a little UI tweaking to make that apparent.</li>
+  </ul>
+  <p class="hascomments" id="file841-missing-features-x8">If you notice any issues, please <a href="mailto:michael@snoyman.com">let me know</a>. I&#39;m very excited about this new site. I believe it will
+   make it much easier to get quality documentation out.</p>
+ 

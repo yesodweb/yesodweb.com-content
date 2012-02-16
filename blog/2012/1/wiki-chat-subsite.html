@@ -1,0 +1,329 @@
+
+  <p class="hascomments" id="file2028-conceptId-x-3">This example will tie together a few different ideas. We&#39;ll start with a chat subsite, which
+   allows us to embed a chat widget on any page. We&#39;ll use the HTML 5 event source API to handle
+   sending events from the server to the client.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">-- @Chat.hs</span>
+<span style="color: gray;">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,</span>
+<span style="color: gray;">TemplateHaskell, FlexibleInstances, MultiParamTypeClasses,</span>
+<span style="color: gray;">FlexibleContexts</span>
+<span style="color: gray;">#-}</span>
+<span style="color: gray;">-- | This modules defines a subsite that allows you to insert a chat box on</span>
+<span style="color: gray;">-- any page of your site. It uses eventsource for sending the messages from</span>
+<span style="color: gray;">-- the server to the browser.</span>
+<span style="color: green;font-weight: bold;">module</span> <span style="color: blue;">Chat</span> <span style="color: green;font-weight: bold;">where</span>
+
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Yesod</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Concurrent.Chan</span> (<span style="color: blue;">Chan</span>, dupChan, writeChan)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.Wai.EventSource</span> (<span style="color: blue;">ServerEvent</span> (..), eventSourceApp)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Language.Haskell.TH.Syntax</span> (<span style="color: blue;">Type</span> (<span style="color: blue;">VarT</span>), <span style="color: blue;">Pred</span> (<span style="color: blue;">ClassP</span>), mkName)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Blaze.ByteString.Builder.Char.Utf8</span> (fromText)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Monoid</span> (mappend)
+
+<span style="color: gray;">-- | Our subsite foundation. We keep a channel of events that all connections</span>
+<span style="color: gray;">-- will share.</span>
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Chat</span> = <span style="color: blue;">Chat</span> (<span style="color: blue;">Chan</span> <span style="color: blue;">ServerEvent</span>)
+
+<span style="color: gray;">-- | We need to know how to check if a user is logged in and how to get</span>
+<span style="color: gray;">-- his/her username (for printing messages).</span>
+<span style="color: green;font-weight: bold;">class</span> (<span style="color: blue;">Yesod</span> master, <span style="color: blue;">RenderMessage</span> master <span style="color: blue;">FormMessage</span>)
+        =&gt; <span style="color: blue;">YesodChat</span> master <span style="color: green;font-weight: bold;">where</span>
+    getUserName :: <span style="color: blue;">GHandler</span> sub master <span style="color: blue;">Text</span>
+    isLoggedIn :: <span style="color: blue;">GHandler</span> sub master <span style="color: blue;">Bool</span>
+
+<span style="color: gray;">-- Now we set up our subsite. The first argument is the subsite, very similar</span>
+<span style="color: gray;">-- to how we&#39;ve used mkYesod in the past. The second argument is specific to</span>
+<span style="color: gray;">-- subsites. What it means here is &quot;the master site must be an instance of</span>
+<span style="color: gray;">-- YesodChat&quot;.</span>
+--
+<span style="color: gray;">-- We define two routes: a route for sending messages from the client to the</span>
+<span style="color: gray;">-- server, and one for opening up the event stream to receive messages from</span>
+<span style="color: gray;">-- the server.</span>
+<span style="color: blue;font-weight: bold;">mkYesodSub</span> <span style="color: green;">&quot;Chat&quot;</span>
+    [ <span style="color: blue;">ClassP</span> &#39;&#39;<span style="color: blue;">YesodChat</span> [<span style="color: blue;">VarT</span> $ mkName <span style="color: green;">&quot;master&quot;</span>]
+    ] [parseRoutes|
+/send <span style="color: blue;">SendR</span> <span style="color: blue;">POST</span>
+/recv <span style="color: blue;">ReceiveR</span> <span style="color: blue;">GET</span>
+|]
+
+<span style="color: gray;">-- | Get a message from the user and send it to all listeners.</span>
+<span style="color: blue;font-weight: bold;">postSendR</span> :: <span style="color: blue;">YesodChat</span> master =&gt; <span style="color: blue;">GHandler</span> <span style="color: blue;">Chat</span> master ()
+<span style="color: blue;font-weight: bold;">postSendR</span> = <span style="color: green;font-weight: bold;">do</span>
+    from &lt;- getUserName
+
+    <span style="color: gray;">-- Note that we&#39;re using GET parameters for simplicity of the Ajax code.</span>
+    <span style="color: gray;">-- This could easily be switched to POST. Nonetheless, our overall</span>
+    <span style="color: gray;">-- approach is still RESTful since this route can only be accessed via a</span>
+    <span style="color: gray;">-- POST request.</span>
+    body &lt;- runInputGet $ ireq textField <span style="color: green;">&quot;message&quot;</span>
+
+    <span style="color: gray;">-- Get the channel</span>
+    <span style="color: blue;">Chat</span> chan &lt;- getYesodSub
+
+    <span style="color: gray;">-- Send an event to all listeners with the user&#39;s name and message.</span>
+    liftIO $ writeChan chan $ <span style="color: blue;">ServerEvent</span> <span style="color: blue;">Nothing</span> <span style="color: blue;">Nothing</span> $ return $
+        fromText from `mappend` fromText <span style="color: green;">&quot;: &quot;</span> `mappend` fromText body
+
+<span style="color: gray;">-- | Send an eventstream response with all messages streamed in.</span>
+<span style="color: blue;font-weight: bold;">getReceiveR</span> :: <span style="color: blue;">GHandler</span> <span style="color: blue;">Chat</span> master ()
+<span style="color: blue;font-weight: bold;">getReceiveR</span> = <span style="color: green;font-weight: bold;">do</span>
+    <span style="color: gray;">-- First we get the main channel</span>
+    <span style="color: blue;">Chat</span> chan0 &lt;- getYesodSub
+
+    <span style="color: gray;">-- We duplicated the channel, which allows us to create broadcast</span>
+    <span style="color: gray;">-- channels.</span>
+    chan &lt;- liftIO $ dupChan chan0
+
+    <span style="color: gray;">-- Now we use the event source API. eventSourceApp takes two parameters:</span>
+    <span style="color: gray;">-- the channel of events to read from, and the WAI request. It returns a</span>
+    <span style="color: gray;">-- WAI response, which we can return with sendWaiResponse.</span>
+    req &lt;- waiRequest
+    res &lt;- lift $ eventSourceApp chan req
+    sendWaiResponse res
+
+<span style="color: gray;">-- | Provide a widget that the master site can embed on any page.</span>
+<span style="color: blue;font-weight: bold;">chatWidget</span> :: <span style="color: blue;">YesodChat</span> master
+           =&gt; (<span style="color: blue;">Route</span> <span style="color: blue;">Chat</span> -&gt; <span style="color: blue;">Route</span> master)
+           -&gt; <span style="color: blue;">GWidget</span> sub master ()
+<span style="color: gray;">-- This toMaster argument tells us how to convert a Route Chat into a master</span>
+<span style="color: gray;">-- route. You might think this is redundant information, but taking this</span>
+<span style="color: gray;">-- approach means we can have multiple chat subsites in a single site.</span>
+<span style="color: blue;font-weight: bold;">chatWidget</span> toMaster = <span style="color: green;font-weight: bold;">do</span>
+    <span style="color: gray;">-- Get some unique identifiers to help in creating our HTML/CSS. Remember,</span>
+    <span style="color: gray;">-- we have no idea what the master site&#39;s HTML will look like, so we</span>
+    <span style="color: gray;">-- should not assume we can make up identifiers that won&#39;t be reused.</span>
+    <span style="color: gray;">-- Also, it&#39;s possible that multiple chatWidgets could be embedded in the</span>
+    <span style="color: gray;">-- same page.</span>
+    chat &lt;- lift newIdent   <span style="color: gray;">-- the containing div</span>
+    output &lt;- lift newIdent <span style="color: gray;">-- the box containing the messages</span>
+    input &lt;- lift newIdent  <span style="color: gray;">-- input field from the user</span>
+
+    ili &lt;- lift isLoggedIn  <span style="color: gray;">-- check if we&#39;re already logged in</span>
+    <span style="color: green;font-weight: bold;">if</span> ili
+        <span style="color: green;font-weight: bold;">then</span> <span style="color: green;font-weight: bold;">do</span>
+            <span style="color: gray;">-- Logged in: show the widget</span>
+            [whamlet|
+&lt;div ##{chat}&gt;
+    &lt;h2&gt;<span style="color: blue;">Chat</span>
+    &lt;div ##{output}&gt;
+    &lt;input ##{input} <span style="color: green;font-weight: bold;">type</span>=text placeholder=<span style="color: green;">&quot;Enter Message&quot;</span>&gt;
+|]
+            <span style="color: gray;">-- Just some CSS</span>
+            toWidget [lucius|
+##{chat} {
+    position: absolute;
+    top: <span style="color: teal;">2</span>em;
+    right: <span style="color: teal;">2</span>em;
+}
+##{output} {
+    width: <span style="color: teal;">200</span>px;
+    height: <span style="color: teal;">300</span>px;
+    border: <span style="color: teal;">1</span>px solid #<span style="color: teal;">999</span>;
+    overflow: auto;
+}
+|]
+            <span style="color: gray;">-- And now that Javascript</span>
+            toWidgetBody [julius|
+// <span style="color: blue;">Set</span> up the receiving end
+<span style="color: blue;font-weight: bold;">var</span> output = document.getElementById(<span style="color: green;">&quot;#{output}&quot;</span>);
+<span style="color: blue;font-weight: bold;">var</span> src = new <span style="color: blue;">EventSource</span>(<span style="color: green;">&quot;@{toMaster ReceiveR}&quot;</span>);
+<span style="color: blue;font-weight: bold;">src</span>.onmessage = function(msg) {
+    // <span style="color: blue;">This</span> function will be called for each new message.
+    var p = document.createElement(<span style="color: green;">&quot;p&quot;</span>);
+    p.appendChild(document.createTextNode(msg.<span style="color: green;font-weight: bold;">data</span>));
+    output.appendChild(p);
+
+    // <span style="color: blue;">And</span> now scroll down within the output div so the most recent message
+    // is displayed.
+    output.scrollTop = output.scrollHeight;
+};
+
+// <span style="color: blue;">Set</span> up the sending end: send a message via <span style="color: blue;">Ajax</span> whenever the user hits
+// enter.
+<span style="color: blue;font-weight: bold;">var</span> input = document.getElementById(<span style="color: green;">&quot;#{input}&quot;</span>);
+<span style="color: blue;font-weight: bold;">input</span>.onkeyup = function(event) {
+    var keycode = (event.keyCode ? event.keyCode : event.which);
+    <span style="color: green;font-weight: bold;">if</span> (keycode == &#39;<span style="color: teal;">13</span>&#39;) {
+        var xhr = new <span style="color: blue;">XMLHttpRequest</span>();
+        var val = input.value;
+        input.value = <span style="color: green;">&quot;&quot;</span>;
+        var params = <span style="color: green;">&quot;?message=&quot;</span> + encodeURI(val);
+        xhr.open(<span style="color: green;">&quot;POST&quot;</span>, <span style="color: green;">&quot;@{toMaster SendR}&quot;</span> + params);
+        xhr.send(null);
+    }
+}
+|]
+        <span style="color: green;font-weight: bold;">else</span> <span style="color: green;font-weight: bold;">do</span>
+            <span style="color: gray;">-- User isn&#39;t logged in, give a not-logged-in message.</span>
+            master &lt;- lift getYesod
+            [whamlet|
+&lt;p&gt;
+    <span style="color: blue;">You</span> must be #
+    $maybe ar &lt;- authRoute master
+        &lt;a href=@{ar}&gt;logged <span style="color: green;font-weight: bold;">in</span>
+    $nothing
+        logged <span style="color: green;font-weight: bold;">in</span>
+    \ to chat.
+|]
+</pre></pre>
+  <p class="hascomments" id="file2028-conceptId-x-5">This module stands on its own, and can be used in any application. Next we&#39;ll provide such a
+   driver application: a wiki. Our wiki will have a hard-coded homepage, and then a wiki section of
+   the site. We&#39;ll be using <dfn id="file2028-conceptId-x-6">multiple dynamic pieces</dfn> to allow an arbitrary hierarchy of
+   pages within the Wiki.</p>
+  <p class="hascomments" id="file2028-conceptId-x-7">For storage, we&#39;ll just use a mutable reference to a <code id="file2028-conceptId-x-8">Map</code>. For a production
+   application, this should be replaced with a proper database. The content will be stored and
+   served as Markdown. <code id="file2028-conceptId-x-9">yesod-auth</code>&#39;s dummy plugin will provide us with (fake)
+   authentication.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,</span>
+<span style="color: gray;">TemplateHaskell, FlexibleInstances, MultiParamTypeClasses,</span>
+<span style="color: gray;">FlexibleContexts</span>
+<span style="color: gray;">#-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Yesod</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Yesod.Auth</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Yesod.Auth.Dummy</span> (authDummy)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Chat</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Concurrent.Chan</span> (<span style="color: blue;">Chan</span>, newChan)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.Wai.Handler.Warp</span> (run)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Text.Lazy</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">TL</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.IORef</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">I</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Map</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">Map</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Markdown</span> (markdown, def)
+
+<span style="color: gray;">-- | Our foundation type has both the chat subsite and a mutable reference to</span>
+<span style="color: gray;">-- a map of all our wiki contents. Note that the key is a list of Texts, since</span>
+<span style="color: gray;">-- a wiki can have an arbitrary hierarchy.</span>
+--
+<span style="color: gray;">-- In a real application, we would want to store this information in a</span>
+<span style="color: gray;">-- database of some sort.</span>
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Wiki</span> = <span style="color: blue;">Wiki</span>
+    { getChat :: <span style="color: blue;">Chat</span>
+    , wikiContent :: <span style="color: blue;">I.IORef</span> (<span style="color: blue;">Map.Map</span> [<span style="color: blue;">Text</span>] <span style="color: blue;">Text</span>)
+    }
+
+<span style="color: gray;">-- Set up our routes as usual.</span>
+<span style="color: blue;font-weight: bold;">mkYesod</span> <span style="color: green;">&quot;Wiki&quot;</span> [parseRoutes|
+/ <span style="color: blue;">RootR</span> <span style="color: blue;">GET</span>                 <span style="color: gray;">-- the homepage</span>
+/wiki/*<span style="color: blue;">Texts</span> <span style="color: blue;">WikiR</span> <span style="color: blue;">GET</span> <span style="color: blue;">POST</span> <span style="color: gray;">-- note the multipiece for the wiki hierarchy</span>
+/chat <span style="color: blue;">ChatR</span> <span style="color: blue;">Chat</span> getChat    <span style="color: gray;">-- the chat subsite</span>
+/auth <span style="color: blue;">AuthR</span> <span style="color: blue;">Auth</span> getAuth    <span style="color: gray;">-- the auth subsite</span>
+|]
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">Yesod</span> <span style="color: blue;">Wiki</span> <span style="color: green;font-weight: bold;">where</span>
+    authRoute _ = <span style="color: blue;">Just</span> $ <span style="color: blue;">AuthR</span> <span style="color: blue;">LoginR</span> <span style="color: gray;">-- get a working login link</span>
+
+    <span style="color: gray;">-- Our custom defaultLayout will add the chat widget to every page.</span>
+    <span style="color: gray;">-- We&#39;ll also add login and logout links to the top.</span>
+    defaultLayout widget = <span style="color: green;font-weight: bold;">do</span>
+        pc &lt;- widgetToPageContent $ widget &gt;&gt; chatWidget <span style="color: blue;">ChatR</span>
+        mmsg &lt;- getMessage
+        hamletToRepHtml [hamlet|
+$doctype <span style="color: teal;">5</span>
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;#{pageTitle pc}
+        ^{pageHead pc}
+    &lt;body&gt;
+        $maybe msg &lt;- mmsg
+            &lt;div .message&gt;#{msg}
+        &lt;nav&gt;
+            &lt;a href=@{<span style="color: blue;">AuthR</span> <span style="color: blue;">LoginR</span>}&gt;<span style="color: blue;">Login</span>
+            \ | #
+            &lt;a href=@{<span style="color: blue;">AuthR</span> <span style="color: blue;">LogoutR</span>}&gt;<span style="color: blue;">Logout</span>
+        ^{pageBody pc}
+|]
+
+<span style="color: gray;">-- Fairly standard YesodAuth instance. We&#39;ll use the dummy plugin so that you</span>
+<span style="color: gray;">-- can create any name you want, and store the login name as the AuthId.</span>
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">YesodAuth</span> <span style="color: blue;">Wiki</span> <span style="color: green;font-weight: bold;">where</span>
+    <span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">AuthId</span> <span style="color: blue;">Wiki</span> = <span style="color: blue;">Text</span>
+    authPlugins _ = [authDummy]
+    loginDest _ = <span style="color: blue;">RootR</span>
+    logoutDest _ = <span style="color: blue;">RootR</span>
+    getAuthId = return . <span style="color: blue;">Just</span> . credsIdent
+    authHttpManager = error <span style="color: green;">&quot;authHttpManager&quot;</span> <span style="color: gray;">-- not used by authDummy</span>
+
+<span style="color: gray;">-- Just implement authentication based on our yesod-auth usage.</span>
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">YesodChat</span> <span style="color: blue;">Wiki</span> <span style="color: green;font-weight: bold;">where</span>
+    getUserName = requireAuthId
+    isLoggedIn = <span style="color: green;font-weight: bold;">do</span>
+        ma &lt;- maybeAuthId
+        return $ maybe <span style="color: blue;">False</span> (const <span style="color: blue;">True</span>) ma
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">RenderMessage</span> <span style="color: blue;">Wiki</span> <span style="color: blue;">FormMessage</span> <span style="color: green;font-weight: bold;">where</span>
+    renderMessage _ _ = defaultFormMessage
+
+<span style="color: gray;">-- Nothing special here, just giving a link to the root of the wiki.</span>
+<span style="color: blue;font-weight: bold;">getRootR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getRootR</span> = defaultLayout [whamlet|
+&lt;p&gt;<span style="color: blue;">Welcome</span> to the <span style="color: blue;">Wiki</span>!
+&lt;p&gt;
+    &lt;a href=@{wikiRoot}&gt;<span style="color: blue;">Wiki</span> root
+|]
+  <span style="color: green;font-weight: bold;">where</span>
+    wikiRoot = <span style="color: blue;">WikiR</span> []
+
+<span style="color: gray;">-- A form for getting wiki content</span>
+<span style="color: blue;font-weight: bold;">wikiForm</span> mtext = renderDivs $ areq textareaField <span style="color: green;">&quot;Page body&quot;</span> mtext
+
+<span style="color: gray;">-- Show a wiki page and an edit form</span>
+<span style="color: blue;font-weight: bold;">getWikiR</span> :: [<span style="color: blue;">Text</span>] -&gt; <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getWikiR</span> page = <span style="color: green;font-weight: bold;">do</span>
+    <span style="color: gray;">-- Get the reference to the contents map</span>
+    icontent &lt;- fmap wikiContent getYesod
+
+    <span style="color: gray;">-- And read the map from inside the reference</span>
+    content &lt;- liftIO $ <span style="color: blue;">I.</span>readIORef icontent
+
+    <span style="color: gray;">-- Lookup the contents of the current page, if available</span>
+    <span style="color: green;font-weight: bold;">let</span> mtext = <span style="color: blue;">Map.</span>lookup page content
+
+    <span style="color: gray;">-- Generate a form with the current contents as the default value.</span>
+    <span style="color: gray;">-- Note that we use the Textarea wrapper to get a &lt;textarea&gt;.</span>
+    ((_, form), _) &lt;- generateFormPost $ wikiForm $ fmap <span style="color: blue;">Textarea</span> mtext
+    defaultLayout $ <span style="color: green;font-weight: bold;">do</span>
+        <span style="color: green;font-weight: bold;">case</span> mtext <span style="color: green;font-weight: bold;">of</span>
+            <span style="color: gray;">-- We&#39;re treating the input as markdown. The markdown package</span>
+            <span style="color: gray;">-- automatically handles XSS protection for us.</span>
+            <span style="color: blue;">Just</span> text -&gt; toWidget $ markdown def $ <span style="color: blue;">TL.</span>fromStrict text
+            <span style="color: blue;">Nothing</span> -&gt; [whamlet|&lt;p&gt;<span style="color: blue;">Page</span> does not yet exist|]
+        [whamlet|
+&lt;h2&gt;<span style="color: blue;">Edit</span> page
+&lt;form method=post&gt;
+    ^{form}
+    &lt;div&gt;
+        &lt;input <span style="color: green;font-weight: bold;">type</span>=submit&gt;
+|]
+
+<span style="color: gray;">-- Get a submitted wiki page and updated the contents.</span>
+<span style="color: blue;font-weight: bold;">postWikiR</span> :: [<span style="color: blue;">Text</span>] -&gt; <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">postWikiR</span> page = <span style="color: green;font-weight: bold;">do</span>
+    icontent &lt;- fmap wikiContent getYesod
+    content &lt;- liftIO $ <span style="color: blue;">I.</span>readIORef icontent
+    <span style="color: green;font-weight: bold;">let</span> mtext = <span style="color: blue;">Map.</span>lookup page content
+    ((res, form), _) &lt;- runFormPost $ wikiForm $ fmap <span style="color: blue;">Textarea</span> mtext
+    <span style="color: green;font-weight: bold;">case</span> res <span style="color: green;font-weight: bold;">of</span>
+        <span style="color: blue;">FormSuccess</span> (<span style="color: blue;">Textarea</span> t) -&gt; <span style="color: green;font-weight: bold;">do</span>
+            liftIO $ <span style="color: blue;">I.</span>atomicModifyIORef icontent $
+                \m -&gt; (<span style="color: blue;">Map.</span>insert page t m, ())
+            setMessage <span style="color: green;">&quot;Page updated&quot;</span>
+            redirect $ <span style="color: blue;">WikiR</span> page
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=post&gt;
+    ^{form}
+    &lt;div&gt;
+        &lt;input <span style="color: green;font-weight: bold;">type</span>=submit&gt;
+|]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = <span style="color: green;font-weight: bold;">do</span>
+    <span style="color: gray;">-- Create our server event channel</span>
+    chan &lt;- newChan
+
+    <span style="color: gray;">-- Initially have a blank database of wiki pages</span>
+    icontent &lt;- <span style="color: blue;">I.</span>newIORef <span style="color: blue;">Map.</span>empty
+
+    <span style="color: gray;">-- Run our app</span>
+    warpDebug <span style="color: teal;">3000</span> $ <span style="color: blue;">Wiki</span> (<span style="color: blue;">Chat</span> chan) icontent
+</pre></pre>
+ 

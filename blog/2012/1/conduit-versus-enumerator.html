@@ -1,0 +1,126 @@
+
+  <p class="hascomments">I&#39;ve been tempted to write this blog post for a few weeks now. While my <a href="http://www.yesodweb.com/book/conduit">blog series on
+    conduits</a> purposely avoided enumerator comparisons, I&#39;m sure the first question people
+   have is, &quot;Why did we need a new solution to the problem?&quot; Now that I&#39;ve gotten feedback from a
+    <a href="http://www.haskell.org/pipermail/web-devel/2012/002316.html">different</a>
+   <a href="http://www.mega-nerd.com/erikd/Blog/CodeHacking/Haskell/telnet-conduit.html">people</a>, and since <a href="http://www.reddit.com/r/haskell/comments/ohjg7/a_new_approach_to_iteratees/">multiple</a>
+   <a href="http://www.reddit.com/r/haskell/comments/o87z5/generalizing_streams_into_coroutines_with_an/">people</a>
+   <a href="http://personal.cis.strath.ac.uk/%7Eraa/posts/2012-01-06-streams.html">are</a> looking at novel solutions to the streaming data problem, I think
+   it&#39;s time to write this post.</p>
+  <p class="hascomments">Before we can really address the question, we need to understand the goals we are trying to
+   achieve. We want a solution that will allow us to:</p>
+  <ol id="file1745-conceptId-ul_inc_mrw_ye"><li>Produce, consume and transform streams of data.</li>
+   <li>Abstract over the underlying data source and destination.</li>
+   <li>Handle resources determinstically. This includes exception safety.</li>
+   <li>Composability: it should be simple to take a few transformers and a consumer and produce a
+    new consumer, for example.</li>
+   <li>Approachable: it shouldn&#39;t take months to master the approach.</li>
+   <li>Robust: we should be making it difficult for people to shoot themselves in the foot.</li>
+   <li>Convenient: we don&#39;t want a solution that requires radically modifying our code.</li>
+  </ol>
+  <p class="hascomments">The enumerator approach (encompassing the <a href="http://hackage.haskell.org/package/iteratee">iteratee</a>,
+    <a href="http://hackage.haskell.org/package/enumerator">enumerator</a>, and <a href="http://hackage.haskell.org/package/iterIO">iterIO</a> packages, as well as Oleg&#39;s
+   original papers) was a breakthrough for solving these issues. It fully addresses issues (1) and
+   (2) above. I would argue it also solves (6) very well. However, it only gives a half solution to
+   (3): while we can deterministically allocate resources in the producer (i.e. Enumerator), you
+   cannot do so in the consumer (i.e. Iteratee). As a result, it&#39;s impossible to write an
+   exception-safe <code>iterFile</code> function (this has been confirmed in all four variations
+   listed above, I can provide the code if anyone&#39;s curious).</p>
+  <p class="hascomments">(4) is also only a partial solution in my mind, at least if you consider (7). The use case that
+   finally opened my eyes to the limitations here was producing an HTTP proxy. I won&#39;t get into all
+   the gory details, but the basic issue is that enumerator forces a kind of Inversion of Control on
+   its users, making it awkward to interleave different streams. Again, I can provide the code for
+   this for the curious, but it&#39;s too involved to be discussed here.</p>
+  <p class="hascomments">(5) is really a complete failure. I didn&#39;t understand enumerators until I wrote a three part
+   blog series on how to use them, and even to this day, after having written a huge amount of
+   enumerator code, I still get stuck trying to write an <code>Enumeratee</code>. The naming is
+   confusing, and the technique is non-intutitive. Want to produce a stream of data? Then write a
+   function that transforms a <code>Step</code> into an <code>Iteratee</code>. There&#39;s a
+   logic to it, but it&#39;s not immediate. All of these type synonyms based on a single base type
+    (<code>Iteratee</code>) leads to very difficult-to-parse error messages. (7) also presents
+   problems: it&#39;s impossible to catch exceptions in an <code>Iteratee</code>, it&#39;s awkward to
+   deal with monad transformer stacks, and so on.</p>
+  <p class="hascomments">So after much discussion with others and a lot of thought, I started working on
+    <a href="http://hackage.haskell.org/package/conduit">conduit</a>s. In my mind, here are the major changes:</p>
+  <ul id="file1745-conceptId-ul_lpk_dww_ye"><li>The names are much more intuitive. I think most people understand <code>Source</code> and
+     <code>Sink</code> immediately, with <code>Conduit</code> only taking a moment
+    longer.</li>
+   <li><code>Source</code>, <code>Conduit</code>, and <code>Sink</code> are all distinct
+    types, meaning error messages are much clearer. This also means no awkward, unused type
+    variables like we have for <code>Enumerator</code> and <code>Enumeratee</code>.</li>
+   <li>Instead of being a sink transformer, a <code>Source</code> is a type that allows you to
+    pull data from it. One advantage is simplicity. But a more powerful advantage is that <b>there&#39;s
+     no inversion of control</b>. If you want, you can just pull data from a source and never write
+    a sink. Or if you use the standard connect operator (<code>$$</code>, as I&#39;m guessing
+    everyone does), there is no complicated control flow involved. A side effect of this is you can
+    actually deal with exceptions fully. (Another minor advantage is we get nice typeclass instances
+    like <code>Monoid</code>.)</li>
+   <li>There is full control for allocating resources anywhere, via the <code>ResourceT</code>
+    transformer. Not only does this allow us to write code we couldn&#39;t write before, it also means
+    we can write <i>all</i> of our code more easily. For example, in the past getting a database
+    connection from a resource pool required using a <code>withPool</code> function, which meant
+    that creating streaming responses from WAI was a huge inversion-of-control exercise. With
+     <code>ResourceT</code>, we can safely &quot;check out&quot; a resource and know it will be returned
+    appropriately.</li>
+   <li>Since we&#39;ve avoided continuation passing style throughout the types, we can easily modify the
+    monad stacks that our code is living in. One example usage for this would be parsing some data,
+    introducing a new monad transformer (e.g., a <code>ReaderT</code> holding the parsed data)
+    for some internal computation, unwrapping the transformer, and continuing computation. I <a href="https://gist.github.com/1261077">tried</a>, and failed,
+    to implement a general purpose solution to this problem in enumerator.</li>
+   <li>To deal with the remaining inversion of control cases, we&#39;ve introduced buffered sources.
+    This is a direct outcome of the third point above, and means massively simplified APIs (compare
+     <a href="http://hackage.haskell.org/packages/archive/http-enumerator/latest/doc/html/Network-HTTP-Enumerator.html#v:http">http</a> from
+     <a href="http://hackage.haskell.org/package/http-enumerator">http-enumerator</a> and
+     <a href="http://hackage.haskell.org/packages/archive/http-conduit/latest/doc/html/Network-HTTP-Conduit.html#v:http">http</a> from
+    <a href="http://hackage.haskell.org/package/http-conduit">http-conduit</a>).</li>
+  </ul>
+  <p class="hascomments">Vague criticisms of the conduit package notwithstanding, the only real downside I know of to
+   the approach is its reliance on mutable state. I&#39;ve considered reworking parts of the codebase to
+   get rid of the mutable state, but have decided against it, because:</p>
+  <ul id="file1745-conceptId-ul_xmk_jyw_ye"><li>Besides a vague &quot;I don&#39;t like it,&quot; no one has shown me a concrete problem with our usage of
+    mutable variables.</li>
+   <li>Since we allow <code>ST</code>, you can still use conduits from pure code. Besides, the
+    vast majority of conduit code will live in <code>IO</code> anyway.</li>
+   <li>I think the mutable state makes the internals of conduit much more approachable. It&#39;s very
+    easy to see what&#39;s going on.</li>
+   <li>We&#39;d have to replace the mutable state with some form of CPS, which would likely destroy some
+    of our other advantages (e.g., easy monad stack modification).</li>
+  </ul>
+  <p class="hascomments">So that&#39;s my overall conduit vs enumerator breakdown. I would like to point out that not only
+   have a huge percentage of the enumerator-based packages out there been successfully ported to
+   conduit (and simplified in the process!), but we have even added new packages that never existed
+   in enumerator. Conduits may be young, but they are production ready (I&#39;m shipping conduit code to
+   clients already), and far beyond any proof-of-concept stage. They are a viable alternative to
+   enumerators.</p>
+  <section><h1>Other alternatives</h1>
+   <p class="hascomments">In the first paragraph of this post, I linked to three other alternate approaches. Firstly,
+    none of these address the resource allocation issue. While a few authors have pointed out that
+    they could reuse the <code>ResourceT</code> approach to do so, that hasn&#39;t actually been
+    done, and therefore- as they stand- they do <i>not</i> solve the problem.</p>
+   <p class="hascomments"><a href="http://personal.cis.strath.ac.uk/%7Eraa/posts/2012-01-06-streams.html">One</a> of the approaches is actually <a href="http://www.reddit.com/r/haskell/comments/o5ioy/reasoning_about_stream_processing_with_effects/">very close in spirit</a> to conduits. The main difference is
+    its avoidance of mutable state. You can actually get a very good idea about the changes
+    necessary to get rid of mutable state in conduits by reading through that post. I still believe
+    that such a change is not only unnecessary, but would be detrimental.</p>
+   <p class="hascomments">The other two approaches use coroutines as a basis. I&#39;ll focus on <a href="http://hackage.haskell.org/package/pipes">pipes</a>, as
+    it got much more attention on Reddit. While I find the approach beautiful, I don&#39;t find it
+    practical. It&#39;s actually a step backwards from enumerators, as it doesn&#39;t solve <i>any</i> of
+    the resource allocation issue. It&#39;s very nice that it fits snugly into a
+     <code>Category</code>, but I don&#39;t think people are going to rush to restructure their code
+    to fit the <code>Category</code> approach. Additionally, while the author makes claims that
+    all error handling is orthogonal to the package, I don&#39;t think it&#39;s at all possible to catch
+    exceptions within a <code>Pipe</code>, which would make it a deal breaker for me.</p>
+   <p class="hascomments">But probably my biggest concern with this package is its distinction between lazy and strict.
+    The tutorial makes it clear that if you use the wrong one, your code might not terminate, or
+    perhaps never free an allocated file. (I don&#39;t think exceptions were ever considered here.) This
+    screams out to me that the paradigm is brittle, and will not compose for any large project. I
+    think this is something that would become immediately apparent as soon as someone starts writing
+    real code with pipes. (Going to the original seven points in the post, I&#39;m saying pipes fails at
+    (6).)</p>
+   <p class="hascomments">My point here is not to pick on pipes: I think it&#39;s an interesting concept, and I really do
+    like the code. My point is more fundamental: the problems we are solving are not simple, elegant
+    problems. We&#39;re dealing with the real world, where ugliness like asynchronous exceptions is the
+    norm. Elegant solutions are wonderful, but we can&#39;t have that elegance at the cost of
+    correctness. Any solution to the problems at hand needs to take into account all the bad stuff
+    that can happen.</p>
+  </section>
+ 

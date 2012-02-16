@@ -1,0 +1,41 @@
+<p>I just released version 0.0.0 of the <a href="http://hackage.haskell.org/package/zlib-bindings">zlib-bindings package</a>, which I think fills a nice gap in the compression realm for Haskell. Up until now, we've had the <a href="http://hackage.haskell.org/package/zlib">zlib package</a>, which provides a nice, high-level interface to compression based on lazy bytestrings. Unfortunately, there are two problems:</p>
+<ol style="list-style-type: decimal"><li><p>This depends on lazy IO, which many people try to avoid.</p></li>
+<li><p>There is no way to use this library when working with streams.</p></li>
+</ol>
+<p>The second point forced me to write some FFI code into the <a href="http://hackage.haskell.org/package/wai-extra">wai-extra package</a> to implement the Gzip middleware. More recently, I decided to add compressed HTTP support to <a href="http://hackage.haskell.org/package/http-enumerator">http-enumerator</a>, and was facing the same challenge. Instead, I decided to simply pull all of that code into a single package.</p>
+<p>The package uses the zlib terminology of deflate for compression and inflate for decompression. There are API docs, but I think the easiest way to get started is to simply read the <a href="http://github.com/snoyberg/zlib-bindings/blob/master/test.hs">unit tests</a>. Here are two samples: the first performs deflation/compression, the second inflation/decompression:</p>
+<pre><code>deflateTest = do
+    license &lt;- S.readFile &quot;LICENSE&quot;
+    def &lt;- initDeflate 7 $ WindowBits 31
+    gziped &lt;- withDeflateInput def license $ go id
+    gziped' &lt;- finishDeflate def $ go gziped
+    let raw' = L.fromChunks [license]
+    assertEqual raw' $ Gzip.decompress $ L.fromChunks $ gziped' []
+  where
+    go front x = do
+        y &lt;- x
+        case y of
+            Nothing -&gt; return front
+            Just z -&gt; go (front . (:) z) x
+
+inflateTest = do
+    license &lt;- S.readFile &quot;LICENSE&quot;
+    gziped &lt;- S.readFile &quot;LICENSE.gz&quot;
+    inf &lt;- initInflate $ WindowBits 31
+    ungziped &lt;- withInflateInput inf gziped $ go id
+    final &lt;- finishInflate inf
+    assertEqual license $ S.concat $ ungziped [final]
+  where
+    go front x = do
+        y &lt;- x
+        case y of
+            Nothing -&gt; return front
+            Just z -&gt; go (front . (:) z) x
+</code></pre>
+<p>The package is tested on both Linux and Windows, and since it uses the zlib package internally, it does not introduce a system library dependency on Windows. Hopefully this package will be of use to some people.</p>
+<p>I also simulataneously released a new version of wai-extra which uses this library internally, and http-enumerator 0.2.0 which includes gzip compression support. This new version of http-enumerator includes some minor fixes, and also consolidates all exceptions into a single type (HttpException).</p>
+<p>Following the dominos along, I've also released authenticate 0.7.0; the only changes there are a bump to http-enumerator 0.2.* and also combining all exceptions into AuthenticateException. This is the library underlying the login mechanism for <a href="http://www.haskellers.com/">haskellers.com</a>, and so has seen a good amount of testing recently.</p>
+<p>And finally there's new releases of <a href="http://hackage.haskell.org/package/yesod">yesod</a> (0.5.2) and <a href="http://hackage.haskell.org/package/yesod-auth">yesod-auth</a> (0.1.2) which accounts for the new authenticate version. There are also a few minor additions to yesod; I won't bore you with details here, you can check out the log on github if you're interested.</p>
+<h2 id="yesod-0.6">Yesod 0.6</h2>
+<p>I'm still confident that we are fast approaching a 1.0 release of Yesod. My guess is that 0.6 will be the last release beforehand. The goal for that release is to separate off some tangential aspects into separate packages. I've already mentioned yesod-auth; I'll probably also release Yesod.Mail as a separate yesod-mail package. I'm also considering adding support for markdown emails and a few other features that could be nifty.</p>
+<p>I've said it before, but I'll throw it out there again: if you have any feature requests for yesod, it'll be easier to add them in now versus later. You can post your ideas in the comments here, on the web-devel list or just email me directly.</p>

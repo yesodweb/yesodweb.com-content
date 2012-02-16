@@ -1,0 +1,64 @@
+<h1>tl;dr</h1>  <p class="hascomments" id="file1123-tldr-x1">Check out the new <a href="https://github.com/yesodweb">yesodweb organization on Github</a> and the <a href="http://groups.google.com/group/yesodweb">yesodweb mailing
+    list</a> (via Google Groups).</p>
+ <h1>History</h1>
+  <p class="hascomments" id="file1124-history-x1">In the beginning, Yesod was a single repository written by a single developer (me). It included
+   all the bells and whistles internally, from authentication to forms and static file serving. And
+   all was well and simple.</p>
+  <p class="hascomments" id="file1124-history-x2">Except this didn&#39;t scale very well. Making breaking changes in a single component meant bumping
+   version numbers everywhere. Someone wanting to implement a small site with few features still
+   needed to pull in on the dependencies of the greater Yesod. And as features continued to be
+   added, this overhead continued to grow.</p>
+  <p class="hascomments" id="file1124-history-x3">The solution was to split Yesod up into many smaller packages: yesod-core, yesod-auth,
+   yesod-static, etc. And this was a very good solution (sans some Cabal annoyances).</p>
+ <h1>Problems</h1>
+  <p class="hascomments" id="file1125-problems-x1">But of course, no good solution is without its issues. In this case, the sheer number of
+   repositories involved made it prohibitively difficult for people to test out beta code. Branching
+   for a beta version also meant branching across 8 different repositories. Often, this meant that
+   some packages weren&#39;t branched, and this made it even more confusing to build straight from the
+   repos.</p>
+  <p class="hascomments" id="file1125-problems-x2">It also became very difficult to follow Yesod development. People tracking the yesod repo
+   itself suddenly saw a significant drop in activity, since most development now occurs on
+   yesod-core. And combined with my non-Yesod packages (yes, I do write code besides Yesod), my
+   personal Github account was at about 80 repositories, making it very difficult to find Yesod
+   code.</p>
+ <h1>Solution</h1>
+  <p class="hascomments" id="file1126-solution-x1">The solution is actually very simple. There is now a yesodweb organization on Github. Instead
+   of an individual repository for each package, it has &quot;megarepositories&quot; grouping together common
+   packages. The wai repo contains WAI, Warp, wai-handler-fastcgi, wai-test and others. Persistent
+   contains the core persistent code, as well as all the backends and TH wrappers. (Actually, this
+   was already the case, a fluke of our development history.) And yesod contains a bunch of yesod-*
+   packages, plus the wrapping yesod package.</p>
+  <p class="hascomments" id="file1126-solution-x2">With the new setup, it should be significantly simpler for users to try out beta code: clone a
+   few repos and run the convenient &quot;install-all.sh&quot; script. This script also leverages the new
+   &quot;cabal test&quot; framework to automatically run unit tests. The goal is that by having more eyes on
+   the code, we can do a better job. And by having more people testing beta release before they
+   arrive an Hackage, we can catch bugs before they go into the wild, and particularly eliminate bad
+   API decisions.</p>
+ <h1>Why now?</h1>
+  <p class="hascomments" id="file1127-why-now-x1">Well, why not? Actually, it&#39;s a very good question. We are quickly approaching the 0.9 release
+   of Yesod. We&#39;re waiting on the release of a few libraries that we&#39;re very excited to be using
+   (I&#39;ll leave that as a surprise for later), and hopefully within the next week or two we&#39;ll be
+   ready to go live. 0.9 is a very important release: it&#39;s our last milestone before the 1.0
+   release.</p>
+  <p class="hascomments" id="file1127-why-now-x2">Over this last development iteration, you&#39;ll be interested to know that there were <b id="file1127-why-now-x3">no
+    breaking changes in yesod-core</b>. I consider this a huge milestone: the base Yesod API has
+   stabilized to such an extent that we didn&#39;t feel the need to break people&#39;s code this time. There
+   were still changes in the underlying libraries: removal of polymoprhic Hamlet, a greatly improved
+   forms API, drastically cleaned up Persistent architecture, etc. But the core of our framework is
+   stabilizing.</p>
+  <p class="hascomments" id="file1127-why-now-x4">Now is when we&#39;re getting very serious about taking Yesod to the next level. We have all the
+   raw features we want. Most of them have been there for over a year. We&#39;ve had a number of
+   iterations to clean things up. We&#39;ve found high quality libraries we can rely on: text,
+   blaze-builder, enumerator.</p>
+  <p class="hascomments" id="file1127-why-now-x5">Our focus at this point is to refine Yesod. We&#39;re focusing on things like more helpful logging,
+   better deployment strategies, increased performance. In the next two weeks, we&#39;ll be tying off a
+   very high-quality release, and beginning on the last touch-ups before our 1.0 release.</p>
+ <h1>How you can help</h1>
+  <p class="hascomments" id="file1128-how-you-can-help-x1">If you&#39;ve made it this far, odds are you care about Yesod. So if you&#39;d like to help, here are
+   some ideas:<ul id="file1128-how-you-can-help-ul_zhj_sqt_bd"><li id="file1128-how-you-can-help-x2">We love the positive feedback, but the constructive criticism is what helps us grow. Keep it
+     coming!</li>
+    <li id="file1128-how-you-can-help-x3">Participate in the discussion on our <a href="http://groups.google.com/group/yesodweb">new mailing list</a>.</li>
+    <li id="file1128-how-you-can-help-x5">Download the code now and test it with your current codebase.</li>
+    <li id="file1128-how-you-can-help-x6">Keep up the comments on the book.</li>
+   </ul></p>
+ 

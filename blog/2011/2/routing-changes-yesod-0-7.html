@@ -1,0 +1,62 @@
+<p>One of the major changes in Yesod 0.7 is how routing works under the hood. From a user standpoint, not too much has changed, but it's important to understand to some extent how the new system works. This post will explain how Yesod <em>used</em> to work, why it changed, and describe two bugs that came up recently. Hopefully the bugs will give a deeper understanding of what the system is doing.</p>
+<h2 id="brief-history-lesson">Brief History Lesson</h2>
+<p>Back in the old days of Yesod 0.6 (you know, last week), routing consisted of:</p>
+<ul><li><p>Convert a path info (eg, /foo/bar/baz/) into a list of strings (eg, [&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;, &quot;&quot;], notice the empty string). Thanks to Jeremy Shaw's excellent web-routes package for the utility functions for this.</p></li>
+<li><p>Apply cleanup rules: in order to ensure canonical URLs, we need to make sure to redirect non-canonical URLs to their canonical form. Though this was a user-controlled setting, the default settings ensured:</p>
+<ul><li><p>There are no double slashes.</p></li>
+<li><p>If the last path segment had a period in it, it must not be followed by a trailing slash. (eg, /file.txt is good, /file.txt/ is bad).</p></li>
+<li><p>Otherwise, there <strong>must</strong> be a trailing slash (eg, /folder/ is good, /folder is bad).</p></li>
+</ul></li>
+<li><p>If the URL needed cleanup, send the user a 301. Otherwise, continue.</p></li>
+<li><p>Convert the path segments into a type-safe URL.</p></li>
+<li><p>Dispatch based on the type-safe URL value.</p></li>
+</ul>
+<p>This seems to work out well, except for a specific use case: subsites. Point in case, let's say we have the static subsite. In an ideal world, the following should all happen:</p>
+<ol style="list-style-type: decimal"><li>/static/file.txt serves the file file.txt</li>
+<li>/static/folder/ shows a directory listing for folder</li>
+<li>/static/file_no_extension show file_no_extension</li>
+<li>/static/file_no_extension/ redirects to /static/file_no_extension</li>
+<li>/static/foo.folder/ shows a directory listing for foo.folder</li>
+<li>/static/foo.folder redirects to /static/foo.folder/</li>
+</ol>
+<p>However, since the cleanup rules are applied before dispatching to the subsite, we can only apply our default rules, which have no way of knowing that file.txt and file_no_extension should both be missing a trailing slash, while folder and foo.folder both <strong>require</strong> a trailing slash.</p>
+<h2 id="the-new-approach">The new approach</h2>
+<p>The trick is we need to give subsites complete control over their route handling cleanup. Therefore, the new process goes something like this:</p>
+<ul><li><p>Convert the path to pieces, like before.</p></li>
+<li><p>Attempt to dispatch.</p></li>
+<li><p>If dispatch fails, see if the route can be cleaned up at all. There are three possible results:</p>
+<ul><li>cleanPath returns a Left value. This means we should redirect the user to the given path.</li>
+<li>cleanPath returns a Right value which is different than the current segments. This means that the URL could be cleaned up, but Yesod should not require a redirect, so we try dispatching on this new set of segments.</li>
+<li>cleanPath returns a Right value which is the same as the current segments. In this case, dispatch simply won't work, and we should return a 404.</li>
+</ul></li>
+<li><p>The <em>new</em> default cleanup rules are much simpler: don't allow any empty path segments. This essentially means no double slashes, and no trailing slashes.</p></li>
+</ul>
+<p>As you can see, this simplifies things greatly. Under this pattern, subsites like static are able to force their own canonical URLs, while the master site can still retain its version of cleanups.</p>
+<h2 id="bug-1-book">Bug 1: /book/</h2>
+<p>The first bug with the new system reared its head on this very website: going to http://docs.yesodweb.com/book/ would previously give the list of chapters in the Yesod book. With the new system, we no longer have the trailing slashes, so a request for /book/ should redirect to /book. Instead, the page was serving 404s.</p>
+<p>However, a request to /about/ <strong>did</strong> redirect to /about, so the problem was much more subtle than I'd initially imagined. It turns out that the following was happening:</p>
+<ul><li>/book/ was translated to [&quot;book&quot;, &quot;&quot;]</li>
+<li>[&quot;book&quot;, &quot;&quot;] was compared against all of the routes. It did <em>not</em> match the BookR route, which would expected [&quot;book&quot;]. However, it <em>did</em> match ChapterR, which expects [&quot;book&quot;, <any String="">]. This is because the SinglePiece instance in web-routes-quasi matched empty strings.</li>
+<li>Yesod dispatched to the getChapterR function, giving it a parameter of &quot;&quot;. However, there was no chapter named &quot;&quot;, so getChapterR returned a 404.</li>
+</ul>
+<p>The solution: release a new version of web-routes-quasi that does not match empty strings. Problem solved.</p>
+<h2 id="bug-2-cant-force-a-trailing-slash">Bug 2: can't force a trailing slash</h2>
+<p>I got a question from Dmitry Olshansky about restoring the previous set of URL cleanup rules. The basic approach is simple: write a custom cleanPath function in your Yesod typeclass which forces trailing slashes. For example (ignoring the period-in-last-piece issue):</p>
+<pre><code>cleanPath _myapp pieces =
+    if pieces == corrected
+        then Right pieces
+        else Left corrected
+  where
+    corrected = (filter (not . null) pieces) ++ [&quot;&quot;]
+</code></pre>
+<p>However, when I tried this, all that happened was that no redirecting occurred: both a request for /foo/ and for /foo would return the same result.</p>
+<p>The problem now is that dispatch happens before cleaning. /foo turns into [&quot;foo&quot;], which matches a resource, and therefore dispatch succeeds. /foo/ turns into [&quot;foo&quot;, &quot;&quot;], cleanPath turns that into Right [&quot;foo&quot;], and the second phase of dispatch succeeds.</p>
+<p>So we have a predicament: we put dispatch before cleaning to solve the cleanup rules for subsites. But doing so <strong>breaks</strong> the dispatch rules for non-subsite routes (henceforth called local routes). The solution:</p>
+<ul><li>First, we dispatch to subsites. If a subsite takes the bait, we're in good shape.</li>
+<li>If no subsites match, we apply cleanPath. At this point we do any 301 redirects that are necessary. If not, we continue dispatching to the local routes.</li>
+<li>If nothing matches, return a 404.</li>
+</ul>
+<p>I'm actually quite satisfied with this as the final answer: it does not require any double-dispatch attempts, and it gives subsites full control over what their URLs look like.</p>
+<h2 id="the-test-suite-has-begun">The test suite has begun</h2>
+<p>Greg Weber has long been pushing me to start a proper test suite for Yesod. With these two bugs, this new test suite has <a href="https://github.com/snoyberg/yesod-core/blob/master/Test/CleanPath.hs">officially begun</a>. As anticipated, the test suite is built on top of <a href="http://hackage.haskell.org/package/wai-test">wai-test</a>. I'm hoping that both libraries will improve as a result of this push.</p>
+<p>My goal going forward is to create a test case for each reported issue. I want to start the focus on yesod-core, and then expand into some of the additional libraries, especially yesod-form. So let's try and continue the &quot;Please Break Yesod&quot; campaign.</p>

@@ -1,0 +1,251 @@
+<h1>Yesod&#39;s Monads</h1>
+  <p class="hascomments" id="file1472-conceptId-x-3">As you&#39;ve read through this book, there have been a number of monads which have
+   appeared: <code id="file1472-conceptId-x-6">Handler</code>, <code id="file1472-conceptId-x-7">Widget</code> and something to do with Persistent
+   (let&#39;s call it <code id="file1472-conceptId-x-8">YesodDB</code> for now). As with most monads, each one provides some
+   specific functionality: <code id="file1472-conceptId-x-9">Handler</code> gives access to the request and allows you to
+   send responses, a <code id="file1472-conceptId-x-10">Widget</code> contains HTML, CSS, and Javascript, and
+    <code id="file1472-conceptId-x-11">YesodDB</code> let&#39;s you make database queries.</p>
+  <p class="hascomments" id="file1472-conceptId-x-4">So far, we&#39;ve presented some very straight-forward ways to use these monads: your main
+   handler will run in <code id="file1472-conceptId-x-12">Handler</code>, using <code id="file1472-conceptId-x-13">runDB</code> to execute a
+    <code id="file1472-conceptId-x-14">YesodDB</code> query, and <code id="file1472-conceptId-x-15">defaultLayout</code> to return a
+   <code id="file1472-conceptId-x-16">Widget</code>, which in turn was created by calls to <code id="file1472-conceptId-x-17">toWidget</code>.</p>
+  <p class="hascomments" id="file1472-conceptId-x-5">However, if we have a deeper understanding of these types, we can achieve some fancier
+   results.</p>
+ <section class="subtopic" id="file1468-transformers"><h1>Monad Transformers</h1>
+  <blockquote id="file1468-transformers-x-3">Monads are like onions. Monads are <i id="file1468-transformers-x-4">not</i> like cakes.<cite id="file1468-transformers-x-5">Shrek, more or less</cite></blockquote>
+  <p class="hascomments" id="file1468-transformers-x-6">Before we get into the heart of Yesod&#39;s monads, we need to understand a bit about
+   monad transformers. (If you already know all about monad transformers, you can likely skip this
+   section.) Different monads provide different functionality: <code id="file1468-transformers-x-21">Reader</code> allows
+   read-only access to some piece of data throughout a computation, <code id="file1468-transformers-x-22">Error</code> allows
+   you to short-circuit computations, and so on.</p>
+  <p class="hascomments" id="file1468-transformers-x-7">Often times, however, you would like to be able to combine a few of these features
+   together. After all, why not have a computation with read-only access to some settings variable,
+   that could error out at any time? One approach to this would be to write a new monad like
+    <code id="file1468-transformers-x-23">ReaderError</code>, but this has the obvious downside of exponential complexity:
+   you&#39;ll need to write a new monad for every single possible combination.</p>
+  <p class="hascomments" id="file1468-transformers-x-8">Instead, we have monad transformers. In addition to <code id="file1468-transformers-x-24">Reader</code>, we have
+    <code id="file1468-transformers-x-25">ReaderT</code>, which adds reader functionality to any other monad. So we could
+   represent our <code id="file1468-transformers-x-26">ReaderError</code> as (conceptually):</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">ReaderError</span> = <span style="color: blue;">ReaderT</span> <span style="color: blue;">Error</span>
+</pre></pre>
+  <p class="hascomments" id="file1468-transformers-x-10">In order to access our settings variable, we can use the <code id="file1468-transformers-x-11">ask</code> function. But what about short-circuiting a computation? We&#39;d like to use
+    <code id="file1468-transformers-x-27">throwError</code>, but that won&#39;t exactly work. Instead, we need to <code id="file1468-transformers-x-12">lift</code> our call into the next monad up. In other words:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">throwError</span> :: errValue -&gt; <span style="color: blue;">Error</span>
+<span style="color: blue;font-weight: bold;">lift</span> . throwError :: errValue -&gt; <span style="color: blue;">ReaderT</span> <span style="color: blue;">Error</span>
+</pre></pre>
+  <p class="hascomments" id="file1468-transformers-x-14">There are a few things you should pick up here:</p>
+  <ul id="file1468-transformers-ul_d29d1697-acc1-4f67-8cc6-a1b8305f865a"><li id="file1468-transformers-x-15">A transformer can be used to add functionality to an existing monad.</li>
+   <li id="file1468-transformers-x-16">A transformer must always wrap around an existing monad.</li>
+   <li id="file1468-transformers-x-17">The functionality available in a wrapped monad will be dependent not only on the
+    monad transformer, but also on the inner monad that is being wrapped.</li>
+  </ul>
+  <p class="hascomments" id="file1468-transformers-x-18">A great example of that last point is the <code id="file1468-transformers-x-28">IO</code> monad. No matter how
+   many layers of transformers you have around an <code id="file1468-transformers-x-29">IO</code>, there&#39;s still an
+    <code id="file1468-transformers-x-30">IO</code> at the core, meaning you can perform I/O in any of these <dfn id="file1468-transformers-x-19">monad transformer stacks</dfn>. You&#39;ll often see code that looks like <code id="file1468-transformers-x-20">liftIO
+    $ putStrLn &quot;Hello There!&quot;</code>.</p>
+ </section><section class="subtopic" id="file1469-the-three-transformers"><h1>The Three Transformers</h1>
+  <p class="hascomments" id="file1469-the-three-transformers-x-6">We&#39;ve already discussed two of our transformers previously: <code id="file1469-the-three-transformers-x-15">Handler</code> and
+    <code id="file1469-the-three-transformers-x-16">Widget</code>. Just to recap, there are two special things about these
+   transformers:</p>
+  <ol id="file1469-the-three-transformers-ol_izz_wma_af"><li id="file1469-the-three-transformers-x-22">In order to simplify error messages, they are not actual transformers. Instead, they are
+    newtypes that hard-code their inner monads.<aside class="note" id="file1469-the-three-transformers-x-23">Remember, this is why Yesod provides a
+     specialized <code id="file1469-the-three-transformers-x-24">lift</code> function, which works for <code id="file1469-the-three-transformers-x-25">Handler</code> and
+      <code id="file1469-the-three-transformers-x-26">Widget</code>.</aside></li>
+   <li id="file1469-the-three-transformers-x-27">In reality they have extra type parameters for the sub and master site. As a result, the
+    Yesod libraries provide <code id="file1469-the-three-transformers-x-28">GHandler sub master a</code> and <code id="file1469-the-three-transformers-x-29">GWidget sub master
+     a</code>, and each site gets a pair of type synonyms <code id="file1469-the-three-transformers-x-30">type Handler = GHandler MyApp
+     MyApp</code> and <code id="file1469-the-three-transformers-x-31">type Widget = GWidget MyApp My App ()</code>.</li>
+  </ol>
+  <p class="hascomments" id="file1469-the-three-transformers-x-3">In <a href="http://hackage.haskell.org/package/persistent">persistent</a>, we have a typeclass called
+    <code id="file1469-the-three-transformers-x-32">PersistStore</code>. This typeclass defines all of the primitive operations you can
+   perform on a database, like <code id="file1469-the-three-transformers-x-5">get</code>. This typeclass essentially looks like
+    <code id="file1469-the-three-transformers-x-7">class (Monad (b m)) =&gt; PersistStore b m</code>. <code id="file1469-the-three-transformers-x-8">b</code> is the backend itself, and is in fact a monad transformer, while <code id="file1469-the-three-transformers-x-9">m</code> is the inner monad that <code id="file1469-the-three-transformers-x-10">b</code> wraps around. Both SQL and
+   MongoDB have their own instances; in the case of SQL, it looks like:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">MonadBaseControl</span> <span style="color: blue;">IO</span> m =&gt; <span style="color: blue;">PersistBackend</span> <span style="color: blue;">SqlPersist</span> m
+</pre></pre>
+  <p class="hascomments" id="file1469-the-three-transformers-x-12">This means that you can run a SQL database with any underlying monad, so long as that
+   underlying monad supports <code id="file1469-the-three-transformers-x-13">MonadBaseControl IO</code>, which allows you to
+   properly deal with exceptions in a monad stack. That basically means any transformer stack built
+   around <code id="file1469-the-three-transformers-x-14">IO</code> (besides exceptional cases like <code id="file1469-the-three-transformers-x-33">ContT</code>).
+   Fortunately for us, that includes both <code id="file1469-the-three-transformers-x-34">Handler</code> and <code id="file1469-the-three-transformers-x-35">Widget</code>. The
+   takeaway here is that we can layer our Persistent transformer on top of <code id="file1469-the-three-transformers-x-36">Handler</code>
+   or <code id="file1469-the-three-transformers-x-37">Widget</code>.</p>
+  <aside class="note" id="file1469-the-three-transformers-x-38">This wasn&#39;t always the case. Before Yesod 0.10, Yesod was built on top of enumerators, which
+   do not support <code id="file1469-the-three-transformers-x-39">MonadBaseControl</code>. In Yesod 0.10, we moved over to
+    <a href="http://hackage.haskell.org/package/conduit">conduit</a>, which greatly simplified everything we&#39;re discussing here.</aside>
+  <p class="hascomments" id="file1469-the-three-transformers-x-17">In order to make it simpler to refer to the relevant Persistent transformer, the
+    <a href="http://hackage.haskell.org/package/yesod-persistent">yesod-persistent</a> package defines the <code id="file1469-the-three-transformers-x-19">YesodPersistBackend</code>
+   associated type. For example, if I have a site called <code id="file1469-the-three-transformers-x-20">MyApp</code> and it uses SQL, I
+   would define something like <code id="file1469-the-three-transformers-x-21">type instance YesodPersistBackend MyApp =
+   SqlPersist</code>.</p>
+  <p class="hascomments" id="file1469-the-three-transformers-x-40">When we want to run our database actions, we&#39;ll have a <code id="file1469-the-three-transformers-x-42">SqlPersist</code>
+   wrapped around a <code id="file1469-the-three-transformers-x-43">Handler</code> or <code id="file1469-the-three-transformers-x-44">Widget</code>. We can then use the
+   standard Persistent unwrap functions (like <code id="file1469-the-three-transformers-x-45">runSqlPool</code>) to run the action and get
+   back a normal <code id="file1469-the-three-transformers-x-46">Handler</code>/<code id="file1469-the-three-transformers-x-47">Widget</code>. To automate this, we provide the
+    <code id="file1469-the-three-transformers-x-48">runDB</code> function. Putting it all together, we can now run database actions inside
+   our handlers and widgets.</p>
+  <p class="hascomments" id="file1469-the-three-transformers-x-68">Most of the time in Yesod code, and especially thus far in this book, widgets have
+   been treated as actionless containers that simply combine together HTML, CSS and Javascript. But
+   if you look at that last paragraph again, you&#39;ll realize that&#39;s not the way things have to be.
+   Since a widget is a transformer on top of a handler, anything you do in a handler can be done in
+   a widget, including database actions. All you have to do is <code id="file1469-the-three-transformers-x-49">lift</code>.</p>
+ </section><section class="subtopic" id="file1470-navbar"><h1>Example: Database-driven navbar</h1>
+  <p class="hascomments" id="file1470-navbar-x-3">Let&#39;s put some of this new knowledge into action. We want to create a
+                <code id="file1470-navbar-x-11">Widget</code> that generates its output based on the contents of the
+            database. Previously, our approach would have been to load up the data in a
+                <code id="file1470-navbar-x-12">Handler</code>, and then pass that data into a <code id="file1470-navbar-x-13">Widget</code>.
+            Now, we&#39;ll do the loading of data in the <code id="file1470-navbar-x-15">Widget</code> itself. This is a boon
+            for modularity, as this <code id="file1470-navbar-x-16">Widget</code> can be used in any
+                <code id="file1470-navbar-x-17">Handler</code> we want, without any need to pass in the database
+            contents.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell, FlexibleContexts,</span>
+<span style="color: gray;">QuasiQuotes, TypeFamilies, MultiParamTypeClasses, GADTs #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Yesod</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.Sqlite</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Time</span>
+
+<span style="color: blue;font-weight: bold;">share</span> [mkPersist sqlSettings, mkMigrate <span style="color: green;">&quot;migrateAll&quot;</span>] [persist|
+<span style="color: blue;">Link</span>
+    title <span style="color: blue;">Text</span>
+    url <span style="color: blue;">Text</span>
+    added <span style="color: blue;">UTCTime</span>
+|]
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Links</span> = <span style="color: blue;">Links</span> <span style="color: blue;">ConnectionPool</span>
+
+<span style="color: blue;font-weight: bold;">mkYesod</span> <span style="color: green;">&quot;Links&quot;</span> [parseRoutes|
+/ <span style="color: blue;">RootR</span> <span style="color: blue;">GET</span>
+/add-link <span style="color: blue;">AddLinkR</span> <span style="color: blue;">POST</span>
+|]
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">Yesod</span> <span style="color: blue;">Links</span>
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">RenderMessage</span> <span style="color: blue;">Links</span> <span style="color: blue;">FormMessage</span> <span style="color: green;font-weight: bold;">where</span>
+    renderMessage _ _ = defaultFormMessage
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">YesodPersist</span> <span style="color: blue;">Links</span> <span style="color: green;font-weight: bold;">where</span>
+    <span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">YesodPersistBackend</span> <span style="color: blue;">Links</span> = <span style="color: blue;">SqlPersist</span>
+    runDB db = <span style="color: green;font-weight: bold;">do</span>
+        <span style="color: blue;">Links</span> pool &lt;- getYesod
+        runSqlPool db pool
+
+<span style="color: blue;font-weight: bold;">getRootR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getRootR</span> = defaultLayout [whamlet|
+&lt;form method=post action=@{<span style="color: blue;">AddLinkR</span>}&gt;
+    &lt;p&gt;
+        <span style="color: blue;">Add</span> a new link to #
+        &lt;input <span style="color: green;font-weight: bold;">type</span>=url name=url value=http://&gt;
+        \ titled #
+        &lt;input <span style="color: green;font-weight: bold;">type</span>=text name=title&gt;
+        \ #
+        &lt;input <span style="color: green;font-weight: bold;">type</span>=submit value=<span style="color: green;">&quot;Add link&quot;</span>&gt;
+&lt;h2&gt;<span style="color: blue;">Existing</span> links
+^{existingLinks}
+|]
+
+<span style="color: blue;font-weight: bold;">existingLinks</span> :: <span style="color: blue;">Widget</span>
+<span style="color: blue;font-weight: bold;">existingLinks</span> = <span style="color: green;font-weight: bold;">do</span>
+    links &lt;- lift $ runDB $ selectList [] [<span style="color: blue;">LimitTo</span> <span style="color: teal;">5</span>, <span style="color: blue;">Desc</span> <span style="color: blue;">LinkAdded</span>]
+    [whamlet|
+&lt;ul&gt;
+    $forall <span style="color: blue;">Entity</span> _ link &lt;- links
+        &lt;li&gt;
+            &lt;a href=#{linkUrl link}&gt;#{linkTitle link}
+|]
+
+<span style="color: blue;font-weight: bold;">postAddLinkR</span> :: <span style="color: blue;">Handler</span> ()
+<span style="color: blue;font-weight: bold;">postAddLinkR</span> = <span style="color: green;font-weight: bold;">do</span>
+    url &lt;- runInputPost $ ireq urlField <span style="color: green;">&quot;url&quot;</span>
+    title &lt;- runInputPost $ ireq textField <span style="color: green;">&quot;title&quot;</span>
+    now &lt;- liftIO getCurrentTime
+    runDB $ insert $ <span style="color: blue;">Link</span> title url now
+    setMessage <span style="color: green;">&quot;Link added&quot;</span>
+    redirect <span style="color: blue;">RootR</span>
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = withSqlitePool <span style="color: green;">&quot;links.db3&quot;</span> <span style="color: teal;">10</span> $ \pool -&gt; <span style="color: green;font-weight: bold;">do</span>
+    runSqlPool (runMigration migrateAll) pool
+    warpDebug <span style="color: teal;">3000</span> $ <span style="color: blue;">Links</span> pool
+</pre></pre>
+  <p class="hascomments" id="file1470-navbar-x-5">Pay attention in particular to the <code id="file1470-navbar-x-6">existingLinks</code> function.
+            Notice how all we needed to do was apply <code id="file1470-navbar-x-7">lift</code> to a normal
+            database action. And from within <code id="file1470-navbar-x-8">getRootR</code>, we treated <code id="file1470-navbar-x-9">existingLinks</code> like any ordinary <code id="file1470-navbar-x-10">Widget</code>,
+            no special parameters at all. See the figure for the output of this app.</p>
+  <figure id="file1470-navbar-x-14"><figcaption>Screenshot of the navbar</figcaption>
+      
+   <img id="file1470-navbar-image_xpd_yzj_zd" src="http://www.yesodweb.com/redirector/home%2F1%2Fbook%2Fyesod-web-framework-book%2Fyesods-monads%2Fnavbar.png"/></figure>
+ </section><section class="subtopic" id="file1471-gets"><h1>Example: Request information</h1>
+  <p class="hascomments" id="file1471-gets-x-3">Likewise, you can get request information inside a <code id="file1471-gets-x-7">Widget</code>. Here we
+            can determine the sort order of a list based on a GET parameter.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,</span>
+<span style="color: gray;">QuasiQuotes, TypeFamilies, MultiParamTypeClasses, GADTs #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Yesod</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.List</span> (sortBy)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Ord</span> (comparing)
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Person</span> = <span style="color: blue;">Person</span>
+    { personName :: <span style="color: blue;">Text</span>
+    , personAge :: <span style="color: blue;">Int</span>
+    }
+
+<span style="color: blue;font-weight: bold;">people</span> :: [<span style="color: blue;">Person</span>]
+<span style="color: blue;font-weight: bold;">people</span> =
+    [ <span style="color: blue;">Person</span> <span style="color: green;">&quot;Miriam&quot;</span> <span style="color: teal;">25</span>
+    , <span style="color: blue;">Person</span> <span style="color: green;">&quot;Eliezer&quot;</span> <span style="color: teal;">3</span>
+    , <span style="color: blue;">Person</span> <span style="color: green;">&quot;Michael&quot;</span> <span style="color: teal;">26</span>
+    , <span style="color: blue;">Person</span> <span style="color: green;">&quot;Gavriella&quot;</span> <span style="color: teal;">1</span>
+    ]
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">People</span> = <span style="color: blue;">People</span>
+
+<span style="color: blue;font-weight: bold;">mkYesod</span> <span style="color: green;">&quot;People&quot;</span> [parseRoutes|
+/ <span style="color: blue;">RootR</span> <span style="color: blue;">GET</span>
+|]
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">Yesod</span> <span style="color: blue;">People</span>
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">RenderMessage</span> <span style="color: blue;">People</span> <span style="color: blue;">FormMessage</span> <span style="color: green;font-weight: bold;">where</span>
+    renderMessage _ _ = defaultFormMessage
+
+
+<span style="color: blue;font-weight: bold;">getRootR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getRootR</span> = defaultLayout [whamlet|
+&lt;p&gt;
+    &lt;a href=<span style="color: green;">&quot;?sort=name&quot;</span>&gt;<span style="color: blue;">Sort</span> by name
+    \ | #
+    &lt;a href=<span style="color: green;">&quot;?sort=age&quot;</span>&gt;<span style="color: blue;">Sort</span> by age
+    \ | #
+    &lt;a href=<span style="color: green;">&quot;?&quot;</span>&gt;<span style="color: blue;">No</span> sort
+^{showPeople}
+|]
+
+<span style="color: blue;font-weight: bold;">showPeople</span> :: <span style="color: blue;">Widget</span>
+<span style="color: blue;font-weight: bold;">showPeople</span> = <span style="color: green;font-weight: bold;">do</span>
+    msort &lt;- lift $ runInputGet $ iopt textField <span style="color: green;">&quot;sort&quot;</span>
+    <span style="color: green;font-weight: bold;">let</span> people&#39; =
+            <span style="color: green;font-weight: bold;">case</span> msort <span style="color: green;font-weight: bold;">of</span>
+                <span style="color: blue;">Just</span> <span style="color: green;">&quot;name&quot;</span> -&gt; sortBy (comparing personName) people
+                <span style="color: blue;">Just</span> <span style="color: green;">&quot;age&quot;</span>  -&gt; sortBy (comparing personAge)  people
+                _           -&gt; people
+    [whamlet|
+&lt;dl&gt;
+    $forall person &lt;- people&#39;
+        &lt;dt&gt;#{personName person}
+        &lt;dd&gt;#{show $ personAge person}
+|]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = warpDebug <span style="color: teal;">3000</span> <span style="color: blue;">People</span>
+</pre></pre>
+  <p class="hascomments" id="file1471-gets-x-5">Once again, all we need to do is <code id="file1471-gets-x-6">lift</code> our normal
+                <code id="file1471-gets-x-8">Handler</code> code (in this case, <code id="file1471-gets-x-9">runInputGet</code>) to have
+            it run in our <code id="file1471-gets-x-10">Widget</code>.</p>
+ </section><section class="subtopic" id="file2444-conceptId"><h1>Summary</h1>
+  <p class="hascomments" id="file2444-conceptId-x-3">If you completely ignore this chapter, you&#39;ll still be able to use Yesod to great benefit. The
+   advantage of understanding how Yesod&#39;s monads interact is to be able to produce cleaner, more
+   modular code. Being able to perform arbitrary actions in a <code id="file2444-conceptId-x-4">Widget</code> can be a
+   powerful tool, and understanding how Persistent and your <code id="file2444-conceptId-x-5">Handler</code> code interact
+   can help you make more informed design decisions in your app.</p>
+ </section>

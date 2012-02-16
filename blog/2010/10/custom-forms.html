@@ -1,0 +1,63 @@
+<p>I think it's fair to say that forms are one of the most complicated parts of web development. A huge part of this complication simply comes from the tedious, boilerplate style code we need to write. A library such as <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/formlets">formlets</a> can do wonders to clean this up. Yesod 0.5 follows the philosophy behind formlets.</p>
+<p>formlets is great because it lets you forget about so many of the boring details of your form: names, ids, layout. This can all be handled in an automated manner. For example (using Yesod):</p>
+<pre><code>data Person = Person { name :: String, age :: Int }
+personForm = fieldsToTable $ Person
+    &lt;$&gt; stringField &quot;Name&quot; Nothing
+    &lt;*&gt; intField &quot;Age&quot; Nothing
+myHandler = do
+    (res, form, enctype) &lt;- runFormPost personForm
+    ...
+    defaultLayout [$hamlet|^form^|]
+</code></pre>
+<p>Sometimes, however, you <em>do</em> want to deal with some of those pesky details. Yesod already allows overriding the automatically generated ids and names, eg:</p>
+<pre><code>&lt;$&gt; stringField &quot;Name&quot; { ffsId = Just &quot;name-field&quot; } Nothing
+</code></pre>
+<p>But Yesod 0.5 doesn't really have a simply way to produce arbitrarily laid out forms. For example, we might want to get fancy with our Person form and produce:</p>
+<pre><code>Hi, my name is &lt;input type=&quot;text&quot; name=&quot;name&quot;&gt; and I am &lt;input type=&quot;number&quot; name=&quot;age&quot;&gt; years old.
+</code></pre>
+<p>You see, the forms library keeps all of the information on the view of the form locked up, and only returns the whole thing once you run the form. So in theory, with Yesod 0.5, we could do something like:</p>
+<pre><code>personForm = Person -- notice no fieldsToTable
+    &lt;$&gt; stringField &quot;Name&quot; Nothing
+    &lt;*&gt; intField &quot;Age&quot; Nothing
+myHandler = do
+    (res, [nameFieldInfo, ageFieldInfo], enctype) &lt;- runFormPost personForm
+    ...
+    defaultLayout [$hamlet|
+    Hi, my name is ^fiInput.nameFieldInfo^ and I am ^ageFieldInfo^ years old.
+    |]
+</code></pre>
+<p>But this is an absolute recipe for disaster: we've completely lost so many of our type-safety benefits by forcing a pattern match on a specific size of a list, if you change the order of our fields the fields will be backwards, we need to remember to update multiple places when the Person datatype changes, and so on. What we'd like is to have to stringField and intField functions give us the HTML directly, something like:</p>
+<pre><code>personForm = do
+    (name, nameHtml) &lt;- stringField &quot;Name&quot; Nothing
+    (age, ageHtml) &lt;- intField &quot;Age&quot; Nothing
+    return (Person name age, [$hamlet|
+    Hi, my name is ^nameHtml^ and I am ^ageHtml^ years old.
+    |]
+</code></pre>
+<p>This doesn't work. The GForm datatype doesn't have a monadic instance. It's easy enough to add one, but that would result in one of two things:</p>
+<ul><li><p>We would have an inconsistent definition of our Monad and Applicative instances. You see, Applicatives cannot use the result from a previous action in determining the next course of action, which allows them to collect multiple error values. (I know this is vague, please forgive me, a fully fleshed out explanation would not fit here well.)</p></li>
+<li><p>We would need to cut out the true power of the forms library, but defining a weaker Applicative instance which can't collect multiple failures. Imagine a form validation that only tells you the first validation error.</p></li>
+</ul>
+<p>Additionally, the code above will only really return HTML if the stringField and intField functions succeed. It turns out that we need a different approach to handle this problem.</p>
+<h2 id="gformmonad">GFormMonad</h2>
+<p>Yesod 0.6 will be adding a new datatype, GFormMonad, to complement the GForm datatype. As a high-level overview: GForm automatically handles keeping track of validation failures and HTML for you; GFormMonad gives you direct access to these. As an example:</p>
+<pre><code>personForm = do
+    (name, nameField) &lt;- stringField &quot;Name&quot; Nothing
+    (age, ageField) &lt;- intField &quot;Age&quot; Nothing
+    return (Person &lt;$&gt; name &lt;*&gt; age, [$hamlet|
+    Hi, my name is ^fiInput.nameField^ and I am ^fiInput.ageField^ years old.
+    |])
+</code></pre>
+<p>This is <em>almost</em> identical to what we wrote as our ideal code above, but not quite. The name variable above has a datatype of <code>FormResult String</code>. In other words, when using GFormMonad, you have to deal with the possibility of validation errors directly. Fortunately, you are still free to use the Applicative instance of FormResult, as we did here.</p>
+<p>Also notice how I'm still using stringField and intField; field functions are all now polymorphic, using the IsForm typeclass. In order to unwrap a GFormMonad, we use runFormMonadGet and runFormMonadPost, like so:</p>
+<pre><code>myHandler = do
+    ((personResult, form), enctype) &lt;- runFormMonadPost personForm
+    case personResult of
+        FormSuccess person -&gt; ...
+    defaultLayout [$hamlet|^form^|]
+</code></pre>
+<p>Making the run functions non-polymorphic helps the type system figure out what you're trying to do.</p>
+<h2 id="other-changes">Other changes</h2>
+<p>As I had anticipated, there are not going to be many other changes in Yesod 0.6. Haskellers.com discovered a bug in MonadCatchIO which screwed up the database connection pool, so I had to yank all of the MonadCatchIO code out and replace it with something else. I've moved the Yesod.Mail code to a <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mime-mail">separate package</a>, as well as <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/yesod-auth">Yesod.Helpers.Auth</a>.</p>
+<p>I'm going to spend a few more days going through the Haddocks and make sure names are consistent and the docs are comprehendable, and will probably make the Yesod 0.6 and Persistent 0.3 release some time early next week. It's already powering <a href="http://www.haskellers.com/">Haskellers.com</a> and the <a href="http://packdeps.haskellers.com/">Hackage dependency monitor</a>, so I think it's solid enough. This is a last call for change requests!</p>
+<p>Given the API stability between 0.5 and 0.6, I feel pretty confident that the next release of Yesod after this will be 1.0. My goal for that release is all about documentation: I want to get as much content as possible into the book, and have it polished. If you see something in the book you don't understand, please ask, and if you see a topic I've skipped, bring it up. We're really building a great community for Yesod, and I need everyone's help to make it the best it can be.</p>

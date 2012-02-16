@@ -1,0 +1,69 @@
+<h3>Quick Status Update</h3>
+<p>For those of you wondering what's happening with Yesod: there's two major changes in store for the 0.3.0 release. Firstly, Hamlet 0.3.0 is going to be released, which will now be built on top of BlazeHtml. The performance of this combination is awesome. Also, persistent is currently fully functional, if a little young.</p>
+<h3>Topic at hand</h3>
+<p>Instead of giving more high-level views of what's going on in the Yesod ecosystem, I thought I'd show some of the more low-level work that's going on, and hopefully give some insight into <i>how</i> Yesod works. This time, I'll be addressing the Handler monad.</p>
+<p>As you might guess, the Handler function is how you write handlers. You might use it like so:</p>
+<pre><code>getHome :: Handler MySite RepHtml</code></pre>
+<p>MySite here is your site argument, which is really the center of any Yesod application. RepHtml simply wraps some Content (a discussion for another time) so that it gets a text/html content type. And getHome is the function name: it's what gets called when a user requests the <code>Home</code> URL with the GET request method.</p>
+<h3>But what <i>is</i> a Handler?</h3>
+<p>Firstly, it's actually a specification of a GHandler. Here, the G stands for General or Generic. In particular:</p>
+<pre><code>type Handler y = GHandler y y</code></pre>
+<p>So what's this GHandler about? Remember that Yesod has a really cool, not-quite-polished feature called <b>subsites</b>. A subsite has its own argument type and its own set of routes. So when writing subsite handler code, you'll sometimes need access to a function to render subsite URLs to Strings, or sometimes you'll want access to the default layout of the master site. However, a normal Yesod application only has one site argument, which doubles as the master and subsite. Thus the type synonym.</p>
+<h3>Fine, what's a GHandler</h3>
+<p>Glad you asked. I'm going to present three virtually identical versions of a GHandler. Let's start off by defining what we want this monad to do:</p>
+<ul><li>Clearly, it must be a transformer on top of <b>IO</b> (you do want to be able to use a database, right?)</li>
+<li>You need to be able to <b>read</b> various status information, like the request information (GET params, cookies, etc), the master and subsite arguments, and so on.</li>
+<li>It needs to allow you to <b>write</b> out headers. I won't get into the details of how this works, but suffice it to say we have a <code>Header</code> datatype.</li>
+<li>You'll need to <b>write</b> modifications to the user session. In particular, you need to be able to set a clear session variables.</li>
+<li>And finally, you need to be able to <b>short-circuit</b> for certain exceptional responses. Exceptional here does not just mean error: sending static files and redirecting are both exceptional as well.<li></ul>
+<p>In Yesod 0.2.0, I wrote a custom monad without using anything from transformers. I manually declare all the correct instances. This worked out just fine, but I really do prefer when possible to use pre-defined monads. One reason is that it gives you automatic access to some <a href="http://hackage.haskell.org/package/MonadCatchIO-transformers">really awesome libraries</a>.</p>
+<p>However, there is (in my opinion) a huge wart with both transformers and mtl: the Error monad. They each declare an orphan instance for Either, and don't even get me started on the Error class. That orphan instance can really bite you sometimes: you import a library that uses mtl and you're using transformers, and now your code won't compile.</p>
+<p>So instead, here's the GHandler definition from <a href="http://github.com/snoyberg/yesod/blob/yesod/0.2.0/Yesod/Handler.hs#L110">Yesod 0.2.0</a>:</p>
+<pre><code>newtype GHandler sub master a = Handler {
+    unHandler :: HandlerData sub master
+              -&gt; IO ([Header], [(String, Maybe String)], HandlerContents a)
+}</code></pre>
+<p>HandlerData contains the read-only data we want access to, that second bit in the return tuple is modifications to the user session, and HandlerContents is a fairly trivial datatype:</p>
+<pre><code>data HandlerContents a =
+      HCContent a
+    | HCError ErrorResponse
+    | HCSendFile ContentType FilePath
+    | HCRedirect RedirectType String</code></pre>
+<p>If you want to, go ahead and define all the monad, application, etc instances for it.</p>
+<h3>The mother of all monads</h3>
+<p>I'm sure many of you have heard the claim that the continuation monad is the mother of all monads. This may be true (or may not, I don't really care), but it <i>does</i> give us some nice control structures. Such as an alternative to the Error monad. I've also seen lots of claims that it's significantly faster, though my tests haven't shown that yet. Best of all: we can use the standard definition from transformers without any orphans!</p>
+<p>When building a complicated transformer stack, I like to write it out the long way first to make sure we have the right behavior. In this case, I want to make sure that the headers and session updates up until a short-circuit call (such as a redirect) are retained. So let's have a look at a <a href="http://github.com/snoyberg/yesod/commit/aceab3299982fdee285e4c55c1da1b63bafc1d6d#L0R105">second implementation of GHandler</a>:</p>
+<pre><code>newtype GHandler sub master a = Handler {
+     unHandler :: HandlerData sub master
+               -&gt; (a -&gt; IO Helper)
+               -&gt; IO Helper
+}
+
+type Helper = ([Header], [(String, Maybe String)], HandlerContents)</code></pre>
+<p>You can take a look at the code for the above-linked commit to see exactly how the instances work, but there's nothing too special going on here: it's just a combination of a Reader and a Cont.</p>
+<h3>Migrating to transformers</h3>
+<p>Now that we know what the result should be under the hood, let's look at the high-level approach we get to take. I'm also switching from straight lists for the writer to list endomorphisms ([a] versus [a] -> [a]). This is more efficient for appending, which happens to be the activity we do most often.</p>
+<pre><code>type GHandler sub master =
+    ReaderT (HandlerData sub master) (
+    ContT HandlerContents (
+    WriterT (Endo [Header]) (
+    WriterT (Endo [(String, Maybe String)]) (
+    IO
+    ))))
+ 
+type Endo a = a -&gt; a</code></pre>
+<p>That's all there is to it! Let's see an example of how we short-circuit a send file request:</p>
+<pre><code>sendFile :: ContentType -&gt; FilePath -&gt; GHandler sub master a
+sendFile ct fp = lift $ ContT $ const $ return $ HCSendFile ct fp</code></pre>
+<p>For those of you unfamiliar with how to use a Cont monad (like me 24 hours ago), the <code>const</code> in there is ignoring the continuation argument. That argument tells you how to finish the computation. However, the whole point of short-circuiting is that we're going to finish it our way, so we drop that argument. The <code>return</code> is necessary since we're dealing with a ContT transformer over another monad, and the lift deals with the fact that our ContT monad is wrapped in a ReaderT.</p>
+<p>Setting a session variable is also trivial:</p>
+<pre><code>setSession :: String -- ^ key
+            -&gt; String -- ^ value
+            -&gt; GHandler sub master ()
+setSession k v = lift . lift . lift . tell $ (:) (k, Just v)</code></pre>
+<p>That's a lot of lifts, but otherwise pure simplicity.</p>
+<h3>Results</h3>
+<p>I didn't measure any speedups from this conversion, but I also didn't try very hard to benchmark properly. I actually found a much more major performance bug that was causing a <b>huge</b> slowdown in the bigtable benchmark (a poorly written buffer function), so any gains from this wouldn't have shown up. However, the really nice feature is that we get to use functionality built for the transformers library for free.</p>
+<p>The biggest example of this is the MonadCatchIO package. I'm using it extensively in the Sqlite backend for persistent to deal with exceptions, and now we have a properly tested instance of MonadCatchIO for our Handler monad.</p>
+<h3>Coming up</h3>
+<p>I'll probably put up a post soon describing the Content datatype and the HasReps typeclass, which define Yesod's output system. Stay tuned!</p>

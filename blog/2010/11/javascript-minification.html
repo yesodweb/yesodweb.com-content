@@ -1,0 +1,23 @@
+<p>We all know that serving the fastest web page possible is the &quot;in&quot; thing these days. We await with bated breath every piece of advice from Google, Yahoo! and Facebook. (Whatever you think of the policies of any of these companies, we have to admit they <em>do</em> handle insane volumes of traffic.)</p>
+<p>One of these techniques is to shrink down our responses as much as possible. Yesod already helps out on this front: Hamlet and Cassius both produce very terse code, and the default scaffolded Yesod site concatenates together your CSS and Javascript code into single files that can be served with caching.</p>
+<p>But the one piece of the puzzle that has been missing up until now has been minifying our Javascript. I put out a request for someone to address this, and Alan Zimmerman took up the challenge. The result is <a href="http://hackage.haskell.org/package/hjsmin">hjsmin</a>. It is a <strong>very</strong> well tested piece of software, and seems by all accounts to be perfectly safe to use.</p>
+<p>I wanted to plug it straight in to <a href="http://www.haskellers.com/">Haskellers.com</a>, but soon realized there were some performance issues. Minifying the typical Javascript response of an individual page took about 150ms on my local system. That may not seem like much, but it will effectively kill any performance gains of using minification.</p>
+<p>With that in mind, Alan and I started working on optimizing hjsmin. I have no doubt that the performance will be seeing some great strides in the future, but I'm impatient: I want to minify <strong>now</strong>!</p>
+<h2 id="caching-to-the-rescue">Caching to the rescue</h2>
+<p>The solution is actually rather simple, and in fact is something I should have done a while ago. Let's review how Haskellers.com serves Javascript (CSS is the same):</p>
+<ol style="list-style-type: decimal"><li><p>Run through all the handlers, which produce a bunch of Javascript code.</p></li>
+<li><p>Concatenate all of that code together into a lazy bytestring. (By the way, under the surface we're using blaze-builder for even better performance.)</p></li>
+<li><p>Get an MD5 hash of the content.</p></li>
+<li><p>Store the Javascript in a file with the hashed name.</p></li>
+<li><p>Insert a &lt;script&gt; tag into the resulting HTML page referencing that Javascript.</p></li>
+</ol>
+<p>Forget about minification for a second. Step four is pretty stupid: if a million people request my homepage, the same Javascript will be generated a million times, <strong>and the same file will be written a million times</strong>. What was I thinking? Let's replace step four with:</p>
+<ol style="list-style-type: decimal"><li><p>Check if a file exists with the hashed named.</p></li>
+<li><p>If not, write the content to the file.</p></li>
+</ol>
+<p>And suddenly instead of a million file writes, one file write and a million file existence checks (which are <strong>much</strong> cheaper). Note that this optimization works equally well for CSS. But also notice that writing content now only happens once. I'm going to modify the above process just a little bit more.</p>
+<ol style="list-style-type: decimal"><li><p>Check if a file exists with the hashed named.</p></li>
+<li><p>If not, write the <strong>minified</strong> content to the file.</p></li>
+</ol>
+<p>And voila! The expensive minification only happens once. The trick to remember is the filename hash is calculated <strong>based on the non-minified Javascript</strong>. This code is now running live on Haskellers. You can <a href="https://github.com/snoyberg/haskellers/commit/2401342e488caae86fdb87f5280656473fe0af13">see the relevant code on Github</a>.</p>
+<p>Please let me know if you see any misbehaving Javascript, but I'm not too worried. Assuming all goes well, expect to see this code as part of the new Yesod site template.</p>

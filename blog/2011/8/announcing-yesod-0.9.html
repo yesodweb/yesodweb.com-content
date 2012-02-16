@@ -1,0 +1,82 @@
+<h1>Yesod 0.9 Release</h1><p>Yesod 0.9 is on hackage! This release represents a massive amount of improvements, in some cases resulting in significant API changes. We believe this release is good enough to be a 1.0 (a release to be proud of, with a stable API). But first we need you to use it for a while and give us all of your great feedback.</p>
+<p>We had a <a href="http://www.yesodweb.com/page/changelog">changelog</a> page going for a while now to keep track of changes. But here we will explain all of the changes in their full glory.</p>
+<h2 id="versioning">Versioning</h2>
+<p>Yesod is split into many separate packages, all eventually wrapped up by the &quot;yesod&quot; package itself. When we say version 0.9, we are referring to the version of the &quot;yesod&quot; package.</p>
+<p>This release releases version 0.9.1 (not 0.9.0) to hackage so that release candidate users will have an easy time upgrading.</p>
+<p>Most of the changes for this release are not part of the &quot;yesod&quot; package, but rather underlying packages like hamlet or yesod-forms. As such, many of these changes have been available on Hackage since before the actual 0.9 release. However, a standard usage of the &quot;yesod&quot; package would not notice them. For more information, please see <a href="/wiki/non-standard-versions">Using non-standard package versions</a>.</p>
+<h2 id="shakespearean-templates-hamlet">Shakespearean templates (Hamlet)</h2>
+<p>Yesod started with hamlet, which gives one the ability to just insert variables into templates as they might be used to with a dynamic language. This was so powerful that Michael made hamlet-like template languages for css and javascript. &quot;hamlet&quot; is the name of the html template. We are now officially adopting the term &quot;Shakespeare&quot; for this style of templates.</p>
+<p>To facilitate this, the hamlet package underwent a re-organization and was broken up into separate packages: hamlet (just hamlet), shakespeare-js (julius), shakespeare-css (lucius, cassius), and xml-hamlet. And there is a shakespeare package that contains the base code for making shakespeare-style templating languages. This makes it really easy to create a new shakespeare style template for any of your templating needs.</p>
+<p>The major addition to this release is the shakespeare-text package. shakespeare-text is a good example of how easy it is to create a new pass-through Shakespeare template language. All it does is allow you to insert variable into normal Haskell text. This is great for creating e-mail templates, but we are also exposing 2 helpers you can choose to use in your normal haskell code. <code>st</code> for strict text, and <code>lt</code> for lazy text.</p>
+<pre class="sourceCode"><code class="sourceCode haskell"><span class="ot">{-# LANGUAGE TemplateHaskell, QuasiQuotes #-}</span><br/><span class="kw">import</span> <span class="dt">Text.Shakespeare.Text</span> (st)<br/><span class="kw">import</span> <span class="dt">Data.Text.IO</span> (<span class="fu">putStrLn</span>)<br/><span class="kw">import</span> <span class="dt">Prelude</span> <span class="kw">hiding</span> (<span class="fu">putStrLn</span>)<br/><br/>main <span class="fu">=</span> <span class="kw">do</span><br/><span class="kw">let</span> version <span class="fu">=</span> <span class="st">&quot;0.9&quot;</span><br/><span class="fu">putStrLn</span> [st<span class="fu">|</span><span class="dt">Yesod</span> release <span class="fu">#</span>{version}<span class="fu">|</span>]</code></pre>
+<p>As with all Shakespeare templates, there is no dependency on haskell-src-extras. If you aren&#39;t using Yesod and don&#39;t mind that dependency, there are some similar packages to shakespeare-text: Interpolation, interpolatedstring-perl6, interpolatedstring-qq.</p>
+<p>The major difference users will notice in this release the removal of directly polymorphic Hamlet. You now choose the simplest hamlet version that suits your needs so you don&#39;t have to pay in efficiency for features you aren&#39;t using. However, the real motivation was to produce better error messages. We have upgrade notes in the previous <a href="http://www.yesodweb.com/blog/2011/08/0.9-rc3-and-scaffold-upgrade">post</a> and the book documentation has been updated.</p>
+<h2 id="forms">Forms</h2>
+<p>Just like templating, forms underwent a major cleanup. Polymorphic forms were removed, which should get rid of the most annoying error message Yesod users encountered. Some functions were also renamed- see the <a href="http://www.yesodweb.com/blog/2011/08/yesod-0-9-release-candidate">initial release candidate anouncement</a> for upgrade instructions.</p>
+<p>Thanks to Luite Stegman&#39;s help, we also added a way to easily add custom verification to your forms with the following new functions: check, checkM, and checkBool. You can see the <a href="http://www.yesodweb.com/blog/2011/08/yesod-form-overhaul">original anouncement</a> or the updated book documentation.</p>
+<h2 id="wai">WAI</h2>
+<p>wai-app-static works together with yesod-static to now automatically set proper caching headers. This will have a huge impact, because our recommended deployment approach is now to just run your binary. Apache/Nginx are no longer required for static file serving. wai-app-static also saw some other improvements to make desktop usage better- static files can be embedded directly in the executable rather than being on the filesystem.</p>
+<p>The debug middleware now uses the new logger to print out a thread-safe log which now includes all POST parameters.</p>
+<h2 id="yesod">Yesod</h2>
+<p>There is built-in support for BrowserID, a next generation, finally user-friendly authentication system. Yesod has added a logging interface, allowing you to switch to any logging system you want. But we included a very simple thread-safe logger, which we plan on switching out for a faster one in the near future. The logging interface give you the option to log the file and line number using template haskell. This same technique is available for use in my recently release <a href="hackage.haskell.org/package/file-location">file-location</a> debugging utility package.</p>
+<p>There have been a lot of other improvements. One example is more secure client side cookies, using CBC mode instead of ECB. (Thanks to Loïc Maury.)</p>
+<h3 id="scaffolding">Scaffolding</h3>
+<p>Scaffolding is what is generated by <code>yesod init</code>. This is where the most noticeable Yesod improvements show up.</p>
+<ul><li>The new logger setup to use the new WAI debug middleware.</li>
+<li>in development mode emails are logged instead of sent. This is actually more convenient and gets rid of the sendmail dependency for development.</li>
+<li>Signal handling on unix added to scaffolder (should probably be moved out of the handler).</li>
+<li>Documentation and code for deploying to Heroku (deploy/Procfile)</li>
+<li>upgrade to html5boilerplate version 2, which just means use normalize.css (instead of a css reset)</li>
+<li>file name changes - see the <a href="http://www.yesodweb.com/blog/2011/08/0.9-rc3-and-scaffold-upgrade">previous upgrade post</a></li>
+<li>configurable settings - you can place settings into yaml configuration files. By default, this is done for the host, port, connection pool size, and other database settings. And you can override settings with command line switches. The default allows you to override port argument. This added flexibility now makes <a href="http://www.yesodweb.com/blog/2011/07/haskell-on-heroku">deploying to Heroku</a> much more straightforward.</li>
+</ul><h1>Persistent 0.6 Changes</h1><p>Feature-wise, there were only a few additions to Persistent 0.6 The most noticeable addition is support for &quot;OR&quot; queries. However, the implementation has undergone a complete re-write, making Persistent more powerful and flexible, and allowing us to switch from constructors to operators.</p>
+<h2 id="persistent-0.6-a-re-write-and-a-better-api">Persistent 0.6, a re-write and a better API</h2>
+<p>Old:</p>
+<pre class="sourceCode"><code class="sourceCode haskell">selectList [<span class="dt">PersonNameEq</span> <span class="st">&quot;bob&quot;</span>] [] <span class="dv">0</span> <span class="dv">0</span></code></pre>
+<p>New:</p>
+<pre class="sourceCode"><code class="sourceCode haskell">selectList [<span class="dt">PersonName</span> <span class="fu">==.</span> <span class="st">&quot;bob&quot;</span>] []</code></pre>
+<p>We are using 2 extra characters to make the same selection. However, the separation between field and operator makes for more readable code, and we have removed one use of Template Haskell to create the constructor with an Eq postfix. Our policy on Template Haskell has always been to use it <em>only</em> when the same cannot be achieved without it. When Michael originally wrote Persistent, it wasn&#39;t clear to him how to implement the operator approach rather than the constructor approach. The <a href="http://www.reddit.com/r/haskell/comments/i23ln/announce_groundhog_a_database_connectivity_library/">release of the Groundhog library</a> showed how this can be done. We had a <a href="http://www.yesodweb.com/show/map/106">discussion</a> with Boris Lykah, the Groundhog author, and figured out what we could learn from Groundhog. Persistent is now using phantom types, similar to Boris&#39;s approach.</p>
+<p>We also discussed possible APIs at length. For Persistent we settled on something that is composable in a way similar to Groundhog, but slightly more optimized for the common use case. The main difference people will notice is no more hanging zeroes! That can be seen in the example above. The zeroes represent the limit and offset. Lets see how they are handled now when you actually need them:</p>
+<p>Old:</p>
+<pre class="sourceCode"><code class="sourceCode haskell">selectList [<span class="dt">PersonName</span> <span class="fu">==.</span> <span class="st">&quot;bob&quot;</span>] [] <span class="dv">5</span> <span class="dv">5</span></code></pre>
+<p>New:</p>
+<pre class="sourceCode"><code class="sourceCode haskell">selectList [<span class="dt">PersonName</span> <span class="fu">==.</span> <span class="st">&quot;bob&quot;</span>] [<span class="dt">OffsetBy</span> <span class="dv">5</span>, <span class="dt">LimitTo</span> <span class="dv">5</span>]</code></pre>
+<p>More verbose when you actually need it- but still better in that case in my mind because it is now clear which is the limit and which is the offest- the reason why I used 5 for both is because I never remembered the argument order of the older style.</p>
+<p>The old style of sorting required constructors created by Template Haskell. Here again, we used the Groundhog approach of re-using Desc and Asc constructors with the field types.</p>
+<p>Old:</p>
+<pre class="sourceCode"><code class="sourceCode haskell">selectList [] [<span class="dt">PersonNameAsc</span>, <span class="dt">PersonLastNameAsc</span>] <span class="dv">0</span> <span class="dv">0</span></code></pre>
+<p>New:</p>
+<pre class="sourceCode"><code class="sourceCode haskell">selectList [] [<span class="dt">Asc</span> <span class="dt">PersonName</span>, <span class="dt">Asc</span> <span class="dt">PersonLastName</span>]</code></pre>
+<p>This shows why we are using lists- it makes it easy to combine pieces of a query in Haskell syntax. The most common query combination is to AND multiple conditions:</p>
+<pre class="sourceCode"><code class="sourceCode haskell">selectList [<span class="dt">PersonName</span> <span class="fu">==.</span> <span class="st">&quot;bob&quot;</span>, <span class="dt">PersonLastName</span> <span class="fu">==.</span> <span class="st">&quot;jones&quot;</span>] []</code></pre>
+<p>Lets show the OR implementation:</p>
+<pre class="sourceCode"><code class="sourceCode haskell">selectList ([<span class="dt">PersonName</span> <span class="fu">==.</span> <span class="st">&quot;bob&quot;</span>] <span class="fu">||.</span> [<span class="dt">PersonLastName</span> <span class="fu">==.</span> <span class="st">&quot;jones&quot;</span>]) []</code></pre>
+<p>This is not a great DSL syntax- it does require parentheses. However, OR is actually a very rare use case- so we just want something that works well and is intuitive rather than the most compact notation.</p>
+<h3 id="less-template-haskell-is-good">Less Template Haskell is good</h3>
+<p>Persistent still requires the same basic amount of Quasi-Quoting from the user to declare datatypes.</p>
+<pre><code>mkPersist sqlSettings [persist|
+  Person
+    name String
+    lastName String
+|]
+</code></pre>
+<p>However, operator annotations (Update, LT, GT, etc) are no longer required, reducing what is required from users in their quasi-quoted models for the normal use case. And the Template Haskell generated is now substantially less. This should speed up compilation time and make Persistent more extensible. The Quasi-Quoting of datatypes is still important to allow for a friendly interface with easy customizations. However, it would no longer be difficult to provide a Template Haskell interface to Persistent (and we would welcome such a patch). In fact, the Template Haskell portion of persistent is an entirely separate cabal project, and one can manually declare types in the persistent style now. There are some iphone users doing this now because Template Haskell did not work on the iphone.</p>
+<h3 id="limitations">Limitations</h3>
+<p>MongoDB is waiting on some upstream improvements we are helping to create in the MongoDB driver. This release has been great for Mongo though- we are really excited about the ability to add custom operators to better take advantage of MongoDB.</p>
+<p>The biggest limitation on Persistent that makes using it worse is Haskell&#39;s lack of record name-spacing.</p><h1>0.9 goal accomplishments</h1><p>We laid out a <a href="http://www.yesodweb.com/blog/2011/04/announcing-yesod-0-8">list of 1.0 goals after the 0.8 release</a>. Lets go through each of them and see how things are coming along:</p>
+<ul><li>Documentation- We are really proud in the increase of breadth and quality of the documentation. We are now at the point where the book, in combination with supplemental documentation on the wiki and in blog posts is giving people the high-level documentation that they need. The most common complaint is now about the lack of detail in the haddocks. So we are going to make a push to improve the haddocks, and also link between them and the book.</li>
+<li>static file caching headers support - Done (mentioned in WAI section).</li>
+<li>Support for other template types as first class citizens- the templating system has undergone a re-organization that helps make the whole situation clearer, and adding new template systems should be more straightforward.</li>
+<li>Easier support for faster, non-blocking Javascript loading via something akin to require.js- not yet started.</li>
+<li>A complete i18n solution- shipped!</li>
+<li>Reassessing our forms package- yesod-forms were re-written to produce clearer error messages and additional features were added.</li>
+<li>Embedded objects in MongoDB- just started</li>
+<li>Performance improvements- Kazu has been our main source of performance improvements, submitting a patch for a faster SendFile, and writing a blazing-fast logger just before this release that we will soon incorporate. As always, we eagerly tackle any reports of slow spots in the framework. Our only other planned speedup is to use a faster system for route matching.</li>
+</ul>
+<p>There are some additional 1.0 goals we are considering, including:</p>
+<ul><li>easy validation of your persistent models</li>
+<li>better interactions between the models and forms</li>
+<li>improving the development mode experience</li>
+</ul>
+<h2 id="thanks-you-yesoders">Thanks you, Yesoders</h2>
+<p>I am really proud that we have accomplished our most important 1.0 goals already while cramming in so many other great changes. Thanks to everyone in the community that used the bleeding edge code, contributed bug reports, asked and answered questions, submitted pull requests, weighed in on design decisions, added things to the wiki, or suggested documentation improvements- you helped make this the by far the best Yesod release ever.</p>

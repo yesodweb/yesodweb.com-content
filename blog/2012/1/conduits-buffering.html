@@ -1,0 +1,262 @@
+<h1>Overview</h1>
+  <p class="hascomments">This is the fifth (and probably final) part in a series on <a href="http://hackage.haskell.org/package/conduit">conduit</a>s, an
+  approach to handling streams of data. You can see the previous posts at:</p>
+  <ol id="file1732-conceptId-ol_8b450736-bc88-43ca-8b94-17fb0d6b1d77"><li><a href="http://www.yesodweb.com/blog/2011/12/resourcet">The Resource monad transformer</a></li>
+   <li><a href="http://www.yesodweb.com/blog/2011/12/conduits">Sources</a></li>
+   <li><a href="http://www.yesodweb.com/blog/2011/12/conduits-sink">Sinks</a></li>
+   <li><a href="http://www.yesodweb.com/blog/2012/01/conduits-conduits">Conduits</a></li>
+  </ol>
+  <p class="hascomments">This post is mostly about the concept of buffering. We&#39;ll also cover a few other miscealaneous
+   topics as well.</p>
+  
+ <h1>Inversion of Control</h1>
+  <p class="hascomments">Buffering was actually one of the main motivations in the creation of the
+    <code>conduit</code> package. To see its importance, we need to consider the approach we&#39;ve
+   seen so far, which we&#39;ll call inversion of control, or IoC.</p>
+  <aside class="note">Inversion of control can mean different things in different circles. If you object to its
+   usage here, go ahead replace it with some other phrase like &quot;warm, fuzzy thing.&quot; I won&#39;t be
+   offended.</aside>
+  <p class="hascomments">Suppose you want to count how many newline characters there are in a file. In the standard
+   imperative approach, you would do someting like:</p>
+  <ol id="file1735-conceptId-ol_tao_tfa_xe"><li>Open the file</li>
+   <li>Pull some data into a buffer</li>
+   <li>Loop over the values in the buffer, incrementing a counter on each newline character</li>
+   <li>Return to 2</li>
+   <li>Close the file</li>
+  </ol>
+  <p class="hascomments">Notice that your code is explicitly calling out to other code and that code is returning
+   control back to your code. You have retained full control of the flow of execution of your
+   program. The conduit approach we&#39;ve seen so far does <i>not</i> work this way. Instead, you
+   would:</p>
+  <ol id="file1735-conceptId-ol_xlx_zfa_xe"><li>Write a sink that counts newlines and adds the result to an accumulator.</li>
+   <li>Connect the sink to a source</li>
+  </ol>
+  <p class="hascomments">There&#39;s no doubt in my mind that this is an easier approach. You don&#39;t have to worry about
+   opening and closing files or pulling data from the file. Instead, the data you need to process is
+   simply presented to you. This is the advantage of IoC: you can focus on specifically your piece
+   of the code.</p>
+  <p class="hascomments">We use this IoC approach all over Haskell: for example, instead of <code>readMVar</code>
+   and <code>putMVar</code>, you can use <code>withMVar</code>. Don&#39;t bother with
+    <code>openFile</code> and <code>closeFile</code>, just use <code>withFile</code> and
+   pass in a function that uses the <code>Handle</code>. Even C has a version of this: why
+    <code>malloc</code> and <code>free</code> when you could just
+   <code>alloca</code>?</p>
+  <p class="hascomments">Actually, that last one is a huge red herring. Of course you can&#39;t just use
+    <code>alloca</code> for everything. <code>alloca</code> only allocates memory locally on
+   the stack, not dynamically on the heap. There&#39;s no way to return your allocated memory outside
+   the current function.</p>
+  <p class="hascomments">But actually, the same restriction applies to the whole family of <code>with</code>
+   functions: you can never return an allocated resource outside of the &quot;block&quot;. Usually this works
+   out just fine, but we need to recognize that this <i>is</i> a change in how we structure our
+   programs. Often times, with simple examples, this is a minor change. However, in larger settings
+   this can become very difficult to manage, bordering on impossible at times.</p>
+ <section .subtopic=""><h1>A web server</h1>
+  <p class="hascomments">Let&#39;s say we&#39;re going to write a web server. We&#39;re going to use the following low-level
+   operations:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Socket</span>
+<span style="color: blue;font-weight: bold;">recv</span>    :: <span style="color: blue;">Socket</span> -&gt; <span style="color: blue;">Int</span> -&gt; <span style="color: blue;">IO</span> <span style="color: blue;">ByteString</span> <span style="color: gray;">-- returns empty when the socket is closed</span>
+<span style="color: blue;font-weight: bold;">sendAll</span> :: <span style="color: blue;">Socket</span> -&gt; <span style="color: blue;">ByteString</span> -&gt; <span style="color: blue;">IO</span> ()
+</pre></pre>
+  <p class="hascomments">We&#39;re up to the part where we need to implement the function <code>handleConn</code> that
+   handles an individual connection. It will look something like this:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Request</span>  <span style="color: gray;">-- request headers, HTTP version, etc</span>
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Response</span> <span style="color: gray;">-- status code, response headers, resposne body</span>
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Application</span> = <span style="color: blue;">Request</span> -&gt; <span style="color: blue;">IO</span> <span style="color: blue;">Response</span>
+<span style="color: blue;font-weight: bold;">handleConn</span> :: <span style="color: blue;">Application</span> -&gt; <span style="color: blue;">Socket</span> -&gt; <span style="color: blue;">IO</span> ()
+</pre></pre>
+  <p class="hascomments">What does our <code>handleConn</code> need to do? In broad strokes:</p>
+  <ol id="file1733-conceptId-ol_23c2db36-3ed2-4d54-bc0e-38be6417ccf1"><li>Parse the request line</li>
+   <li>Parse the request headers</li>
+   <li>Construct the <code>Request</code> value</li>
+   <li>Pass <code>Request</code> to the <code>Application</code> and get back a
+     <code>Response</code></li>
+   <li>Send the <code>Response</code> over the <code>Socket</code></li>
+  </ol>
+  <p class="hascomments">We start off by writing steps 1 and 2 manually, without using conduits. We&#39;ll do this very
+   simply and just assume three space-separated strings. We end up with something that looks
+   like:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">RequestLine</span> = <span style="color: blue;">RequestLine</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">ByteString</span>
+
+<span style="color: blue;font-weight: bold;">parseRequestLine</span> :: <span style="color: blue;">Socket</span> -&gt; <span style="color: blue;">IO</span> <span style="color: blue;">RequestLine</span>
+<span style="color: blue;font-weight: bold;">parseRequestLine</span> socket = <span style="color: green;font-weight: bold;">do</span>
+    bs &lt;- recv socket <span style="color: teal;">4096</span>
+    <span style="color: green;font-weight: bold;">let</span> (method:path:version:ignored) = <span style="color: blue;">S8.</span>words bs
+    return $ <span style="color: blue;">RequestLine</span> method path version
+</pre></pre>
+  <p class="hascomments">There are two issues here: it doesn&#39;t handle the case where there are less than three words in
+   the chunk of data, and it throws away any extra data. We can definitely solve both of these
+   issues manually, but it&#39;s very tedious. It&#39;s much easier to implement this in terms of
+   conduits.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.ByteString</span> (<span style="color: blue;">ByteString</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.ByteString</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">S</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Conduit.Binary</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">CB</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Conduit.List</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">CL</span>
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">RequestLine</span> = <span style="color: blue;">RequestLine</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">ByteString</span>
+
+<span style="color: blue;font-weight: bold;">parseRequestLine</span> :: <span style="color: blue;">Sink</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">IO</span> <span style="color: blue;">RequestLine</span>
+<span style="color: blue;font-weight: bold;">parseRequestLine</span> = <span style="color: green;font-weight: bold;">do</span>
+    <span style="color: green;font-weight: bold;">let</span> space = toEnum $ fromEnum <span style="color: red;">&#39; &#39;</span>
+    <span style="color: green;font-weight: bold;">let</span> getWord = <span style="color: green;font-weight: bold;">do</span>
+            <span style="color: blue;">CB.</span>dropWhile (== space)
+            bss &lt;- <span style="color: blue;">CB.</span>takeWhile (/= space) =$ <span style="color: blue;">CL.</span>consume
+            return $ <span style="color: blue;">S.</span>concat bss
+
+    method &lt;- getWord
+    path &lt;- getWord
+    version &lt;- getWord
+    return $ <span style="color: blue;">RequestLine</span> method path version
+</pre></pre>
+  <p class="hascomments">This means that our code will automatically be supplied with more data as it comes in, and any
+   extra data will automatically be buffered in the <code>Source</code>, ready for the next time
+   it&#39;s used. Now we can easily structure our program together, demonstrating the power of the
+   conduits approach:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.ByteString</span> (<span style="color: blue;">ByteString</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit.Network</span> (sourceSocket)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.Socket</span> (<span style="color: blue;">Socket</span>)
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">RequestLine</span> = <span style="color: blue;">RequestLine</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">ByteString</span>
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Headers</span> = [(<span style="color: blue;">ByteString</span>, <span style="color: blue;">ByteString</span>)]
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Request</span> = <span style="color: blue;">Request</span> <span style="color: blue;">RequestLine</span> <span style="color: blue;">Headers</span>
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Response</span> = <span style="color: blue;">Response</span>
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Application</span> = <span style="color: blue;">Request</span> -&gt; <span style="color: blue;">IO</span> <span style="color: blue;">Response</span>
+
+<span style="color: blue;font-weight: bold;">parseRequestHeaders</span> :: <span style="color: blue;">Sink</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">IO</span> <span style="color: blue;">Headers</span>
+<span style="color: blue;font-weight: bold;">parseRequestHeaders</span> = undefined
+
+<span style="color: blue;font-weight: bold;">parseRequestLine</span> :: <span style="color: blue;">Sink</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">IO</span> <span style="color: blue;">RequestLine</span>
+<span style="color: blue;font-weight: bold;">parseRequestLine</span> = undefined
+
+<span style="color: blue;font-weight: bold;">sendResponse</span> :: <span style="color: blue;">Socket</span> -&gt; <span style="color: blue;">Response</span> -&gt; <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">sendResponse</span> = undefined
+
+<span style="color: blue;font-weight: bold;">handleConn</span> :: <span style="color: blue;">Application</span> -&gt; <span style="color: blue;">Socket</span> -&gt; <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">handleConn</span> app socket = <span style="color: green;font-weight: bold;">do</span>
+    req &lt;- runResourceT $ sourceSocket socket $$ <span style="color: green;font-weight: bold;">do</span>
+        requestLine &lt;- parseRequestLine
+        headers &lt;- parseRequestHeaders
+        return $ <span style="color: blue;">Request</span> requestLine headers
+    res &lt;- liftIO $ app req
+    liftIO $ sendResponse socket res
+</pre></pre>
+ </section><section .subtopic=""><h1>Whither the request body?</h1>
+  <p class="hascomments">This is all great, until we realize <i>we can&#39;t read the request body</i>. The
+    <code>Application</code> is simply given the <code>Request</code>, and lives in the
+    <code>IO</code> monad. It has no access whatsoever to the incoming stream of data.</p>
+  <p class="hascomments">There&#39;s an easy fix for this actually: have the <code>Application</code> live in the
+    <code>Sink</code> monad. This is the very approach we took with
+    <a href="http://hackage.haskell.org/package/enumerator">enumerator</a>-based WAI 0.4. However, there are two problems:</p>
+  <ul id="file1734-conceptId-ul_6cdf43df-026f-4a2b-9806-baf8013379ff"><li>People find it confusing. What people <i>expect</i> is that the <code>Request</code>
+    value would have a <code>requestBody</code> value of type <code>Source</code>.</li>
+   <li>This makes certain kinds of usage incredibly difficult. For example, trying to write an HTTP
+    proxy combining WAI and <code>http-enumerator</code> proved to be almost impossible.</li>
+  </ul>
+  <p class="hascomments">This is the downside of inversion of control. Our code wants to be in control. It wants to be
+   given something to pull from, something to push to, and run with it. We need some solution to the
+   problem.</p>
+  <aside class="note">If you think that the situation I described with the proxy isn&#39;t so bad, it&#39;s because I&#39;ve
+   gone easy on the details. We also need to take into account streaming the response body, and the
+   streaming needs to happen on both the client and server side.</aside>
+  <p class="hascomments">The simplest solution would be to just create a new <code>Source</code> and pass that to
+   the <code>Application</code>. Unfortunately, this will cause problems with our buffering. You
+   see, when we connect our source to the <code>parseRequestLine</code> and
+    <code>parseRequestHeaders</code> sinks, it made a call to <code>recv</code>. If the data
+   it received was not enough to cover all of the headers, it would issue another call. When it had
+   enough data, it would stop. However, odds are that it didn&#39;t stop <i>exactly</i> at the end of
+   the headers. It likely consumed a bit of the request body as well.</p>
+  <p class="hascomments">If we just create a new source and pass that to the request, it will be missing the beginning
+   of the request body. We need some way to pass that buffered data along.</p>
+ </section><h1>BufferedSource</h1>
+  <p class="hascomments">And so we finally get to introduce the last data type in conduits:
+    <code>BufferedSource</code>. This is an abstract data type, but all it really does is keep a
+   mutable reference to a buffer and an underlying <code>Source</code>. In order to create one
+   of these, you use the <code>bufferSource</code> function.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">bufferSource</span> ::<span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Source</span> m a -&gt; <span style="color: blue;">ResourceT</span> m (<span style="color: blue;">BufferedSource</span> m a)
+</pre></pre>
+  <p class="hascomments">This one little change is what allows us to easily solve our web server dilemna. Instead of
+   connecting a <code>Source</code> to our parsing <code>Sink</code>s, we use a
+    <code>BufferedSource</code>. At the end of each connection, any leftover data is put back on
+   the buffer. For our web server case, we can now create a <code>BufferedSource</code>, use
+   that to read the request line and headers, and then pass that same
+    <code>BufferedSource</code> to the application for reading the request body.</p>
+ <h1>Typeclass</h1>
+  <p class="hascomments">We want to be able to connect a buffered source to a sink, just like we would a regular source.
+   We would also like to be able to fuse it to a conduit. In order to make this convenient, conduit
+   has a typeclass, <code>IsSource</code>. There are instances provided for both
+    <code>Source</code> and <code>BufferedSource</code>. Both the connect
+    (<code>$$</code>) and left-fuse (<code>$=</code>) operators use this typeclass.</p>
+  <p class="hascomments">There&#39;s one &quot;gotcha&quot; in the <code>BufferedSource</code> instance of this typeclass, so
+   let&#39;s explain it. Suppose we want to write a file copy function, without any buffering. This is a
+   fairly standard usage of conduits:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">sourceFile</span> input $$ sinkFile output
+</pre></pre>
+  <p class="hascomments">When this line is run, both the input and output files are opened, the data is copied, and then
+   both files are closed. Let&#39;s change this example slightly to use buffering:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">bsrc</span> &lt;- bufferSource $ sourceFile input
+<span style="color: blue;font-weight: bold;">bsrc</span> $$ isolate <span style="color: teal;">50</span> =$ sinkFile output1
+<span style="color: blue;font-weight: bold;">bsrc</span> $$ sinkFile output2
+</pre></pre>
+  <p class="hascomments">When is the input file opened and closed? The opening occurs on the first line, when buffering
+   the source. And if we follow the normal rules from sources, the file should be closed after the
+   second line. However, if we did that, we couldn&#39;t reuse <code>bsrc</code> for line 3!</p>
+  <p class="hascomments">So instead, <code>$$</code> does <i>not</i> close the file. As a result, you can pass a
+   buffered source to as many actions as you want, without concerns that the file handle has been
+   closed out from under you.</p>
+  <aside class="note">If you remember from earlier, the invariant of a source is that it cannot be pulled from
+   after it returns a <code>Closed</code> response. In order to allow you to work more easily
+   with a <code>BufferedSource</code>, this invariant is relaxed. It is the responsibility of
+   the <code>BufferSource</code> implementation to ensure that after the underlying
+    <code>Source</code> is closed, it is never used again.</aside>
+  <p class="hascomments">This presents one caveat: when you&#39;re finished with a buffered source, you should manually call
+    <code>bsourceClose</code> on it. However, as usual, this is merely an optimization, as the
+   source will automatically be closed when <code>runResourceT</code> is called.</p>
+ <h1>Recapping the web server</h1>
+  <p class="hascomments">So what exactly does our web server look like now?</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.ByteString</span> (<span style="color: blue;">ByteString</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit.Network</span> (sourceSocket)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.Socket</span> (<span style="color: blue;">Socket</span>)
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">RequestLine</span> = <span style="color: blue;">RequestLine</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">ByteString</span>
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Headers</span> = [(<span style="color: blue;">ByteString</span>, <span style="color: blue;">ByteString</span>)]
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Request</span> = <span style="color: blue;">Request</span> <span style="color: blue;">RequestLine</span> <span style="color: blue;">Headers</span> (<span style="color: blue;">BufferedSource</span> <span style="color: blue;">IO</span> <span style="color: blue;">ByteString</span>)
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Response</span> = <span style="color: blue;">Response</span>
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Application</span> = <span style="color: blue;">Request</span> -&gt; <span style="color: blue;">ResourceT</span> <span style="color: blue;">IO</span> <span style="color: blue;">Response</span>
+
+<span style="color: blue;font-weight: bold;">parseRequestHeaders</span> :: <span style="color: blue;">Sink</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">IO</span> <span style="color: blue;">Headers</span>
+<span style="color: blue;font-weight: bold;">parseRequestHeaders</span> = undefined
+
+<span style="color: blue;font-weight: bold;">parseRequestLine</span> :: <span style="color: blue;">Sink</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">IO</span> <span style="color: blue;">RequestLine</span>
+<span style="color: blue;font-weight: bold;">parseRequestLine</span> = undefined
+
+<span style="color: blue;font-weight: bold;">sendResponse</span> :: <span style="color: blue;">Socket</span> -&gt; <span style="color: blue;">Response</span> -&gt; <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">sendResponse</span> = undefined
+
+<span style="color: blue;font-weight: bold;">handleConn</span> :: <span style="color: blue;">Application</span> -&gt; <span style="color: blue;">Socket</span> -&gt; <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">handleConn</span> app socket = runResourceT $ <span style="color: green;font-weight: bold;">do</span>
+    bsrc &lt;- bufferSource $ sourceSocket socket
+    requestLine &lt;- bsrc $$ parseRequestLine
+    headers &lt;- bsrc $$ parseRequestHeaders
+    <span style="color: green;font-weight: bold;">let</span> req = <span style="color: blue;">Request</span> requestLine headers bsrc
+    res &lt;- app req
+    liftIO $ sendResponse socket res
+</pre></pre>
+  <p class="hascomments">We&#39;ve made a few minor changes. Firstly, the <code>Application</code> now lives in the
+    <code>ResourceT IO</code> monad. This isn&#39;t strictly necessary, but it&#39;s very convenient:
+   the application can now register cleanup actions that will only take place after the response has
+   been fully sent to the client.</p>
+  <p class="hascomments">But the major changes are in the <code>handleConn</code> function. We now start off by
+   buffering our source. This buffered source is then used twice in our function, and then passed
+   off to the application.</p>
+ <h1>That&#39;s all folks!</h1>
+  <p class="hascomments">Thanks for making it through this very long series of posts, I hope it&#39;s been informative. The
+   next step is to dive into the <a href="http://hackage.haskell.org/packages/archive/pkg-list.html#cat:conduit">conduit packages on Hackage</a>. Also, stay tuned in the next few weeks for
+   an all new, all conduit release of Yesod.</p>
+  <p class="hascomments">My hope is that the simplicity afforded by conduits will allow people not alone to become more
+   involved in playing around with code, but will let people make even more interesting combinations
+   of the existing packages. I&#39;m looking forward to seeing the results.</p>
+ 

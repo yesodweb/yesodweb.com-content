@@ -1,0 +1,235 @@
+<h1>Let&#39;s make an ePub</h1>
+  <p class="hascomments" id="file853-lets-make-an-epub-x1">I was recently tasked with setting up a system for one of our clients that would take their
+   internal XML document format and produce an ePub. This isn&#39;t a particularly difficult task, and
+   is something I&#39;ve done before. The one restriction I was given was that the solution had to be
+   implemented in Java.</p>
+  <p class="hascomments" id="file853-lets-make-an-epub-x2">Anyone who reads this blog at all should realize I&#39;m a Haskell programmer, and as such, Java is
+   not my language of choice. Nonetheless, I&#39;m used to clients requiring work be done with it, on
+   the chance that they ever want to look at the code. (To my knowledge, this has never actually
+   happened.) This time around, I&#39;m very happy I did it in Java, as it gave me a perfect real-life
+   situation for expressing a point I&#39;ve wanted to make for a while.</p>
+ <h1>What is Java?</h1>
+  <p class="hascomments" id="file854-what-is-java-x1">Before getting into the meat of this, we need to analyze the client requirement a bit more:
+   what is Java, and why do they want me to use it? There are really two distinct things that get
+   the name Java: the programmer language, and the virtual machine. The requirement to use Java then
+   stems from two completely different goals:</p>
+  <ul id="file854-what-is-java-ul_rer_jmi_jd"><li id="file854-what-is-java-x2">Requiring Java-the-language has to do with the idea that &quot;we know Java, we&#39;ll understand Java
+    code.&quot;</li>
+   <li id="file854-what-is-java-x3">Requiring the JVM is usually about ease of deployment, increased security, etc.</li>
+  </ul>
+  <p class="hascomments" id="file854-what-is-java-x4">In this case, it was made clear that the goals were the first one: they wanted any one of their
+   ten Java programmers to be able to understand the code I was writing. So in a situation like
+   this, you would assume that every line of code needs to be written in Java itself, for maximum
+   comprehension. (They actually mentioned a possible interest in using Clojure, but that would have
+   been a stretch for them.)</p>
+  <p class="hascomments" id="file854-what-is-java-x5">However, as you&#39;ll see in a bit, most of the code I wrote was <i id="file854-what-is-java-x6">not</i> Java, and they were
+   perfectly happy with this.</p>
+ <h1>Meet the Partially Powered Languages</h1>
+  <p class="hascomments" id="file855-meet-the-partially-powered-languages-x1">So if not Java, then what? Well, there were actually three additional languages used in the
+   development of the project, with one of them being replaced halfway through:</p>
+  <ul id="file855-meet-the-partially-powered-languages-ul_uus_ssi_jd"><li id="file855-meet-the-partially-powered-languages-x2">XSLT, used for transforming XML.</li>
+   <li id="file855-meet-the-partially-powered-languages-x3">XProc, an XML pipeline language. More on this later.</li>
+   <li id="file855-meet-the-partially-powered-languages-x4">Ant, used to orchestrate all this.</li>
+  </ul>
+  <p class="hascomments" id="file855-meet-the-partially-powered-languages-x5">This list may seem a bit arbitrary, but it&#39;s not. One of the major tools used in the document
+   services industry is the DITA-OT, and it is a polyglot of Java, XSLT and Ant. There is a lot of
+   interest in migrating to XProc for both simplification and performance improvements, and the
+   client specifically mentioned an interest in XProc since they are using it elsewhere.</p>
+  <p class="hascomments" id="file855-meet-the-partially-powered-languages-x6">Why do I call these partially powered languages? Quite simply, each language is good for its
+   specific task, but can&#39;t (easily) do anything else. Take XProc: it&#39;s a language designed to piece
+   together a number of XML-transforming operations. The approach often used today by tools like the
+   DITA-OT is to use Ant to call out to XSLT for each pipeline step, storing the intermediate
+   results in a temp folder. As you can imagine, all of that file I/O, parsing and rendering carries
+   a performance penalty.</p>
+  <p class="hascomments" id="file855-meet-the-partially-powered-languages-x7">So I thought that XProc would be perfect here... until I found out there was no direct way to
+   create a ZIP file from it. (ePubs are just glorified ZIP files.) This isn&#39;t a bug in XProc, or
+   something for which the library has not yet been written, but simply a fact of the language: its
+   goals do not include producing ZIP files. And that&#39;s precisely the problem: it&#39;s not very common
+   that someones needs fit perfectly into the use case of the tool in question.</p>
+  <p class="hascomments" id="file855-meet-the-partially-powered-languages-x8">Here&#39;s another example from this project. XSLT turned out to be fairly straight-forward for
+   most of the implementation. (Besides the fact that there are a whole bunch of issues with
+   relative file paths waiting to rear their ugly heads... but for now, the XML is simple, so we
+   took the easy route.) And using XSLT 2.0 allowed us to write this thing to generate multiple
+   output files from a single input file, meaning a single XSLT call to produce all the output,
+   avoiding all those temporary XML files I mentioned earlier. Hurray!</p>
+  <p class="hascomments" id="file855-meet-the-partially-powered-languages-x9">And all was well... until I got to the end. One of the XML files in an ePub (content.opf)
+   requires a list of all the files contained in the ZIP file. No problem, I can generate a list of
+   all the HTML files I generated. But I don&#39;t have a list of all the static files, like CSS and
+   images, that were used. In theory, I could glean all the images referenced from the XML directly,
+   but I don&#39;t know about any images referenced from the CSS. And XSLT can&#39;t parse CSS, so that&#39;s
+   not an option.</p>
+  <p class="hascomments" id="file855-meet-the-partially-powered-languages-x10">There&#39;s actually a very simple solution: just get a list of all the files in the static folder.
+   Heck, I can use that for the HTML too if I want to be lazy! All I need to do is use that XSLT
+   directory listing function... that function that doesn&#39;t exist. You see, getting a list of files
+   in a folder is not in the purview of XSLT. It knows how to read, manipulate, and generate XML. So
+   how did I solve this? Well, the standard way we do things in the DITA-OT:</p>
+  <ol id="file855-meet-the-partially-powered-languages-ol_yxy_qwi_jd"><li id="file855-meet-the-partially-powered-languages-x11">Write some Java code that lists files in folder and outputs them as an XML file.</li>
+   <li id="file855-meet-the-partially-powered-languages-x12">Call that code before calling XSLT.</li>
+   <li id="file855-meet-the-partially-powered-languages-x13">Pass in a referenced to that generated file when calling the XSLT. Let XSLT do its normal
+    stuff at that point.</li>
+  </ol>
+  <p class="hascomments" id="file855-meet-the-partially-powered-languages-x14">As for Ant... well, anyone familiar with it will know its powers. It can easily do stuff like
+   copy files, compile Java, and call XSLT. And it can easily be extended with new features, by
+   defining new Ant tasks- in Java. Which just proves the point: it can do some stuff itself, but
+   not everything.</p>
+ <h1>So what&#39;s the problem?</h1>
+  <p class="hascomments" id="file856-so-whats-the-problem-x1">Just to review, let&#39;s see how our little ePub generator works:</p>
+  <ol id="file856-so-whats-the-problem-ol_pvt_exi_jd"><li id="file856-so-whats-the-problem-x2">We use Ant to orchestrate everything. It&#39;s what the user calls (perhaps ironically via a Bash
+    script), it accepts parameters, and calls out to everything else.</li>
+   <li id="file856-so-whats-the-problem-x3">There&#39;s one piece of Java code to generate an XML file containing the list of files.</li>
+   <li id="file856-so-whats-the-problem-x4">XSLT takes the input XML files and produces the XHTML and XML files required by the
+    ePub.</li>
+   <li id="file856-so-whats-the-problem-x5">Ant does some file copying as necessary, then ZIPs everything up into an ePub.</li>
+  </ol>
+  <p class="hascomments" id="file856-so-whats-the-problem-x6">Doesn&#39;t seem too bad, right? Well, remember that issue with relative paths I mentioned? It&#39;s
+   something I&#39;ve solved before on different projects. It&#39;s nothing too complicated, you just need
+   to (1) parse file paths properly and (2) make sure you have a consistent mapping from source
+   files to output files. This was really easy to solve in Haskell, and even in Java: you just use a
+   datastructure like a map or hashtable and some basic string parsing.</p>
+  <p class="hascomments" id="file856-so-whats-the-problem-x7">And here&#39;s the problem: both of those are difficult to impossible in XSLT. XSLT isn&#39;t designed
+   for maps. It certainly doesn&#39;t have the ability to get the canonical filename for a relative path
+   and use it as a key in a dictionary. While that&#39;s just 1 or 2 lines in Java, Haskell, and
+   probably a dozen other languages, it&#39;s not the case in XSLT. (By the way, this is an existing,
+   long-standing bug in the DITA-OT already. The solution there is &quot;don&#39;t set up your source XML
+   that way.&quot;)</p>
+  <p class="hascomments" id="file856-so-whats-the-problem-x8">There&#39;s also the fact that this whole call-out-to-Java approach for the file listing is
+   ridiculous. It&#39;s inefficient for certain, but more importantly, it&#39;s counter-intuitive. And it&#39;s
+   something that can be easily broken in maintenance.</p>
+  <p class="hascomments" id="file856-so-whats-the-problem-x9">But then there&#39;s the really big issue: the whole reason to use Java was so that all of their
+   Java programmers would understand the code. <b id="file856-so-whats-the-problem-x10">And we haven&#39;t achieved that goal at all.</b> The
+   Java code was the most innocuous part of the project. Now in order to understand what&#39;s going on,
+   they need to know Java, Ant and XSLT.</p>
+  <aside class="note" id="file856-so-whats-the-problem-x11">Nonetheless, for some reason that baffles me, using XProc, XSLT and Ant is still considered
+   &quot;Java&quot; by our clients. I truly can&#39;t explain this mindset, I&#39;m sorry I have no insight to
+   share.</aside>
+  <p class="hascomments" id="file856-so-whats-the-problem-x12">There&#39;s one more issue that I&#39;ve seen, that hasn&#39;t affected us here yet, but does affect other
+   big system designed in this way: modularity. Ant and XSLT are not designed for modularity. They
+   aren&#39;t general purpose languages, and they were designed with specific goals. You can see this
+   limitation greatly in the DITA-OT: in needed to create an entire plugin system which generates
+   Ant files from templates just to accomplish something simple like passing parameters. (It&#39;s a bit
+   more complicated than that, I don&#39;t want to go into the gory details here.) And the worst part is
+   that it doesn&#39;t even solve the problem well: you can&#39;t have two sets of modifications to HTML
+   output in the DITA-OT without essentially duplicating all of the template files.</p>
+ <h1>Why did you let this happen?</h1>
+  <p class="hascomments" id="file857-why-did-you-let-this-happen-x1">It seems like the fault in all this rests squarely on my shoulders: I knew that Ant and XSLT
+   had shortcomings for this project, and I used them anyway. I should have just manned up and used
+   Java for the whole thing. Everything would have been in a single language that the client can
+   understand, and adding future features like better file reference support would have been an
+   evolutionary change.</p>
+  <p class="hascomments" id="file857-why-did-you-let-this-happen-x2">The problem is that there&#39;s a budget to consider. I&#39;ve tried once before to replace our normal
+   XSLT usage with pure Java, and the result was horrible: it took me significantly longer to write
+   than just doing the same thing in XSLT. And there are two reasons for this: Java-the-language,
+   and Java-the-libraries. I don&#39;t want to speak about this in the abstract, so let&#39;s have a
+   real-world comparison to a Haskell library: <a href="http://hackage.haskell.org/package/xml-enumerator">xml-enumerator</a>. I&#39;m sure many
+   other languages could make a similar comparison with their tools, but this is the one I&#39;m most
+   familiar with.</p>
+  <p class="hascomments" id="file857-why-did-you-let-this-happen-x4">Let&#39;s start with a simple question: what&#39;s an XML document? In xml-enumerator, that&#39;s very
+   simple: a <a href="http://hackage.haskell.org/packages/archive/xml-enumerator/0.3.4/doc/html/Text-XML-Enumerator-Resolved.html#/t:Document">datatype called Document</a> that contains some stuff
+   (processing instructions and comments) before and after the root element, a doctype statement,
+   and the root element itself. What&#39;s an <a href="http://hackage.haskell.org/packages/archive/xml-enumerator/0.3.4/doc/html/Text-XML-Enumerator-Resolved.html#/t:Element">element</a>? Why it&#39;s the tag name, a list of attributes and a
+   list of children nodes. And a <a href="http://hackage.haskell.org/packages/archive/xml-enumerator/0.3.4/doc/html/Text-XML-Enumerator-Resolved.html#/t:Node">node</a> is either an element, some text, a processing
+   instruction, or a comment. It&#39;s all right there in the data type definitions, which I think are
+   even understable by someone without any Haskell experience.</p>
+  <p class="hascomments" id="file857-why-did-you-let-this-happen-x8">Contrast this with the DOM model from Java. We have a <a href="http://download.oracle.com/javase/1.5.0/docs/api/org/w3c/dom/Node.html">Node</a> interface, which has child interfaces for elements, processing
+   instructions, text and comments. So far, pretty similar to Haskell. Oh, and it has subinterfaces
+   for documents, attributes, and notations. (Note: notations don&#39;t actually exist in the XML.) Now,
+   this Node interface declares a whole bunch of functions, such as <a href="http://download.oracle.com/javase/1.5.0/docs/api/org/w3c/dom/Node.html#getNodeName()">getNodeName</a>. So you can guess what that does for an
+   element, but what does it do for a comment? Well, it seems that it returns the contents of the
+   comment... right.</p>
+  <p class="hascomments" id="file857-why-did-you-let-this-happen-x11">Here&#39;s some more fun: try understanding how that API deals with XML namespaces. In
+   xml-enumerator, we have a special datatype called Name, that contains the local name, namespace
+   and prefix for an identifier. This models the XML specification for namespaces precisely. And for
+   convenience, you can even just write them as normal strings in your Haskell source code, so most
+   of the time you don&#39;t even need to think about namespaces. In Java? There are two versions for
+   most functions, one that deals with namespaces, and one that doesn&#39;t.</p>
+  <p class="hascomments" id="file857-why-did-you-let-this-happen-x12">Let&#39;s compare traversing the DOM. In Haskell, I can easily add an attribute to every element in
+   a tree like
+   so:<pre class="codeblock" id="file857-why-did-you-let-this-happen-x13">addAttr :: Name -&gt; Text -&gt; Node -&gt; Node
+addAttr name value (NodeElement (Element tag attrs children)) =
+    NodeElement (Element tag ((name, value) : attrs) (map (addAttr name value) children))
+addAttr _ _ node = node</pre>Here,
+   we get to leverage pattern matching extensively, as well as use persistent data structures
+   easily. The equivalent in Java
+   is:<pre class="codeblock" id="file857-why-did-you-let-this-happen-x14">public static void addAttr(String name, String value, Node node) {
+    if (node.getNodeType() != Node.ELEMENT_NODE) return;
+    Element element = (Element) node;
+    element.setAttribute(name, value);
+
+    NodeList nl = element.getChildNodes();
+    for (int i = 0; i &lt; nl.getLength(); ++i) {
+        addAttr(name, value, nl.item(i));
+    }
+}</pre>Note
+   that we have to use a type cast, which if not checked correctly could result in a runtime
+   exception. We&#39;re also modifying the original value instead of generating a new one, and we have
+   no support for namespaces.</p>
+  <p class="hascomments" id="file857-why-did-you-let-this-happen-x15">The magic features that&#39;s missing here is sum types. There is no good replacement in Java, and
+   it precisely the right tool to model nodes in XML. Added to that the requirement to use mutable
+   data structures here and it&#39;s painful. And don&#39;t even get me started on the difference between a
+   null string and an empty string in the API.</p>
+  <p class="hascomments" id="file857-why-did-you-let-this-happen-x16">I&#39;ve only scratched the surface here, but I&#39;m sure you can extrapolate from here how painful
+   writing this kind of code is in Java. And I was surprised to find this out: Java is after all
+   known for its <a href="http://www.reddit.com/r/programming/comments/eaqgk">prowess as manipulating XML</a>.</p>
+  <p class="hascomments" id="file857-why-did-you-let-this-happen-x18">Which now explains the situation fully: Java is a painful language for the majority of the code
+   we need to write. So instead, we use a bunch of languages designed for those specific tasks to
+   avoid writing that Java code. As a result, we have messy codebases using lots of sub-powered
+   languages that results in spaghetti code that no one can read.</p>
+ <h1>So... we should only use full-fledged languages?</h1>
+  <p class="hascomments" id="file858-so-we-should-only-use-full-fledged-languages-x1">You might think that I&#39;m advocating never using a non-general-purpose programming language.
+   That&#39;s not the case. If you look at Yesod, we have a number of those floating around, in
+   particular Hamlet, an HTML templating language. Let&#39;s compare Hamlet to XSLT in the context of
+   this conversation:</p>
+  <ul id="file858-so-we-should-only-use-full-fledged-languages-ul_jhv_jej_jd"><li id="file858-so-we-should-only-use-full-fledged-languages-x2">Hamlet is nothing more than simple, syntactic sugar. You can easily trace everything it does
+    into the corresponding Haskell code. XSLT, on the other hand, is a very powerful language, for
+    which it is very difficult to reproduce features in Java.</li>
+   <li id="file858-so-we-should-only-use-full-fledged-languages-x3">Hamlet only has meaning within the context of a Haskell program. It reads variables from the
+    surrounding code and returns a value, which must be used by Haskell. XSLT can exist entirely
+    outside of a Java program.</li>
+   <li id="file858-so-we-should-only-use-full-fledged-languages-x4">Hamlet has absolutely no side effects. XSLT can be used to generate as many output files as
+    it wants.</li>
+  </ul>
+  <p class="hascomments" id="file858-so-we-should-only-use-full-fledged-languages-x5">You might be surprised at what I&#39;m saying: Hamlet&#39;s advantage is that it&#39;s <b id="file858-so-we-should-only-use-full-fledged-languages-x6">less</b> powerful
+   than XSLT! That&#39;s precisely the point. Having add-on languages like Hamlet are great for
+   simplifying code, removing line noise, and making it easier to maintain the codebase. XSLT, on
+   the other hand, is used as an alternative to Java.</p>
+  <p class="hascomments" id="file858-so-we-should-only-use-full-fledged-languages-x7">Going back to my file reference example: with a language like Hamlet, there&#39;s no problem. We
+   can call back to Haskell to handle the heavy lifting that Hamlet doesn&#39;t support. It&#39;s so tightly
+   bound with the surrounding program that there is virtually no overhead to this. Also, there would
+   be no problem using the strong data types we know and love within Hamlet; in XSLT, we&#39;re forced
+   to switch back to weak datatypes. (Example: my Java code uses the File type for getting the file
+   listing; XSLT just sees strings.)</p>
+  <p class="hascomments" id="file858-so-we-should-only-use-full-fledged-languages-x8">If I was to write an ePub generator in Haskell (which I&#39;ll likely be doing in the
+   not-too-distant future), I would use the <a href="http://hackage.haskell.org/package/xml-hamlet">xml-hamlet</a> package. That would allow
+   me to easily and concisely produce XML values. In other words, I could
+   replace:<pre class="codeblock" id="file858-so-we-should-only-use-full-fledged-languages-x10">[ NodeElement $ Element &quot;foo&quot; [(&quot;bar&quot;, &quot;baz&quot;)]
+    [ NodeContent &quot;some content&quot;
+    , NodeElement $ Element &quot;bin&quot; [] []
+    ]
+]</pre>with<pre class="codeblock" id="file858-so-we-should-only-use-full-fledged-languages-x11">[xml|
+&lt;foo bar=baz&gt;
+    some content
+    &lt;bin&gt;
+|]</pre>Of
+   course, both of those are infinitely more pleasant than the Java
+   equivalent:<pre class="codeblock" id="file858-so-we-should-only-use-full-fledged-languages-x12">DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+DocumentBuilder db = dbf.newDocumentBuilder();
+Document doc = db.newDocument();
+Element foo = doc.createElement(&quot;foo&quot;);
+doc.appendChild(foo);
+foo.setAttribute(&quot;bar&quot;, &quot;baz&quot;);
+foo.appendChild(doc.createTextNode(&quot;some content&quot;));
+foo.appendChild(doc.createElement(&quot;bin&quot;));</pre>And
+   just wait till you have to write this to a file. In Haskell, it&#39;s the <code id="file858-so-we-should-only-use-full-fledged-languages-x13">writeFile</code>
+   function. In Java, I pity you.</p>
+ <h1>Conclusion</h1>
+  <ul id="file859-conclusion-ul_xxs_igj_jd"><li id="file859-conclusion-x1">Java-the-language and Java-the-libraries make a number of simple tasks very complicated.</li>
+   <li id="file859-conclusion-x2">Therefore, we have a number of helper languages, like XSLT and Ant, to avoid the pain of a
+    pure Java solution.</li>
+   <li id="file859-conclusion-x3">However, these tools are all purposely missing some features we&#39;ll inevitably need.</li>
+   <li id="file859-conclusion-x4">The result will be either missing proper handling of some features, a polyglot that will miss
+    the point of using Java in the first place, or most likely both.</li>
+   <li id="file859-conclusion-x5">There are great use cases for non-general-purpose languages, but they should have tight
+    integration with a real language.</li>
+   <li id="file859-conclusion-x6">Haskell&#39;s flexible syntax and great typing make it very powerful here.</li>
+  </ul>
+ 

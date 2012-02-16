@@ -1,0 +1,44 @@
+<p>We are excited to announce the release of Persistent 0.8. This will be used by the upcoming 0.10 Yesod release.</p>
+<p>Persistent is a data store interface library that is backend agnostic - it currently works with SQL and MongoDB databases.</p>
+<h2 id="more-backends">More backends!</h2>
+<p>Persistent has solid support for Sqlite, PostgreSQL, and MongoDB. Felipe Lessa just contributed a MySQL backend! There is also a <a href="https://github.com/yesodweb/persistent/pull/36">couchDB backend in the works</a> - if you are a couchDB fan let us know - the main thing holding this one back are some willing maintainers to keep it up to date with changes in Persistent.</p>
+<h2 id="dependency-upgrades">Dependency upgrades</h2>
+<ul><li>The new MySQL backend uses the mysql-simple library.</li>
+<li>The PostgreSQL backend now uses postgresql-simple instead of HDBC.</li>
+<li>The persistent streaming API now uses conduits instead of enumerators.</li>
+<li>Move from pool to resource-pool (thanks Bryan O'Sullivan!)</li>
+</ul>
+<h2 id="a-new-raw-sql-interface">A new raw SQL interface</h2>
+<p>Felipe Lessa also added an amazing rawSql interface!</p>
+<p>The Persistent query interface cannot capture every operation needed in a backend. For more advanced SQL queries without support from Persistent, rawSql is now a great tool. Persistent already had a very low-level raw SQl interface. However, you had to parse the result yourself. The rawSql interface maintains Persistent's automatic serialization.</p>
+<pre><code>SELECT ??, ??
+FROM &quot;Person&quot;, &quot;Likes&quot;, &quot;Object&quot;
+WHERE &quot;Person&quot;.id = &quot;Likes&quot;.&quot;personId&quot;
+AND &quot;Object&quot;.id = &quot;Likes&quot;.&quot;objectId&quot;
+AND &quot;Person&quot;.name LIKE ?
+</code></pre>
+<p>If you name that query likesStmt, you then execute it:</p>
+<pre class="sourceCode"><code class="sourceCode haskell"><span class="kw">do</span> results <span class="ot">&lt;-</span> rawSql likesStmt [<span class="st">&quot;%Luke%&quot;</span>]<br/>forM_ results <span class="fu">$</span><br/>\\( <span class="dt">Entity</span> personKey person<br/>, <span class="dt">Entity</span> objectKey object<br/>) <span class="ot">-&gt;</span> <span class="kw">do</span> <span class="fu">...</span></code></pre>
+<p>This new interface adds greatly needed flexibility to Persistent. However, it does away with Persistent's guarantee that the query is correct: you could easily have a typo in your query. Now is a good time to mention another exciting project that attempts to solve this issue by validating the query at compile time: <a href="https://gitorious.org/persistent-hssqlppp">persistent-hssqlppp</a>.</p>
+<h2 id="complex-data-structures-support">Complex Data Structures Support!</h2>
+<p>Persistent's serialization is now much more powerful. Previously, Persistent only supported flat Haskell records. However, MongoDB directly supports complex data structures, such as a record that contains a list of records. This functionality is essential to proper data modeling with MongoDB, and is one of the aspects of MongoDB that I have enjoyed the most. I think SQL users will enjoy this also.</p>
+<p>SQL does not explicitly support complex data structures as column values. However it is a common strategy to serialize data structures to something like a JSON string and then save them to a SQL column - Persistent now automates this process. This is very useful functionality as long as SQL users keep in mind that JSON-serialized columns are meant just to be updated, deleted, and selected, not to be compared in a query (with a where clause, etc). Also, please keep in mind that consistent partial updates of an embedded data structure impossible. If you need to query your data structure or update portions of it, you should instead continue to spread your data structures over multiple tables rather than use this new feature.</p>
+<p>Persistent now comes out of the box with support for Haskell bread-and-butter data structures: Records, Maps, Lists, and Sets. This means we automatically generate To/From JSON instances for your Persistent entities now. So when you need to send them as JSON, most of your work will already be done. If you don't like our JSON instances, use a no-json annotation in your schema.</p>
+<h2 id="the-great-divide">The Great Divide</h2>
+<p>In a <a href="http://www.yesodweb.com/blog/2011/11/got-right">recent blog post</a> I talked about how the strength of Yesod is the ease of integration with the compelling Hamlet, WAI, and Persistent libraries. We think Hamlet and WAI can still be improved, but that we have struck on the right design for Haskell. For all of its Persistent's strengths, it has always been something we are much less certain about. In re-thinking Persistent, we realized that Persistent is dealing with two separate issues.</p>
+<ol style="list-style-type: decimal"><li>Serializing Haskell data to the database and de-serializing from the database to Haskell</li>
+<li>Defining a query interface that all backends can share for type-safe querying of the database.</li>
+</ol>
+<p>We believe we <em>have</em> struck upon a great design for Haskell for data serialization to the database. On the other hand, the query interface could certainly be improved, and there are alternative approaches that might be better.</p>
+<p>The basic serialization functions Persistent exposes (get, insert, replace) seem fairly universal to all databases. However, it seems impossible to make a universal query interface to satisfy every backend. For example, when Michael experimented with a Redis backend, he quickly realized many of the query operations did not map well to a simple key value store.</p>
+<p>So rather than have a monolithic typeclass interface, Persistent now exposes 3 typeclasses</p>
+<ol style="list-style-type: decimal"><li>PersistStore - univeral, basic serialization (get, insert, etc). Required by all other Persistent type-classes</li>
+<li>PersistUnique - secondary indexes (getBy, etc). PersistStore is based on operating on a primary key. PersistUnique extends some of these operations to secondary indexes, or other columns where the values are unique</li>
+<li>PersistQuery - Persistent's out of the box advanced query interface</li>
+</ol>
+<p>Our hope is that a PersistStore backend can now be made for any data store. If the PersistQuery interface does not align well with the data store, than an entirely different query interface can be used instead.</p>
+<h2 id="other-improvements">Other improvements</h2>
+<p>We cleaned up EntityDef, the data structure that maintains meta-data about your database entities - this fixed several bugs including making it more resilient to renamings. Database parameters can now be configured via environment variables</p>
+<h2 id="future-directions-for-persistent">Future directions for Persistent</h2>
+<p>We are getting pretty happy with the SQL/MongoDB querying capabilities. Eventually we think there will be a way to have compile-time validation of raw queries for both SQL and MongoDB.</p>
+<p>The new Persistent architecture makes it easier to have more contributions to Persistent from the community. It has never been easier to create a Persistent backend - just start by implementing the PersistStore serialization API. We look forward to seeing more Persistent backends and more powerful query interfaces.</p>

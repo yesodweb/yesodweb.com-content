@@ -1,0 +1,29 @@
+<p>I announced on the web-devel list that Yesod 0.2 is basically feature complete, and almost ready for release. I decided to finally go and do some maintenance on some of the underlying libraries, so I wanted to give some updates. Some of this is stuff I've been itching to do for a while, so I'm pretty excited it will be included for Yesod 0.2.</p>
+<h3>Enumerator-based compression</h3>
+<p>The one big weak link in the enumerator chain for WAI has been the GZIP middleware; it was originally based on the standard zlib package on Hackage, which uses lazy I/O. In essence, we were losing a lot of the benefits of the WAI whenever we compressed output.</p>
+<p>But not anymore! I've released <a href="http://hackage.haskell.org/package/wai-extra">wai-extra</a> 0.1.1, which includes an enumerator-based binding to the zlib library.</p>
+<p>The new wai-extra 0.1 series is designed to minimize external dependencies. I dropped the clientsession and methodoverride middlewares (I don't think they'll be missed), and drop dependencies on a few other packages. I believe the only non-Haskell Platform packages are now sendfile and wai, and clearly the latter has to stay in.</p>
+<p>As a future roadmap, I'm considering porting over the encoding functions in web-encodings and specializing them for datatypes in WAI. For example, decodeUrlPairs would only work on strict bytestrings, since that's how WAI provides the query string.</p>
+<h3>wai-handler-fastcgi</h3>
+<p>I originally wrote hack-handler-fastcgi as a port of the fastcgi package on Hackage, which in turn wraps the C library. I was very excited when Dan Knapp released <a href="http://hackage.haskell.org/package/direct-fastcgi">direct-fastcgi</a>, and recently I wrote <a href="http://hackage.haskell.org/package/wai-handler-fastcgi">a wrapper around it</a> that allows you to run your WAI applications with it. I'm using it in production with lighttpd for <a href="http://www.search-once.com/">my most recent client site</a>.</p>
+<p>One little annoyance: there's a debugging line that outputs "fromList []" for every request. I emailed Dan about this, and hopefully he'll remove it; in the meanwhile, for version 1.0.1.1, you can just remove line 1704 in Network/FastCGI.hs.</p>
+<h3>yaml</h3>
+<p>With some help from Anton Ageev, yaml, data-object-yaml and data-object-json all got a bit of an update, including some iteratee goodness. I won't repeat myself: <a href="http://www.haskell.org/pipermail/haskell-cafe/2010-May/077691.html">you can read the release announcement</a>.</p>
+<h3>failure et al</h3>
+<p>The <a href="http://hackage.haskell.org/package/failure">failure</a> package got bumped to 0.1.0. The only real change was renaming MonadFailure to Failure. This created a cascade of releases for control-monad-failure, attempt, safe-failure, control-monad-attempt, etc.</p>
+<p>This package makes failure handling very nice, I encourage people to look into it.</p>
+<h3>clientsession</h3>
+<p>And now a bit of a wart. I really didn't like having the Crypto dependency, since it takes forever to build all the tests, especially on a low-memory server. I e-mailed them a patch to make the tests optional, but it hasn't been applied. On top of that, I have a feeling that the AES implementation in Crypto is very inefficient, since it deals directly with lists of Word8s.</p>
+<p>I tried switching over to SimpleAES. In fact, I even released clientsession 0.3.0 based on SimpleAES. However, it seems there's some bug for 32-bit systems (my server again). I traced it down to something in assembly, at which point I gave up.</p>
+<p>My next step was to try pulling the AES code into the clientsession repo to avoid the test building, but that still runs very slowly.</p>
+<p>So I just wrote some code <a href="http://github.com/snoyberg/clientsession/tree/xor">in a separate branch</a> that uses incredibly fast XOR encryption. Combined with some compression to avoid frequency analysis, this may be enough, but I definitely want a more robust solution in place by release.</p>
+<h3>bloggy</h3>
+<p>And by popular demand, I've ported <a href="http://github.com/snoyberg/bloggy">bloggy</a> to Yesod 0.2. I personally don't think it's a great way to learn Yesod- I believe the tutorials give a better view without clouding the scene with data serialization issues- but for those who want it, it's available.</p>
+<h3>What's next</h3>
+<p>I won't even consider releasing Yesod until I can go a few days without making a breaking API change. I'm still finding minor things all over the place where a change is nice, and I'd rather have a solid release than an earlier one.</p>
+<p>Also, my next project is massively database-driven, so I'm already thinking hard about the next Yesod release. Here's the thoughts I've been tossing around, very much unpolished:</p>
+<ul><li>Define entities but not entity relationships. Allow entities to hold references to other entities (ie, keys). And the layer will use no joining at all.</li>
+<li>Create a Query datatype somehow, and values will be created using combinators like <code>filterBy someField myValue</code> or <code>sortBy someField</code>.</li>
+<li>Have some typeclass for converting a Query into various monads.</li>
+</ul>
+<p>As I said, very unpolished... and it's late... hopefully better stuff tomorrow.</p>

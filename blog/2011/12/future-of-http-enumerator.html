@@ -1,0 +1,15 @@
+<p>My coworker Yitz Gale told me that some people were getting worried about the future of http-enumerator now that conduits are on the scene. Let's try to clear the air on what's going to be happening with it.</p>
+<p>Firstly, I've already released http-conduit, which I <em>do</em> intend to be a replacement for http-enumerator. In fact, http-enumerator <em>itself</em> was one of the main motivations for creating conduits.</p>
+<ul><li>Due to enumerator's inability to safely allocate resources in an Iteratee, it's possible to leak sockets in some circumstances. This is an insurmountable problem with drastically changing the API.</li>
+<li>One of the goals of the API design in http-enumerator was to allow the creation of an HTTP proxy when paired up with WAI. Two people- separately- spent a lot of time trying to get this to work. It seems like at the end it might be possible, with some API changes, but conduits offer a much simpler approach.</li>
+</ul>
+<p>In other words, http-enumerator would need a breaking change to get it to work properly anyway. So instead of considering http-conduit as a totally separate package, unrelated to http-enumerator, think of it as http-enumerator 1.0. You'll need to change some of your code to get it to work with the &quot;new version,&quot; but that's always the case. The only reason it's getting a new name is because it would be a bit silly to call something using conduits http-enumerator. By contrast, WAI is switching to conduits as well, and is keeping the same name.</p>
+<p>But is this really a fair argument? After all, switching from enumerator to conduit in all your code is going to be very hard, right? Well, probably not:</p>
+<ul><li>If you're not using the enumerator functions (http and httpRedirect), the changes are incredibly minor, just a few updates to fix the leaking socket issue.</li>
+<li>If you <em>are</em> using the enumerator functions, but are not using enumerators pervasively throughout your code, you can likely just switch to an equivalent conduit function. conduit was designed to have a very similar API to enumerator, complete with matching operators and similar module names.</li>
+</ul>
+<p>That leaves one group: the people writing code using enumerator everywhere. Two things to say for that crowd:</p>
+<ul><li>http-enumerator isn't disappearing. It will still be available on Hackage, I'll continue putting in bug fixes for the next few months, and if someone wants to take over as maintainer, it will survive even longer.</li>
+<li>It may not be practical to just switch over to conduit immediately, but I urge everyone to at least consider it. Either you'll find that you like conduit more, or you'll have some valuable feedback on how to make conduit better. After all, the goal here is to advance the state of streaming I/O in Haskell.</li>
+</ul>
+<p>If people have questions about changes in http-conduit, or want some help migrating code, feel free to ask.</p>

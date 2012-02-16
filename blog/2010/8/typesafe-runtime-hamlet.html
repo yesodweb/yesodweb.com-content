@@ -1,0 +1,77 @@
+<h3>Current Hamlet inclusion options</h3>
+<p>I recently released <a href="http://hackage.haskell.org/package/hamlet-0.4.2">Hamlet version 0.4.2</a>, which added an often-requested feature: runtime Hamlet templates. This allows some really cool possibilities, such as using Hamlet templates in <a href="http://hackage.haskell.org/package/hakyll">Hakyll</a>. There are now three different ways to include a Hamlet template in your code; let's look at the options and their relatives strengths and weaknesses.</p>
+<ul><li>Quasi-quoted<ul><li>Advantages<ul><li>Fully type-checked at compile time.</li>
+            <li>Changing the template automatically forces a recompile.</li>
+            <li>Does as much work as possible at compile-time; faster runtime execution.</li>
+        </ul></li>
+        <li>Disadvantages<ul><li>Some people like to keep their templates and code separate.</li>
+            <li>The only way to see the result of a template change is a recompile- slows down development cycle.</li>
+        </ul></li>
+</ul></li>
+<li>Template Haskell external file<ul><li>Advantages<ul><li>Fully type-checked at compile time.</li>
+            <li>Does as much work as possible at compile-time; faster runtime execution.</li>
+            <li>Keeps templates and code separate.</li>
+        </ul></li>
+        <li>Disadvantages<ul><li>Changing the template <b>does not</b> automatically forces a recompile; you might see stale content if you're not careful.</li>
+            <li>The only way to see the result of a template change is a recompile- slows down development cycle.</li>
+        </ul></li>
+</ul></li>
+<li>Runtime templates<ul><li>Advantages<ul><li>Immediately see results of template changes, without a recompile.</li>
+            <li>Keeps templates and code separate.</li>
+        </ul></li>
+        <li>Disadvantages<ul><li>Not type-checked at all.</li>
+            <li>Parse errors only appear at runtime.</li>
+        </ul></li>
+</ul></li>
+</ul>
+<p>In addition, it's very difficult to get runtime templates to interact well with the first two options. In the case of Yesod, there is basically no machinery in place to help you out; you'll have to write it all yourself.</p>
+<h3>The Fourth Option</h3>
+<p>However, Hamlet 0.5 is going to include a fourth method which will have the following characteristics:</p>
+<ul><li>Advantages<ul><li>Fully type-checked at compile time.</li>
+    <li>Is code-wise identical to the external Template Haskell method.</li>
+    <li>You can view changes to your template without a recompile. If you have made changes the break the type-safety of your template, you will get an error message and be informed you must recompile.</li>
+    <li>You can use this method during testing and easily switch all of your code to the external TH version for production, thereby <b>avoiding all runtime costs</b>.</li>
+</ul></li>
+<li>Disadvantages<ul><li>Since you are avoiding a compilation step, sometimes you'll need to manually initiate a recompile.</li>
+    <li>Some of the more advanced Hamlet tricks available to quasi-quoted and TH templates are not available. This shouldn't affect most people.</li>
+</ul></li>
+</ul>
+<h3>Half runtime, half Template Haskell, and a little unsafe</h3>
+<p>Let's say that I have the simple Hamlet template <code>Hello $name$</code>. If we use either quasi-quoted or TH Hamlet, <code>name</code> will be converted into an <code>Exp</code> and will reference the variable in scope called <code>name</code>. If we use runtime Hamlet, we would need an appropriate <code>HamletData</code> value, something looking like <code>HDMap [("name", HDHtml $ string name)]</code>.</p>
+<p>Now let's say that we want to change that template to <code>Hello $name$!</code>. All I've done is added an exclamation point, so I <b>know</b> the type safety of the template has not been affected. Here are the results for the three inclusion options.</p>
+<dl><dt>Quasi-quoted</dt>
+<dd>Fully recompile the entire module containing the template.</dd>
+<dt>Template Haskell</dt>
+<dd>The change won't appear until you <i>manually</i> force the module to be recompiled.</dd>
+<dt>Runtime</dt>
+<dd>Change appears immediately without a recompile.</dd>
+</dl>
+<p>However, let's say that I change the template now to:</p>
+<pre><code>%ul
+    $forall names name
+        %li Hello $name$</code></pre>
+<p>I also immediately fix up my Haskell code so that instead of <code>name = "Michael"</code> I have <code>names = words "Michael Miriam Eliezer Gavriella"</code>. Now, the results are:</p>
+<dl><dt>Quasi-quoted</dt>
+<dd>Fully recompile the entire module containing the template.</dd>
+<dt>Template Haskell</dt>
+<dd>Fully recompile the entire module containing the template.</dd>
+<dt>Runtime</dt>
+<dd>Code won't compile until you <i>also</i> modify the HamletData value to something like <code>HDMap [("names", HDList $ map (HDHtml . string) names)]</code>.</dd>
+</dl>
+<p>So with options 1 and 2, we get an unnecessary recompile step in case 1. In case 2, we require Haskell code changes, so the recompile is unavoidable. However, it's much more tedious to make the code changes for option 3.  Also, let's say that we made the Haskell code change (name to names) <i>before</i> the template changes. Options 1 and 2 would give us a compile-time error message, while option 3 would only complain at runtime.</p>
+<p>What we really want is to have that <b>HamletData value constructed for us</b> by Hamlet, by reading the template file <b>at compile time</b>. However, we also want it to <b>read the template file at runtime</b> and apply the HamletData value to it. This is exactly what option 4 does.</p>
+<h3>How it works</h3>
+<p>There's a new function in Hamlet 0.5: hamletFileDebug. (Don't get attached to any names, I expect a lot of renamings before it's released.) It has an identical signature to hamletFile (the external Template Haskell version): <code>FilePath -&gt; Q Exp</code>. hamletFile pulls in the template from the given file at compile time, parses it and converts it into Haskell code that gets compiled. Template Haskell changes the <code>Q Exp</code> into a value <code>Hamlet url</code>.</p>
+<p>hamletFileDebug is slightly different. It also pulls in the template from the file at compile time and parses it. Next, it scans through the parsed template and finds all references to variables and how they are used. Using the example above, it would notice that the template refers to <code>name</code> and expects it to be a String. It then creates the appropriate <code>HamletData</code> value based on all these references.</p>
+<p>Like hamletFile, hamletFileDebug will also return a value of type <code>Hamlet url</code>. However, this value will in fact read the specified file <b>at runtime</b> and render it against the <code>HamletData</code> value each time. In order to achieve this, it has to use <code>unsafePerformIO</code>; since this is intended to enhance your development, and should not be used in production, I think it's a fair use.</p>
+<h3>How it plays out</h3>
+<p>So how does this interact with a normal Hamlet development workflow? Let's go back to the name to names example: if you change your Haskell code first, hamletFileDebug will get called again during your recompile and will inspect the template. It will notice that the <code>name</code> variable is no longer in scope, and you will get a compile-time error.</p>
+<p>On the other hand, if you change the Hamlet template file first, you'll end up with a runtime error. However, I think it's a fair trade-off: you're skipping a compile cycle here, so the <i>only</i> way to get an error message is at runtime.</p>
+<p>Looking at the exclamation mark example, no code changes are required, only template changes. In this case, your changes will become immediately visible.</p>
+<h3>Next steps</h3>
+<p>I'm very excited about how this change will affect my development cycle; it will make it much easier to play around with HTML changes to see the results. This also converges with some other work I've been doing: Stylish. I created <a href="http://github.com/snoyberg/stylish">a github repo for Stylish</a> a few days ago, which is meant to be Hamlet for CSS. It is based on the recently released blaze-builder, which will also be the core of blaze-html 0.2.</p>
+<p>Even though Yesod offers an <code>addStyle</code> function for including CSS declarations, I almost always use static CSS files for this purpose, simply because I can't afford to go through a whole compile cycle to test out changing the border from 2px to 3px. (I know about firebug, don't worry.) However, Hamlet 0.5 should hopefully solve this problem: by using the same technique of hamletFileDebug, I'll be able to test out style changes immediately.</p>
+<p>So now I'm announcing the inclusion of two more pieces in Hamlet 0.5: Camlet and Jamlet. They are to CSS and Javascript, respectively, what Hamlet is to HTML. Camlet is going to be what Stylish is right now: white-space sensitive CSS allowing you to embed variables from Haskell and nest CSS declarations. I think Jamlet will simply be a text pass-through for the moment, but may eventually support Javascript compression.</p>
+<p>By using these two libraries with Hamlet, you won't need to worry about deploying your static files separately. And here's the really cool feature I'm hoping to add to Yesod 0.5: caching. When you use addStyle in Yesod, it will concatenate all of the CSS declarations for a page together. It will then take a hash of that value, cache the value based on the hash, and send a <code>link</code> tag referencing that content via the hash. When that content is served, it will have an expiration date set long in the future; since the hash value will automatically change whenever you change the CSS, you won't need to worry about users getting stale CSS files. The same will be true for Javascript.</p>
+<p>This will also give you a number of minor benefits. For example, instead of hard-coding CSS names in your HTML, CSS and JavaScript separately, you could declare the name once in Haskell and reference that variable throughout. You'll be alerted <b>at compile time</b> if you've made a typo in a CSS class name. You're also guaranteed to have well-formed CSS files.</p>
+<p>I'm very excited about all of these changes, and hope to be making these releases soon. Let me know your thoughts on this earlier, rather than later, if possible. Along with the database migration additions, I think Yesod 0.5 is going to be a very fun release.</p>

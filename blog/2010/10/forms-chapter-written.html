@@ -1,0 +1,44 @@
+<p>Special service announcement: please fill out the <a href="https://spreadsheets.google.com/viewform?formkey=dG8tcVhBdzRSS1lkdVV6U281emtRMWc6MQ">Haskellers.com survey</a>. That is all ;).</p>
+<p>I just wanted to give a heads-up that the <a href="http://docs.yesodweb.com/book/forms/">forms chapter of the Yesod book</a> is up. This is still mostly un-proofread, but contains a good amount of information and should be enough to get you started on forms. I'd appreciate feedback on where it could be further clarified. (By the way, that goes for the other chapters as well.)</p>
+<h2 id="schr&#246;dingers-applicative-cat">Schrödinger's applicative cat</h2>
+<p>While going over this chapter with my wife, I was trying to figure out a good analogy for applicatives. I'm not sure if I just explained why <a href="http://byorgey.wordpress.com/2009/01/12/abstraction-intuition-and-the-monad-tutorial-fallacy/">monads are like burritos</a>, but it's cute enough to put up anyway.</p>
+<p>We all know about evil Mr. Schrödinger (is it Dr. Schrödinger?) who locked his cat in a bag with some poison. We're not sure if at any point in time the cat is alive or dead. (Hint: this is like a Maybe.) So in Haskell terms, we might have:</p>
+<pre><code>data Cat = Cat { pounds :: Int }
+data Bag a = Dead | Alive a
+</code></pre>
+<p>Now, we're not sadists here (besides locking cats up in their bags with poison), so we decide we would like to feed this perhaps-living cat. So we write up our little cat-feeding function:</p>
+<pre><code>data Mouse = Mouse
+feedCat :: Mouse -&gt; Cat -&gt; Cat
+feedCat Mouse (Cat oldWeight) = Cat $ oldWeight + 1
+</code></pre>
+<p>But time comes to feed the cat, and we realize that our cat lives in a bag! In other words, our cat (call him whiskers) is:</p>
+<pre><code>whiskers :: Bag Cat
+</code></pre>
+<p>We need some way to send the food into the bag. We'll call that intoBag:</p>
+<pre><code>intoBag :: (a -&gt; b) -&gt; Bag a -&gt; Bag b
+intoBag f Dead = Dead
+intoBag f (Alive a) = Alive $ f a
+</code></pre>
+<p>And now we can feed whiskers with:</p>
+<pre><code>intoBag (feedCat Mouse) whiskers
+</code></pre>
+<p>All is well and good, until we realize Mr. Schrödinger decided he wanted to put the mouse in a bag as well:</p>
+<pre><code>squeaker :: Bag Mouse
+</code></pre>
+<p>We try out intoBag function, and realize the only thing we can do is this:</p>
+<pre><code>intoBag feedCat squeaker :: Bag (Cat -&gt; Cat)
+</code></pre>
+<p>We need some way of feeding a mouse that may be alive to a cat that may be alive. Firstly, let's think about the outcome of these things:</p>
+<ul><li><p>If both the mouse and the cat are alive, then the cat can eat the mouse. The cat will then still be alive. (You can guess what happens to the mouse.)</p></li>
+<li><p>If the cat is dead, well, the cat's dead.</p></li>
+<li><p>If the mouse is dead, the cat doesn't have any food, so he dies too.</p></li>
+</ul>
+<p>Fairly gruesome. But we still haven't figured out a way to do this! Turns out we need a combineBags function:</p>
+<pre><code>combineBags :: Bag (a -&gt; b) -&gt; Bag a -&gt; Bag b
+combineBags (Alive f) (Alive a) = Alive $ f a
+combineBags _ _ = Dead
+</code></pre>
+<p>And then we can feed whiskers:</p>
+<pre><code>intoBag feedCat squeaker `combineBags` whiskers
+</code></pre>
+<p>Assuming, of course, he's still alive.</p>

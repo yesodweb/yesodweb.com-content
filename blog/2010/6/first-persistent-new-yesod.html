@@ -1,0 +1,18 @@
+<p>I'm happy to announce the first release of Persistent, and a new release of Yesod adding basic Persistent support.</p>
+<p>This release of Persistent includes backends for sqlite and postgresql. The former has no external library dependencies, as it includes the SQLite C library in the distribution. The latter is built on top of HDBC-postgresql. Please see <a href="http://docs.yesodweb.com/persistent/">the documentation site</a> for more details.</p>
+<p>Yesod 0.3.0 adds some rudimentary support for Persistent, most interestingly in the Yesod.Helpers.Crud module. With this addition, Yesod is now what I'd consider a "full featured web framework", providing Model, View and Controller functionality. However, not all features have been finalized. In particular, the Yesod.Formable module is highly subject to change, and will be merged together with the Yesod.Form module in upcoming releases.</p>
+<p>A fairly complete changelog for this release of Yesod:</p>
+<ul><li>Added the isAuthorized function to the Yesod typeclass for easing and centralizing authorization.</li>
+<li>Migration to Hamlet 0.3.1, which offers huge performance gains by being built on top of BlazeHtml.</li>
+<li>Migration to web-routes-quasi 0.4.0, allowing much more powerful subsites to be constructed.</li>
+<li>Yesod.Formable as a rudimentary formlets library. See below for where this is heading.</li>
+<li>ContentType is now simply a type synonym for String.</li>
+<li>Removed dependency on the convertible-text library.</li>
+<li>Converted the Handler monad to be a monad transformer stack using standard monads from the transformers library.</li>
+<li>Fixed a very stupid performance bug, result in a 10x speedup in the BigTable benchmark.</li>
+</ul>
+<h3>Future plans</h3>
+<p>I wanted to get this release of Yesod out quickly so that people could start playing around with Persistent immediately. However, as noted, some aspects are as yet unpolished. That's because I'm intending on adding a very significant feature in the next release: widgets.</p>
+<p>Let's give a very simple motivating example: web forms. Let's say you want a form that provides client-side validation and shows your error messages in red. Currently, you need to write your Yesod code to generate HTML, write Javascript separately, write the CSS separately, and explicitly link in the JS and CSS files.</p>
+<p>The widget concept is an attempt to combine all of that into a single place, within your Yesod code. For example, you'll be able to specify some Javascript validation code, and specify dependencies for that Javascript, such as jQuery. If you have other Javascript code on your page that depends on jQuery, jQuery will only be included once.</p>
+<p>This will hopefully encourage the creation of composable web components. This looks to me to be a very exciting direction for Yesod to take, and I look forward to sharing my progress on it in the future.</p>

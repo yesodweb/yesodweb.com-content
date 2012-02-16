@@ -1,0 +1,18 @@
+<p>One of the typical examples applications given by web frameworks is the blog: it shows basic CRUD operations, templating a dispatch- in other words, Model, View and Controller. The <a href="http://docs.yesodweb.com/yesod/tutorial/blog.html">current Yesod blog tutorial</a> includes no persistence support, so one of the goals of persistent is to make it possible to have a very light-weight blog tutorial.</p>
+<p>Well, it's not light-weight yet, but I've included the blog tutorial in <a href="http://github.com/snoyberg/persistent">the persistent repo</a>. And here's the really cool part: there's a <a href="http://github.com/snoyberg/persistent/blob/master/blog.hs">sqlite version</a> and <a href="http://github.com/snoyberg/persistent/blob/master/blog-redis.hs">a Redis version</a>!</p>
+<p>Redis support is far from complete (and I mean <b>far</b>), but I think this is a very nice proof-of-concept. And to my knowledge, this might make Yesod the first web framework to have support for the new generation of NoSQL, key-value datastores.</p>
+<h3>New high-level syntax</h3>
+<p>I've also scrapped the ugly YAML-based syntax that I'd cobbled together for something which, in my opinion, in much nicer. I'd appreciate feedback on it. The basic idea is:</p>
+<ul><li>Any non-indented line should contain the name of the table. Table name must be capitalized.</li>
+<li>All indented lines (ie, anything beginning with a space) are <i>attribute lines</i>, and are applied to the most recent table name.</li>
+<li>An attribute line beginning with a lowercase defines a column. The first word is the column name, the second is the datatype of the column, and the remaining words are attributes of the column. For example, <b>null</b> means the field is nullable, <b>Eq</b> means the field can be filtered by equality, etc.</li>
+<li>An attribute line beginning with an uppercase defines a unique key. The first word is the constructor name, and the following words are the column names in the unique key.</li>
+</ul>
+<p>Here's the definition taken straight from the blog example:</p>
+<pre><code>Entry
+    slug String
+    date Day Desc
+    title String
+    content HtmlContent
+    UniqueSlug slug</code></pre>
+<p>Here, we can sort in descending order by date, and the slug must be unique.</p>

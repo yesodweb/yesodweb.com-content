@@ -1,0 +1,326 @@
+<h1>Overview</h1>
+  <p class="hascomments" id="file795-overview-x1">One of the powerful, and sometimes confusing, features in Haskell is monad transformers. They
+   allow you to take different pieces of functionality- such as mutable state, error handling, or
+   logging- and compose them together easily. Though I swore I&#39;d never write a monad tutorial, I&#39;m
+   going to employ a painful analogy here: monads are like onions. (Monads are not like cakes.) By
+   that, I mean <i id="file795-overview-x2">layers</i>.</p>
+  <p class="hascomments" id="file795-overview-x3">We have the core monad- also known as the innermost or bottom monad. I&#39;ll likely use all forms
+   of terminology here. On top of this core, we add layers, each adding a new feature and spreading
+   outward/upward. As a motivating example, let&#39;s consider an Error monad stacked on top of the IO
+   monad:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">newtype</span> <span style="color: blue;">ErrorT</span> e m a = <span style="color: blue;">ErrorT</span> { runErrorT :: m (<span style="color: blue;">Either</span> e a) }
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">MyStack</span> = <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span>
+</pre></pre>Now
+   pay close attention here: ErrorT is just a simple newtype around an Either wrapped in a monad.
+   Getting rid of the newtype, we
+   have:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">ErrorTUnwrapped</span> e m a = m (<span style="color: blue;">Either</span> e a)
+</pre></pre></p>
+  <p class="hascomments" id="file795-overview-x6">At some point, we&#39;ll need to actually perform some IO inside our MyStack. If we went with the
+   unwrapped approach, it would be trivial, since there would be no ErrorT constructor in the way.
+   However, we need that newtype wrapper for a whole bunch of type reasons I won&#39;t go into here
+   (this isn&#39;t a monad transformer tutorial after all). So the solution is the MonadTrans
+   typeclass:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">class</span> <span style="color: blue;">MonadTrans</span> t <span style="color: green;font-weight: bold;">where</span>
+    lift :: <span style="color: blue;">Monad</span> m =&gt; m a -&gt; t m a
+</pre></pre>
+  <p class="hascomments" id="file795-overview-x8">I&#39;ll admit, the first time I saw that type signature, my response was stunned confusion, and
+   incredulity that it actually meant anything. But looking at an instance helps a
+   bit:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">instance</span> (<span style="color: blue;">Error</span> e) =&gt; <span style="color: blue;">MonadTrans</span> (<span style="color: blue;">ErrorT</span> e) <span style="color: green;font-weight: bold;">where</span>
+    lift m = <span style="color: blue;">ErrorT</span> $ <span style="color: green;font-weight: bold;">do</span>
+        a &lt;- m
+        return (<span style="color: blue;">Right</span> a)
+</pre></pre>All
+   we&#39;re doing is wrapping the inside of the IO with a Right value, and then applying our newtype
+   wrapper. This allows us to take an action that lives in IO, and &quot;lift&quot; it to the outer/upper
+   monad.</p>
+  <p class="hascomments" id="file795-overview-x10">But now to the point at hand. This works very well for simple functions. For example:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">sayHi</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">sayHi</span> = putStrLn <span style="color: green;">&quot;Hello&quot;</span>
+
+<span style="color: blue;font-weight: bold;">sayHiError</span> :: <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">sayHiError</span> = lift $ putStrLn <span style="color: green;">&quot;Hello&quot;</span>
+</pre></pre>
+  <p class="hascomments" id="file795-overview-x12">But let&#39;s take something slightly more complicated, like a callback:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">withMyFile</span> :: (<span style="color: blue;">Handle</span> -&gt; <span style="color: blue;">IO</span> a) -&gt; <span style="color: blue;">IO</span> a
+<span style="color: blue;font-weight: bold;">withMyFile</span> = withFile <span style="color: green;">&quot;test.txt&quot;</span> <span style="color: blue;">WriteMode</span>
+
+<span style="color: blue;font-weight: bold;">sayHi</span> :: <span style="color: blue;">Handle</span> -&gt; <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">sayHi</span> handle = hPutStrLn handle <span style="color: green;">&quot;Hi there&quot;</span>
+
+<span style="color: blue;font-weight: bold;">useMyFile</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">useMyFile</span> = withMyFile sayHi
+</pre></pre>
+  <p class="hascomments" id="file795-overview-x14">So far so good, right? Now let&#39;s say that we need a version of sayHi that has access to the
+   Error monad:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">sayHiError</span> :: <span style="color: blue;">Handle</span> -&gt; <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">sayHiError</span> handle = <span style="color: green;font-weight: bold;">do</span>
+    lift $ hPutStrLn handle <span style="color: green;">&quot;Hi there, error!&quot;</span>
+    throwError <span style="color: blue;">MyError</span>
+</pre></pre>
+  <p class="hascomments" id="file795-overview-x16">We would like to write a function that combines withmyFile and sayHiError. Unfortunately, GHC
+   doesn&#39;t like this very
+   much:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">useMyFileErrorBad</span> :: <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">useMyFileErrorBad</span> = withMyFile sayHiError
+
+    <span style="color: blue;">Couldn&#39;t</span> match expected <span style="color: green;font-weight: bold;">type</span> `<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ()&#39;
+                with actual <span style="color: green;font-weight: bold;">type</span> `<span style="color: blue;">IO</span> ()&#39;
+</pre></pre>Why
+   does this happen, and how can we work around it?</p>
+ <h1>Intuition</h1>
+  <p class="hascomments" id="file796-intuition-x1">Let&#39;s try and develop an external intuition of what&#39;s happening here. The ErrorT monad
+   transformer adds extra functionality to the IO monad. We&#39;ve defined a way to &quot;tack on&quot; that extra
+   functionality to normal IO actions: we add that Right constructor and wrap it all in ErrorT.
+   Wrapping in Right is our way of saying &quot;it went OK,&quot; there wasn&#39;t anything wrong with this
+   action.</p>
+  <p class="hascomments" id="file796-intuition-x2">Now this intuitively makes sense: since the IO monad doesn&#39;t have the concept of returning a
+   MyError when something goes wrong, it will always succeed in the lifting phase. (Note: This has
+    <b id="file796-intuition-x3">nothing</b> to do with runtime exceptions, don&#39;t even think about them.) What we have is a
+   guaranteed one-directional translation up the monad stack.</p>
+  <p class="hascomments" id="file796-intuition-x4">Let&#39;s take another example: the Reader monad. A Reader has access to some extra piece of data
+   floating around. Whatever is running in the inner monad doesn&#39;t know about that extra piece of
+   information. So how would you do a lift? You just ignore that extra information. The Writer
+   monad? Don&#39;t write anything. State? Don&#39;t change anything. I&#39;m seeing a pattern here.</p>
+  <p class="hascomments" id="file796-intuition-x5">But now let&#39;s try and go in the opposite direction: I have something in a Reader, and I&#39;d like
+   to run it in the base monad (e.g., IO). Well... that&#39;s not going to work, is it? I need that
+   extra piece of information, I&#39;m relying on it, and it&#39;s not there. There&#39;s simply no way to go in
+   the opposite direction without providing that extra value.</p>
+  <p class="hascomments" id="file796-intuition-x6">Or is there? If you remember, we&#39;d pointed out earlier that ErrorT is just a simple wrapper
+   around the inner monad. In other words, if I have <code id="file796-intuition-x7">errorValue :: ErrorT MyError IO
+    MyValue</code>, I can apply <code id="file796-intuition-x8">runErrorT</code> and get a value of type <code id="file796-intuition-x9">IO
+    (Either MyError MyValue)</code>. The looks quite a bit like bi-directional translation,
+   doesn&#39;t it?</p>
+  <p class="hascomments" id="file796-intuition-x10">Well, not quite. We originally had an <code id="file796-intuition-x11">ErrorT MyError IO</code> monad, with a value of
+   type <code id="file796-intuition-x12">MyValue</code>. Now we have a monad of type <code id="file796-intuition-x13">IO</code> with a value of
+   type <code id="file796-intuition-x14">Either MyError MyValue</code>. So this process has in fact changed the value,
+   while the lifting process leaves it the same.</p>
+  <p class="hascomments" id="file796-intuition-x15">But still, with a little fancy footwork we can unwrap the ErrorT, do some processing, and then
+   wrap it back up again.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">useMyFileError1</span> :: <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">useMyFileError1</span> =
+    <span style="color: green;font-weight: bold;">let</span> unwrapped :: <span style="color: blue;">Handle</span> -&gt; <span style="color: blue;">IO</span> (<span style="color: blue;">Either</span> <span style="color: blue;">MyError</span> ())
+        unwrapped handle = runErrorT $ sayHiError handle
+        applied :: <span style="color: blue;">IO</span> (<span style="color: blue;">Either</span> <span style="color: blue;">MyError</span> ())
+        applied = withMyFile unwrapped
+        rewrapped :: <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ()
+        rewrapped = <span style="color: blue;">ErrorT</span> applied
+     <span style="color: green;font-weight: bold;">in</span> rewrapped
+</pre></pre>
+  <p class="hascomments" id="file796-intuition-x17">This is the crucial point of this whole article, so look closely. We first unwrap our monad.
+   This means that, to the outside world, it&#39;s now just a plain old IO value. Internally, we&#39;ve
+   stored all the information from our ErrorT transformer. Now that we have a plain old IO, we can
+   easily pass it off to withMyFile. withMyFile takes in the internal state and passes it back out
+   unchanged. Finally, we wrap everything back up into our original ErrorT.</p>
+  <p class="hascomments" id="file796-intuition-x18">This is the entire pattern of monad-control: we embed the extra features of our monad
+   transformer inside the value. Once in the value, the type system ignores it and focuses on the
+   new outermost monad. When we&#39;re done playing around with that inner monad, we can pull our state
+   back out and reconstruct our original monad stack.</p>
+ <h1>Types</h1>
+  <p class="hascomments" id="file799-types-x1">I purposely started with the ErrorT transformer, as it is one of the simplest for this
+   inversion mechanism. Unfortunately, others are a bit more complicated. Take for instance ReaderT.
+   It is defined as <code id="file799-types-x2">newtype ReaderT r m a = ReaderT { runReaderT :: r -&gt; m a }</code>. If
+   we apply <code id="file799-types-x3">runReaderT</code> to it, we get a function that returns a monadic value. So
+   we&#39;re going to need some extra machinery to deal with all that stuff. And this is when we leave
+   Kansas behind.</p>
+  <p class="hascomments" id="file799-types-x4">There are a few approaches to solving these problems. In the past, I implemented a solution
+   using type families in the <a href="http://hackage.haskell.org/package/neither">neither</a> package. Anders Kaseorg implemented a much
+   more straight-forward solution in <a href="http://hackage.haskell.org/package/monad-peel">monad-peel</a>. And for efficiency, in
+    <a href="http://hackage.haskell.org/package/monad-control">monad-control</a>, Bas van Dijk uses CPS (continuation passing style) and
+   existential types.</p>
+  <p class="hascomments" id="file799-types-x8">The first type we&#39;re going to look at
+   is:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Run</span> t = forall n o b. (<span style="color: blue;">Monad</span> n, <span style="color: blue;">Monad</span> o, <span style="color: blue;">Monad</span> (t o)) =&gt; t n b -&gt; n (t o b)
+</pre></pre>That&#39;s
+   incredibly dense, let&#39;s talk it out. The only &quot;input&quot; datatype to this thing is t, a monad
+   transformer. A Run is a function that will then work with <b id="file799-types-x10">any</b> combination of types n, o
+   and b (that&#39;s what the forall means). n and o are both monads, while b is a simple value
+   contained by them.</p>
+  <p class="hascomments" id="file799-types-x11">The left hand side of the Run function, <code id="file799-types-x12">t n b</code>, is our monad transformer
+   wrapped around the n monad and holding a b value. So for example, that could be a <code id="file799-types-x13">MyTrans
+    FirstMonad MyValue</code>. It then returns a value with the transformer &quot;popped&quot; inside, with
+   a brand new monad at its core. In other words, <code id="file799-types-x14">FirstMonad (MyTrans NewMonad
+    MyValue)</code>.</p>
+  <p class="hascomments" id="file799-types-x15">That might sound pretty scary at first, but it actually isn&#39;t as foreign as you&#39;d think: this
+   is essentially what we did with ErrorT. We started with ErrorT on the outside, wrapping around
+   IO, and ended up with an IO by itself containing an Either. Well guess what: another way to
+   represent an Either is <code id="file799-types-x16">ErrorT MyError Identity</code>. So essentially, we pulled the IO
+   to the outside and plunked an Identity in its place. We&#39;re doing the same thing in a Run: pulling
+   the FirstMonad outside and replacing it with a NewMonad.<aside class="note" id="file799-types-x17">Now might be a good time to get a
+    beer.</aside></p>
+  <p class="hascomments" id="file799-types-x18">Alright, now we&#39;re getting somewhere. If we had access to one of those Run functions, we could
+   use it to peel off the ErrorT on our sayHiError function and pass it to withMyFile. With the
+   magic of undefined, we can play such a game:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">errorRun</span> :: <span style="color: blue;">Run</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span>)
+<span style="color: blue;font-weight: bold;">errorRun</span> = undefined
+
+<span style="color: blue;font-weight: bold;">useMyFileError2</span> :: <span style="color: blue;">IO</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">Identity</span> ())
+<span style="color: blue;font-weight: bold;">useMyFileError2</span> =
+    <span style="color: green;font-weight: bold;">let</span> afterRun :: <span style="color: blue;">Handle</span> -&gt; <span style="color: blue;">IO</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">Identity</span> ())
+        afterRun handle = errorRun $ sayHiError handle
+        applied :: <span style="color: blue;">IO</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">Identity</span> ())
+        applied = withMyFile afterRun
+     <span style="color: green;font-weight: bold;">in</span> applied
+</pre></pre>
+  <p class="hascomments" id="file799-types-x20">This looks eerily similar to our previous example. In fact, errorRun is acting almost
+   identically to runErrorT. However, we&#39;re still left with two problems: we don&#39;t know where to get
+   that errorRun value from, and we still need to restructure the original ErrorT after we&#39;re
+   done.</p>
+ <section .subtopic=""><h1>MonadTransControl</h1>
+  <p class="hascomments" id="file797-monadtranscontrol-x1">Obviously in the specific case we have before us, we could use our knowledge of the ErrorT
+   transformer to beat the types into submission and create our Run function manually. But what we
+    <i id="file797-monadtranscontrol-x2">really</i> want is a general solution for many transformers. At this point, you know we need
+   a typeclass.</p>
+  <p class="hascomments" id="file797-monadtranscontrol-x3">So let&#39;s review what we need: access to a Run function, and some way to restructure our
+   original transformer after the fact. And thus was born MonadTransControl, with its single method
+   liftControl:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">class</span> <span style="color: blue;">MonadTrans</span> t =&gt; <span style="color: blue;">MonadTransControl</span> t <span style="color: green;font-weight: bold;">where</span>
+    liftControl :: <span style="color: blue;">Monad</span> m =&gt; (<span style="color: blue;">Run</span> t -&gt; m a) -&gt; t m a
+</pre></pre>
+  <p class="hascomments" id="file797-monadtranscontrol-x5">Let&#39;s look at this closely. liftControl takes a function (the one we&#39;ll be writing). That
+   function is provided with a Run function, and must return a value in some monad (m). liftControl
+   will then take the result of that function and reinstate the original transformer on top of
+   everything.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">useMyFileError3</span> :: <span style="color: blue;">Monad</span> m =&gt; <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> m ())
+<span style="color: blue;font-weight: bold;">useMyFileError3</span> =
+    liftControl inside
+  <span style="color: green;font-weight: bold;">where</span>
+    inside :: <span style="color: blue;">Monad</span> m =&gt; <span style="color: blue;">Run</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span>) -&gt; <span style="color: blue;">IO</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> m ())
+    inside run = withMyFile $ helper run
+    helper :: <span style="color: blue;">Monad</span> m
+           =&gt; <span style="color: blue;">Run</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span>) -&gt; <span style="color: blue;">Handle</span> -&gt; <span style="color: blue;">IO</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> m ())
+    helper run handle = run (sayHiError handle :: <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ())
+</pre></pre>
+  <p class="hascomments" id="file797-monadtranscontrol-x7">Close, but not exactly what I had in mind. What&#39;s up with the double monads? Well, let&#39;s start
+   at the end: sayHiError handle returns a value of type <code id="file797-monadtranscontrol-x8">ErrorT MyError IO ()</code>. This
+   we knew already, no surprises. What might be a little surprising (it got me, at least) is the
+   next two steps.</p>
+  <p class="hascomments" id="file797-monadtranscontrol-x9">First we apply run to that value. Like we&#39;d discussed before, the result is that the IO inner
+   monad is popped to the outside, to be replaced by some arbitrary monad (represented by m here).
+   So we end up with an IO (ErrorT MyError m ()). Ok... We then get the same result after applying
+   withMyFile. Not surprising.</p>
+  <p class="hascomments" id="file797-monadtranscontrol-x10">The last step took me a long time to understand correctly. Remember how we said that we
+   reconstruct the original transformer? Well, so we do: by plopping it right on top of everything
+   else we have. So our end result is the previous type- <code id="file797-monadtranscontrol-x11">IO (ErrorT MyError m ())</code>-
+   with a <code id="file797-monadtranscontrol-x12">ErrorT MyError</code> stuck on the front.</p>
+  <p class="hascomments" id="file797-monadtranscontrol-x13">Well, that seems just about utterly worthless, right? Well, almost. But don&#39;t forget, that &quot;m&quot;
+   can be any monad, including IO. If we treat it that way, we get <code id="file797-monadtranscontrol-x14">ErrorT MyError IO (ErrorT
+    MyError IO ())</code>. That looks a lot like <code id="file797-monadtranscontrol-x15">m (m a)</code>, and we want just plain
+   old <code id="file797-monadtranscontrol-x16">m a</code>. Fortunately, now we&#39;re in
+   luck:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">useMyFileError4</span> :: <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">useMyFileError4</span> = join useMyFileError3
+</pre></pre>And
+   it turns out that this usage is so common, that Bas had mercy on us and defined a helper
+   function:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">control</span> :: (<span style="color: blue;">Monad</span> m, <span style="color: blue;">Monad</span> (t m), <span style="color: blue;">MonadTransControl</span> t)
+        =&gt; (<span style="color: blue;">Run</span> t -&gt; m (t m a)) -&gt; t m a
+<span style="color: blue;font-weight: bold;">control</span> = join . liftControl
+</pre></pre>So
+   all we need to write
+   is:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">useMyFileError5</span> :: <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">useMyFileError5</span> =
+    control inside
+  <span style="color: green;font-weight: bold;">where</span>
+    inside :: <span style="color: blue;">Monad</span> m =&gt; <span style="color: blue;">Run</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span>) -&gt; <span style="color: blue;">IO</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> m ())
+    inside run = withMyFile $ helper run
+    helper :: <span style="color: blue;">Monad</span> m
+           =&gt; <span style="color: blue;">Run</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span>) -&gt; <span style="color: blue;">Handle</span> -&gt; <span style="color: blue;">IO</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> m ())
+    helper run handle = run (sayHiError handle :: <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ())
+</pre></pre></p>
+  <p class="hascomments" id="file797-monadtranscontrol-x20">And just to make it a little
+   shorter:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">useMyFileError6</span> :: <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">useMyFileError6</span> = control $ \run -&gt; withMyFile $ run . sayHiError
+</pre></pre></p>
+ </section><section .subtopic=""><h1>MonadControlIO</h1>
+  <p class="hascomments" id="file798-monadcontrolio-x1">The MonadTrans class provides the lift method, which allows you to lift an action one level in
+   the stack. There is also the MonadIO class that provides liftIO, which lifts an IO action as far
+   in the stack as desired. We have the same breakdown in monad-control. But first, we need a
+   corrolary to
+   Run:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">RunInBase</span> m base = forall b. m b -&gt; base (m b)
+</pre></pre>Instead
+   of dealing with a transformer, we&#39;re dealing with two monads. base is the underlying monad, and m
+   is a stack built on top of it. RunInBase is a function that takes a value of the entire stack,
+   pops out that base, and puts in on the outside. Unlike in the Run type, we don&#39;t replace it with
+   an arbitrary monad, but with the original one. To use some more concrete types:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">RunInBase</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span>) <span style="color: blue;">IO</span> = forall b. <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> b -&gt; <span style="color: blue;">IO</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> b)
+</pre></pre>
+  <p class="hascomments" id="file798-monadcontrolio-x4">This should look fairly similar to what we&#39;ve been looking at so far, the only difference is
+   that we want to deal with a specific inner monad. Our MonadControlIO class is really just an
+   extension of MonadControlTrans using this RunInBase.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">class</span> <span style="color: blue;">MonadIO</span> m =&gt; <span style="color: blue;">MonadControlIO</span> m <span style="color: green;font-weight: bold;">where</span>
+    liftControlIO :: (<span style="color: blue;">RunInBase</span> m <span style="color: blue;">IO</span> -&gt; <span style="color: blue;">IO</span> a) -&gt; m a
+</pre></pre>
+  <p class="hascomments" id="file798-monadcontrolio-x6">Simply put, liftControlIO takes a function which receives a RunInBase. That RunInBase can be
+   used to strip down our monad to just an IO, and then liftControlIO builds everything back up
+   again. And like MonadControlTrans, it comes with a helper function</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">controlIO</span> :: <span style="color: blue;">MonadControlIO</span> m =&gt; (<span style="color: blue;">RunInBase</span> m <span style="color: blue;">IO</span> -&gt; <span style="color: blue;">IO</span> (m a)) -&gt; m a
+<span style="color: blue;font-weight: bold;">controlIO</span> = join . liftControlIO
+</pre></pre>
+  <p class="hascomments" id="file798-monadcontrolio-x8">We can easily rewrite our previous example with
+   it:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">useMyFileError7</span> :: <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">useMyFileError7</span> = controlIO $ \run -&gt; withMyFile $ run . sayHiError
+</pre></pre>And
+   as an advantage, it easily scales to multiple
+   transformers:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">sayHiCrazy</span> :: <span style="color: blue;">Handle</span> -&gt; <span style="color: blue;">ReaderT</span> <span style="color: blue;">Int</span> (<span style="color: blue;">StateT</span> <span style="color: blue;">Double</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span>)) ()
+<span style="color: blue;font-weight: bold;">sayHiCrazy</span> handle = liftIO $ hPutStrLn handle <span style="color: green;">&quot;Madness!&quot;</span>
+
+<span style="color: blue;font-weight: bold;">useMyFileCrazy</span> :: <span style="color: blue;">ReaderT</span> <span style="color: blue;">Int</span> (<span style="color: blue;">StateT</span> <span style="color: blue;">Double</span> (<span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span>)) ()
+<span style="color: blue;font-weight: bold;">useMyFileCrazy</span> = controlIO $ \run -&gt; withMyFile $ run . sayHiCrazy
+</pre></pre></p>
+ </section><h1>Real Life Examples</h1>
+  <p class="hascomments" id="file800-real-life-examples-x1">Let&#39;s solve some real-life problems with this code. Probably the biggest motivating use case is
+   exception handling in a transformer stack. For example, let&#39;s say that we want to automatically
+   run some cleanup code when an exception is thrown. If this were normal IO code, we&#39;d
+   use:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">onException</span> :: <span style="color: blue;">IO</span> a -&gt; <span style="color: blue;">IO</span> b -&gt; <span style="color: blue;">IO</span> a
+</pre></pre>But if we&#39;re
+   in the ErrorT monad, we can&#39;t pass in either the action or the cleanup. In comes controlIO to the
+   rescue:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">onExceptionError</span> :: <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> a
+                 -&gt; <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> b
+                 -&gt; <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> a
+<span style="color: blue;font-weight: bold;">onExceptionError</span> action after = controlIO $ \run -&gt;
+    run action `onException` run after
+</pre></pre></p>
+  <p class="hascomments" id="file800-real-life-examples-x4">Let&#39;s say we need to allocate some memory to store a Double in. In the IO monad, we could just
+   use the alloca function. Once again, our solution is
+   simple:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">allocaError</span> :: (<span style="color: blue;">Ptr</span> <span style="color: blue;">Double</span> -&gt; <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> b)
+            -&gt; <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> b
+<span style="color: blue;font-weight: bold;">allocaError</span> f = controlIO $ \run -&gt; alloca $ run . f
+</pre></pre></p>
+ <h1>Lost State</h1>
+  <p class="hascomments" id="file801-lost-state-x1">Let&#39;s rewind a bit to our onExceptionError. It uses onException under the surface, which has a
+   type signature: <code id="file801-lost-state-x2">IO a -&gt; IO b -&gt; IO a</code>. Let me ask you something: what happened to
+   the b in the output? Well, it was thoroughly ignored. But that seems to cause us a bit of a
+   problem. After all, we store on transformer state information in the value of the inner monad. If
+   we ignore it, we&#39;re essentially ignoring the monadic side effects as well!</p>
+  <p class="hascomments" id="file801-lost-state-x3">And the answer is that, yes, this does happen with monad-control. Certain functions will drop
+   some of the monadic side effects. This is put best by Bas, in the comments on the relevant
+    functions:<blockquote id="file801-lost-state-x4">Note, any monadic side effects in m of the &quot;release&quot; computation will be
+    discarded; it is run only for its side effects in IO.</blockquote>In practice, monad-control will
+   usually be doing the right thing for you, but you need to be aware that some side effects may be
+   disappearing.</p>
+ <h1>More Complicated Cases</h1>
+  <p class="hascomments" id="file802-more-complicated-cases-x1">In order to make our tricks work so far, we&#39;ve needed to have functions that give us full
+   access to play around with their values. Sometimes, this isn&#39;t the case. Take, for instance:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">addMVarFinalizer</span> :: <span style="color: blue;">MVar</span> a -&gt; <span style="color: blue;">IO</span> () -&gt; <span style="color: blue;">IO</span> ()
+</pre></pre>
+  <p class="hascomments" id="file802-more-complicated-cases-x3">In this case, we are required to have no value inside our finalizer function. Intuitively, the
+   first thing we should notice is that there will be no way to capture our monadic side effects. So
+   how do we get something like this to compile? Well, we need to explicitly tell it to drop all of
+   its state-holding
+   information:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">addMVarFinalizerError</span> :: <span style="color: blue;">MVar</span> a -&gt; <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> () -&gt; <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">addMVarFinalizerError</span> mvar f = controlIO $ \run -&gt;
+    return $ liftIO $ addMVarFinalizer mvar (run f &gt;&gt; return ())
+</pre></pre></p>
+  <p class="hascomments" id="file802-more-complicated-cases-x5">Another case from the same module
+   is:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">modifyMVar</span> :: <span style="color: blue;">MVar</span> a -&gt; (a -&gt; <span style="color: blue;">IO</span> (a, b)) -&gt; <span style="color: blue;">IO</span> b
+</pre></pre>Here,
+   we have a restriction on the return type in the second argument: it must be a tuple of the value
+   passed to that function and the final return value. Unfortunately, I can&#39;t see a way of writing a
+   little wrapper around modifyMVar to make it work for ErrorT. Instead, in this case, I copied the
+   definition of modifyMVar and modified it:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">modifyMVar</span> :: <span style="color: blue;">MVar</span> a
+           -&gt; (a -&gt; <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> (a, b))
+           -&gt; <span style="color: blue;">ErrorT</span> <span style="color: blue;">MyError</span> <span style="color: blue;">IO</span> b
+<span style="color: blue;font-weight: bold;">modifyMVar</span> m io =
+  <span style="color: blue;">Control.Exception.Control.</span>mask $ \restore -&gt; <span style="color: green;font-weight: bold;">do</span>
+    a      &lt;- liftIO $ takeMVar m
+    (a&#39;,b) &lt;- restore (io a) `onExceptionError` liftIO (putMVar m a)
+    liftIO $ putMVar m a&#39;
+    return b
+</pre></pre>
+ 

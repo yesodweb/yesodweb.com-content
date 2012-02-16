@@ -1,0 +1,41 @@
+<p>I had a pedantic moment I wanted to share with you all while working on web-routes-quasi. It should also serve as a nice introduction to this (not yet released) package.</p>
+<p>This package consists of essentially two components: a quasi-quoter which converts a simple syntax into a [Resource], and some template haskell code that generate a URL datatype, render, parse and dispatch functions based on this [Resource]. For now, we'll focus on just the parse function. It takes a [String] and returns either a URL (of the aforementioned datatype) or an error message; the error message is always "Invalid URL", so <b>nothing</b> truly interesting there.</p>
+<p>.... and yes, pun intended on nothing...</p>
+<p>Anyway, the template haskell code to generate the parse function basically runs through the list of Resources, generates a clause for each one, and then tacks on a catchall clause at the end to return the error message.</p>
+<h3>What went wrong</h3>
+<p>Well, there's one little corner case that I hadn't thought of. Let's say that we are writing an application where <i>every</i> route is valid. Then that catch-all clause will trigger an overlapping pattern warning. This seems rather benign for two reasons:</p>
+<ol><li>What web application says that every possible input is a valid route?</li>
+<li>You can always just disable the warning, or at least ignore it.</li>
+</ol>
+<p>However, I came up against a case that defeated both reasons:</p>
+<ol><li>I'm writing a subsite for Yesod which handles static file requests. In such a situation, <i>every</i> request is theoretically valid and must be checked against the filesystem.</li>
+<li>I'm pedantic, and hate all warnings.</li>
+</ol>
+<h3>The Goal</h3>
+<p>So the goal is simple: determine when a list of resources covers every possible request, and if so, simply omit the catch-all clause.</p>
+<p>This is where you get to see some web-routes-quasi internals. A Resource is defined as:</p>
+<pre><code>data Resource = Resource String [Piece] Handler
+data Piece = StaticPiece String
+           | StringPiece String
+           | IntPiece String
+           | SlurpPiece String
+data Handler = ByMethod [(String, String)]
+             | Single String
+             | SubSite String String String</code></pre>
+<p>The exact meanings of all of these constructors is well documented in the source code, so I will forgo it here. But basically, here's what's important for our purposes:</p>
+<ul><li>A slurp piece (which must be the last piece for a resource) collects <i>all</i> the remaining pieces in a request. A subsite does basically the same thing, passing all the remaining pieces to the subsite parser.</li>
+<li>A string piece matches any single path segment.</li>
+<li>Int piece matches only integral pieces; static piece matches a specific word. For purposes of determining completeness, any resource which includes a static or int piece must be thrown out. (Proof left as exercise to reader.)</li>
+</ul>
+<p>So how do we determine whether a resource list is complete?</p>
+<h3>My Algorithm</h3>
+<ul><li>Throw out resources with an int or static piece.</li>
+<li>Count up the number of string pieces in each resource.</li>
+<li>If the last piece is a slurp, or the handler is a subsite, consider this resource a "slurp resource".</li>
+<li>Find the minimum number of string pieces for a slurp resource. If there exist non-slurp resources with string piece counts number from 0 to the minimum count for slurp resources (exclusive), then the resources are complete. Otherwise, they are incomplete.</li>
+</ul>
+<h3>Homework</h3>
+<ol><li>Why does my algorithm work?</li>
+<li>I implemented it in 22 lines of code. It could easily be shorter; have fun! It's the areResourcesComplete function in Web.Routes.Quasi. Just make sure the test suite passes. (Unless someone finds a bug or makes the program clearer, I won't be including patches; this code need not be performant since it's run compile-time.)</li>
+<li>Is there a better algorithm?</li>
+</ol>

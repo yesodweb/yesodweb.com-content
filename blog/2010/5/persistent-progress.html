@@ -1,0 +1,71 @@
+<p>I just switched over a 2900-loc Yesod web application to use <a href="http://github.com/snoyberg/persistent/">persistent</a>, so I think now's a good time to give a bit of an update on the way things are going. For those interested, <a href="http://docs.yesodweb.com/haddock/persistent/">here's the most recent Haddocks</a>.</p>
+<h3>Status</h3>
+<p>Amazingly, persistent is fully usable right now for certain functionalities. There's a high-level interface for defining tables, Template Haskell code to generate SQLite code, and the Persist typeclass. You can try it now if you like, though be warned that it will be changing.</p>
+<h3>Nothing is NULL</h3>
+<p>Pop quiz: does the following code return all the rows in a table?</p>
+<pre><code>SELECT * FROM MyTable WHERE my_column=5
+UNION ALL
+SELECT * FROM MyTable WHERE my_column<>5</code></pre>
+<p>It seems like the answer should be yes, but in fact, it's no. That's because both <code>NULL=5</code> and <code>NULL<>5</code> evaluate to FALSE. Technically, they evaluate to NULL, which gets interpretted in a boolean context as FALSE, but it's irrelevant to our point.</p>
+<p>This makes it difficult to model a <code>Maybe</code> value as a nullable field. The solution isn't too difficult; if you want to filter for all rows where column my_column is equal to some Nothing value, you specify <code>IS NULL</code> instead of <code>=?</code> and binding the Nothing.</p>
+<p>However, when dealing with unique keys and the <a href="http://docs.yesodweb.com/haddock/persistent/Database-Persist.html#v%3AgetBy">getBy</a> function, it gets a bit more complicated. So for now, I have a simple compromise: <b>nullable columns cannot be included in unique keys</b>.</p>
+<h3>Less type classes</h3>
+<p>I've decided to backtrack a bit on my multi-type-class idea in the previous post. Instead, I'm having the TH code generate a single type class instance for each table.</p>
+<p>I've also decided to simplify the data families a bit. Here's the motiviation: I want to be able to have a <code>PersonId</code> datatype to go along with the <code>Person</code> table. The previous definition of <code>Key</code> was <code>data family Key value m</code>, where m is the monad for the backend we're dealing with (such as Sqlite).</p>
+<p>Unfortunately, that means the definition of PersonId because <code>type PersonId m = Key Person m</code>, which is really irritating. So instead, Key is now simply <code>data family Key value</code>.</p>
+<p>The upshot of this is that there can only be one instance for each value in scope at a time. However, this really makes perfect sense: the TH code generates the datatypes! So in order to switch backends, you'll need to change your TH deriving line.</p>
+<h3>YAML entity declarations</h3>
+<p>I'll be honest: I really don't like this solution, and find it ugly. However, it was the fastest thing to implement, and I needed something to work with immediately for my current project. Hopefully I can put some real thought into a better syntax later. In fact, I think an EDSL would be better here than quasi-quoted syntax.</p>
+<p>Here's an example that would declare two datatypes and create appropriate instances for the Sqlite3 backend.</p>
+<pre><code>persistSqlite3 [$persist|
+Author:
+    columns:
+        - name: name
+          type: String
+          order: [Asc] # can be sorted in ascending order
+        - name: tagline
+          type: String
+          nullable: True
+    uniques:
+        UniqueAuthorName: [name]
+Entry:
+    columns:
+        - name: author
+          type: AuthorId # this is declared automatically
+          filter: [Eq]   # you can select all entries by an author
+        - name: date
+          type: Day
+          order: [Asc, Desc]
+        - name: slug
+          type: String
+        - name: title
+          type: String
+        - name: content
+          type: HtmlContent
+    uniques:
+        UniqueDateSlug: [date, slug]
+|]</code></pre>
+<h3>Using HDBC... for now</h3>
+<p>To get started quickly, I'm using HDBC. The obvious advantages are:</p>
+<ul><li>Automatic support for all HDBC backends.</li>
+<li>No need to write against the FFI.</li>
+<li>Well tested library.</li>
+<li>SqlValue and Convertible are defined for us.</li>
+</ul>
+<p>The downsides are:</p>
+<ul><li>Even with automatic support for the backends, we still need to be careful of writing compliant SQL. For example, <code>INTEGER PRIMARY KEY</code> versus <code>INTEGER AUTO_INCREMENT</code> versus <code>SERIAL</code>.</li>
+<li>MySQL support is pretty spotty on HDBC if I'm not mistaken.</li>
+<li>It still doesn't help us with the non-SQL backends at all.</li>
+<li>We're probably incurring some some performance overhead.</li>
+<li>HDBC isn't very good at deterministic operation. It's difficult to tell when a statement will be finalized, and if you use the lazy I/O, there's <b>lots</b> of opportunities for bugs.</li>
+<li>It's not quite as bug-free as I'd like. Details available upon request.</li>
+<li>Ideally I'd like a PersistValue instead of SqlValue datatype that takes into account non-SQL backends.</li>
+<li>I don't like the design of Convertible: there's no distinction made between conversions which are guaranteed to succeed and those which might fail. This encourages errors ocurring in pure code. I <a href="http://hackage.haskell.org/package/convertible-text">proposed a different interface</a> to John, and he seemed interested at the time, but nothing has come of it since.</li>
+</ul>
+<p>I have a lot of experience with the Sqlite C API, and it's very easy to program against. I'm not so certain of MySQL and PostgreSQL, but frankly the hardest work in this project is the TH code, <i>not</i> the database code itself.</p>
+<p>Of course, if we stick with HDBC it will be easier for people to drop down to straight SQL queries when persistent is too constraining.</p>
+<h3>Next steps</h3>
+<p>It would be really nice to be able to automatically generate web forms from this tables, especially on my current project. This isn't very difficult in theory, I just have to figure it out.</p>
+<p>I'm not sure if for this first release I should focus more on a number of backends, or on perfecting a single one. If I do multiple backends, it might point out places where the API favors a certain backend too much, but I'd really like to get something working out there quickly so that Yesod can have a persistence layer already.</p>
+<p>And I still have to choose an enumerator interface for the select, filter and order functions. For those afraid of enumerators, I intend to offer a strict list variant as well. I'm tempted to join everyone else with the iteratee package... I'd appreciate community feedback on this one.</p>
+<p>If you want to get a better feel for this library, start by looking at <a href="http://docs.yesodweb.com/haddock/persistent/Database-Persist.html#t%3APersist">the Persist typeclass</a>. You can also look at <a href="http://github.com/snoyberg/persistent/blob/master/test3.hs">a simple test program</a>. Hopefully I'll put up a simple Yesod app that uses this soon.</p>

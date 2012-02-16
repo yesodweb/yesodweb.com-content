@@ -1,0 +1,55 @@
+<h1 id="happy-holidays">Happy Holidays!</h1>
+<p>As a present for all Yesod users we are pleased to announce the 0.9.4 release! This release features a fast production logger, improved configuration, a lot of package upgrades and bug fixes, and paves the way for a 1.0 release.</p>
+<h1 id="features">Features</h1>
+<h2 id="production-quality-logger---integration-with-kazu-yamamotos-fast-logger">production quality logger - integration with Kazu Yamamoto's fast-logger</h2>
+<p>In the 0.9 release we built a logging interface for Yesod. The logger code it uses to write the logs out is very simple and easy to understand. Since that release, Kazu Yamamoto released a really fast logger he has been using that we are very happy to upgrade to, appropriately named <a href="http://hackage.haskell.org/package/fast-logger">fast-logger</a>. Kazu has <a href="http://themonadreader.files.wordpress.com/2011/10/issue19.pdf">written about some details of the original design and shared some of his bench-marking</a>. This should be the fastest logger known to Haskell, and with it we implemented a production request logger. Previously there was just a development request logger focused entirely on convenience, without a thought to performance. One current limitation we will eventually improve is that the production logger doesn't log POST parameters, but the development logger still has that covered.</p>
+<p>Note that we output logs to stdout by default. We expect you to pipe to syslog or the logging tool of your choice (but you can supply a different handle if you like). This keeps Yesod out of the business of dealing with log files and lets you pick a much more robust solution.</p>
+<p>We still need to add the needed documentation to the logger. One nice feature that users may be unaware of is the ability to easily add file &amp; line number information to your logging statement by using the Template Haskell versions.</p>
+<pre><code>$(logDebug) &quot;This is a debug log message with file location information&quot;
+</code></pre>
+<h2 id="configurationscaffoldingdevel-changes">configuration/scaffolding/devel changes</h2>
+<p>Yesod generates scaffolding code for a few purposes - to do some boilerplate customization of your site based on some details that you provide, allow you to change functionality based on your application compilation flags, and also because we think you will likely want to change the scaffolding code (and it that is easier than dealing with complex configuration options). We have moved as much scaffolding code into the yesod-default package where it exists as real code as opposed to code templates in the scaffolding system . The scaffolding code now just references these default functions. This helps us maintain the code better, and will keep your boilerplate to a minimum. There is still nothing to stop you from overriding the default functions as you would have with scaffolding code, but you will probably want to copy the default function source code first.</p>
+<p>We now have several techniques for configuring Yesod * YAML configuration files * cabal flags (use -fdev for a development build) corresponding to CPP defines for compile-time settings - these work extremely well if you know exactly what you want * command line arguments (-p --port).</p>
+<p>By default the executable now <em>requires</em> an environment argument to prevent users from accidently using the wrong settings in production. Application configuration is different depending on the environment.</p>
+<p>The core per-environment application settings are now maintained in the following configuration structure.</p>
+<pre class="sourceCode"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">ConfigSettings</span> environment extra <span class="fu">=</span> <span class="dt">ConfigSettings</span> <br/>{<span class="ot">csEnv </span><span class="ot">::</span> environment <br/>,<span class="ot">csLoadExtra </span><span class="ot">::</span> <span class="dt">TextObject</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> extra <br/>,<span class="ot">csFile </span><span class="ot">::</span> environment <span class="ot">-&gt;</span> <span class="dt">IO</span> <span class="fu">FilePath</span> <br/>} </code></pre>
+<p>This is a type signature change in the release. Where you used to have just AppConfig, it should be changed to: AppConfig DefaultEnv ∅</p>
+<p>The <code>extra</code> parameter allows you to define a function that will load arbitrary data into your configuration.</p>
+<p>As another point of flexibility, &quot;yesod devel&quot; now takes an optional parameter giving it a file to be used as the &quot;dist/devel.hs&quot; to allow people who need it to control how their devel environment is launched.</p>
+<h2 id="upgrade-notes">Upgrade notes</h2>
+<p>Please see the above on the <em>mandatory</em> change to AppConfig. Another change to types is that you may need to add a type signature of <code>::Wiget</code> where you invoke widgetFile or otherwise create widgets.</p>
+<p>The below changes are not all required. We recognize that upgrading scaffolding code is painful, and this release continues to addresses that point by moving more functionality into configuration/default code in a way that will make future upgrades less painful. However, coming with us for that change does require you to undertake another effort to change your scaffolding generated code.</p>
+<p>We have changed the flag system: in the cabal file there are now <code>-flibrary-only</code> and <code>-fdev</code> flags instead of a <code>-fdevel</code> flag. These now set a <code>DEVELOPMENT</code> CPP define instead of PRODUCTION.</p>
+<p>When you upgrade to the latest Yesod, please note that the logger was moved to the scaffolding so that it can be switched on the #ifdef DEVELOPMENT flag. Please make sure your code looks like this in Application.hs to take advantage of logging:</p>
+<pre class="sourceCode"><code class="sourceCode haskell"><span class="kw">import</span> <span class="dt">Yesod.Logger</span> (<span class="dt">Logger</span>, logBS, flushLogger)<br/><span class="kw">import</span> <span class="dt">Network.Wai.Middleware.RequestLogger</span><br/><br/><span class="co">-- inside your with&lt;Site&gt; function where you would now invoke the defaultRunner function</span><br/>defaultRunner (f <span class="fu">.</span> logWare) h<br/><span class="kw">where</span><br/><span class="fu">#</span>ifdef <span class="dt">DEVELOPMENT</span><br/>logWare <span class="fu">=</span> logHandleDev (\msg <span class="ot">-&gt;</span> logBS logger msg &#187; flushLogger logger)<br/><span class="fu">#</span>else<br/>logWare <span class="fu">=</span> logStdout<br/><span class="fu">#</span>endif</code></pre>
+<p>For the rest of the upgrade, you may want to do a <code>yesod init</code> and take a look at how the current files are generated. One important change is we have defined an <code>Import</code> module that is a modified Prelude that you can add your frequently used functions to.</p>
+<p>Here is a diff of a <a href="https://github.com/Tarrasch/DtekPortalen/compare/25cdde332372dbd3d073ebf566d9a4f17bff24db...32c944e650">public site that just upgraded</a> There are a things in the diff that won't apply to you, but it should be fairly obvious.</p>
+<h2 id="more-changelog">More Changelog</h2>
+<ul><li>Yesod
+<ul><li><code>yesod version</code> now correctly uses the Cabal generated version</li>
+<li>RedirectTemporary now results in a 307 for HTTP 1.1 clients (still 302 for HTTP 1.0)</li>
+</ul></li>
+<li>Shakespeare/Hamlet
+<ul><li>Hamlet supports Haskell's case pattern match with <code>$case/$of</code></li>
+<li>use the less obscure <code>$doctype</code> instead of <code>!!!</code> to declare your doctype</li>
+<li>much of Yesod's i18n code is now moved into the shakespeare-i18n package so that non-Yesod hamlet users can benefit from i18n</li>
+<li>clearer error reporting when incorrect $tokens are used</li>
+</ul></li>
+<li>WAI
+<ul><li><a href="https://github.com/jargv/wai/commit/bef8a422f4e819d02f1b871759a57012d9387ccd">support for custom development actions, which is being used for automatic browser refresh</a> - something we look forward to better integrating in the development mode environment</li>
+<li>allow proxies to pass along the server field setting</li>
+<li>wai-websockets upgraded to websockets 0.4 library.</li>
+</ul></li>
+<li>authenticate - improved facebook integration</li>
+<li>monad-control - 0.3 (much improved) is now supported, and there is still support for 0.2 (which MongoDB users will be stuck on for a little bit longer).</li>
+<li>persistent - bug fixes for !=. against non-nullable SQL columns and empty FilterOr/FilterAnd filters</li>
+</ul>
+<h1 id="infrastructure-improvements">infrastructure improvements</h1>
+<p>A big thanks to Arash Rouhani, who got another build server up and running for us!</p>
+<p>We have revised the source installation scripts and instructions. Please speak up if you encounter any problems building Yesod from source. We are expecting dependency hell to be a very limited occurrence, particularly if you use virthualenv when building Yesod from source.</p>
+<h1 id="and-a-happy-new-year">And a Happy New Year!</h1>
+<p>2012 is going to be a great year for Haskell! The official GHC 7.4 release will be out soon, which features some amazing new features. Much of the Yesod code base already compiles under the first 7.4 release candidates, so we will likely have 7.4 support soon after the official release.</p>
+<p>We think we are ready for our 1.0 milestone. Almost all of the 1.0 features we laid out have now been implemented. One of the biggest aspects we wanted for 1.0 was API stability, and there are few disruptive API changes we want to make for the 1.0 release.</p>
+<p>The biggest change we are planning on making is switching to <a href="http://www.yesodweb.com/blog/2011/12/conduits">conduits</a> from enumerators. Although we expect that most of our users will not notice a difference, for anyone that has integrated with enumerator functionality, this will mean changes, although most changes should not be difficult.</p>
+<p>Given that conduits could use more time to stabilize, we are planning on a 0.10 release very soon that will have all of the other API changes we want to make, and possibly the switch to conduits. Then we will be ready for the 1.0.</p>
+<p>Please upgrade and get your feedback in. We are now starting the API changes for the 0.10 branch. For 0.10 you can look forward to a significant upgrade to a more modular and featureful Persistent. However, the new Persistent should require few, if any changes to your Persistent code.</p>

@@ -1,0 +1,72 @@
+
+  <p class="hascomments">Let&#39;s say you&#39;re writing a webserver. You want the server to take a port to listen on, and an
+   application to run. So you create the following function:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">run</span> :: <span style="color: blue;">Int</span> -&gt; <span style="color: blue;">Application</span> -&gt; <span style="color: blue;">IO</span> ()
+</pre></pre>
+  <p class="hascomments">But suddenly you realize that some people will want to customize their timeout durations. So
+   you modify your API:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">run</span> :: <span style="color: blue;">Int</span> -&gt; <span style="color: blue;">Int</span> -&gt; <span style="color: blue;">Application</span> -&gt; <span style="color: blue;">IO</span> ()
+</pre></pre>
+  <p class="hascomments">So, which <code>Int</code> is the timeout, and which is the port? Well, you could create
+   some type aliases, or comment your code. But there&#39;s another problem creeping into our code: this
+    <code>run</code> function is getting unmanageable. Soon we&#39;ll need to take an extra
+   parameter to indicate how exceptions should be handled, and then another one to control which
+   host to bind to, and so on.</p>
+  <p class="hascomments">So a more extensible solution is to introduce a settings datatype:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Settings</span> = <span style="color: blue;">Settings</span>
+    { settingsPort :: <span style="color: blue;">Int</span>
+    , settingsHost :: <span style="color: blue;">String</span>
+    , settingsTimeout :: <span style="color: blue;">Int</span>
+    }
+</pre></pre>
+  <p class="hascomments">And this makes the calling code almost self-documenting:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">run</span> <span style="color: blue;">Settings</span>
+    { settingsPort = <span style="color: teal;">8080</span>
+    , settingsHost = <span style="color: green;">&quot;127.0.0.1&quot;</span>
+    , settingsTimeout = <span style="color: teal;">30</span>
+    } myApp
+</pre></pre>
+  <p class="hascomments">Great, couldn&#39;t be clearer, right? True, but what happens when you have 50 settings to your
+   webserver. Do you really want to have to specify all of those each time? Of course not. So
+   instead, the webserver should provide a set of defaults:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">defaultSettings</span> = <span style="color: blue;">Settings</span> <span style="color: teal;">3000</span> <span style="color: green;">&quot;127.0.0.1&quot;</span> <span style="color: teal;">30</span>
+</pre></pre>
+  <p class="hascomments">And now, instead of needing to write that long bit of code above, we can get away with:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">run</span> defaultSettings { settingsPort = <span style="color: teal;">8080</span> } myApp <span style="color: gray;">-- (1)</span>
+</pre></pre>
+  <p class="hascomments">This is great, except for one minor hitch. Let&#39;s say we now decide to add an extra record to
+    <code>Settings</code>. Any code out in the wild looking like
+   this:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">run</span> (<span style="color: blue;">Settings</span> <span style="color: teal;">8080</span> <span style="color: green;">&quot;127.0.0.1&quot;</span> <span style="color: teal;">30</span>) myApp <span style="color: gray;">-- (2)</span>
+</pre></pre>will
+   be broken, since the <code>Settings</code> constructor now takes 4 arguments. The proper
+   thing to do would be to bump the major version number so that dependent packages don&#39;t get
+   broken. But having to change major versions for every minor setting you add is a nuisance. The
+   solution? Don&#39;t export the <code>Settings</code> constructor:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">module</span> <span style="color: blue;">MyServer</span>
+    ( <span style="color: blue;">Settings</span>
+    , settingsPort
+    , settingsHost
+    , settingsTimeout
+    , run
+    , defaultSettings
+    ) <span style="color: green;font-weight: bold;">where</span>
+</pre></pre>
+  <p class="hascomments">With this approach, no one can write code like (2), so you can freely add new records without
+   any fear of code breaking.</p>
+  <p class="hascomments">The one downside of this approach is that it&#39;s not immediately obvious from the Haddocks that
+   you can actually change the settings via record syntax. That&#39;s the point of this chapter: to give
+   everyone using this approach a page to link to that will explain to users what&#39;s going on.</p>
+  <p class="hascomments">I personally use this technique in a few places, feel free to have a look at the Haddocks to
+   see what I mean.</p>
+  <ul id="file1448-conceptId-ul_iih_pve_wd"><li>Warp: <a href="http://hackage.haskell.org/packages/archive/warp/latest/doc/html/Network-Wai-Handler-Warp.html#t:Settings">Settings</a></li>
+   <li>http-conduit: <a href="http://hackage.haskell.org/packages/archive/http-conduit/latest/doc/html/Network-HTTP-Conduit.html#t:Request">Request</a> and
+     <a href="http://hackage.haskell.org/packages/archive/http-conduit/latest/doc/html/Network-HTTP-Conduit.html#t:ManagerSettings">ManagerSettings</a></li>
+   <li>xml-conduit<ul id="file1448-conceptId-ul_hbz_xve_wd"><li>Parsing: <a href="http://hackage.haskell.org/packages/archive/xml-conduit/latest/doc/html/Text-XML-Stream-Parse.html#t:ParseSettings">ParseSettings</a></li>
+     <li>Rendering: <a href="http://hackage.haskell.org/packages/archive/xml-conduit/latest/doc/html/Text-XML-Stream-Render.html#t:RenderSettings">RenderSettings</a></li>
+    </ul></li>
+  </ul>
+  <p class="hascomments">As a tangential issue, <code>http-conduit</code> and <code>xml-conduit</code> actually
+   create instances of the <a href="http://hackage.haskell.org/packages/archive/data-default/latest/doc/html/Data-Default.html#t:Default">Default</a> typeclass instead of
+   declaring a brand new identifier. This means you can just type <code>def</code> instead of
+    <code>defaultParserSettings</code>.</p>
+ 

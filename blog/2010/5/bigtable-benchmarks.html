@@ -1,0 +1,30 @@
+<h3>Executive Overview</h3>
+<p>If you want the gist of it without the details:</p>
+<ul><li>Haskell CGI is very fast.</li>
+<li>There are some major performance problems in both the fastcgi and direct-fastcgi packages.</li>
+<li>hack-handler-fastcgi performs well, giving hope that we can have something similar for WAI.</li>
+<li>Happstack performs very well on large loads, Snap has some room for improvement.</li>
+<li>Yesod performs fairly well on CGI, but hopefully will benefit from speed improvements in wai-handler-fastcgi in the future.</li>
+</ul>
+<h3>Introduction</h3>
+<p>For the record, this has nothing to do with Google's database system. This is a benchmark for outputting a large amount of HTML. In particular, a table with 1000 rows, each with 50 columns, and each cell having the number of the column.</p>
+<p>Normally, the benchmark just uses 10 columns, but I'm using 50 because (1) it's cooler and (2) the Snap Framework benchmark used 50 columns, and that's what got this whole ball rolling.</p>
+<p>The main point of this post is to give insight into performance tradeoffs with different choices in Haskell, and in particular shed light on the best ways to serve Yesod applications.</p>
+<h3>Baseline</h3>
+<p>Let's start off by establishing some baseline results. I'll be running all tests- except for standalone servers- with lighttpd on a quad-core Ubuntu Lucid box with 4 GB of RAM. All tests are being run against localhost. I'm also using the Apache benchmarking tool (ab); it's not quite as precise as httperf, so please keep in mind a certain margin of error when looking at these numbers. All of the code for these benchmarks is <a href="http://github.com/snoyberg/benchmarks/">available on github</a>.</p>
+<p>Anyway, the fastest result will obviously be serving a static file. The result for that was 2100+ requests/second. Graphing that number would just screw up the scale for the other results, so I've left it out.</p>
+<p>For our purposes, we'll start by comparing raw CGI output. By raw, I mean simply printing to stdout without using a package. There are six different results in this benchmark: C, Perl, Python are obvious. There are then three versions of the Haskell benchmark for bytestrings, text and strings. Here's the graph, higher numbers are better.</p>
+<img src="/static/benchmarks/bigtable/rawcgi.png"><p>The perl and python numbers aren't surprising; they need to be intrepretted for each pass. It's also not surprising that the string version is slower than bytestring. What <i>is</i> surprising is that text is slower than string! This will require more research, as it will have a major impact on Yesod, which uses text quite a bit through the Hamlet library.</p>
+<p>Next, let's compare the performance of a few different CGI packages in Haskell.</p>
+<img src="/static/benchmarks/bigtable/cgipackages.png"><p>Don't let the scale of the graph throw you off; these results are nearly identical to each other. This is comforting: the raw bytestring performance was fairly close to C performance, and the packages are keeping pace. Of course, CGI is not the optimal deployment method for a framework like Yesod, since there is so much initialization, so let's move onto FastCGI.</p>
+<img src="/static/benchmarks/bigtable/fastcgi.png"><p>This is where things start getting depressing. The C library is performing incredibly well, and yet none of the Haskell libraries can keep up. WAI is merely a wrapper around direct-fastcgi, so that result isn't surprising. direct-fastcgi is a pure Haskell implementation of the FastCGI protocol; given its relative immaturity, it's not surprising that it hasn't been optimized yet.</p>
+<p>What <i>is</i> shocking is how slow the fastcgi package is, especially since it's just wrapping around a C library. Considering the fact that FastCGI is really my main method for deploying Yesod right now, I was very concerned. I decided on an off chance to try out hack-handler-fastcgi, and amazingly, it performed very well. I did a very quick conversion to make that package work with WAI, revealing much better results:</p>
+<img src="/static/benchmarks/bigtable/fastcgi2.png"><p>There's obviously room for improvement, but at least we're in the right ballpark. This code is not yet released on Hackage; I want to clean it up a bit more first, but it will almost certainly be replacing the current version of wai-handler-fastcgi.</p>
+<h3>Standalone servers</h3>
+<p>I ran two different versions of the Snap benchmark: one from their repository, and a more optimized version that I wrote. I do this to point something out: it is very easy with the Snap API to write very poorly performing code, since you can unwittingly build up a large amount of data in memory.</p>
+<p>Even so, the Snap results are much less than expected. I was in touch with Gregory Collins about this, and he found one performance bug almost immediately that gave the numbers a 40% boost. Moral of the story: Snap has a lot of potential, but it's still very young.</p>
+<img src="/static/benchmarks/bigtable/standalone.png"><h3>And finally, Yesod</h3>
+<p>I've done a very good job of <i>not</i> talking at all about Yesod yet. That's because the results for Yesod are very much tied in with the above results. I'm sad to say that, today, there is no truly performant base upon which to run Yesod. That doesn't mean you can't use Yesod; I'm running it in production settings without too much difficulty. It just means that I have my work cut out for me.</p>
+<p>In addition to the server-side issues, Yesod itself has not been optimized at all, so there's probably plenty of room for improvement in the core library itself.</p>
+<p>Due to Yesod's initialisation process, the CGI results are noticeably slower than raw CGI, though not the slowest benchmark we've seen today. fastcgi is still suffering from the direct-fastcgi package, and simpleserver is suffering from its own problems (after all, it was never intended to be given a load like this).</p>
+<img src="/static/benchmarks/bigtable/yesod.png">

@@ -1,0 +1,47 @@
+<p>Web development in Haskell is still virgin territory. Haskell is always capable of trying to copy what other languages do, but Yesod has blazed many new trails in the pursuit of finding the right way for <em>Haskell</em>. Yesod is a web framework plus 3 other projects: WAI, Shakespeare/Hamlet, and Persistent. When we go over this list, we start to realize that the strenght of Yesod lies in these 3 other projects and how they are easily integrated into Yesod.</p>
+<h2 id="wai">WAI</h2>
+<ul><li>Right
+<ul><li>backend independence (cgi, Warp, whatever comes next).</li>
+<li>Share huge amounts of code between applications and frameworks at the middleware and backend layers</li>
+<li>Overall this is a no-brainer to anyone experienced with using a similar concept in other programming language, and almost every programming language is converging on a similar standard concept.</li>
+<li>Enumerators have the right performance characteristics</li>
+</ul></li>
+<li>Wrong?
+<ul><li>Maybe a better version of enumerators will appear in the future.</li>
+</ul></li>
+</ul>
+<h2 id="shakespearehamlet">Shakespeare/Hamlet</h2>
+<ul><li>Right
+<ul><li>compile-time safety</li>
+<li>no extra variable mapping steps required</li>
+<li>automatic variable conversion based on type</li>
+<li>Hamlet's DRY HTML, specifically indentation to signify closing tags</li>
+</ul></li>
+<li>Wrong?
+<ul><li>currently no dependency tracking, but I patched GHC for that, and our development server handles it</li>
+<li>How to put code into a template? Hamlet supports a minimal set of Haskell (we could call it logic-less), but others want the full power of Haskell in their templates.</li>
+</ul></li>
+</ul>
+<h2 id="persistent-database-interface">Persistent Database interface</h2>
+<ul><li>Right
+<ul><li>easy data serialization</li>
+<li>easy basic query language</li>
+</ul></li>
+<li>Wrong?
+<ul><li>Haskell records have namespace collisions</li>
+<li>Query language is not truly universal and cannot satisfy many use cases</li>
+</ul></li>
+</ul>
+<h2 id="yesod">Yesod</h2>
+<ul><li>Right
+<ul><li>routing - <a href="http://www.yesodweb.com/blog/2011/10/code-generation-conversation">Discussed in the last blog post</a></li>
+<li>declarative, succinct, and easy to use</li>
+<li>easy type-safe URLs</li>
+<li>widgets - bind HTML, CSS, and Javascript together</li>
+</ul></li>
+<li>Wrong?
+<ul><li>?</li>
+</ul></li>
+</ul>
+<p>The funny thing is we really have no idea if we actually got the web framework right. Routing is only a small part of a web framework. In Yesod using templates is safe and DRY, WAI gives you flexibility, and data serializes easily to the database. There is really only one (very broadly speaking) style we can think of for compile-time templates or a WAI. But there are a lot of ways to change how a web framework operates. Widgets are definitely great, but I wouldn't be suprised if there is even a more powerful way to achieve the same result. The nice thing is that anyone else can try to build a better web framework by re-using what Yesod got right. And we have already seen new frameworks appear that leverage WAI and re-use yesod packages.</p>
+<p>We are always thinking about how to make things better, and we appreciate all the constructive feedback we get, and those that start extending Yesod. Thinking about what Persistent got right, and watching some developments in the community is going to lead to some changes to Persistent that should be announced soon. Hopefully we will then have all 3 ancillary projects right and can then focus more on the web framework itself.</p>

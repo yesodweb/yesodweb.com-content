@@ -1,0 +1,128 @@
+<h1>Motivation</h1>
+  <p class="hascomments" id="file847-motivation-x1">We&#39;re about ready for the Yesod 0.9 release candidate, and we&#39;re trying to polish all the rough
+   edges. Greg and I have been trying to get feedback on what&#39;s still missing and what could be done
+   better. Luite Stegeman did a good job <a href="http://groups.google.com/group/yesodweb/browse_thread/thread/47cd8e311e1e50e1">pointing out some shortcomings</a> in the yesod-form package.
+   I&#39;ve made some major changes, some not directly related to his comments.</p>
+  <p class="hascomments" id="file847-motivation-x3">Let&#39;s start off by identifying the issues we needed to solve.</p>
+  <ul id="file847-motivation-ul_lpu_nlo_ed"><li id="file847-motivation-x4">No direct way to do validations like &quot;a number between 1 and 10&quot;. It was possible, just not
+    easy.</li>
+   <li id="file847-motivation-x5">No way at all to perform monadic validations (is this username taken? is this date in the
+    past?).</li>
+   <li id="file847-motivation-x6">To support i18n, we have the concept of message types. However, it hasn&#39;t been possible to
+    mix different types for the most part.</li>
+   <li id="file847-motivation-x7">Type signatures very quickly become unwieldy.</li>
+  </ul>
+ <h1>SomeMessage</h1>
+  <p class="hascomments" id="file848-somemessage-x1">A quick review of i18n in Yesod: we have a typeclass called <code id="file848-somemessage-x2">RenderMessage</code>
+   defined
+   as<pre class="codeblock" id="file848-somemessage-x3">class RenderMessage master message where
+    renderMessage :: master
+                  -&gt; [Text] -- ^ languages
+                  -&gt; message
+                  -&gt; Text</pre>This
+   lets each application (distinguished by the master datatype) have its own sets of translations.
+   Within yesod-form, we would end up with a msg type variable in a few places, such as for error
+   messages from a field parser. And yesod-form defines a datatype <code id="file848-somemessage-x4">FormMessage</code>
+   which it uses for all its messages.</p>
+  <p class="hascomments" id="file848-somemessage-x5">But let&#39;s say we want to have an integer field for numbers between 1 and 10. There are two
+   things that can go wrong:<ul id="file848-somemessage-ul_tji_wmo_ed"><li id="file848-somemessage-x6">the user could submit a non-integer. For this we want to use the built-in error message from
+     yesod-form of type FormMessage</li>
+    <li id="file848-somemessage-x7">the user could enter an integer outside the range. Here we would want to use the application
+     specific message type.</li>
+   </ul></p>
+  <p class="hascomments" id="file848-somemessage-x8">The question is how do we combine two different datatypes together. The answer:
+   existentials.<pre class="codeblock" id="file848-somemessage-x9">data SomeMessage master = forall msg. RenderMessage master msg =&gt; SomeMessage msg</pre>We
+   now have a datatype that represents any message that can be translated for our application. By
+   using this datatype in place of a msg type variable, we get to both achieve our primary goal and
+   make our type signatures a bit shorter.</p>
+ <h1>Less General Types</h1>
+  <p class="hascomments" id="file849-less-general-types-x1">Once we are in the swing of cleaning up our type signatures, let&#39;s go for the gold. yesod-form
+   was originally designed based on formlets, which uses very general type signatures. formlets
+   doesn&#39;t specify how the html should be stored or in what monad the form should run. Instead,
+   those are all given as type parameters. And up until now, yesod-form has done the same thing.</p>
+  <p class="hascomments" id="file849-less-general-types-x2">However, this doesn&#39;t really make much sense for Yesod, where we know the user will be
+   representing their view as Widgets and running in the Handler monad. So instead of leaving these
+   to type parameters, we&#39;ve now fixed them in the types themselves. Now the types in yesod-form
+   match up much more closely with the rest of the Yesod framework, taking parameters for the
+   subsite, master site, and the contained value.</p>
+  <p class="hascomments" id="file849-less-general-types-x3">Hopefully this will make the library easier to use and make compiler error messages
+   clearer.</p>
+ <h1>Monadic field parser</h1>
+  <p class="hascomments" id="file850-monadic-field-parser-x1">Now with that maintenance overhead out of the way, we can start to focus on Luite&#39;s issues
+   directly. Let&#39;s start by looking at the definition of the fieldParse record in a Field from a few
+   days ago:<pre class="codeblock" id="file850-monadic-field-parser-x2">[Text] -&gt; Either msg (Maybe a)</pre>Fairly simple: take a list of
+   parameters (remember, multiple values can be submitted for each field, like with multi-select
+   fields) and either return an error message, Nothing if the input is missing, or the parsed value
+   on success. (Missing input may or may not be an error, depending on if the field is required or
+   optional.)</p>
+  <p class="hascomments" id="file850-monadic-field-parser-x3">Now what we want is an easy way to add extra restriction onto that &quot;a&quot;. Let&#39;s take our number
+   example from before. An intField from yesod-form would have a fieldParse looking like
+    <code id="file850-monadic-field-parser-x4">[Text] -&gt; Either FormMessage (Maybe Int)</code>. We now want to tack on some code that
+   can logically be expressed
+   as:<pre class="codeblock" id="file850-monadic-field-parser-x5">data MyAppMessage = BelowOne | AboveTen
+withinRange :: Int -&gt; Either MyAppMessage Int
+withRange i
+    | i &lt; 1 = Left BelowOne
+    | i &gt; 10 = Left AboveTen
+    | otherwise = Right i</pre>All
+   we need is a way to attach our withinRange to our fieldParse.</p>
+  <p class="hascomments" id="file850-monadic-field-parser-x6">The first thing to point out is that our SomeMessage trick from earlier is absolutely necessary
+   at this point. Without it, we would be forced to either include every possible error message in
+   FormMessage, or redefine our built-in fields to use our custom error message type. Instead, we
+   can now wrap up the error messages in a SomeMessage constructor and easily compose these two
+   functions.</p>
+  <p class="hascomments" id="file850-monadic-field-parser-x7">But let&#39;s take the slightly more complicated case: a non-pure validator. There is no provision
+   in fieldParse for monadic side effects. The solution for this is actually very simple: wrap the
+   return in a
+   monad:<pre class="codeblock" id="file850-monadic-field-parser-x8">data Field sub master a = Field
+    { fieldParse :: [Text] -&gt; GGHandler sub master IO (Either (SomeMessage master) (Maybe a))
+    , fieldView :: ...
+    }</pre></p>
+  <p class="hascomments" id="file850-monadic-field-parser-x9">For our built-in fields the only change necessary is an added return.</p>
+ <h1>The check functions</h1>
+  <p class="hascomments" id="file851-the-check-functions-x1">Now that the structure has been corrected, furnishing is easy. At this point, I&#39;ll let the code
+   speak for itself:</p>
+  <pre class="codeblock" id="file851-the-check-functions-x2">check :: RenderMessage master msg
+      =&gt; (a -&gt; Either msg a) -&gt; Field sub master a -&gt; Field sub master a
+check f = checkM $ return . f
+
+-- | Return the given error message if the predicate is false.
+checkBool :: RenderMessage master msg
+          =&gt; (a -&gt; Bool) -&gt; msg -&gt; Field sub master a -&gt; Field sub master a
+checkBool b s = check $ \x -&gt; if b x then Right x else Left s
+
+checkM :: RenderMessage master msg
+       =&gt; (a -&gt; GGHandler sub master IO (Either msg a))
+       -&gt; Field sub master a
+       -&gt; Field sub master a
+checkM f field = field
+    { fieldParse = \ts -&gt; do
+        e1 &lt;- fieldParse field ts
+        case e1 of
+            Left msg -&gt; return $ Left msg
+            Right Nothing -&gt; return $ Right Nothing
+            Right (Just a) -&gt; fmap (either (Left . SomeMessage) (Right . Just)) $ f a
+    }</pre>
+  <p class="hascomments" id="file851-the-check-functions-x3">And just to motivate this a bit more, the use code from the <a href="https://github.com/yesodweb/yesod/blob/master/yesod-form/hello-forms.hs">hello-forms.hs sample</a>. Note that this code simply uses Text values for
+   its validation messages. If you&#39;re not concerned with i18n, this is always an option in your
+   applications.</p>
+  <pre class="codeblock" id="file851-the-check-functions-x5">myValidForm = runFormGet $ renderTable $ pure (,,)
+    &lt;*&gt; areq (check (\x -&gt;
+            if T.length x &lt; 3
+                then Left (&quot;Need at least 3 letters&quot; :: Text)
+                else Right x
+              ) textField)
+            &quot;Name&quot; Nothing
+    &lt;*&gt; areq (checkBool (&gt;= 18) (&quot;Must be 18 or older&quot; :: Text) intField)
+            &quot;Age&quot; Nothing
+    &lt;*&gt; areq (checkM inPast dayField) &quot;Anniversary&quot; Nothing
+  where
+    inPast x = do
+        now &lt;- liftIO getCurrentTime
+        return $ if utctDay now &lt; x
+                    then Left (&quot;Need a date in the past&quot; :: Text)
+                    else Right x</pre>
+  <aside class="note" id="file851-the-check-functions-x6">The type signatures on the strings are necessary due to our usage of OverloadedStrings. It
+   would be nice if GHC had some defaulting rules when it gets confused, but that&#39;s not the case
+   yet.</aside>
+ 

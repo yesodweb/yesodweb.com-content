@@ -1,0 +1,19 @@
+<p>I'm very happy to announce the newest release of Persistent. Version 0.7 is now on Hackage, and supports three major changes:</p>
+<ul><li>The typeclass hierarchy has been split up into <code>PersistStore</code> and <code>PersistQuery</code>. This means that it should be much easier to add backends for data stores like Redis. (Thanks to Greg Weber for this.)</li>
+<li>There's a much more convenient raw SQL interface with automated data marshaling. (Thanks to Felipe Lessa for this.)</li>
+<li>The <code>EntityDef</code> and Template Haskell code has been drastically cleaned up and simplified. This makes it easier to add new features as separate TH components, and fixes a number of bugs related to automated migrations with field renames. (I'll take credit here.)</li>
+</ul>
+<p>Persistent 0.7 will be used in the upcoming Yesod 0.10... Speaking of which, Yesod 0.10 is now officially in beta! I strongly encourage all users to give this a test drive. Greg has put together a <a href="http://www.yesodweb.com/wiki/0.10_upgrade">0.10 upgrade guide</a>, and we'll likely have a blog post giving the typical &quot;here's how I upgraded Haskellers.com.&quot;</p>
+<p>We'll go into the exciting new features of Yesod 0.10 in the actual release announcement, but for testing purposes, there hasn't been a significant number of changes. This release was mostly focused on API cleanup. Remember: the goal is to turn Yesod 0.10 into 1.0!</p>
+<p>The only feature we still plan to add before the official release is merging in <a href="https://github.com/nubis/yesod">Nubis's test branch</a>. This is a really nice set of features, not only adding easy, high-level testing to the scaffolding, but in general making the scaffolding a more user-friendly site. Thank you Nubis!</p>
+<p>In order to install the beta, you can either install from Github or from the Yesod Yackage site. To install from Github:</p>
+<ol style="list-style-type: decimal"><li><code>cabal update</code></li>
+<li><code>git clone https://github.com/yesodweb/yesod</code></li>
+<li><code>cd yesod</code></li>
+<li><code>git submodule update --init</code></li>
+<li><code>./scripts/install</code></li>
+</ol>
+<p>To install from Yackage, add the following line to your <code>~/.cabal/config</code> file:</p>
+<pre><code>remote-repo: yesodweb-yackage:http://yackage.yesodweb.com/
+</code></pre>
+<p>And then run <code>cabal update &amp;&amp; cabal install yesod</code>.</p>

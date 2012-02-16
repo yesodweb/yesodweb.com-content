@@ -1,0 +1,36 @@
+<p>I just scratched a whole bunch of itches at once. I've been wanting to integrate formlets with Yesod, I've wanted Django-style generics, and somehow combining form generation with model definitions.</p>
+<p>Well, the generics could be a little more generic, and I'm not sold 100% on formlets, but there's some definite progress. I also want to discuss some future directions for Hamlet.</p>
+<h3>Type-based form definitions</h3>
+<p>A major driving force behind the persistent package is having the types define a lot of characteristics. For example: in Django, you would define a string field and then specify that you want it to be non-empty (non-null? I don't remember their terminology). I believe the equivalent functionality for persistent should be through types. So, we would have a <code>newtype NonEmptyString = NonEmptyString String</code>. Then, the <code>Persistable</code> instance can do any validation that it wants.</p>
+<p>By having all of these specifications in the type, we can easily extend this to deal with fields. Let's have a typeclass:</p>
+<pre><code>class Fieldable a where
+    fieldable :: String -> Formlet (Hamlet url IO ()) m a</code></pre>
+<p>Then when we define the <code>NonEmptyString</code> instance, we have it verify that strings aren't empty. (If you're wondering, that first String argument is simply for defining the label of the field.) Then we'll have another class:</p>
+<pre><code>class Formable a where
+    formable :: Formlet (Hamlet url IO ()) m a</code></pre>
+<p>And we can automatically generate Formable instances (via template haskell) for any datatype that is fully made up of Fieldable instances.</p>
+<p>Taking it a step further: if we also have a <code>Persist</code> instance for this datatype, then we can automatically create, read, update and delete these types. By having a Fieldable instance, we can ask the user for input on the data. And voila! we have a generic CRUD system.</p>
+<p>The code in question is <a href="http://github.com/snoyberg/persistent/blob/master/blog.hs">available on github</a>. I'd like to eventually turn CRUD into its own subsite, but I believe the subsite system will need a little more work to make this happen. Looks like a good project for Yesod 0.3.0.</p>
+<h3>Access Control Lists</h3>
+<p>In the project I'm contracting on right now, I'm going to need to implement permissions management. I'm considering a very simple extension to yesod to allow this:</p>
+<pre><code>data PermissionResult = Permitted | RequiredAuthentication | NotAuthorized String
+
+-- in the Yesod typeclass
+authenticateRoute :: y -> Maybe (Routes y)
+authenticateRoute _ = Nothing
+isPermitted :: Routes y -> Handler y PermissionResult
+isPermitted _ = return Permitted</code></pre>
+<p>What's really cool about this approach is:</p>
+<ul><li>You can completely separate the authorization logic from the rest of the application.</li>
+<li>You can't accidently forget to specify the settings for a route.</li>
+<li>Before showing the user a link, you can call isPermitted yourself and decide if they should see it.</li>
+</ul>
+
+<h3>Hamlet modifications</h3>
+<p>The first one I'm considering is migrating away from the text package. I think it's massively slowing down hamlet (based on my bigtable benchmarks). Instead, I think Hamlet will work on UTF8-encoded bytestrings. Additionally, we can do a lot of the UTF8-encoding of strings at compile-time instead of runtime, hopefully speeding things up more. And if someone <i>really</i> wants a different encoding, they can re-encode the bytestrings.</p>
+<p>I'm also considering removing interleaved IO support. There's three main reasons for this:</p>
+<ul><li>Most reasons for interleaved IO are not a good idea anyway. For example, it's probably best <i>not</i> to interleave database calls, as that will hog a database connection longer than is necessary.</li>
+<li>It adds a lot of complexity to the system. Based on some profiling, I believe the enumerators in particular are giving serious slow-downs versus pure, lazy lists.</li>
+<li>The Hamlet datatype could be greatly simplified from a Monad to... well, maybe all the way to <code>(url -> String) -> Lazy.ByteString</code>. I'd probably keep a newtype wrapper, and allow some instances like <code>Monoid</code>.</li>
+</ul>
+<p>Please let me know if anyone is relying on any of the Hamlet features I'm considering removing.</p>

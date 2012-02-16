@@ -1,0 +1,87 @@
+<h1>Introduction</h1>  <p class="hascomments" id="file826-introduction-x1">My wife (Miriam Snoyman) has been wanting to make a recipe site for a while now. Instead of me
+   just writing it for her, she decided she would take this chance to learn a bit more about web
+   programming. She has done some programming in the past, and has knowledge of HTML/CSS (no
+   Javascript). She&#39;s also never done any Haskell.</p>
+  <p class="hascomments" id="file826-introduction-x2">So being the brave sport she is, she agreed to let me blog about this little adventure. I&#39;m
+   hoping that this helps out some newcomers to Yesod and/or Haskell get their feet wet.</p>
+  <p class="hascomments" id="file826-introduction-x3">Given that our schedule is quite erratic and dependent on both kids agreeing to be asleep, I
+   don&#39;t know how often we will be doing these sessions, or how long they&#39;ll last each time.</p>
+ <h1>Getting Started</h1>  <aside class="note" id="file827-getting-started-x1">We already have a full Haskell/Yesod environment set up on our system, so I don&#39;t cover that
+   here. For more information, see the <a href="http://www.yesodweb.com/page/five-minutes">Yesod in Five Minutes</a> page.</aside>
+  <p class="hascomments" id="file827-getting-started-x3">The first step is using the yesod executable to generate a scaffolded site. The scaffolded site
+   is a &quot;template&quot; site and sets up the file/folder structure in the preferred way. A few other
+   optimizations like static file serving. It gives you a site that supports databases and logins.
+   Start with <code id="file827-getting-started-x4">yesod init</code>.</p>
+  <p class="hascomments" id="file827-getting-started-x5">Some of these questions (like name) are for the cabal file. Other questions (database) actually
+   change the scaffolded site.</p>
+  <p class="hascomments" id="file827-getting-started-x6">The &quot;Foundation&quot; is the central datatype of a Yesod application. It&#39;s used for a few different
+   things:</p>
+  <ul id="file827-getting-started-ul_1b2fdc73-f77e-4bcb-b40d-780ab953c20d"><li id="file827-getting-started-x7">It can contain information that needs to be loaded at the start of your application and used
+    throughout. For example, database connection.</li>
+   <li id="file827-getting-started-x8">A central concept in Yesod is a URL datatype. This datatype is related to your foundation via
+    a type family, aka associated types.</li>
+  </ul>
+  <aside class="note" id="file827-getting-started-x9">A datatype in Haskell has one or more constructors. Each constructor has zero or more fields
+   that contain data. In this case, the foundation will always have one constructor. We&#39;ll see more
+   about datatypes later.</aside>
+  <p class="hascomments" id="file827-getting-started-x10">The foundation is often times the same as the project name, starting with a capital letter.</p>
+  <p class="hascomments" id="file827-getting-started-x11">Once you have your folder, you want to build it. Run <code id="file827-getting-started-x12">cabal configure</code> and
+    <code id="file827-getting-started-x13">yesod build</code>. We use &quot;yesod build&quot; instead of &quot;cabal build&quot; because it does
+   dependency checking for us on template files. You should now have an executable named
+   &quot;dist/build/&lt;your app&gt;/&lt;your app&gt;&quot;. Go ahead and run it.</p>
+  <p class="hascomments" id="file827-getting-started-x14">If you used PostgreSQL, you&#39;ll get an error about not having an account. We need to create it.
+   To see how it&#39;s trying to log in, look in config/Settings.hs. A few notes:<ul id="file827-getting-started-ul_20e843e4-dee0-425c-ae89-0f18a097e283"><li id="file827-getting-started-x15">Top of file defines language extensions.</li>
+    <li id="file827-getting-started-x16">Haskell project is broken up into modules. The &quot;module Settings (...) where&quot; line defines
+     the &quot;export list&quot;, what the module provides to the outside world.</li>
+    <li id="file827-getting-started-x17">Then the import statements pull code in to be used here. &quot;qualified&quot; means don&#39;t import all
+     the content of the module into the current namespace. &quot;as H&quot; gives a shortcut as you can type
+     &quot;Text.Hamlet.renderHtml&quot; as &quot;H.renderHtml&quot;.</li>
+    <li id="file827-getting-started-x18">Note that there&#39;s a difference between things starting with uppercase and lowercase. The
+     former is data types and constructors. The latter is functions and variables.</li>
+    <li id="file827-getting-started-x19">#ifdef PRODUCTION allows us to use the same codebase for testing and production and just
+     change a few settings.</li>
+   </ul></p>
+  <p class="hascomments" id="file827-getting-started-x20">connStr contains our database information. We need to create a user and database in
+   PostgreSQL.</p>
+  <pre class="codeblock" id="file827-getting-started-x21">sudo -u postgres psql
+&gt; CREATE USER recipes password &#39;recipes&#39;;
+&gt; CREATE DATABASE recipes_debug OWNER recipes;
+&gt; \q</pre>
+  <p class="hascomments" id="file827-getting-started-x22">Now try running your app again. It should automatically create the necessary tables. Open up
+   the app in your browser: http://localhost:3000/. You should see a &quot;Hello&quot; and &quot;Added from
+   JavaScript&quot;.</p>
+ <h1>Entities/Models</h1>
+  <p class="hascomments" id="file828-entitiesmodels-x1">We store everything in the database via models. There is one datatype per table. There is one
+   block in the models file per entity. The models definition file is &quot;config/models&quot;. By default,
+   we have &quot;User&quot; and &quot;Email&quot;, which are used for authentication. This file is whitespace sensitive.
+   A new block is not indented at all.</p>
+  <p class="hascomments" id="file828-entitiesmodels-x2">An entity is a datatype, so it needs a capital letter. It makes more sense to use singular
+   nouns. Fields are all lowercase. First give a field name, and then a datatype. Some basic
+   datatypes are &quot;Text&quot; and &quot;Int&quot;. If you want something to be optional, you put a &quot;Maybe&quot; after the
+   datatype.</p>
+  <p class="hascomments" id="file828-entitiesmodels-x3">We work off of SQL&#39;s relational approach to datatypes. Instead of having a &quot;recipe&quot; with a list
+   of &quot;ingredients&quot;, we will have a recipe, and each ingredient will know which recipe it belongs
+   to. (The reason for this is outside our scope right now.) This kind of a relationship is called a
+   one-to-many: each recipe can have many ingredients, and each ingredient belongs to a single
+   recipe. In code:</p>
+  <pre class="codeblock" id="file828-entitiesmodels-x4">Recipe
+    title Text
+    desc Text Maybe
+Ingredient
+    recipe RecipeId
+    name Text
+    quantity Double
+    unit Text</pre>
+  <p class="hascomments" id="file828-entitiesmodels-x5">You can think of RecipeId as a pointer to an actual recipe, instead of actually holding the
+   recipe itself.</p>
+  <p class="hascomments" id="file828-entitiesmodels-x6">We can always come back and make modifications later. Persistent migrations will automatically
+   update the table definitions when possible. If it&#39;s not possible to automatically update, it will
+   give you an explanation why.</p>
+  <aside class="note" id="file828-entitiesmodels-x7">Ideally we don&#39;t want users typing in arbitrary units, we want to give them a specific list
+   of options. To achieve something like that in Haskell, we would use a datatype with multiple
+   constructors, such
+   as:<pre class="codeblock" id="file828-entitiesmodels-x8">data Unit = Ounces | Pounds | Kilos | Grams | FluidOunces | Liters</pre>In
+   C/C++/Java, this is known as an enumeration. But in Haskell, we get a whole bunch of cool type
+   safety stuff. We&#39;ll see later how to easily switch our models definition to use such a
+   datatype.</aside>
+ 

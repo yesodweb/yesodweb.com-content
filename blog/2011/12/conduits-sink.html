@@ -1,0 +1,322 @@
+<h1>Conduits released!</h1>
+  <p class="hascomments">Since the last blog post, I&#39;ve uploaded the conduit packages to Hackage so that everyone can
+   play along at home. Obviously, this code is very new, and user feedback is highly appreciated. In
+   the same vein, it&#39;s entirely possible that there will be changes to the API. That said, a huge
+   amount of code has already been migrated over to conduit (besides the packages below, all of WAI,
+   http-conduit, and a number of XML libraries have been ported), so I feel pretty confident that
+   things are mostly stable.</p>
+  <p class="hascomments">The code is split into a few different pacakges:</p>
+  <dl><dt><a href="http://hackage.haskell.org/package/conduit">conduit</a></dt>
+    <dd>Base package, including the Resource transformer.</dd>
+   
+   
+    <dt><a href="http://hackage.haskell.org/package/attoparsec-conduit">attoparsec-conduit</a></dt>
+    <dd>Turn <a href="http://hackage.haskell.org/package/attoparsec">attoparsec</a> parsers into Sinks.</dd>
+   
+   
+    <dt><a href="http://hackage.haskell.org/package/blaze-builder-conduit">blaze-builder-conduit</a></dt>
+    <dd>Convert a stream of Builders into a stream of ByteStrings.</dd>
+   
+   
+    <dt><a href="http://hackage.haskell.org/package/filesystem-conduit">filesystem-conduit</a></dt>
+    <dd>Traverse folders, and convenience adapters for the <a href="http://hackage.haskell.org/package/system-filepath">system-filepath</a>
+     package.</dd>
+   
+   
+    <dt><a href="http://hackage.haskell.org/package/zlib-conduit">zlib-conduit</a></dt>
+    <dd>Compress and decompress streams of bytes.</dd>
+   
+  </dl>
+ <h1>Quick Review</h1>
+  <p class="hascomments">This is part 3 in the conduits series. The first two parts were:</p>
+  <ol id="file1697-conceptId-ul_tgt_jaz_se"><li><a href="http://www.yesodweb.com/blog/2011/12/resourcet">The Resource monad transformers</a></li>
+   <li><a href="http://www.yesodweb.com/blog/2011/12/conduits">Conduits- an overview, and in-depth coverage of sources</a></li>
+  </ol>
+  <p class="hascomments">To give a basic overview: you use <code>runResourceT</code> to run a Resource block, which
+   ensures all allocated resources are freed. The conduit package always lives inside a Resource
+   block, which ensures that resources are freed. Sources produce data, sinks consume data, and
+   conduits transform data. You can fuse conduits into sources, into sinks, or with other conduits.
+   And finally, you can connect a source to a sink to produce a result.</p>
+  <p class="hascomments">That should be enough information to cover this post, though reading the previous posts- and
+   especially the second one- is highly recommended.</p>
+ <h1>Sinks</h1>
+  <p class="hascomments">A sink consumes a stream of data, and produces a result. A sink must always produce a result,
+   and must always produce a single result. This is encoded in the types themselves.</p>
+  <p class="hascomments">There is a <code>Monad</code> instance for sink, making it simple to compose multiple sinks
+   together into a larger sink. You can also use the built-in sink functions to perform most of your
+   work. Like sources, you&#39;ll rarely need to dive into the inner workings. Let&#39;s start off with an
+   example: getting lines from a stream of <code>Char</code>s (we&#39;ll assume Unix line endings
+   for simplicity).</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Conduit.List</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">CL</span>
+
+<span style="color: gray;">-- Get a single line from the stream.</span>
+<span style="color: blue;font-weight: bold;">sinkLine</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Sink</span> <span style="color: blue;">Char</span> m <span style="color: blue;">String</span>
+<span style="color: blue;font-weight: bold;">sinkLine</span> = sinkState
+    id <span style="color: gray;">-- initial state, nothing at the beginning of the line</span>
+    push
+    close
+  <span style="color: green;font-weight: bold;">where</span>
+    <span style="color: gray;">-- On a new line, return the contents up until here</span>
+    push front <span style="color: red;">&#39;\n&#39;</span> =
+        return $ <span style="color: blue;">StateDone</span> <span style="color: blue;">Nothing</span> $ front []
+
+    <span style="color: gray;">-- Just another character, add it to the front and keep going</span>
+    push front char =
+        return $ <span style="color: blue;">StateProcessing</span> $ front . (char:)
+
+    <span style="color: gray;">-- Got an EOF before hitting a newline, just give what we have so far</span>
+    close front = return $ front []
+
+<span style="color: gray;">-- Get all the lines from the stream, until we hit a blank line or EOF.</span>
+<span style="color: blue;font-weight: bold;">sinkLines</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Sink</span> <span style="color: blue;">Char</span> m [<span style="color: blue;">String</span>]
+<span style="color: blue;font-weight: bold;">sinkLines</span> = <span style="color: green;font-weight: bold;">do</span>
+    line &lt;- sinkLine
+    <span style="color: green;font-weight: bold;">if</span> null line
+        <span style="color: green;font-weight: bold;">then</span> return []
+        <span style="color: green;font-weight: bold;">else</span> <span style="color: green;font-weight: bold;">do</span>
+            lines &lt;- sinkLines
+            return $ line : lines
+
+<span style="color: blue;font-weight: bold;">content</span> :: <span style="color: blue;">String</span>
+<span style="color: blue;font-weight: bold;">content</span> = unlines
+    [ <span style="color: green;">&quot;This is the first line.&quot;</span>
+    , <span style="color: green;">&quot;Here&#39;s the second.&quot;</span>
+    , <span style="color: green;">&quot;&quot;</span>
+    , <span style="color: green;">&quot;After the blank.&quot;</span>
+    ]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = <span style="color: green;font-weight: bold;">do</span>
+    lines &lt;- runResourceT $ <span style="color: blue;">CL.</span>sourceList content $$ sinkLines
+    mapM_ putStrLn lines
+</pre></pre>
+  <p class="hascomments">Running this sample produces the expected output:</p>
+  <pre>This is the first line.
+Here&#39;s the second.</pre>
+  <p class="hascomments"><code>sinkLine</code> demonstrates usage of the <code>sinkState</code> function, which
+   is very similar to the <code>sourceState</code> function we just saw. It takes three
+   arguments: an initial state, a push function (takes the current state and next input, and returns
+   a new state and result) and a close function (takes the current state and returns an output). As
+   opposed to <code>sourceState</code>- which doesn&#39;t need a close function- a sink is required
+   to always return a result.</p>
+  <p class="hascomments">Our push function has two clauses. When it gets a newline character, it indicates that
+   processing is complete via <code>StateDone</code>. The <code>Nothing</code> indicates
+   that there is no leftover input (we&#39;ll discuss that later). It also gives an output of all the
+   characters it has received. The second clause simply appends the new character to the existing
+   state and indicates that we are still working via <code>StateProcessing</code>. The close
+   function returns all characters.</p>
+  <p class="hascomments"><code>sinkLines</code> shows how we can use the monadic interface to produce new sinks. If
+   you replace <code>sinkLine</code> with <code>getLine</code>, this would look like
+   standard code to pull lines from standard input. This familiar interface should make it easy to
+   get up and running quickly.</p>
+ <section .subtopic=""><h1>Types</h1>
+  <p class="hascomments">The types for sinks are just a bit more involved than sources. Let&#39;s have a look:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">SinkPush</span> input m output = input -&gt; <span style="color: blue;">ResourceT</span> m (<span style="color: blue;">SinkResult</span> input m output)
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">SinkClose</span> m output = <span style="color: blue;">ResourceT</span> m output
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">SinkResult</span> input m output =
+    <span style="color: blue;">Processing</span> (<span style="color: blue;">SinkPush</span> input m output) (<span style="color: blue;">SinkClose</span> m output)
+  | <span style="color: blue;">Done</span> (<span style="color: blue;">Maybe</span> input) output
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Sink</span> input m output =
+    <span style="color: blue;">SinkNoData</span> output
+  | <span style="color: blue;">SinkData</span>
+        { sinkPush :: <span style="color: blue;">SinkPush</span> input m output
+        , sinkClose :: <span style="color: blue;">SinkClose</span> m output
+        }
+  | <span style="color: blue;">SinkLift</span> (<span style="color: blue;">ResourceT</span> m (<span style="color: blue;">Sink</span> input m output))
+</pre></pre>
+  <p class="hascomments">Whenever a sink is pushed to, it can either say it needs more data
+   (<code>Processing</code>) or say it&#39;s all done. When still processing, it must provided
+   updated push and close function; when done, it returns any leftover inut and the output. Fairly
+   straight-forward.</p>
+  <p class="hascomments">The first real &quot;gotcha&quot; is the three constructors for <code>Sink</code>. Why do we need
+    <code>SinkNoData</code>: aren&#39;t sinks all about consuming data? The answer is that we need
+   it to efficiently implement our <code>Monad</code> instance. When we use
+    <code>return</code>, we&#39;re giving back a value that requires no data in order to compute it.
+   We could model this with the <code>SinkData</code> constructor, with something like:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">myReturn</span> a = <span style="color: blue;">SinkData</span> (\input -&gt; return (<span style="color: blue;">Done</span> (<span style="color: blue;">Just</span> input) a)) (return a)
+</pre></pre>
+  <p class="hascomments">But doing so would force reading in an extra bit of input that we don&#39;t need right now, and
+   possibly will never need. (Have a look again at the <code>sinkLines</code> example.) So
+   instead, we have an extra constructor to indicate that no input is required. Likewise,
+    <code>SinkLift</code> is provided in order to implement an efficient
+    <code>MonadTrans</code> instance.</p>
+ </section><section .subtopic=""><h1>Sinks: no helpers</h1>
+  <p class="hascomments">Let&#39;s try to implement some sinks on the &quot;bare metal&quot;, without any helper functions.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">System.IO</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.Trans.Resource</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+
+<span style="color: gray;">-- Consume all input and discard it.</span>
+<span style="color: blue;font-weight: bold;">sinkNull</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Sink</span> a m ()
+<span style="color: blue;font-weight: bold;">sinkNull</span> =
+    <span style="color: blue;">SinkData</span> push close
+  <span style="color: green;font-weight: bold;">where</span>
+    push _ignored = return $ <span style="color: blue;">Processing</span> push close
+    close = return ()
+
+<span style="color: gray;">-- Let&#39;s stream characters to a file. Here we do need some kind of</span>
+<span style="color: gray;">-- initialization. We do this by initializing in a push function,</span>
+<span style="color: gray;">-- and then returning a different push function for subsequent</span>
+<span style="color: gray;">-- calls. By using withIO, we know that the handle will be closed even</span>
+<span style="color: gray;">-- if there&#39;s an exception.</span>
+<span style="color: blue;font-weight: bold;">sinkFile</span> :: <span style="color: blue;">ResourceIO</span> m =&gt; <span style="color: blue;">FilePath</span> -&gt; <span style="color: blue;">Sink</span> <span style="color: blue;">Char</span> m ()
+<span style="color: blue;font-weight: bold;">sinkFile</span> fp =
+    <span style="color: blue;">SinkData</span> pushInit closeInit
+  <span style="color: green;font-weight: bold;">where</span>
+    pushInit char = <span style="color: green;font-weight: bold;">do</span>
+        (releaseKey, handle) &lt;- withIO (openFile fp <span style="color: blue;">WriteMode</span>) hClose
+        push releaseKey handle char
+    closeInit = <span style="color: green;font-weight: bold;">do</span>
+        <span style="color: gray;">-- Never opened a file, so nothing to do here</span>
+        return ()
+
+    push releaseKey handle char = <span style="color: green;font-weight: bold;">do</span>
+        liftIO $ hPutChar handle char
+        return $ <span style="color: blue;">Processing</span> (push releaseKey handle) (close releaseKey handle)
+
+    close releaseKey _ = <span style="color: green;font-weight: bold;">do</span>
+        <span style="color: gray;">-- Close the file handle as soon as possible.</span>
+        return ()
+
+<span style="color: gray;">-- And we&#39;ll count how many values were in the stream.</span>
+<span style="color: blue;font-weight: bold;">count</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Sink</span> a m <span style="color: blue;">Int</span>
+<span style="color: blue;font-weight: bold;">count</span> =
+    <span style="color: blue;">SinkData</span> (push <span style="color: teal;">0</span>) (close <span style="color: teal;">0</span>)
+  <span style="color: green;font-weight: bold;">where</span>
+    push count _ignored =
+        return $ <span style="color: blue;">Processing</span> (push count&#39;) (close count&#39;)
+      <span style="color: green;font-weight: bold;">where</span>
+        count&#39; = count + <span style="color: teal;">1</span>
+
+    close count = return count
+</pre></pre>
+  <p class="hascomments">Nothing is particularly complicated to implement. You should notice a common pattern here:
+            declaring your push and close functions in a <code>where</code> clause, and then
+            using them twice: once for the initial <code>SinkData</code>, and once for the
+                <code>Processing</code> constructor. This can become a bit tedious; that&#39;s why
+            we have helper functions.</p>
+ </section><section .subtopic=""><h1>Sinks: with helpers</h1>
+  <p class="hascomments">Let&#39;s rewrite <code>sinkFile</code> and <code>count</code> to take advantage of the
+   helper functions <code>sinkIO</code> and <code>sinkState</code>, respectively.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">System.IO</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+
+<span style="color: gray;">-- We never have to touch the release key directly, sinkIO automatically</span>
+<span style="color: gray;">-- releases our resource as soon as we return IODone from our push function,</span>
+<span style="color: gray;">-- or sinkClose is called.</span>
+<span style="color: blue;font-weight: bold;">sinkFile</span> :: <span style="color: blue;">ResourceIO</span> m =&gt; <span style="color: blue;">FilePath</span> -&gt; <span style="color: blue;">Sink</span> <span style="color: blue;">Char</span> m ()
+<span style="color: blue;font-weight: bold;">sinkFile</span> fp = sinkIO
+    (openFile fp <span style="color: blue;">WriteMode</span>)
+    hClose
+    <span style="color: gray;">-- push: notice that we are given the handle and the input</span>
+    (\handle char -&gt; <span style="color: green;font-weight: bold;">do</span>
+        liftIO $ hPutChar handle char
+        return <span style="color: blue;">IOProcessing</span>)
+    <span style="color: gray;">-- close: we&#39;re also given the handle, but we don&#39;t use it</span>
+    (\_handle -&gt; return ())
+
+<span style="color: gray;">-- And we&#39;ll count how many values were in the stream.</span>
+<span style="color: blue;font-weight: bold;">count</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Sink</span> a m <span style="color: blue;">Int</span>
+<span style="color: blue;font-weight: bold;">count</span> = sinkState
+    <span style="color: teal;">0</span>
+    <span style="color: gray;">-- The push function gets both the current state and the next input...</span>
+    (\state _ignored -&gt;
+        <span style="color: gray;">-- and it returns the new state</span>
+        return $ <span style="color: blue;">StateProcessing</span> $ state + <span style="color: teal;">1</span>)
+    <span style="color: gray;">-- The close function gets the final state and returns the output.</span>
+    (\state -&gt; return state)
+</pre></pre>
+  <p class="hascomments">Nothing dramatic, just slightly shorter, less error-prone code. Using these two helper
+   functions is highly recommended, as it ensures proper resource management and state updating.</p>
+ </section><section .subtopic=""><h1>List functions</h1>
+  <p class="hascomments">As easy as it is to write your own sinks, you&#39;ll likely want to take advantage of the built-in
+   sinks available in the <a href="http://hackage.haskell.org/packages/archive/conduit/latest/doc/html/Data-Conduit-List.html">Data.Conduit.List</a> module. These provide
+   analogues to common list functions, like folding. (The module also has some
+    <code>Conduit</code>s, like <a href="http://hackage.haskell.org/packages/archive/conduit/latest/doc/html/Data-Conduit-List.html#v:map">map</a>.)</p>
+  <p class="hascomments">If you&#39;re looking for some way to practice with conduits, reimplementing the functions in the
+    <code>List</code> module- both with and without the helper functions- would be a good
+   start.</p>
+  <p class="hascomments">Let&#39;s look at some simple things we can make out of the built-in sinks.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Conduit.List</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">CL</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+
+<span style="color: gray;">-- A sum function.</span>
+<span style="color: blue;font-weight: bold;">sum&#39;</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Sink</span> <span style="color: blue;">Int</span> m <span style="color: blue;">Int</span>
+<span style="color: blue;font-weight: bold;">sum&#39;</span> = <span style="color: blue;">CL.</span>fold (+) <span style="color: teal;">0</span>
+
+<span style="color: gray;">-- Print every input value to standard output.</span>
+<span style="color: blue;font-weight: bold;">printer</span> :: (<span style="color: blue;">Show</span> a, <span style="color: blue;">ResourceIO</span> m) =&gt; <span style="color: blue;">Sink</span> a m ()
+<span style="color: blue;font-weight: bold;">printer</span> = <span style="color: blue;">CL.</span>mapM_ (liftIO . print)
+
+<span style="color: gray;">-- Sum up all the values in a stream after the first five.</span>
+<span style="color: blue;font-weight: bold;">sumSkipFive</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Sink</span> <span style="color: blue;">Int</span> m <span style="color: blue;">Int</span>
+<span style="color: blue;font-weight: bold;">sumSkipFive</span> = <span style="color: green;font-weight: bold;">do</span>
+    <span style="color: blue;">CL.</span>drop <span style="color: teal;">5</span>
+    <span style="color: blue;">CL.</span>fold (+) <span style="color: teal;">0</span>
+
+<span style="color: gray;">-- Print each input number and sum the total</span>
+<span style="color: blue;font-weight: bold;">printSum</span> :: <span style="color: blue;">ResourceIO</span> m =&gt; <span style="color: blue;">Sink</span> <span style="color: blue;">Int</span> m <span style="color: blue;">Int</span>
+<span style="color: blue;font-weight: bold;">printSum</span> = <span style="color: green;font-weight: bold;">do</span>
+    total &lt;- <span style="color: blue;">CL.</span>foldM go <span style="color: teal;">0</span>
+    liftIO $ putStrLn $ <span style="color: green;">&quot;Sum: &quot;</span> ++ show total
+    return total
+  <span style="color: green;font-weight: bold;">where</span>
+    go accum int = <span style="color: green;font-weight: bold;">do</span>
+        liftIO $ putStrLn $ <span style="color: green;">&quot;New input: &quot;</span> ++ show int
+        return $ accum + int
+</pre></pre>
+ </section><section .subtopic=""><h1>Connecting</h1>
+  <p class="hascomments">At the end of the day, we&#39;re actually going to want to use our sinks. While we could manually
+   call <code>sinkPush</code> and <code>sinkClose</code>, it&#39;s tedious. For example:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = runResourceT $ <span style="color: green;font-weight: bold;">do</span>
+    res &lt;-
+        <span style="color: green;font-weight: bold;">case</span> printSum <span style="color: green;font-weight: bold;">of</span>
+            <span style="color: blue;">SinkData</span> push close -&gt; loop [<span style="color: teal;">1</span>..<span style="color: teal;">10</span>] push close
+            <span style="color: blue;">SinkNoData</span> res -&gt; return res
+    liftIO $ putStrLn $ <span style="color: green;">&quot;Got a result: &quot;</span> ++ show res
+  <span style="color: green;font-weight: bold;">where</span>
+    start (<span style="color: blue;">SinkData</span> push close) = loop [<span style="color: teal;">1</span>..<span style="color: teal;">10</span>] push close
+    start (<span style="color: blue;">SinkNoData</span> res) = return res
+    start (<span style="color: blue;">SinkLift</span> msink) = msink &gt;&gt;= start
+
+    loop [] _push close = close
+    loop (x:xs) push close = <span style="color: green;font-weight: bold;">do</span>
+        mres &lt;- push x
+        <span style="color: green;font-weight: bold;">case</span> mres <span style="color: green;font-weight: bold;">of</span>
+            <span style="color: blue;">Done</span> _leftover res -&gt; return res
+            <span style="color: blue;">Processing</span> push&#39; close&#39; -&gt; loop xs push&#39; close&#39;
+</pre></pre>
+  <p class="hascomments">Instead, the recommended approach is to connect your sink to a source. Not only is this
+   simpler, it&#39;s less error prone, and means you have a lot of flexibility in where your data is
+   coming from. To rewrite the example above:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = runResourceT $ <span style="color: green;font-weight: bold;">do</span>
+    res &lt;- <span style="color: blue;">CL.</span>sourceList [<span style="color: teal;">1</span>..<span style="color: teal;">10</span>] $$ printSum
+    liftIO $ putStrLn $ <span style="color: green;">&quot;Got a result: &quot;</span> ++ show res
+</pre></pre>
+  <p class="hascomments">Connecting takes care of testing for the sink constructor (<code>SinkData</code> versus
+    <code>SinkNoData</code> versus <code>SinkLift</code>), pulling from the source, and
+   pushing to/closing the sink.</p>
+  <p class="hascomments">However, there is one thing I wanted to point out from the long-winded example. On the second
+   to last line, we ignore the leftover value of <code>Done</code>. This brings up the issue of
+    <dfn>data loss</dfn>. This is an important topic that has had a lot of thought put into it.
+   Unfortunately, we can&#39;t fully cover it yet, as we haven&#39;t discussed the main culprit in the
+   drama: <code>Conduit</code>s (the type, not the package).</p>
+  <p class="hascomments">But as a quick note here, the leftover value from the <code>Done</code> constructor is not
+   always ignored. The <code>Monad</code> instance, for example, uses it to pass data from one
+   sink to the next in a binding. And in fact, the real connect operator <i>doesn&#39;t</i> always throw
+   away the leftovers. When we cover resumable sources later, we&#39;ll see that the leftover value is
+   put back on the buffer to allow later sinks reusing an existing source to pull the value.</p>
+ </section><h1>To be continued...</h1>
+  <p class="hascomments">We still have a lot to cover in conduits, though at this point you likely have enough
+   information to get started using them. The next big topic is <code>Conduit</code>s. We&#39;ll see
+   what they are, and how they combine together with sources and sinks. Finally, we&#39;ll try to cover
+   the larger design decisions behind conduits, and some more advanced usages.</p>
+ 

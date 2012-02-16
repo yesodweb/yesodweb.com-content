@@ -1,0 +1,38 @@
+<p>I've said many times that Yesod is based on RESTful principles. One example is the 1 resource == 1 URL design. Another is multiple representations. In my last post I described the Handler monad; here I hope to explain why the return type of handler functions usually looks like <code>Handler MyApp RepHtml</code>.</p>
+<h3>Files and Enumerators</h3>
+<p>Yesod is built on top of WAI, so we need to look down at that level a bit to get an understanding of what's going on. WAI is designed for performance, and in particular offers two ways of giving a response body:</p>
+<ul><li>A file path. This allows the web server to use a <code>sendfile</code> system call if it so desires. It can be a massive performance win since the data doesn't need to be copied at all.</li>
+<li>An enumerator. Enumerators are simulatenously the cool new kid on the block, not well understood, and completely non-standard. I'm guessing there's easily a dozen enumerator definitions floating around. WAI uses one of the simplest definitions around. However, I won't really be discussing that design in this post.</li>
+</ul>
+<p>Yesod therefore also allows both files and enumerators for the output; this is the <code>Content</code> data type. Yesod also has a <code>ToContent</code> typeclass (as of 0.3.0; it used to just be a more general ConvertSuccess) for converting the "usual suspects" like lazy bytestrings or text into <code>Content</code>.</p>
+<h3>Representations</h3>
+<p>A representation of data then really consists of two pieces of information: the <code>Content</code> and the mime-type. In Yesod 0.3.0, we use a simple <code>String</code> to represent mime-type: <code>type ContentType = String</code>. So how do we allow multiple representations? Let's start off with the simplest approach: <code>[(ContentType, Content)]</code>. Seems perfect: if a handler could return either HTML or JSON content, it would return something like:</p>
+<pre><code>return
+    [ ("text/html", toContent "&lt;p&gt;Hi there!&lt;/p&gt;")
+    , ("application/json", toContent "{\"msg\":\"Hi there!\"}")
+    ]</code></pre>
+<p>So how would Yesod know which representation to serve? RESTfully of course! We parse the <code>Accept</code> HTTP request header, determine the prioritized list of expected mime-types, and then select the appropriate representation based on that list. If none of our representations match that list, we just serve the first one.</p>
+<h3>ChooseRep and RepHtml</h3>
+<p>This is all well and good, and earlier versions of Yesod worked this way. However, you end up losing type information: I can't look at the return type of a handler and know what type of content it has. So instead, let's look at this approach:</p>
+<pre><code>type ChooseRep = [ContentType] -> IO (ContentType, Content)
+class HasReps a where
+   chooseRep :: a -> ChooseRep</code></pre>
+<p>This first thing to notice is that <code>ChooseRep</code> is more powerful than our simple list. It's able to perform IO actions to produce the appropriate representation. This is very useful: perhaps we showing the HTML representation of data, you need to do some expensive database lookups, whereas the JSON version doesn't need that data. You can make sure you only run the IO operations when the user actually wants HTML.</p>
+<p>The <code>HasReps</code> typeclass is the real winner here. It's trivial to now define instances of <code>HasReps</code> that specify which mime-type they return. Some real-life examples from Yesod:</p>
+<pre><code>newtype RepHtml = RepHtml Content
+instance HasReps RepHtml where
+    chooseRep (RepHtml c) _ = return (typeHtml, c)
+
+newtype RepJson = RepJson Content
+instance HasReps RepJson where
+    chooseRep (RepJson c) _ = return (typeJson, c)
+
+data RepHtmlJson = RepHtmlJson Content Content
+instance HasReps RepHtmlJson where
+    chooseRep (RepHtmlJson html json) = chooseRep
+        [ (typeHtml, html)
+        , (typeJson, json)
+        ]</code></pre>
+<p>Notice how that last datatype actually supports two different mime-types. You could create a type that supports XML as well if you like, or anything else. Yesod tries to only offer the most common types, so we've stuck with the HTML+JSON combination.</p>
+<h3>Coming up</h3>
+<p>In this mini-series on Yesod under-the-hood stuff, I think I'll attack user sessions next, and some of the built-in functions to help you (ab)use them properly.</p>

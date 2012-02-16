@@ -1,0 +1,32 @@
+<p>I was speaking with <a href="http://www.haskellers.com/user/Yitz_Gale/">my coworker Yitz</a> about a project he's working on. Basically, he's going to end up with about 16 cabal packages that are not going to be deployed to Hackage, and wanted us to set up a Hackage server for our company to deploy these kinds of things. However, getting all the pieces of Hackage aligned properly for such a simple use case seemed a bit overkill.</p>
+<p>I then realized that I had the exact same problem during Yesod development: before I make a major release, I usually end up with about 10-15 packages that are not yet live on Hackage. It gets to be a real pain when suddenly wai-extra is depending on network 2.3 and authenticate requires network 2.2, and suddenly I need to manually recompile 10 packages.</p>
+<p>So I decided to write up a simple web service to act as a local Hackage server. It has no security (anyone with access can upload a package), doesn't build haddocks, doesn't show package descriptions, etc. All it does is:</p>
+<ul><li>Show a list of uploaded packages/versions</li>
+<li>Links to the tarballs</li>
+<li>Allows you to upload new versions, which will automatically overwrite existing packages</li>
+<li>Provides the 00-index.tar.gz file needed by cabal-install, as well as the tarballs for all the packages</li>
+</ul>
+<p>In order to use this, just do the following:</p>
+<ul><li>cabal install yackage</li>
+<li>run &quot;yackage&quot;</li>
+<li>Upload your packages</li>
+<li>Add <code>remote-repo: yackage:http://localhost:3500/</code> to your ~/.cabal/config file</li>
+<li>cabal update</li>
+<li>Install your packages are usual</li>
+</ul>
+<p>You'll need to leave yackage running whenever you want to run an update or download new packages. A few other usage notes:</p>
+<ul><li>If you overwrite a package, your cache folder will still have the old version. You might want to just wipe our your cache folder on each usage.</li>
+<li>Running cabal update will download the update for both yackage <em>and</em> the main hackage server; the latter can be a long process depending on your internet connection.</li>
+</ul>
+<p>Here's a little shell script that will disable the Hackage repo, wipe our the Yackage cache, update and re-enable the Hackage repo:</p>
+<pre><code>#!/bin/sh
+
+CABAL_DIR=~/.cabal
+
+cp $CABAL_DIR/config $CABAL_DIR/config.sav
+sed 's/^remote-repo: hackage/--remote-repo: hackage/' &lt; $CABAL_DIR/config.sav &gt; $CABAL_DIR/config
+rm -rf $CABAL_DIR/packages/yackage
+cabal update
+cp $CABAL_DIR/config.sav $CABAL_DIR/config
+</code></pre>
+<p>I hope others find this tool useful.</p>

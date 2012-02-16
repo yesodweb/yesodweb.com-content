@@ -1,0 +1,111 @@
+<h1>The Problem</h1>
+  <p class="hascomments" id="file427-the-problem-x1">CHMs are a commonly used help format in the Windows world. They are based on HTML, meaning the
+   core content is portable and easy to write. But they&#39;ve got a number of issues:</p>
+  <ul id="file427-the-problem-ul_75260141-5774-4df3-ae04-b627f057d766"><li id="file427-the-problem-x2">They&#39;re Windows-only. Some of us prefer Linux and Mac.</li>
+   <li id="file427-the-problem-x3">You can&#39;t easily take your CHM content and deploy it on the server.</li>
+   <li id="file427-the-problem-x4">There are a number of issues with CHMs, particularly with regards to i18n.</li>
+  </ul>
+  <p class="hascomments" id="file427-the-problem-x5">Nonetheless, CHMs provide some features we don&#39;t really have in any other system: single-file
+   deployment with search and an index (aka, tri-pane). We have other systems like Eclipse Help
+   which try to do the same thing, but they have requirements on the client side. Another
+   possibility is simply providing the raw HTML to users, but this would require sending multiple
+   files, and precludes the usage of Ajax and other features.</p>
+ <h1>The Solution</h1>
+  <p class="hascomments" id="file431-the-solution-x1">The solution we came up with is providing a single executable that embeds a server (Warp) and
+   the static files, and launches a browser to view them. This is a natural extension of Yesod in
+   general, where Hamlet and family are compiled directly into our executables. This approach works
+   fairly well, but required some extra work.</p>
+ <section .subtopic=""><h1>wai-handler-launch</h1>
+  <p class="hascomments" id="file428-wai-handler-launch-x1">My original idea was to embed Webkit directly in the executable as well. This is really a very
+   cool solution: you never have to worry about Internet Explorer again. However, distributing
+   Webkit (or QtWebkit) was simply too heavy a dependency, and made compiling a nightmare. Paulo
+   Tanimoto and I also took a crack at using MSHTML on Windows, but our win32-fu wasn&#39;t up to the
+   task.</p>
+  <p class="hascomments" id="file428-wai-handler-launch-x2">So instead, we have <a href="http://hackage.haskell.org/package/wai-handler-launch">wai-handler-launch</a>. This package lets you run any WAI
+   application using Warp, and will automatically launch the default web browser. On Windows, it
+   uses the <code id="file428-wai-handler-launch-x4">ShellExecute</code> API call, on Mac it calls out to the <code id="file428-wai-handler-launch-x5">open</code>
+   program and on Linux it uses <code id="file428-wai-handler-launch-x6">xdg-open</code>. (Note that this may cause trouble for
+   some desktop environments.)</p>
+  <p class="hascomments" id="file428-wai-handler-launch-x7">The other interesting thing in this package is automatic shutdown. wai-handler-launch
+   automatically inserts a piece of Javascript into every HTML page that pings the server every
+   minute. If it doesn&#39;t get pinged for two minutes, it shuts down.</p>
+ </section><section .subtopic=""><h1>Template Haskell</h1>
+  <p class="hascomments" id="file429-template-haskell-x1">The next trick is embedding static files into an executable. For this, we can use Template
+   Haskell (or more specifically, the <a href="http://hackage.haskell.org/package/file-embed">file-embed</a> package). A Template Haskell
+   splice always lives in the Q monad, which can embed arbitrary IO actions via qRunIO. And using
+   the StringL constructor, we can embed arbitrary content. Therefore, with just a little work, we
+   can embed a whole file at compile time:</p>
+  <pre class="codeblock" id="file429-template-haskell-x3">embeddedFile :: String
+embeddedFile = $(fmap (LitE . StringL) $ readFile &quot;myfile.txt&quot;)</pre>
+  <p class="hascomments" id="file429-template-haskell-x4">One downside of this approach (well, there&#39;s a few, but the one I want to mention now) is that
+   it isn&#39;t very good for binary data. Sure, we can use Data.ByteString.Char8.pack, but we&#39;ll see
+   soon why that&#39;s not exactly what we want. Also, GHC has trouble with dealing with string literals
+   that get too big. So instead of StringL, we&#39;ll use StringPrimL, which instead of returning a
+   String provides an Addr#. Combined with Data.ByteString.Unsafe.unsafePackAddressLen, we&#39;re in
+   good shape.</p>
+  <aside class="note" id="file429-template-haskell-x5">StringPrimL was introduced with template-haskell 2.5, meaning you must be using GHC 7 to use
+   it.</aside>
+  <p class="hascomments" id="file429-template-haskell-x6">Well, good shape except for the fact that it doesn&#39;t work for non-ASCII data. It turns out that
+   GHC encodes the contents of both StringL and StringPrimL, and automatically decodes the results
+   of StringL. We would need to manually decode this data ourselves. You can see this with a little
+   sample program:</p>
+  <pre class="codeblock" id="file429-template-haskell-x7">{-# LANGUAGE TemplateHaskell #-}
+import Data.ByteString.Unsafe (unsafePackAddressLen)
+import Language.Haskell.TH.Syntax
+import qualified Data.ByteString as S
+
+main = do
+    fromAddr &lt;- unsafePackAddressLen 7 $(return $ LitE $ StringPrimL &quot;123\0\&amp;456&quot;)
+    print fromAddr
+    let fromStr = S.pack $ map (toEnum . fromEnum) $(return $ LitE $ StringL &quot;123\0\&amp;456&quot;)
+    print fromStr</pre>
+  <p class="hascomments" id="file429-template-haskell-x8">But considering the next stunt we&#39;re about to pull, that&#39;s not really an issue.</p>
+ </section><section .subtopic=""><h1>Modifying an Executable</h1>
+  <p class="hascomments" id="file430-modifying-an-executable-x1">Here&#39;s the last curveball in this project. We&#39;re going to need to generate these all-in-one
+   executables on a number of different systems, many of which won&#39;t have Haskell compilers set up.
+   Also, it would be very convenient to be able to produce executables for Windows, Linux and Mac on
+   a single system, instead of needing a compiler farm for each new web help we want to deploy.</p>
+  <p class="hascomments" id="file430-modifying-an-executable-x2">Yitz Gale (my coworker at Suite Solutions) came up with an idea: let&#39;s embed some dummy content
+   with a recognizable pattern in the executable. Then, we&#39;ll have another program that comes along
+   and swaps out the dummy data with the real stuff. Downside: we need to pre-define the maximum
+   size of the webhelp. But we can mitigate this disadvantage by generating executables of various
+   sizes, and then using the smallest executable that will hold our data.</p>
+  <p class="hascomments" id="file430-modifying-an-executable-x3">And this is why we need to go with StringPrimL. Besides the much quicker compile time, if we
+   used StringL then GHC would attempt to decode the data for us. Now, we can embed whatever
+   arbitrary binary content we want in our executable. GHC will give us an Addr# to the raw bytes,
+   and we can access it directly. Apply some binary pickling scheme, such as the
+    <a href="http://hackage.haskell.org/package/cereal">cereal</a> package, and we&#39;re in business.</p>
+  <p class="hascomments" id="file430-modifying-an-executable-x5">The final result, using some not-yet-released versions of the packages described in this post,
+   are two files: the template code and the injector:</p>
+  <pre class="codeblock" id="file430-modifying-an-executable-x6">-- Template
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
+import Data.FileEmbed
+import Data.Serialize (decode)
+import Network.Wai.Handler.Launch (run)
+import Network.Wai.Application.Static
+
+main = do
+    let bs = $(dummySpace 1000000)
+    let files = either error id $ decode bs
+    run $ staticApp (defaultStaticSettings NoCache)
+        { ssFolder = embeddedLookup $ toEmbedded files
+        , ssDirListing = StaticDirListing (Just defaultListing) [&quot;index.html&quot;, &quot;index.htm&quot;]
+        }</pre>
+  <pre class="codeblock" id="file430-modifying-an-executable-x7">-- Injector
+import Data.FileEmbed
+import Data.Serialize
+import qualified Data.ByteString.Char8 as S
+import qualified Data.ByteString.Lazy as L
+import System.Environment (getArgs)
+import Codec.Compression.Zlib (compress)
+
+main = do
+    args &lt;- getArgs
+    (webhelpTemp, srcDir, dstExe) &lt;-
+        case args of
+            [a, b, c] -&gt; return (a, b, c)
+            _ -&gt; error &quot;Usage: webhelp-inject &lt;webhelp-template.exe&gt; &lt;source dir&gt; &lt;output exe&gt;&quot;
+    folder &lt;- getDir srcDir
+    injectFile (encode folder) webhelpTemp dstExe</pre>
+ </section>

@@ -1,0 +1,200 @@
+<h1>JSON Web Service</h1>
+  <p class="hascomments" id="file844-json-web-service-x1">Let&#39;s create a very simple web service: it takes a JSON request and returns a JSON response.
+   We&#39;re going to write the server in WAI/Warp, and the client in http-enumerator. We&#39;ll be using
+    <a href="http://hackage.haskell.org/package/aeson">aeson</a> for JSON parsing and rendering.</p>
+ <section .subtopic=""><h1>Server</h1>
+  <p class="hascomments" id="file842-server-x1">WAI uses the <a href="http://hackage.haskell.org/package/enumerator">enumerator</a> package to handle streaming request bodies, and
+   efficiently generates responses using <a href="http://hackage.haskell.org/package/blaze-builder">blaze-builder</a>. <a href="http://hackage.haskell.org/package/aeson">aeson</a>
+   uses <a href="http://hackage.haskell.org/package/attoparsec">attoparsec</a> for parsing; by using <a href="http://hackage.haskell.org/package/attoparsec-enumerator">attoparsec-enumerator</a>
+   we get easy interoperability with WAI. And aeson can encode JSON directly into a Builder. This
+   plays out as:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.Wai</span> (<span style="color: blue;">Response</span> (<span style="color: blue;">ResponseBuilder</span>), <span style="color: blue;">Application</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.HTTP.Types</span> (status200, status400)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.Wai.Handler.Warp</span> (run)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Aeson.Parser</span> (json)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Attoparsec.Enumerator</span> (iterParser)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Aeson</span> (<span style="color: blue;">Value</span> (<span style="color: blue;">Object</span>, <span style="color: blue;">String</span>))
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Aeson.Encode</span> (fromValue)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Enumerator</span> (catchError, <span style="color: blue;">Iteratee</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Exception</span> (<span style="color: blue;">SomeException</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.ByteString</span> (<span style="color: blue;">ByteString</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Map</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">Map</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (pack)
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = run <span style="color: teal;">3000</span> app
+
+<span style="color: blue;font-weight: bold;">app</span> :: <span style="color: blue;">Application</span>
+<span style="color: blue;font-weight: bold;">app</span> _ = flip catchError invalidJson $ <span style="color: green;font-weight: bold;">do</span>
+    value &lt;- iterParser json
+    newValue &lt;- liftIO $ modValue value
+    return $ <span style="color: blue;">ResponseBuilder</span>
+        status200
+        [(<span style="color: green;">&quot;Content-Type&quot;</span>, <span style="color: green;">&quot;application/json&quot;</span>)]
+        $ fromValue newValue
+
+<span style="color: blue;font-weight: bold;">invalidJson</span> :: <span style="color: blue;">SomeException</span> -&gt; <span style="color: blue;">Iteratee</span> <span style="color: blue;">ByteString</span> <span style="color: blue;">IO</span> <span style="color: blue;">Response</span>
+<span style="color: blue;font-weight: bold;">invalidJson</span> ex = return $ <span style="color: blue;">ResponseBuilder</span>
+    status400
+    [(<span style="color: green;">&quot;Content-Type&quot;</span>, <span style="color: green;">&quot;application/json&quot;</span>)]
+    $ fromValue $ <span style="color: blue;">Object</span> $ <span style="color: blue;">Map.</span>fromList
+        [ (<span style="color: green;">&quot;message&quot;</span>, <span style="color: blue;">String</span> $ pack $ show ex)
+        ]
+
+<span style="color: gray;">-- Application-specific logic would go here.</span>
+<span style="color: blue;font-weight: bold;">modValue</span> :: <span style="color: blue;">Value</span> -&gt; <span style="color: blue;">IO</span> <span style="color: blue;">Value</span>
+<span style="color: blue;font-weight: bold;">modValue</span> = return
+</pre></pre>
+ </section><section .subtopic=""><h1>Client</h1>
+  <p class="hascomments" id="file843-client-x1"><a href="http://hackage.haskell.org/package/http-enumerator">http-enumerator</a> was written as a comapnion to WAI. It too uses enumerator
+   and blaze-builder pervasively, meaning we once again get easy interop with aeson. A few extra
+   comments for those not familiar with http-enumerator:</p>
+  <ul id="file843-client-ul_4be25b01-52e2-414f-ba22-d6c0b97232c8"><li id="file843-client-x3">A <code id="file843-client-x4">Manager</code> is present to keep track of open connections, so that multiple
+    requests to the same server use the same connection. You usually want to use the
+     <code id="file843-client-x5">withManager</code> function to create and clean up this Manager, since it is
+    exception safe.</li>
+   <li id="file843-client-x6">We need to know the size of our request body, which can&#39;t be determined directly from a
+    Builder. Instead, we convert the Builder into a lazy ByteString and take the size from
+    there.</li>
+   <li id="file843-client-x7">There are a number of different functions for initiating a request. We use http, which allows
+    us to directly access the data stream. There are other higher level functions (such as httpLbs)
+    that let you ignore the issues of enumerators and get the entire body directly.</li>
+  </ul>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.HTTP.Enumerator</span>
+    ( http, parseUrl, withManager, <span style="color: blue;">RequestBody</span> (<span style="color: blue;">RequestBodyLBS</span>)
+    , requestBody
+    )
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Aeson</span> (<span style="color: blue;">Value</span> (<span style="color: blue;">Object</span>, <span style="color: blue;">String</span>))
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Map</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">Map</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Aeson.Parser</span> (json)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Attoparsec.Enumerator</span> (iterParser)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Enumerator</span> (run_)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Aeson.Encode</span> (fromValue)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Blaze.ByteString.Builder</span> (toLazyByteString)
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = withManager $ \manager -&gt; <span style="color: green;font-weight: bold;">do</span>
+    value &lt;- makeValue
+    <span style="color: gray;">-- We need to know the size of the request body, so we convert to a</span>
+    <span style="color: gray;">-- ByteString</span>
+    <span style="color: green;font-weight: bold;">let</span> valueBS = toLazyByteString $ fromValue value
+    req&#39; &lt;- parseUrl <span style="color: green;">&quot;http://localhost:3000/&quot;</span>
+    <span style="color: green;font-weight: bold;">let</span> req = req&#39; { requestBody = <span style="color: blue;">RequestBodyLBS</span> valueBS }
+    run_ $ flip (http req) manager $ \status headers -&gt; <span style="color: green;font-weight: bold;">do</span>
+        <span style="color: gray;">-- Might want to ensure we have a 200 status code and Content-Type is</span>
+        <span style="color: gray;">-- application/json. We skip that here.</span>
+        resValue &lt;- iterParser json
+        liftIO $ handleResponse resValue
+
+<span style="color: gray;">-- Application-specific function to make the request value</span>
+<span style="color: blue;font-weight: bold;">makeValue</span> :: <span style="color: blue;">IO</span> <span style="color: blue;">Value</span>
+<span style="color: blue;font-weight: bold;">makeValue</span> = return $ <span style="color: blue;">Object</span> $ <span style="color: blue;">Map.</span>fromList
+    [ (<span style="color: green;">&quot;foo&quot;</span>, <span style="color: blue;">String</span> <span style="color: green;">&quot;bar&quot;</span>)
+    ]
+
+<span style="color: gray;">-- Application-specific function to handle the response from the server</span>
+<span style="color: blue;font-weight: bold;">handleResponse</span> :: <span style="color: blue;">Value</span> -&gt; <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">handleResponse</span> = print
+</pre></pre>
+ </section><h1>Persistent: Raw SQL</h1>  <p class="hascomments" id="file845-persistent-raw-sql-x1">The Persistent package provides a type safe interface to data stores. It tries to be
+            backend-agnostic, such as not relying on relational features of SQL. My experience has
+            been you can easily perform 95% of what you need to do with the high-level interface.
+            (In fact, most of my web apps use the high level interface exclusively.)</p>
+  <p class="hascomments" id="file845-persistent-raw-sql-x2">But occassionally you&#39;ll want to use a feature that&#39;s specific to a backend. One feature I&#39;ve
+   used in the past is full text search. In this case, we&#39;ll use the SQL &quot;LIKE&quot; operator, which is
+   not modeled in Persistent. We&#39;ll get all people with the last name &quot;Snoyman&quot; and print the
+   records out.</p>
+        <aside class="note" id="file845-persistent-raw-sql-x4">Actually, you <i id="file845-persistent-raw-sql-x5">can</i> express a LIKE operator directly in the normal syntax due to a
+            new feature in Persistent 0.6, which allows backend-specific operators. But this is
+            still a good example, so let&#39;s roll with it.</aside>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: gray;">{-# LANGUAGE TemplateHaskell #-}</span>
+<span style="color: gray;">{-# LANGUAGE QuasiQuotes #-}</span>
+<span style="color: gray;">{-# LANGUAGE TypeFamilies #-}</span>
+<span style="color: gray;">{-# LANGUAGE GeneralizedNewtypeDeriving #-}</span>
+<span style="color: gray;">{-# LANGUAGE GADTs #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.Sqlite</span> (withSqliteConn)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.TH</span> (mkPersist, persist, share, mkMigrate, sqlSettings)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.GenericSql</span> (runSqlConn, runMigration, <span style="color: blue;">SqlPersist</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.GenericSql.Raw</span> (withStmt)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.GenericSql.Internal</span> (<span style="color: blue;">RowPopper</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+
+<span style="color: blue;font-weight: bold;">share</span> [mkPersist sqlSettings, mkMigrate <span style="color: green;">&quot;migrateAll&quot;</span>] [persist|
+<span style="color: blue;">Person</span>
+    name <span style="color: blue;">Text</span>
+|]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = withSqliteConn <span style="color: green;">&quot;:memory:&quot;</span> $ runSqlConn $ <span style="color: green;font-weight: bold;">do</span>
+    runMigration migrateAll
+    insert $ <span style="color: blue;">Person</span> <span style="color: green;">&quot;Michael Snoyman&quot;</span>
+    insert $ <span style="color: blue;">Person</span> <span style="color: green;">&quot;Miriam Snoyman&quot;</span>
+    insert $ <span style="color: blue;">Person</span> <span style="color: green;">&quot;Eliezer Snoyman&quot;</span>
+    insert $ <span style="color: blue;">Person</span> <span style="color: green;">&quot;Gavriella Snoyman&quot;</span>
+    insert $ <span style="color: blue;">Person</span> <span style="color: green;">&quot;Greg Weber&quot;</span>
+    insert $ <span style="color: blue;">Person</span> <span style="color: green;">&quot;Rick Richardson&quot;</span>
+
+    <span style="color: gray;">-- Persistent does not provide the LIKE keyword, but we&#39;d like to get the</span>
+    <span style="color: gray;">-- whole Snoyman family...</span>
+    <span style="color: green;font-weight: bold;">let</span> sql = <span style="color: green;">&quot;SELECT name FROM Person WHERE name LIKE &#39;%Snoyman&#39;&quot;</span>
+    withStmt sql [] withPopper
+
+<span style="color: gray;">-- A popper returns one row at a time. We loop over it until it returns Nothing.</span>
+<span style="color: blue;font-weight: bold;">withPopper</span> :: <span style="color: blue;">RowPopper</span> (<span style="color: blue;">SqlPersist</span> <span style="color: blue;">IO</span>) -&gt; <span style="color: blue;">SqlPersist</span> <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">withPopper</span> popper =
+    loop
+  <span style="color: green;font-weight: bold;">where</span>
+    loop = <span style="color: green;font-weight: bold;">do</span>
+        mrow &lt;- popper
+        <span style="color: green;font-weight: bold;">case</span> mrow <span style="color: green;font-weight: bold;">of</span>
+            <span style="color: blue;">Nothing</span> -&gt; return ()
+            <span style="color: blue;">Just</span> row -&gt; liftIO (print row) &gt;&gt; loop
+</pre></pre>
+ <h1>Internationalized Julius</h1>  <p class="hascomments" id="file846-internationalized-julius-x1">Hamlet has built-in support for i18n via the underscope interpolation syntax:</p>
+  <pre class="codeblock" id="file846-internationalized-julius-x2">&lt;h1&gt;_{MsgHelloWorld}</pre>
+  <p class="hascomments" id="file846-internationalized-julius-x3">There was a concious decision not to include this syntax for Cassius, Lucius and Julius,  since
+   it is relatively uncommon to need this interpolation, and the added complexity of using the
+   library didn&#39;t seem to warrant it. However, there are times when you do want to add an
+   internationalized message to your Javascript.</p>
+  <p class="hascomments" id="file846-internationalized-julius-x4">The trick is fairly simple: <code id="file846-internationalized-julius-x5">getMessageRender</code> returns a function that will
+   convert a type-safe message into an actual string. We can directly use those strings with normal
+   variable interpolation. getMessageRender handles all the work of determining the user&#39;s language
+   preference list.</p>
+  <pre class="codeblock" id="file846-internationalized-julius-x6">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE QuasiQuotes #-}
+import Yesod
+
+data JI = JI
+type Handler = GHandler JI JI
+mkYesod &quot;JI&quot; [parseRoutes|
+/ RootR GET
+|]
+
+instance Yesod JI where
+    approot _ = &quot;&quot;
+
+data JIMsg = MsgHello
+
+instance RenderMessage JI JIMsg where
+    renderMessage a [] x = renderMessage a [&quot;en&quot;] x
+    renderMessage _ (&quot;en&quot;:_) MsgHello = &quot;Hello&quot;
+    renderMessage _ (&quot;es&quot;:_) MsgHello = &quot;Hola&quot;
+    renderMessage a (_:ls) x = renderMessage a ls x
+
+getRootR :: Handler RepHtml
+getRootR = do
+    render &lt;- getMessageRender
+    defaultLayout $ addJulius [julius|alert(&quot;#{render MsgHello}&quot;)|]
+
+main :: IO ()
+main = warpDebug 3000 JI</pre>

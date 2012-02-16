@@ -1,0 +1,54 @@
+<p>I'm very happy to announce the first release of the <a href="http://hackage.haskell.org/package/xml-enumerator">xml-enumerator</a> package. But first, a word from our sponsors: a large portion of the code in this package was written for work at my day job with <a href="http://www.suite-sol.com/">Suite Solutions</a>. We are a company that focuses on documentation services, especially using XML in general and DITA in particular. The company has graciously agreed to allow me to release this code as open source.</p>
+<p>For those who are not yet aware, I'm a very big fan of John Millikan's <a href="http://hackage.haskell.org/package/enumerator">enumerator</a> package, and so it should come as no surprise that when I needed to pick an XML parsing library I turned to his work. I was surprised to find not one, but <em>two</em> librarys: libxml-enumerator and expat-enumerator, which each wrapped around the respective C libraries. libxml-enumerator is very difficult to get working on Windows systems, and expat-enumerator does not have support for XML namespaces or doctypes. (That may be fixed in the future.)</p>
+<p>What's nice is that both of these packages rely upon the same datatypes, provided by the <a href="http://hackage.haskell.org/package/xml-types">xml-types</a> package (also written by John), and therefore can be mostly swapped out transparently. Unfortunately, there was no support for rendering XML using these datatypes, which was something I needed for the tool I was writing. As such, xml-enumerator is composed of three pieces:</p>
+<ul><li>A native XML parser based on attoparsec.</li>
+<li>An XML renderer based on blaze-builder.</li>
+<li>A set of parser combinators I developed for the Yesod book.</li>
+</ul>
+<p>Let me give a brief introduction to each of these:</p>
+<h2 id="the-parser">The parser</h2>
+<p>The parseBytes function provides an enumeratee to convert a stream of ByteStrings into a stream of Events. It follows mostly the same type signature as the parseBytesIO functions provided by libxml-enumerator and expat-enumerator, but since it does not call foreign code can live in any monad. There is one limitation: it requires the input to be in UTF8 encoding.</p>
+<p>To overcome this, the Text.XML.Enumerator.Parse module also provides a detectUtf enumeratee, which will automatically convert UTF-16/32 (big and little endian) into UTF8, leaving UTF8 data unchanged. Therefore, to get a list of Events from a file, you could use:</p>
+<pre><code>run_ $ enumFile &quot;myfile.xml&quot; $$ joinI $ detectUtf $$ joinI $ parseBytes $$ consume
+</code></pre>
+<p>Ideally, I would have liked to make this parser work on a stream of Texts instead of ByteStrings, but unfortunately there is not yet an equivalent of attoparsec for Texts.</p>
+<h2 id="the-renderer">The renderer</h2>
+<p>The renderer is simply two enumeratees: renderBuilder converts a stream of Events into a stream of Builders (from the blaze-builder package). renderBytes uses renderBuilder and the blaze-builder-enumerator package to convert a stream of Events into a stream of optimally-sized ByteStrings, involving minimal buffer copying. In order to re-encode an XML file, for example, we could run:</p>
+<pre><code>withBinaryFile &quot;output.xml&quot; WriteMode $ \h -&gt;
+    run_ $ enumFile &quot;input.xml&quot; $$ joinI $ detectUtf $$ joinI $ parseBytes
+        $$ joinI $ renderBytes $$ iterHandle h
+</code></pre>
+<p>Note that you could equally well use libxml-enumerator or expat-enumerator for the parsing, since they are all using the same Event type.</p>
+<h2 id="parser-combinators">Parser combinators</h2>
+<p>The combinator library is meant for parsing simplified XML documents. It uses the simplify enumeratee to convert a stream of Events into SEvents. This essentially throws out all events besides element begin and end events, converts entities into text based on a function you provide it, and concatenates together adjacent contents.</p>
+<p>Attribute parsing is handled via a AttrParser monad, which lets you deal with both required and optional attributes and whether parsing should fail when unexpected attributes are present. Tag parsing has three functions (tag, tag' and tag''... I'm horrible at naming things) that go from most-general to easiest-to-use, and there are two content parsing functions.</p>
+<p>There are three combinators: choose selects the first successful parser, many runs a parser until it fails, and force requires a parser to run successfully. And finally, there are two convenience functions, parseFile and parseFile_, that automatically uses detectUtf, parseBytes and simplify for you. The Text.XML.Enumerator.Parse module begins with this sample program:</p>
+<pre><code>{-# LANGUAGE OverloadedStrings #-}
+ import Text.XML.Enumerator.Parse
+ import Data.Text.Lazy (Text, unpack)
+
+ data Person = Person { age :: Int, name :: Text }
+     deriving Show
+
+ parsePerson = tag' &quot;person&quot; (requireAttr &quot;age&quot;) $ \age -&gt; do
+     name &lt;- content'
+     return $ Person (read $ unpack age) name
+
+ parsePeople = tag'' &quot;people&quot; $ many parsePerson
+
+ main = parseFile_ &quot;people.xml&quot; (const Nothing) $ force &quot;people required&quot; parsePeople
+</code></pre>
+<p>Given a people.xml file containing:</p>
+<pre><code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+ &lt;people&gt;
+     &lt;person age=&quot;25&quot;&gt;Michael&lt;/person&gt;
+     &lt;person age=&quot;2&quot;&gt;Eliezer&lt;/person&gt;
+ &lt;/people&gt;
+</code></pre>
+<p>produces:</p>
+<pre><code>[Person {age = 25, name = &quot;Michael&quot;},Person {age = 2, name = &quot;Eliezer&quot;}]
+</code></pre>
+<h2 id="relation-to-some-recent-work">Relation to some recent work</h2>
+<p>If you are wondering, the release of this package is very much related to some stuff I mentioned in <a href="http://docs.yesodweb.com/blog/serendipity-wai-http-enumerator/">my last blog post</a>. In particular, I wrote a first version of blaze-builder-enumerator while working on the renderer for this package, and was working on demonstrating this package as a web service when I decided to stitch together WAI and xml-enumerator.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Since this is an initial release, there are very possibly some bugs in it, so please let me know if you find anything wrong. And I'd just like to give another thank you to my employers for contributing this to the community.</p>

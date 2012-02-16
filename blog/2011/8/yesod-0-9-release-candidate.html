@@ -1,0 +1,136 @@
+<h1>What&#39;s new?</h1>
+  <p class="hascomments" id="file784-whats-new-x1">You can get a taste for the new stuff in the 0.9.0 release from the <a href="http://www.yesodweb.com/page/changelog">ChangeLog
+    page</a>. In general, this is a very stable, well-tested release. The beta is being actively
+   used in a number of production sites, including this one, with no reported ill effects. The Yesod
+   team feels very strongly that this is an upgrade worth making as soon as possible.</p>
+  <p class="hascomments" id="file784-whats-new-x3">The purpose of the release candidate is to try to get any last-minute input on bugs or bad
+   decisions before they are set in stone with the official release. I highly encourage everyone
+   using Yesod to install the release candidate and test it out on a few of your sites.</p>
+ <h1>Get set up for Yackage</h1>
+  <p class="hascomments" id="file785-get-set-up-for-yackage-x1">The 0.9 release candidate is available on the <a href="http://yackage.yesodweb.com/">Yesod Yackage server</a>. Note that the version numbers are
+   the same as will be released with the final release. That means that, if you install the RC, it&#39;s
+   highly recommended to wipe your .ghc folder after the official release comes out.</p>
+  <p class="hascomments" id="file785-get-set-up-for-yackage-x3">In order to install the release candidate, follow these steps:</p>
+  <ol id="file785-get-set-up-for-yackage-ol_hkl_fwc_kd"><li id="file785-get-set-up-for-yackage-x4">Add the following line to your <code class="filepath" id="file785-get-set-up-for-yackage-x5">~/.cabal/config</code>
+    file:<pre class="codeblock" id="file785-get-set-up-for-yackage-x6">remote-repo: yesod-yackage:http://yackage.yesodweb.com</pre></li>
+   <li id="file785-get-set-up-for-yackage-x7">Run <code id="file785-get-set-up-for-yackage-x8">cabal update</code></li>
+   <li id="file785-get-set-up-for-yackage-x9">Run <code id="file785-get-set-up-for-yackage-x10">cabal install yesod-0.9.0</code></li>
+   <li id="file785-get-set-up-for-yackage-x11">Get a beer and congratulate yourself on a job well done.</li>
+  </ol>
+ <h1>Migration guide: Yesod 0.8 to 0.9</h1>  <p class="hascomments" id="file786-migration-guide-yesod-08-to-09-x1">As has become a bit of a custom, we&#39;re going to go through the necessary changes to the
+   Haskellers codebase to get it to work with the new release. Fortunately, there are many less
+   steps in this release. You can see the <a href="https://github.com/snoyberg/haskellers/commit/1ba421449c29d8d2b653055b746ee1afe98430e9">entire commit on Github</a>. To give you an idea of time
+   investment, it took me about two hours to migrate Haskellers, write this guide, and apply a few
+   minor tweaks to the framework in the process.</p>
+  <ol id="file786-migration-guide-yesod-08-to-09-ol_sap_jic_kd"><li id="file786-migration-guide-yesod-08-to-09-x3">Fix up your cabal file. For the most part, just change yesod to version 0.9 and watch the
+    fallout. Pay particular attention to the version bounds on related packages like hamlet and
+    persistent. Also:<ul id="file786-migration-guide-yesod-08-to-09-ul_bqz_mic_kd"><li id="file786-migration-guide-yesod-08-to-09-x4">hamlet has been split out into multiple packages. You&#39;ll likely get build errors telling
+      you to add shakespeare-css and shakespeare-js</li>
+     <li id="file786-migration-guide-yesod-08-to-09-x5">Due to issues with the newest aeson and Template Haskell, we had to create a fork. The API
+      is identical, the only difference is in how doubles are rendered. Just updated any references
+      to aeson to be aeson-native.</li>
+    </ul></li>
+   <li id="file786-migration-guide-yesod-08-to-09-x6">Goodbye &quot;Helpers&quot; module namespace. This affects Yesod.Helpers.Static, Yesod.Helpers.Auth.*,
+    Yesod.Helpers.Feed.* and others. All you need to do is remove the word Helpers.</li>
+   <li id="file786-migration-guide-yesod-08-to-09-x7">The datatypes from hamlet have been renamed. This likely doesn&#39;t affect much code, but just
+    be aware of it.<table id="file786-migration-guide-yesod-08-to-09-simpletable_aiq_yic_kd"><thead id="file786-migration-guide-yesod-08-to-09-x8"><td id="file786-migration-guide-yesod-08-to-09-x9">Old name</td>
+      <td id="file786-migration-guide-yesod-08-to-09-x10">New name</td>
+     </thead>
+     <tr id="file786-migration-guide-yesod-08-to-09-x11"><td id="file786-migration-guide-yesod-08-to-09-x12">Hamlet</td>
+      <td id="file786-migration-guide-yesod-08-to-09-x13">HtmlUrl</td>
+     </tr>
+     <tr id="file786-migration-guide-yesod-08-to-09-x14"><td id="file786-migration-guide-yesod-08-to-09-x15">Cassius/Lucius</td>
+      <td id="file786-migration-guide-yesod-08-to-09-x16">CssUrl</td>
+     </tr>
+     <tr id="file786-migration-guide-yesod-08-to-09-x17"><td id="file786-migration-guide-yesod-08-to-09-x18">Julius</td>
+      <td id="file786-migration-guide-yesod-08-to-09-x19">JavascriptUrl</td>
+     </tr>
+     <tr id="file786-migration-guide-yesod-08-to-09-x20"><td id="file786-migration-guide-yesod-08-to-09-x21">IHamlet</td>
+      <td id="file786-migration-guide-yesod-08-to-09-x22">HtmlUrlI18n</td>
+     </tr>
+    </table></li>
+   <li id="file786-migration-guide-yesod-08-to-09-x23">Forms have had a significant overhaul. This will be the most labor-intensive part of the
+    migration. I&#39;ll address this later.</li>
+   <li id="file786-migration-guide-yesod-08-to-09-x24">In your Model.hs file, mkPersist now takes an extra parameter to give it settings. For now
+    use sqlSettings, we&#39;ll have some more options in the future.</li>
+   <li id="file786-migration-guide-yesod-08-to-09-x25">Model.hs needs the GADTs language extension enabled.</li>
+   <li id="file786-migration-guide-yesod-08-to-09-x26">In your application file (e.g., Haskellers.hs), remove the type synonyms for Handler and
+    Widget. This is now provided by the TH code. Also, instead of Widget (), just say Widget.</li>
+   <li id="file786-migration-guide-yesod-08-to-09-x27">In the YesodPersist instance, change &quot;YesodDB&quot; to &quot;YesodPersistBackend&quot;.</li>
+   <li id="file786-migration-guide-yesod-08-to-09-x28">The other big change: the filter API for persistent became <b id="file786-migration-guide-yesod-08-to-09-x29">much</b> simpler. Instead of
+    using constructors like &quot;PersonNameEq&quot;, we now just use operators. (Thanks to Boris for the
+     <a href="http://hackage.haskell.org/package/groundhog">groundhog</a> inspiration here.) Some simple examples:<table id="file786-migration-guide-yesod-08-to-09-simpletable_uml_bkc_kd"><thead id="file786-migration-guide-yesod-08-to-09-x31"><td id="file786-migration-guide-yesod-08-to-09-x32">Old code</td>
+      <td id="file786-migration-guide-yesod-08-to-09-x33">New code</td>
+     </thead>
+     <tr id="file786-migration-guide-yesod-08-to-09-x34"><td id="file786-migration-guide-yesod-08-to-09-x35">PersonNameEq &quot;Michael&quot;</td>
+      <td id="file786-migration-guide-yesod-08-to-09-x36">PersonName ==. &quot;Michael&quot;</td>
+     </tr>
+     <tr id="file786-migration-guide-yesod-08-to-09-x37"><td id="file786-migration-guide-yesod-08-to-09-x38">PersonAgeLe 30</td>
+      <td id="file786-migration-guide-yesod-08-to-09-x39">PersonAge &lt;=. 30</td>
+     </tr>
+     <tr id="file786-migration-guide-yesod-08-to-09-x40"><td id="file786-migration-guide-yesod-08-to-09-x41">UserEmailNe $ Just &quot;foo@bar.com&quot;</td>
+      <td id="file786-migration-guide-yesod-08-to-09-x42">UserEmail !=. Just &quot;foo@bar.com&quot;</td>
+     </tr>
+    </table>There will be a bit of manual effort involved in this transition, but the result
+    is well worth it.</li>
+   <li id="file786-migration-guide-yesod-08-to-09-x43">select syntax has changed. Instead of having those two hanging integers at the end, we have a
+    list of options. An example should suffice:<dl id="file786-migration-guide-yesod-08-to-09-x44"><dt id="file786-migration-guide-yesod-08-to-09-x46">Old</dt>
+      <dd id="file786-migration-guide-yesod-08-to-09-x47">selectList [PersonNameEq &quot;Michael&quot;] [PersonAgeDesc] 5 10</dd>
+     
+     
+      <dt id="file786-migration-guide-yesod-08-to-09-x49">New</dt>
+      <dd id="file786-migration-guide-yesod-08-to-09-x50">selectList [PersonName ==. &quot;Michael&quot;] [Desc PersonAge, LimitTo 5, OffsetBy 10]</dd>
+     
+    </dl>If you had a 0 for either of those trailing integers, they can just be ignored.</li>
+   <li id="file786-migration-guide-yesod-08-to-09-x51">Updates are similarly changed.<dl id="file786-migration-guide-yesod-08-to-09-x52"><dt id="file786-migration-guide-yesod-08-to-09-x54">Old</dt>
+      <dd id="file786-migration-guide-yesod-08-to-09-x55">update personId [PersonName &quot;Michael&quot;]</dd>
+     
+     
+      <dt id="file786-migration-guide-yesod-08-to-09-x57">New</dt>
+      <dd id="file786-migration-guide-yesod-08-to-09-x58">update personId [PersonName =. &quot;Michael&quot;]</dd>
+     
+    </dl></li>
+   <li id="file786-migration-guide-yesod-08-to-09-x59">And a great sigh of relief was heard: polymorphic hamlet is gone. For the most part, this
+    just means you&#39;ll need to preface a few hamlet calls with toWidget. Unfortunately, the error
+    messages are confusing; just email the list if you get stuff on somthing.</li>
+<li id="file786-migration-guide-yesod-08-to-09-x90">There have been some renames in the templates. It&#39;s best to just <a href="http://www.yesodweb.com/book/templates">read the chapter</a> for details.</li>
+   <li id="file786-migration-guide-yesod-08-to-09-x60">We added i18n support for form messages. You&#39;ll need to add this to your application file
+    (e.g.,
+    Haskellers.hs)<pre class="codeblock" id="file786-migration-guide-yesod-08-to-09-x61">instance RenderMessage Haskellers FormMessage where
+    renderMessage _ _ = defaultFormMessage</pre>This
+    uses the default values, which are all English. You can modify these yourself if you want,
+    expect some blog posts in the next few weeks focusing on how i18n works.</li>
+   <li id="file786-migration-guide-yesod-08-to-09-x62">Under some strange conditions, you&#39;ll have to give your ID variables explicit type
+    signatures. This is exceedingly rare.</li>
+  </ol>
+  <section id="file786-migration-guide-yesod-08-to-09-x63"><h1 id="file786-migration-guide-yesod-08-to-09-x64">Forms</h1>
+   <p class="hascomments" id="file786-migration-guide-yesod-08-to-09-x65">Forms got a huge cleanup in this release. I&#39;m hoping to get the chapter up-to-date soon, but
+    the migration guide isn&#39;t enough to fully explain what&#39;s happened. I&#39;ll just give a few quick
+    translations that I&#39;ve used in Haskellers:</p>
+   <table id="file786-migration-guide-yesod-08-to-09-simpletable_jqe_vlc_kd"><thead id="file786-migration-guide-yesod-08-to-09-x66"><td id="file786-migration-guide-yesod-08-to-09-x67">Old code</td>
+     <td id="file786-migration-guide-yesod-08-to-09-x68">New code</td>
+    </thead>
+    <tr id="file786-migration-guide-yesod-08-to-09-x69"><td id="file786-migration-guide-yesod-08-to-09-x70">runFormPost&#39;</td>
+     <td id="file786-migration-guide-yesod-08-to-09-x71">runInputPost</td>
+    </tr>
+    <tr id="file786-migration-guide-yesod-08-to-09-x72"><td id="file786-migration-guide-yesod-08-to-09-x73">maybeStringInput</td>
+     <td id="file786-migration-guide-yesod-08-to-09-x74">iopt textField</td>
+    </tr>
+    <tr id="file786-migration-guide-yesod-08-to-09-x75"><td id="file786-migration-guide-yesod-08-to-09-x76">stringInput</td>
+     <td id="file786-migration-guide-yesod-08-to-09-x77">ireq textField</td>
+    </tr>
+    <tr id="file786-migration-guide-yesod-08-to-09-x78"><td id="file786-migration-guide-yesod-08-to-09-x79">runFormGet&#39;</td>
+     <td id="file786-migration-guide-yesod-08-to-09-x80">runInputGet</td>
+    </tr>
+    <tr id="file786-migration-guide-yesod-08-to-09-x81"><td id="file786-migration-guide-yesod-08-to-09-x82">maybeIntInput</td>
+     <td id="file786-migration-guide-yesod-08-to-09-x83">iopt intField</td>
+    </tr>
+    <tr id="file786-migration-guide-yesod-08-to-09-x84"><td id="file786-migration-guide-yesod-08-to-09-x85">maybeStringField</td>
+     <td id="file786-migration-guide-yesod-08-to-09-x86">aopt textField</td>
+    </tr>
+    <tr id="file786-migration-guide-yesod-08-to-09-x87"><td id="file786-migration-guide-yesod-08-to-09-x88">fieldsToTable</td>
+     <td id="file786-migration-guide-yesod-08-to-09-x89">renderTable</td>
+    </tr>
+   </table>
+  </section>
+ 

@@ -1,0 +1,14 @@
+<p>I'm very happy to announce the release of <a href="http://hackage.haskell.org/package/yesod-0.2.0">Yesod 0.2.0</a>. For those who don't know, Yesod is a web framework for Haskell that promotes static type-safety, RESTful design, conciseness and efficiency.</p>
+<p>You can find tutorials and other documentation on the <a href="http://docs.yesodweb.com/yesod/">Yesod documentation site</a>. This site is also the home to documentation on some Yesod subprojects.</p>
+<p>This release introduces some major changes from the previous 0.0 series. The largest of these include:</p>
+<ul><li>Type-safe URLs via the <a href="http://docs.yesodweb.com/web-routes-quasi/">web-routes-quasi</a> package. You no longer splice together strings to create URLs; each application has a datatype which only allows encoding of valid URLs.</li>
+<li>Compile-time checked templates via the <a href="http://docs.yesodweb.com/hamlet/">hamlet</a> package. Hamlet has a Haml-like syntax and can be embedded directly in Haskell source code via quasi-quoting. Yesod ties Hamlet and web-routes-quasi together to ensure type-safe URLs in your templates as well. Hamlet has many nice features for creating HTML output, I will not enumerate them here.</li>
+<li>Subsites are a new feature which allows you to create web components that can be plugged into multiple sites. Yesod includes two subsites: authentication and static files.</li>
+</ul>
+<p>Yesod is still based on the Web Application Interface (wai), allowing it to be served from multiple backends. I will be releasing benchmarks in a few days as I wait for some feedback on one more backend which will hopefully be released soon.</p>
+<p>Various other sources of Yesod information:</p>
+<ul><li>I gave a talk to the Southern California Functional Programmers group. There are <a href="http://docs.google.com/present/edit?id=0AT9dwvcPwQ9lZGN3N3MzNHRfMzM0ZGZxYmZyY3Q&hl=en">slides</a> and <a href="http://docs.google.com/leaf?id=0Bx3_LY5jgxVbNjViY2VkNWEtYmQyMC00MmMzLTgyZGEtNmQ2ZWY1NmE2NGVj&hl=en">audio</a>.</li>
+<li>I run my blog with a little bit of Yesod code I endearingly call <a href="http://github.com/snoyberg/bloggy">bloggy</a>.</li>
+<li>If you have questions, please consider joining the <a href="http://www.haskell.org/mailman/listinfo/web-devel">Haskell web devel mailing list</a>.</li>
+</ul>
+<p>I'm using this code in production, so it is fairly well tested. However, if you find a bug, or even <i>think</i> you've found a bug, please let me know. And stay tuned to this blog to hear plans for the next Yesod release.</p>

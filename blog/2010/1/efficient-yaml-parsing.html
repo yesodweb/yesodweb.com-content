@@ -1,0 +1,47 @@
+<p>One of the main applications I have for stress testing <a href="http://github.com/snoyberg/yesod">my Yesod web framework</a> is <a href="http://www.snoyman.com/photos/">the photo blog</a>. This blog stores all information in a single YAML file. This file is now about 200 KB large.</p>
+<p>A few weeks ago, I made some changes so Atom feeds would be generated using <a href="http://github.com/snoyberg/yesod/blob/master/Data/Object/Html.hs">HtmlObject</a>, and suddenly I was running out of memory. At the time I made a few simple strictness hacks and set it aside for later.</p>
+<p>Now that the release is nearing, I've started attacking memory leaks. The HtmlObject bug was fairly easily solved (it was using too much list appending), but I realized I was unhappy with the performance of my <a href="http://hackage.haskell.org/package/data-object-yaml">YAML library</a>.</p>
+<p>Just as a quick intro, this YAML library includes a binding to <a href="http://pyyaml.org/wiki/LibYAML">libyaml</a> and converts the result to be a <a href="http://hackage.haskell.org/package/data-object">Data.Object.Object</a>. The problem with this approach is that, anytime you read the file, it reads <b>and stores</b> the entire contents in memory, even if you only need to collect, say, the names of the entries.</p>
+<h2>A simple solution</h2>
+<p>A fairly simple solution to this problem is to run a program to split the single large YAML files into different views. For example, one file for each entry, and then a separate file with the list of all entries. This is most likely something I will want to do regardless, since it will reduce disk read times. Nonetheless, the library should be made more efficient.</p>
+<h2>The Benchmark</h2>
+<p>In order to test things out, I decided to go for a ridiculously simple benchmark: count how many entries are in my YAML file. You can <a href="http://static.snoyman.com/entries.yaml">download the sample file here</a>.</p>
+<p>The main issue I'm interested in here is memory, not processing, so I will only mention those results. In particular, I consider the most important number total memory in use as reported by "+RTS -sstderr". If someone know a reason to trust another number instead, please let me know.</p>
+<p>The original version of the library ended up using 7MB of memory. Considering the fact that the entire YAML file is only 200KB, there's a lot of fat to trim.</p>
+<p>The main issue, however, is the fact that I'm reading the entire file into memory. Let's see how to address that.</p>
+<h2>Lazy IO</h2>
+<p>I at first considered using unsafeInterleaveIO to get out of this predicament. The library produced a list of events ([Event]). However, I had plenty of reasons to avoid this:</p>
+<ul><li>I'm calling out to a C library, which made things very hairy. There were all kinds of resource management issues to beware of.</li>
+<li>Any step along the way could have generated a failure from the C library, and I didn't want those popping up in pure code. I could have changed the type to [Either YamlException Event], but it seemed like an uphill battle.</li>
+<li>I haven't seen examples of unsafeInterleaveIO used in this context, and I wasn't certain how stable it would be.</li>
+</ul>
+<h2>Left-fold enumerator</h2>
+<p>So I decided that it would make most sense to have a left-fold enumerator here. In this setup, I would provide the library with a function and accumulating parameter, and the library handles all memory management and exception issues. <a href="http://okmij.org/ftp/Streams.html">Others</a> <a href="http://www.galois.com/blog/2008/09/12/left-fold-enumerators-a-safe-expressive-and-efficient-io-interface-for-haskell/">have</a> <a href="http://www.haskell.org/haskellwiki/Enumerator_and_iteratee">discussed</a> this topic at-length, so I won't get into more details for now.</p>
+<p>In this process, I decided to split the library into two pieces: yaml would be the low-level binding providing the left-fold enumerator interface, while data-object-yaml would provide high-level conversions to data-object types.</p>
+<h2>Results</h2>
+<p>The results so far are promising. I now have two benchmarks: the easy and efficient one. The easy benchmark follows the same procedure as before: convert the entire YAML file into an Object and then count the entries. After the rewrite, this benchmark takes 5 MB. Still needs lots of work, but I was gratified to see that I shaved off 2 MB without focusing on this area.</p>
+<p>However, the efficient benchmark is where we see the real possibilities of a left-fold enumerator approach. This code generates no intermediate data structure, it simply counts up the entries. Here's some number comparisons between the two benchmarks:</p>
+<table border="1"><thead><tr><th>Results</th>
+<th>Easy</th>
+<th>Efficient</th>
+</tr>
+</thead>
+<tbody><tr><th>Total memory used</th>
+<td>5-6MB</td>
+<td>1MB</td>
+</tr>
+<tr><th>%GC Time</th>
+<td>50.0%</td>
+<td>0.0</td>
+</tr>
+<tr><th>Maximum residency (bytes)</th>
+<td>3,545,840</td>
+<td>7,632</td>
+</tr>
+</tbody>
+</table>
+<p>It appears to me that this version runs in constant space, which is what I would hope for.</p>
+
+<h2>Conclusion</h2>
+<p>The downside to the efficient method is that it's rather tedious to program. However, I think it should be relatively straight-forward to develop a parsing framework to ease this burden. After all, we're dealing with <i>incredibly</i> simple data structures here: scalars, sequences and mappings.</p>
+<p>If you'd like to play around with this code yourself, you'll need to get both my <a href="http://github.com/snoyberg/yaml">yaml</a> and <a href="http://github.com/snoyberg/data-object-yaml">data-object-yaml</a> repositories from Github.</p>

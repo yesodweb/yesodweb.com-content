@@ -1,0 +1,32 @@
+<p>This post discusses the session API as present in Yesod 0.4. This version has not been released yet, but you can <a href="http://docs.yesodweb.com/haddock/yesod/">see the Haddocks online</a>. The API is not much different from previous versions, but the names have changed a bit.</p>
+<h3>Sessions</h3>
+<p>Most web frameworks provide some notion of user sessions, where you can store small bits of information for each user. In the case of Yesod, we use the <a href="http://hackage.haskell.org/package/clientsession">clientsession package</a> (also written by yours truly) to store data in an HTTP cookie. While this might sound insecure and inefficient at first, it's not:</p>
+<ul><li>All data is hashed, encrypted and base64-encoded before being placed in the HTTP cookie.</li>
+<li>You shouldn't be storing large amounts of data in the cookie, so the bandwidth overhead shouldn't be large.</li>
+<li>Production sites should be serving their static data from a separate domain name, meaning the cookie bandwidth hit won't apply to them.</li>
+<li>By storing the data in a client session, we avoid a database lookup for each request, which can be very expensive.</li>
+<li>Currently, sessions are <i>not</i> compressed, though this is a feature easily added in the future if it turns out to be beneficial.</li>
+</ul>
+<p>Like most frameworks, the sessions are simple key-value stores. There are three basic operations on a session:</p>
+<ul><li><a href="http://docs.yesodweb.com/haddock/yesod/Yesod-Request.html#v%3AlookupSession">lookupSession</a> gets a value for a given key.</li>
+<li><a href="http://docs.yesodweb.com/haddock/yesod/Yesod-Handler.html#v%3AsetSession">setSession</a> sets a new value, or replaces an existing value.</li>
+<li><a href="http://docs.yesodweb.com/haddock/yesod/Yesod-Handler.html#v%3AdeleteSession">deleteSession</a> clears the value in a session, so that it does not appear in the next request.</li>
+</ul>
+<p>Please note that the setSession and deleteSession functions do <b>not</b> affect the outcome of a call to lookupSession within a single request. In other words:</p>
+<pre><code>do
+    val1 &lt;- lookupSession "key"
+    setSession "key" "newvalue"
+    val2 &lt;- lookupSession "key" -- val1 == val2, not "newvalue"</code></pre>
+<h3>Messages</h3>
+<p>Messages are built on top of sessions. The situation is a common one in web development: the user performs a POST request, you make a change, and want to simultaneously tell the user that the request suceeded and redirect them to a new page. Yesod provides a pair of functions to make this very easy:</p>
+<ul><li><a href="http://docs.yesodweb.com/haddock/yesod/Yesod-Handler.html#v%3AsetMessage">setMessage</a> stores a value in the session.</li>
+<li><a href="http://docs.yesodweb.com/haddock/yesod/Yesod-Handler.html#v%3AgetMessage">getMessage</a> both reads the value most recently put into the session, and also clears that old value.</li>
+</ul>
+<p>In my projects, I will often put a call to getMessage in the <a href="http://docs.yesodweb.com/haddock/yesod/Yesod-Yesod.html#v%3AdefaultLayout">defaultLayout</a> function and know that any messages I set with setMessage will be displayed on the next page the user views.</p>
+<h3>Ultimate Destination</h3>
+<p>Not to be confused with a horror film, this concept is used internally in the Yesod authentication module. Simply put, let's say a user requests a page that requires authentication. Clearly, you need to send them to the login page. A well-designed web app will then <i>send them back to the first page they requested</i>. That's what we call the ultimate destination.</p>
+<ul><li><a href="http://docs.yesodweb.com/haddock/yesod/Yesod-Handler.html#v%3AsetUltDest">setUltDest</a> sets the ultimate destination to the given route.</li>
+<li><a href="http://docs.yesodweb.com/haddock/yesod/Yesod-Handler.html#v%3AsetUltDest%27">setUltDest'</a> is a variant of setUltDest that sets the ultimate destination to the current route.</li>
+<li><a href="http://docs.yesodweb.com/haddock/yesod/Yesod-Handler.html#v%3AsetUltDestString">setUltDestString</a> is the same thing, but uses a string instead of a type-safe URL. Can be useful if you want to send a user to another site after authentication.</li>
+<li><a href="http://docs.yesodweb.com/haddock/yesod/Yesod-Handler.html#v%3AredirectUltDest">redirectUltDest</a> sends the user to the ultimate destination currently in his/her session and clears that value from the session.</li>
+</ul>

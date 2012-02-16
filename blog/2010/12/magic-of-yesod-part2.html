@@ -1,0 +1,176 @@
+<p>For those celebrating one, a happy holiday. To everyone else, a happy day.</p>
+<p>Before we get started on the second installment in this series, I wanted to give everyone a little update on Yesod 0.7. Felipe Lessa came up with a very good idea: split up Yesod into a yesod-core package which will provide basic functionality and have minimal dependencies, and a yesod package which will tie together a bunch of addon packages. This will help out in a few ways:</p>
+<ul><li><p>The scaffolded site will no longer have extra dependencies versus the yesod package.</p></li>
+<li><p>The scaffolded site can be a little smaller, since some of the functionality that was included there can be put in the yesod package.</p></li>
+<li><p>One of the goals of the 1.0 release is to have a complete test suite. Breaking things up into smaller packages makes it (at least psychologically) easier to test the whole thing.</p></li>
+<li><p>Make it easier to make breaking changes in addon modules like Sitemap or AtomFeed.</p></li>
+</ul>
+<p>This also means that it should be easier for new contributors to find a package and make contributions, since there will be less far-reaching consequences. So if anyone sees one of these new packages and would like to take a more active role (either contributing, or even taking over maintainership), please let me know.</p>
+<p>Anyway, on to the topic at hand: the magic.</p>
+<h2 id="static-subsite">Static subsite</h2>
+<p>There are two pieces of &quot;magic&quot; involved in the static subsite (for serving static files). The first is the very concept of a subsite. Unfortunately, this is a topic that I have not gotten around to documenting properly, and probably will not for a few months. For a one line explanation: it allows you to create reusable components that can be plugged into any Yesod application.</p>
+<p>But the magic to be addressed now is the staticFiles function. Let's review a few key facts about how the static subsite works:</p>
+<ul><li><p>There is a StaticRoute datatype which represents each file request. There is a single constructor (StaticRoute) which takes two arguments: a list of path pieces (eg, &quot;/foo/bar.css&quot; becomes [&quot;foo&quot;, &quot;bar.css&quot;]) and a list of query string parameters.</p></li>
+<li><p>The Static datatype contains a field for the lookup function, which takes a FilePath. For this, the path pieces are converted back into a path (eg, [&quot;foo&quot;, &quot;bar.css&quot;] -&gt; &quot;/foo/bar.css&quot;) and the query string is ignored.</p></li>
+</ul>
+<p>So what's the point of the query string? If you place a hash of the file contents in the query string, then you can set you expires header far in the future and not worry about the client getting stale content. When you change the content, the hash will change, and therefore the URL will change, causing the browser to download a new copy.</p>
+<p>We now have two annoyances when dealing with the static subsite:</p>
+<ul><li><p>We need to type in the file paths in our Haskell code without any assurances that the files actually exist. You're one typo away from a broken site.</p></li>
+<li><p>You'll need to manually calculate the hashes. Besides the extra programming overhead, if you do this at runtime you'll get a major performance overhead as well.</p></li>
+</ul>
+<p>The answer to both of these is the staticFiles TH function. If you give it a filesystem path, it will explore the entire directory structure, find all files, calculate hashes, and create Haskell identifiers for each of them. And it does all of this at compile time, meaning zero runtime performance overhead. So, if you have a &quot;static/images/logo.png&quot; file, and you want to use it, you simply include the line:</p>
+<pre><code>$(staticFiles &quot;static&quot;)
+</code></pre>
+<p>in your code and you will now have a <code>images_logo_png</code> value in scope with a datatype of <code>StaticRoute</code>. Oh, and I forgot to mention: GHC 6.12 introduced a feature where the TH brackets are not necessary for top-level calls, so you can simply write</p>
+<pre><code>staticFiles &quot;static&quot;
+</code></pre>
+<p>There is one downside to this approach that needs to be mentioned: if you change files in your static folder without modifying the module that calls staticFiles, you will still have the old identifiers in your object files. I recommend having a StaticFiles module in each project that just runs the staticFiles function. Whenever you modify your static folder, <code>touch StaticFiles.hs</code> and you should be good to go. For extra safety when compiling your production code, I recommend always starting with a cabal clean.</p>
+<h2 id="parseroutes">parseRoutes</h2>
+<p>The parseRoutes quasi-quoter is actually even simpler than Julius. However, it goes hand-in-hand with mkYesod, which is significantly more sophisticated than Julius, and therefore this section ended up in this post instead. The quasi-quoter does only two things:</p>
+<ul><li><p>Converts each non-blank line in its argument into a <a href="http://hackage.haskell.org/packages/archive/web-routes-quasi/0.6.2/doc/html/Web-Routes-Quasi-Parse.html#t:Resource">Resource</a>.</p></li>
+<li><p>Checks that there are no overlapping paths in the resources provided.</p></li>
+</ul>
+<p>Starting with the second point, an overlapping set of paths could be something like:</p>
+<pre><code>/foo/#String
+/#String/bar
+</code></pre>
+<p>since /foo/bar will match <em>both</em> of those. However, there is unfortunately a little bit more to it than that, since even these paths will overlap:</p>
+<pre><code>/foo/#Int
+/#Int/bar
+</code></pre>
+<p>This is because the quasi-quoter doesn't know <em>anything</em> about what an Int or String are, it just passes them along. I still think that it is best to avoid such overlapping paths, but if you <em>really</em> want to avoid the overlapping check, you can use <a href="http://hackage.haskell.org/packages/archive/web-routes-quasi/0.6.2/doc/html/Web-Routes-Quasi-Parse.html#v:parseRoutesNoCheck">parseRoutesNoCheck</a>.</p>
+<p>Now what about that Resource datatype? It has a single constructor:</p>
+<pre><code>Resource String [Piece] [String]
+</code></pre>
+<p>The first String is the name of the resource pattern, and the list of Strings at the end is the extra arguments. For example, in:</p>
+<pre><code>/foo/bar FooBarR GET POST
+</code></pre>
+<p>that list of Strings would be</p>
+<pre><code>[&quot;GET&quot;, &quot;POST&quot;]
+</code></pre>
+<p>The quasi-quoter does not apply any meaning to that section; that is handled by mkYesod. As far as the list of Pieces, there are three piece constructors: StaticPiece, SinglePiece and MultiPiece. As a simple example,</p>
+<pre><code>/foo/#Bar/*Baz
+</code></pre>
+<p>becomes</p>
+<pre><code>[StaticPiece &quot;foo&quot;, SinglePiece &quot;Bar&quot;, MultiPiece &quot;Baz&quot;]
+</code></pre>
+<p>Of all the magic in Yesod, this is the part that can most easily be replaced with plain Haskell. In fact, this could be a good candidate for an IsString instance. Something to consider...</p>
+<h2 id="mkyesod">mkYesod</h2>
+<p>I personally think that type safe URLs are the most important part of Yesod. I feel <em>very</em> good saying that, because I'm not even the one who came up with the idea: after release 0.2 of Yesod (I think), both Chris Eidhof and Jeremy Shaw emailed me the idea. It's actually hard for me to imagine where Yesod would have gone had it not been for that recommendation.</p>
+<p>The good side of type safe URLs is that it makes it all but impossible to generate invalid internal links, it validates incoming input from the requested path, and makes routing very transparent. The bad side is that it requires a <em>lot</em> of boilerplate:</p>
+<ul><li>Define a datatype with a constructor for each resource pattern.</li>
+<li>Create a URL rendering function to convert that datatype to a [String]</li>
+<li>Write a URL parsing function to convert a [String] to that datatype (well, wrapped in a Maybe)</li>
+<li>Write a dispatch function to call appropriate handler functions.</li>
+</ul>
+<p>mkYesod is probably the most important single function in all of Yesod. It does all four of these steps automatically for you, based on a list of Resources (which can be created using the parseRoutes quasiquoter described above).</p>
+<p>As a simple example, let's take a look at what mkYesod does:</p>
+<pre><code>{-# LANGUAGE QuasiQuotes, TypeFamilies #-}
+import Yesod
+import Yesod.Helpers.Static
+
+mkYesod &quot;MySite&quot; [$parseRoutes|
+/ RootR GET
+/person/#String PersonR GET POST
+/fibs/#Int FibsR GET
+/wiki/*Strings WikiR
+/static StaticR Static getStatic
+|]
+</code></pre>
+<p>If you run this code with -ddump-splices, you'll see the resulting Haskell code. Here's the cleaned up version:</p>
+<pre><code>data MySiteRoute
+    = RootR
+    | PersonR String
+    | FibsR Int
+    | WikiR Strings
+    | StaticR Route Static
+    deriving (Show, Read, Eq)
+
+type instance Route MySite = MySiteRoute
+
+dispatch RootR method =
+    case method of
+        &quot;GET&quot; -&gt; Just $ chooseRep &lt;$&gt; getRootR
+        _ -&gt; Nothing
+dispatch (PersonR x) method =
+    case method of
+        &quot;GET&quot; -&gt; Just $ chooseRep &lt;$&gt; getPersonR x
+        &quot;POST&quot; -&gt; Just $ chooseRep &lt;$&gt; postPersonR x
+        _ -&gt; Nothing
+dispatch (FibsR x) method =
+    case method of
+        &quot;GET&quot; -&gt; Just $ chooseRep &lt;$&gt; getFibsR x
+        _ -&gt; Nothing
+dispatch (WikiR x) _ = Just $ chooseRep &lt;$&gt; handleWikiR x
+-- Yes, this next bit is *ugly*...
+dispatch (StaticR x) method =
+    (fmap chooseRep &lt;$&gt;
+        (toMasterHandlerDyn
+            StaticR
+            (\ -&gt; runSubsiteGetter getStatic)
+            x
+            &lt;$&gt;
+            Web.Routes.Site.handleSite
+            (getSubSite :: Web.Routes.Site.Site (Route Static) (String -&gt; Maybe (GHandler Static MySite ChooseRep)))
+            (error &quot;Cannot use subsite render function&quot;)
+            x
+            method))
+
+-- produces a pair of path pieces and query string parameters
+render RootR = ([], [])
+render (PersonR x) = ([&quot;person&quot;, toSinglePiece x], [])
+render (FibsR x) = ([&quot;fibs&quot;, toSinglePiece x], [])
+render (WikiR x) = (&quot;wiki&quot; : toMultiPiece x, [])
+render (StaticR x) =
+    (\ (b, c) -&gt; ((&quot;static&quot; : b), c)) $
+    (Web.Routes.Site.formatPathSegments
+        (getSubSite :: Web.Routes.Site.Site
+            (Route Static)
+            (String -&gt; Maybe (GHandler Static MySite ChooseRep))) x)
+
+parse [] = Right RootR
+parse [&quot;person&quot;, s] =
+    case fromSinglePiece s of
+        Left e -&gt; Left e
+        Right x -&gt; PersonR x
+parse [&quot;fibs&quot;, s] =
+    case fromSinglePiece s of
+        Left e -&gt; Left e
+        Right x -&gt; FibsR x
+parse (&quot;wiki&quot; : s) =
+    case fromMultiPiece s of
+        Left e -&gt; Left e
+        Right x -&gt; WikiR x
+parse (&quot;static&quot; : s) =
+    case Web.Routes.Site.parsePathSegments
+       $ (getSubSite :: Web.Routes.Site.Site
+            (Route Static)
+            (String -&gt; Maybe (GHandler Static MySite ChooseRep))) of
+        Left e -&gt; Left e
+        Right x -&gt; StaticR x
+parse _ = Left &quot;Invalid URL&quot;
+
+instance YesodSite MySite where
+    getSite = Web.Routes.Site.Site dispatch render parse
+</code></pre>
+<p>The actual code is a little bit harder to follow, but does the same basic thing. One last thing: in order to make it possible to define your routes in one file and your handlers in a bunch of other files, we need to split up the declaration of the MySiteRoute datatype from the declaration of the dispatch function. That's precisely the purpose of providing both <a href="http://hackage.haskell.org/packages/archive/yesod/0.6.7/doc/html/Yesod-Dispatch.html#v:mkYesodData">mkYesodData</a> and <a href="http://hackage.haskell.org/packages/archive/yesod/0.6.7/doc/html/Yesod-Dispatch.html#v:mkYesodDispatch">mkYesodDispatch</a>.</p>
+<h2 id="errata-for-last-post">Errata for last post</h2>
+<p>One thing I forgot to mention in the last post: Hamlet templates are in fact polymorphic. You can have:</p>
+<pre><code>[$hamlet|%h1 HELLO WORLD|] :: Html
+[$hamlet|%h1 HELLO WORLD|] :: Hamlet a
+[$hamlet|%h1 HELLO WORLD|] :: GWidget sub master ()
+</code></pre>
+<p>This is achieved via the <a href="http://hackage.haskell.org/packages/archive/hamlet/0.6.1.2/doc/html/Text-Hamlet.html#t:HamletValue">HamletValue</a> typeclass. This construct is a little complicated, and probably deserves its own discussion. For now, I will simply say that this typeclass provides htmlToHamletMonad and urlToHamletMonad functions for the hamlet TH code to call, and thus create a polymorphic result.</p>
+<p>There are two important things to keep in mind:</p>
+<ul><li><p>You cannot embed a template with one datatype inside a template with a different datatype. For example, the following will not work:</p>
+<p>asHtml :: Html asHtml = [<span class="math"><em>h</em><em>a</em><em>m</em><em>l</em><em>e</em><em>t</em>∣</span>hamlet|<sup>asHtml</sup>|]</p></li>
+<li><p>When dealing with the GWidget instance, GHC can get confused. For example:</p>
+<p>-- this works myGoodWidget :: GWidget sub master () myGoodWidget = do setTitle &quot;something&quot; [$hamlet|%h1 Text|]</p>
+<p>-- this doesn't myBadWidget :: GWidget sub master () myBadWidget = do [$hamlet|%h1 Text|] setTitle &quot;something&quot;</p></li>
+</ul>
+<p>Since the datatype for the hamlet quasiquotation in myGoodWidget is required to be GWidget sub master (), everything works out. However, in myBadWidget, the datatype is actually GWidget sub master <strong>a</strong>, and GHC doesn't know that you want to use the GWidget sub master () instance of HamletValue. The trick to get around this is to use the addWidget function, which is:</p>
+<pre><code>addWidget :: GWidget sub master () -&gt; GWidget sub master ()
+addWidget = id
+</code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>I still owe you another post persistent entity declarations and migrations, but that will have to wait for another day. I still have some coding to do tonight!</p>

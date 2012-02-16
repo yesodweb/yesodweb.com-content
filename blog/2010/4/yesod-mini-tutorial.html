@@ -1,0 +1,35 @@
+<p>Well, I'll be flying home in a few days after a long trip to see family. As such, this will probably be my last time to do some Yesod work for a week, so I wanted to give a little status update.</p>
+<p>There are two major changes coming with Yesod 0.2: Hamlet and web-routes-quasi. The former is going to be the preferred templating system for Yesod, replacing both HStringTemplate and the Data.Object.Html module. It has already been released and is <a href="http://docs.yesodweb.com/hamlet/">fairly well documented</a>.</p>
+<p>The latter is a reworking of the former routing system for Yesod, split out and designed to work with web-routes. It features a simpler syntax, support for subsites, and (most importantly) delivers the ability to create type-safe URLs. It is not yet released, though there is <a href="http://docs.yesodweb.com/web-routes-quasi/">a web-routes-quasi documentation page</a>; that page may be a little out of date.</p>
+<p>I'm very interested in hearing community feedback on Yesod at this point. I know most people will wait to try things out seriously when <a href="http://docs.yesodweb.com/">the documentation is written</a>, but for now I thought I'd write a mini-tutorial on how things fit together.</p>
+<h3>Hello World</h3>
+<code><pre>1 {-# LANGUAGE TypeFamilies, QuasiQuotes, TemplateHaskell #-}
+2 import Yesod
+3 data HelloWorld = HelloWorld
+4 mkYesod "HelloWorld" [$parseRoutes|/ Home GET|]
+5 instance Yesod HelloWorld where approot _ = ""
+6 getHome = return $ RepPlain $ cs "Hello World!"
+7 main = toWaiApp HelloWorld &gt;&gt;= basicHandler 3000</pre></code>
+<p>Line 1 shows you what language extensions Yesod requires, and line 2 imports the framework. Line 3 declares the HelloWorld datatype; every Yesod application has such a datatype which is the core of the application. In our simple HelloWorld, we don't need any information in it, but usually you store settings loaded from config files, database connections and the like in it.</p>
+<p>Line 4 is magic: the end of the line is a piece of quasiquotes which creates a list of Resources. This is a feature provided by web-routes-quasi; see its documentation for syntax information. mkYesod is template haskell that does a number of things for us:</p>
+<ul><li>Creates a datatype for the URLs in our application. For our example, this is equivalent to <code>data HelloWorldRoutes = Home</code></li>
+<li>Creates an instance of YesodSite; this provided URL parse and render functions as well as a dispatch function. The dispatch function references the getHome function, which is why we define it on line 6.</li>
+</ul>
+<p>Line 5 is a minimalistic instance of the Yesod typeclass; all applications must instantiate it. You can set various settings in it, but the only one necessary is approot. Line 6 defines the handler for the GET method of the application root. <a href="http://hackage.haskell.org/packages/archive/convertible-text/0.2.0.5/doc/html/Data-Convertible-Base.html#v%3Acs">cs</a> converts the string "Hello World!" into Content; RepPlain specifies that the content type is "text/plain".</p>
+<p>And finally, line 7 creates a WAI <a href="http://hackage.haskell.org/packages/archive/wai/0.0.0/doc/html/Network-Wai.html#t%3AApplication">Application</a> and uses the basicHandler to serve the application via either simple server or CGI, based on environment variables.</p>
+<h3>Beyond Hello World</h3>
+<p>I'll just point out a few of the possibly surprising things in Yesod; everything will be covered more thoroughly in the upcoming documentation.</p>
+<ul><li>You can provide multiple representations of a response, and allow Yesod to choose the right one based on the HTTP "Accept" request header. This allows you to easily create applications with either an AJAX or static interface.</li>
+<li><a href="http://hackage.haskell.org/package/clientsession">clientsession</a> is used for handling session data.</li>
+<li>There is built in support for OpenID and RPXnow authentication, but not internal site authentication. Hopefully, that will be added soon.</li>
+<li>The <a href="http://github.com/snoyberg/yesod/tree/ver0.2">current development version</a> depends on a few packages not yet released, but which are all available in <a href="http://github.com/snoyberg">my github account</a>. Obviously those will all be uploaded before release.</li>
+</ul>
+<p>I might update this post with a few more points later, but I'm out of time for now! See you all in a week.</p>
+<h3 style="color:#f00">Update (April 25, 2010)</h3>
+<p>I've gotten all of the dependencies for Yesod uploaded onto Hackage, so all it should take to try it out is:</p>
+<ul><li>cabal update</li>
+<li>git clone git://github.com/snoyberg/yesod.git</li>
+<li>cd yesod</li>
+<li>git checkout origin/ver0.2</li>
+<li>cabal install</li>
+</ul>

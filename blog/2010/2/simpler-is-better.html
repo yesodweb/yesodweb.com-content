@@ -1,0 +1,15 @@
+<p>I was in the middle of writing a post about non-recursive enumerators (see <a href="http://www.snoyman.com/blog/entry/request-body-interfaces/">my last post</a>) when I realized it was too much of an uphill battle. While they gave the promise of uniting both request and response bodies under a single interface that allowed easy generation of lazy bytestrings, they were going to be too complicated.</p>
+<p>So I've broken down and admitted that I will have to have two separate interfaces for these things. It makes sense after all: the requirements for a server spitting out a response body are quite different than an application reading a request body.</p>
+<p>So I think it's safe to declare the winner on the response body side to be the recursive enumerator (henceforth known as enumerator). In addition, to deal with a number of compile type issues, I've added a newtype, so that the definition of Enumerator is:</p>
+<code><pre>newtype Enumerator = Enumerator { runEnumerator :: forall a.
+              (a -> B.ByteString -> IO (Either a a))
+                 -> a
+                 -> IO (Either a a)
+}</pre></code>
+<p>I know it looks scary, but it's not really that bad: first argument is an iteratee and the second is the initial seed. Don't worry, they <a href="http://github.com/snoyberg/wai">wai repository</a> has some good examples of how to use it in the Network.Wai.Enumerator module. You can also check out the <a href="http://github.com/snoyberg/wai-extra">wai-extra</a> repository.</p>
+<p>Without rehashing the discussion from the last post, I mentioned what I called a "Source", but complained that it required the use of a MVar. I also alluded to an alternate definition that did away with the MVar, instead allowing explicit state passing. That's what's currently in the WAI. The definition is:</p>
+<code>data Source = forall a. Source a (a -> IO (Maybe (B.ByteString, a)))</code>
+<p>The Source constructor has two pieces: the "a" and that ugly function. The "a" is the initial state of the Source. One example (used by both SimpleServer and CGI in wai-extra) for that "a" is the value of the Content-Length header.</p>
+<p>The second piece (the ugly function) takes some state, and then gives you the next piece of the request body and a new state, if they're available. Back to the previous example, if given a value of 0, it knows that the request body has been entirely consumed and returns Nothing. Otherwise, it takes another chunk off the request body, and returns that chunk with the remaining length.</p>
+<p>I think this is by far the simplest approach to program to. I was reluctant to introduce it since it involves two different interfaces, but at this point I see no better alternative. If anyone is actually interested in why I'm rejecting non-recursive enumerators, feel free to ask.</p>
+<p>At this point, I think the WAI is ready to be released. I'll wait a week for comments, and then put it on Hackage.</p>

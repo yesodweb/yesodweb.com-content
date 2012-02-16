@@ -1,0 +1,68 @@
+<p>It's been a busy week for the Yesod team. The big API changes have been going into the Forms package, which I'll describe shortly. But first, we wanted to let everyone know about some of the other excitement.</p>
+<ul><li>Greg has implemented <a href="http://html5boilerplate.com/">html5boilerplate</a> integration for the scaffolded site.</li>
+<li>Mark Wotton has set us up on his <a href="http://ci.shimweasel.com/job/yesod/">continuous integration</a> server. Greg is continuing the process of switching our test suites over to the new &quot;cabal test&quot; system so they can be run automatically on the CI server.</li>
+<li>Erik de Castro Lopo has implemented a slew of enhancements for http-enumerator, focusing on proxy support and HTTP basic authentication. We're still adding a few extra features, so the code is not yet on Hackage.</li>
+<li>I've put in a lot of work on a new documentation system to replace the current website. I hope to blog more about this soon, but I'm not sure how much I'm allowed to say at the moment. I <em>will</em> say that one of the major features will be first-class user-contributed documentation, directly from the site.</li>
+<li>We've got a new <a href="/contributors">contributors page</a>. We're starting to get the Yesod team a bit more organized and try to make it clear to the otuside world who is working on which pieces of the puzzle; expect such information to appear on that page in the future.</li>
+<li>We're starting a <a href="/testimonials">testimonials page</a>. There are quite a number of individuals and companies using Yesod in production now. If you're one of them, and you'd like to tell the world about it (and get a bit of free advertising in the process), <script type="text/javascript"><!--
+h='&#x73;&#110;&#x6f;&#x79;&#x6d;&#x61;&#110;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x6d;&#x69;&#x63;&#104;&#x61;&#x65;&#108;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+'send me an email'+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#x73;&#x65;&#110;&#100;&#32;&#x6d;&#x65;&#32;&#x61;&#110;&#32;&#x65;&#x6d;&#x61;&#x69;&#108;&#32;&#40;&#x6d;&#x69;&#x63;&#104;&#x61;&#x65;&#108;&#32;&#x61;&#116;&#32;&#x73;&#110;&#x6f;&#x79;&#x6d;&#x61;&#110;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;&#x29;</noscript>.</li>
+</ul>
+<h2 id="html5boilerplate">html5boilerplate</h2>
+<p>Perhaps the biggest pain for web developers since the second web browser was created is cross-browser compatibility. The job of a framework is to deal with the common pain points like these. Using browser-independent javascript libraries is a huge win here, and the default Yesod widgets use jQuery and jQuery UI. But there are still html and css issues waiting to trip you up, including when trying to leverage newer html5 features and maintain browser compatibility. Html5boilerplate can help us out here. It is definitely a wide-ranging project- it tries to cover a lot of issues in a backend programming language agnostic way. For many aspects this is not optimal and we are already handling them appropriately within Yesod. But we can leverage their html layout and css file to provide proven techniques for dealing with cross-browser issues.</p>
+<p>We want to keep things simple and avoid intimidating the first-time user. So the new scaffolding tool silently generates these files:</p>
+<ul><li>hamlet/boilerplate-layout.hamlet</li>
+<li>static/css/html5boilerplate.css</li>
+</ul>
+<p>The file: hamlet/default-layout.hamlet is still the default. But when you are serious about launching, you will want to switch to use html5boilerplate. Or if you have your own tried and true techniques, just delete these files.</p>
+<h2 id="forms">Forms</h2>
+<p><strong>Note</strong>: Just to make it clear, these &quot;decisions&quot; are still up for discussion. Greg has some ideas on how to clean up the API a bit, and I'd rather delay the release if it means a better final product.</p>
+<p>I <a href="http://www.yesodweb.com/blog/yesod-form-revamp">blogged recently about the Yesod forms library</a>, leaving some stuff up in the air. Well, as part of the work on the i18n efforts for Yesod in general, and work on the new documentation site, I've hammered out a number of the details. There are still a few changes to be made, and I haven't decided if it will be released before the 0.9 release. But it's mostly complete. This post will give a high-level overview.</p>
+<h2 id="three-types-of-forms">Three types of forms</h2>
+<p>There are three types of forms:</p>
+<ul><li><p>Monad (Form), which does not handle error propogation and view (i.e., the HTML itself). It's very convenient for making custom forms.</p></li>
+<li><p>Applicative (AForm), which handles error propogation and view automatically, allowing for very concise code. If you need to create a standard form, such as a table layout form, this is what you'd use.</p></li>
+<li><p>Input (FormInput). This is a special type for simply reading GET/POST parameters without actually constructing any HTML. In the current form package, there is a whole class of stringInput, intInput, etc functions. However, they all lived in the standard form datatype; having a separate type is new.</p></li>
+</ul>
+<p>You can run monadic forms with runFormPost/runFormGet, and input forms with runInputPost/runInputGet. For Applicative forms, you must first convert them to monadic forms, using a render function. The package currently has renderTable and renderDivs.</p>
+<h2 id="field">Field</h2>
+<p>An individual field needs three pieces of information: how to parse from textual data, how to render to textual data, and how to create a view (widget). That's where the Field datatype comes into play. It looks like:</p>
+<pre><code>data Field xml msg a = ...
+</code></pre>
+<p>The xml type argument specifies the datatype for the view; this will usually be a Widget. And <code>a</code> specifies the datatype the field will return (e.g., intField returns an Int). But the msg is the interesting one: yesod-forms is now fully i18n'ed! Instead of just returning a message like &quot;Invalid integer&quot;, intField returns an InvalidInteger value of type FormMessage.</p>
+<p>yesod-core now includes a typeclass:</p>
+<pre><code>class RenderMessage master message where
+    renderMessage :: master -&gt; Languages -&gt; message -&gt; Text
+</code></pre>
+<p>In order to use the forms library, you're going to need to provide an appropriate RenderMessage instance. If you just want to use the default rendering (which always displays English), it would look like:</p>
+<pre><code>instance RenderMessage MyApp Form where
+    renderMessage _ _ = defaultFormMessage
+</code></pre>
+<p>So this is a bit of overhead in order to use the library, but the advantages of being able to easily internationalize an application (IMO) are well worth it.</p>
+<h2 id="fields-to-forms">Fields to Forms</h2>
+<p>We have six functions for turning a Field into one of the Form types above. We have a required and optional variant, and a different function for each type of form. The naming is very straight-forward: mreq, mopt, areq, aopt, ireq, and iopt. The first four take three arguments: the Field itself, a FieldSettings (we'll get there) and the initial value for the field. The last two only take two arguments: the Field, and the parameter name.</p>
+<p>So what's this FieldSettings? It's a data type containing four pieces of information: the label of the field, the tooltip, the ID and the name. Only the first is required. Oh, and here's the important bit: the label and tooltip can be any datatype, allowing for internationalized fields again! So for example:</p>
+<pre><code>data MyMessage = Name | Age
+
+myForm = runFormPost $ renderTable $ (,)
+    &lt;$&gt; areq textField (FieldSettings Name Nothing Nothing Nothing) (Just &quot;Michael&quot;)
+    &lt;*&gt; aopt intField (FieldSettings Age Nothing Nothing Nothing) Nothing
+</code></pre>
+<p>If you're not using i18n, you can go ahead and use plain old Text. And in fact, we even have a convenient IsString instance, so if you turn on OverloadedStrings, you could write the above as:</p>
+<pre><code>myForm = runFormPost $ renderTable $ (,)
+    &lt;$&gt; areq textField &quot;Name&quot; (Just &quot;Michael&quot;)
+    &lt;*&gt; aopt intField &quot;Age&quot; Nothing
+</code></pre>
+<h2 id="formresult">FormResult</h2>
+<p>A form can return three possible results:</p>
+<ol style="list-style-type: decimal"><li>There was no data present</li>
+<li>There was invalid data present</li>
+<li>There was good data present</li>
+</ol>
+<p>We use FormResult for this, completely unchanged from previous versions:</p>
+<pre><code>data FormResult a = FormMissing | FormFailure [Text] | FormSuccess a
+</code></pre>
+<h2 id="fieldview">FieldView</h2>
+<p>You usually won't need to interact directly with a FieldView. This datatype contains information on how a field needs to be rendered, such as the label, HTML for input, and any error messages. renderTables/renderDivs use it internally; if you decide to write a custom rendering function, you'll need it too.</p>

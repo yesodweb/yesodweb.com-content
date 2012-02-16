@@ -1,0 +1,207 @@
+<h1>Introduction</h1><p>This is hopefully the first blog post in many with &quot;cookbook&quot; style answers. If you have either questions or &quot;recipes&quot; to submit, please <script type="text/javascript"></script><noscript>send them over (michael at snoyman dot com)</noscript>. Eventually, this content will make its way into the Yesod book.</p><h1>Adding a local Javascript file</h1>  <p class="hascomments" id="file833-adding-a-local-javascript-file-x1">There are two main functions used to include a reference to an external Javascript file:
+    <code id="file833-adding-a-local-javascript-file-x2">addScript</code> and <code id="file833-adding-a-local-javascript-file-x3">addScriptRemote</code>. The latter is used when you
+   want to provide the actual URL to the script, and can be especially useful for referencing
+   CDN-hosted libraries, such as <a href="http://code.google.com/apis/libraries/devguide.html#jquery">Google-hosted jQuery</a>.</p>
+  <p class="hascomments" id="file833-adding-a-local-javascript-file-x5">The former function is used when you want to refer to a type-safe URL. The most common case of
+   this is with the <a href="http://hackage.haskell.org/package/yesod-static">yesod-static</a> package; if you want to use that, the best place
+   to see an example usage is in the scaffolded site. Here is a minimal example using the
+   lower-level <code id="file833-adding-a-local-javascript-file-x7">sendFile</code>.</p>
+  <pre class="codeblock" id="file833-adding-a-local-javascript-file-x8">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TemplateHaskell #-}
+import Yesod
+
+data Local = Local
+type Handler = GHandler Local Local
+
+mkYesod &quot;Local&quot; [parseRoutes|
+/ RootR GET
+/myfile.js MyFileJsR GET
+|]
+
+instance Yesod Local where
+    approot _ = &quot;&quot;
+
+getRootR = defaultLayout $ do
+    addScript MyFileJsR
+    addHamlet [hamlet|
+&lt;h1&gt;HELLO WORLD!
+|]
+
+ -- type sig necessary, since sendFile is polymorphic
+getMyFileJsR :: Handler ()
+-- Serves &quot;myfile.js&quot; with text/javascript mime-type.
+-- Served from /myfile.js as defined above, but your code needn&#39;t know that.
+getMyFileJsR = sendFile &quot;text/javascript&quot; &quot;myfile.js&quot;
+
+main = warpDebug 3000 Local</pre><h1>Virtual Hosts</h1>  <p class="hascomments" id="file834-virtual-hosts-x1">Often times, we&#39;ll want to run multiple sites from a single machine, using <a href="http://en.wikipedia.org/wiki/Virtual_hosting">virtual
+    hosts</a>. The recommended approach in general is to use a web server like Nginx to be the
+   frontend server, and to reverse HTTP proxy to your individual sites. However, it&#39;s entirely
+   possible to do this in 100% pure Haskell, with just a single instance running for all your
+   sites.</p>
+  <p class="hascomments" id="file834-virtual-hosts-x3">To achieve this, we&#39;ll use the vhost middleware. We&#39;ll start off with some boilerplate
+   definitions of three Yesod sites:</p>
+  <pre class="codeblock" id="file834-virtual-hosts-x4">{-# LANGUAGE OverloadedStrings, QuasiQuotes, TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
+
+import Yesod
+import Network.Wai.Middleware.Vhost
+import Network.Wai.Handler.Warp
+import Network.Wai
+
+data Site1 = Site1
+data Site2 = Site2
+data DefaultSite = DefaultSite
+
+mkYesod &quot;Site1&quot; [parseRoutes|/ Root1 GET|]
+getRoot1 = return $ RepPlain &quot;Root1&quot;
+
+mkYesod &quot;Site2&quot; [parseRoutes|/ Root2 GET|]
+getRoot2 = return $ RepPlain &quot;Root2&quot;
+
+mkYesod &quot;DefaultSite&quot; [parseRoutes|/ RootDef GET|]
+getRootDef = return $ RepPlain &quot;RootDef&quot;
+
+instance Yesod Site1 where approot _ = &quot;&quot;
+instance Yesod Site2 where approot _ = &quot;&quot;
+instance Yesod DefaultSite where approot _ = &quot;&quot;</pre>
+  <p class="hascomments" id="file834-virtual-hosts-x5">Now comes the actual virtual hosting. We want to serve Site1 from &quot;host1&quot;, Site2 from &quot;host2&quot;,
+   and otherwise serve DefaultSite. In order to determine which site to use, we&#39;ll compare against
+   the serverName record of the WAI request value. The code is very straight-forward:</p>
+  <pre class="codeblock" id="file834-virtual-hosts-x6">main = do
+   app1 &lt;- toWaiApp Site1
+   app2 &lt;- toWaiApp Site2
+   appDef &lt;- toWaiApp DefaultSite
+   run 3000 $ vhost
+       [ ((==) &quot;host1&quot; . serverName, app1)
+       , ((==) &quot;host2&quot; . serverName, app2)
+       ] appDef</pre>
+  <p class="hascomments" id="file834-virtual-hosts-x7">The vhost function takes two arguments: a list of pairs of predicates and applications, and a
+   final default application. This approach works very well for just a few sites, but if you have
+   dozens of virtual hosts, it would be more efficient to use a Map. Add the following to your
+   import list:</p>
+  <pre class="codeblock" id="file834-virtual-hosts-x8">import qualified Data.Map as Map</pre>
+  <p class="hascomments" id="file834-virtual-hosts-x9">And then replace your main with:</p>
+  <pre class="codeblock" id="file834-virtual-hosts-x10">main = do
+   app1 &lt;- toWaiApp Site1
+   app2 &lt;- toWaiApp Site2
+   appDef &lt;- toWaiApp DefaultSite
+   let sites = Map.fromList
+                   [ (&quot;host1&quot;, app1)
+                   , (&quot;host2&quot;, app2)
+                   ]
+   run 3000 $ \req -&gt;
+       case Map.lookup (serverName req) sites of
+           Nothing -&gt; appDef req
+           Just app -&gt; app req</pre><h1>Yesod Proxy Server</h1>  <p class="hascomments" id="file835--yesod-proxy-server-x1">Yesod is built on top of WAI, which in turn is built on enumerators. One of the advantages of
+   enumerators is being able to work with streams of data, in constant space. By building on a
+   central enumerator system, multiple libraries are able to interoperate very easily. In our case,
+   both WAI and <a href="http://hackage.haskell.org/package/http-enumerator">http-enumerator</a> share an enumerator approach. Combined with
+   Aristid Breitkreuz&#39;s <a href="http://hackage.haskell.org/package/http-types">http-types</a>, it is much easier to get these packages to
+   interoperate.</p>
+  <p class="hascomments" id="file835--yesod-proxy-server-x4">Unfortunately, there are still a few gotchas. If you&#39;re not familiar with enumerators, it can
+   be difficult to get the types to work out. Yesod purposely doesn&#39;t advertise the low-level
+   functions necessary to get things to work, since they are confusing to new users. And there&#39;s a
+   bit of a catch with Builders versus ByteStrings. We&#39;ll step through a very simple Yesod app that
+   proxies the Yesod homepage. We&#39;ll start with our standard language extensions:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x5">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x6">Next we have our import statements. Try to follow which modules/libraries and providing
+   different functionalities.</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x7">import Yesod hiding (Request)
+import Network.HTTP.Enumerator (parseUrl, withManager, http, Request)
+import Network.HTTP.Types (Status, ResponseHeaders)
+import Network.Wai (Response (ResponseEnumerator))
+import Data.ByteString (ByteString)
+import Blaze.ByteString.Builder (Builder, fromByteString)
+import Data.Enumerator (Iteratee, run_, ($$), joinI)
+import qualified Data.Enumerator.List as EL</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x8">And now some simple code to create a new Yesod application with a single route and is served by
+   Warp:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x9">data Proxy = Proxy
+type Handler = GHandler Proxy Proxy
+
+mkYesod &quot;Proxy&quot; [parseRoutes|
+/ RootR GET
+|]
+
+instance Yesod Proxy where
+   approot _ = &quot;&quot;
+
+main :: IO ()
+main = warpDebug 3000 Proxy</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x10">All that&#39;s left is to define our handler function. If we look at the
+    <a href="http://hackage.haskell.org/package/http-enumerator">http-enumerator</a> package, we&#39;ll see that there are a number of functions
+   available for running an HTTP request. However, all of them (except simpleHttp) take a Request.
+   So we&#39;ll start by using parseUrl to generate such a value. We&#39;ll take advantage of the IO
+   instance of Failure by using liftIO:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x12">getRootR :: Handler ()
+getRootR = do
+   req &lt;- liftIO $ parseUrl &quot;http://www.yesodweb.com/&quot;</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x13">For this exercise, we&#39;re going to use the <code id="file835--yesod-proxy-server-x14">http</code> function, which has the
+   signature:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x15">http :: Request IO 
+     -&gt; (Status -&gt; ResponseHeaders -&gt; Iteratee ByteString IO a)
+     -&gt; Manager
+     -&gt; Iteratee ByteString IO a</pre>
+  <aside class="note" id="file835--yesod-proxy-server-x16">http is a bit more polymorphic than this, allowing any instance of MonadIO. Additionally, we
+   could swap out httpRedirect for http here if we wished; httpRedirect will automatically follow
+   3xx redirects.</aside>
+  <p class="hascomments" id="file835--yesod-proxy-server-x17">Alright, the Manager is simply a collection of open connections. We can generate one using
+   withManager. And we already have our request. Now we need to do something about that second
+   argument. But it looks strangely familiar... let&#39;s look at the definition of ResponseEnumerator
+   from WAI:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x18">type ResponseEnumerator a = (Status -&gt; ResponseHeaders -&gt; Iteratee Builder IO a) -&gt; IO a</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x19">Interesting... it&#39;s almost identical, except for the ByteString versus Builder issue. Let&#39;s
+   take a quick break from the definition of getRootR and define a new function, blaze, to help us
+   out here:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x20">blaze :: (Status -&gt; ResponseHeaders -&gt; Iteratee Builder IO a)
+      -&gt; Status -&gt; ResponseHeaders -&gt; Iteratee ByteString IO a
+blaze f status headers =</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x21">First, a little side note: http-enumerator returns all of the content headers from the server,
+   including content-encoding. This can cause a bit of a problem for clients (you know, they don&#39;t
+   like being told their data is encoded when it isn&#39;t), so we need to strip that header out:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x22">let notEncoding (&quot;Content-Encoding&quot;, _) = False
+        notEncoding _ = True
+        headers&#39; = filter notEncoding headers</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x23">Next, we want to get apply the status and headers to f to get our Builder Iteratee:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x24">--builderIter :: Iteratee Builder IO a
+        builderIter = f status headers&#39;</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x25">Finally, we need to turn our Builder Iteratee into a ByteString Iteratee. Let&#39;s remember that
+   an Iteratee is a data consumer, being fed a stream of data. In order to convert an Iteratee to
+   receive a new stream type, we need to stick an adapter at the beginning of it, called an
+   Enumeratee. In our case, we need to convert a stream of ByteStrings to a stream of Builders. For
+   this, we can use Data.Enumerator.List.map and fromByteString, together with joinI and $$ for some
+   glue:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x26">in joinI $ EL.map fromByteString $$ builderIter</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x27">Well, now that our helper function is done, we can return to http. We need to use
+   sendWaiResponse, which will let us send a raw WAI response from our Yesod app. And we&#39;ll want to
+   use the ResponseEnumerator constructor for Response. So our getRootR ends up looking like:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x28">getRootR :: Handler ()
+getRootR = do
+   req &lt;- liftIO $ parseUrl &quot;http://www.yesodweb.com/&quot;
+   sendWaiResponse $ ResponseEnumerator $ inside req</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x29">And we need inside to have a type signature of:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x30">inside :: Request IO
+       -&gt; (Status -&gt; ResponseHeaders -&gt; Iteratee Builder IO a)
+       -&gt; IO a</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x31">As we mentioned before, we&#39;ll use withManager to get the manager, so our function will start
+   off as:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x32">inside req f = withManager $ \manager -&gt;</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x33">And the rest is just playing with the types. We know we want to call http here, and the first
+   argument is going to be req. f is almost the right type for the second argument to http, but it
+   needs a little help from the blaze function. And the final argument will be manager. This gives
+   us:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x34">http req (blaze f) manager :: Iteratee Bytestring IO a</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x35">But we need our function to return IO a. So the last step is to actually run_ the Iteratee to
+   produce a value. Our complete definition of inside is:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x36">inside req f = withManager $ \manager -&gt;
+   run_ (http req (blaze f) manager)</pre>
+  <p class="hascomments" id="file835--yesod-proxy-server-x37">Or in point-free style, for those inclined:</p>
+  <pre class="codeblock" id="file835--yesod-proxy-server-x38">inside req f = withManager $ run_ . http req (blaze f)</pre>

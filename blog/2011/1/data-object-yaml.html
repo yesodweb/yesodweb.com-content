@@ -1,0 +1,51 @@
+<p>I got an email recently asking for some documentation on the <a href="http://hackage.haskell.org/package/data-object-yaml">data-object-yaml</a>. It's a fairly straight-forward package, with one or two surprises lurking inside, so I think a blog post ought to do it justice. If anyone has questions, just ask it in a comment and I'll try to address it.</p>
+<p>As a bit of background, this package is built on a few other packages I wrote. yaml is a low-level wrapper around the C libyaml library, with an enumerator interface. data-object is a package defining a data type:</p>
+<pre><code>data Object k v = Scalar v
+                | Sequence [Object k v]
+                | Mapping [(k, Object k v)]
+</code></pre>
+<p>In other words, it can represent JSON data fully, and YAML data almost fully. In particular, it doesn't handle cyclical aliases, which I hope doesn't really occur too much in real life.</p>
+<p>Another package to deal with is failure: it basically replaces using an Either for error-handling into a typeclass. It has instances for Maybe, IO and lists by default.</p>
+<p>The last package is convertible-text, which is a fork of John Goerzen's convertible package. The difference is it supports both conversions that are guaranteed to succeed (Int -&gt; String) and ones which may fail (String -&gt; Int), and also supports various textual datatypes (String, lazy/strict ByteString, lazy/string Text).</p>
+<h2 id="yamlscalar-and-yamlobject">YamlScalar and YamlObject</h2>
+<p>We have a <code>type YamlObject = Object YamlScalar YamlScalar</code>, where a YamlScalar is just a ByteString value with a tag and a style. A &quot;style&quot; is how the data was represented in the underlying YAML file: single quoted, double quoted, etc.</p>
+<p>Then there is an IsYamlScalar typeclass, which provides fromYamlScalar and toYamlScalar conversion functions. There are instances for all the &quot;text-like&quot; datatypes: String, ByteString and Text. The built-in instances all assume a UTF-8 data encoding. And around this we have toYamlObject and fromYamlObject functions, which do exactly what they sound like.</p>
+<h2 id="encoding-and-decoding">Encoding and decoding</h2>
+<p>There are two encoding files: encode and encodeFile. You can guess the different: the former produces a ByteString (strict) and the latter writes to a file. They both take an Object, whose keys and values must be an instance of IsYamlScalar. So, for example:</p>
+<pre><code>encodeFile &quot;myfile.yaml&quot; $ Mapping
+    [ (&quot;Michael&quot;, Mapping
+        [ (&quot;age&quot;, Scalar &quot;26&quot;)
+        , (&quot;color&quot;, Scalar &quot;blue&quot;)
+        ])
+    , (&quot;Eliezer&quot;, Mapping
+        [ (&quot;age&quot;, Scalar &quot;2&quot;)
+        , (&quot;color&quot;, Scalar &quot;green&quot;)
+        ])
+    ]
+</code></pre>
+<p>decoding is only slightly more complicated, since the decoding can fail. In particular, the return type is an IO wrapped around a Failure. For example, you could use:</p>
+<pre><code>maybeObject &lt;- decodeFile &quot;myfile.yaml&quot;
+case maybeObject of
+    Nothing -&gt; putStrLn &quot;Error parsing YAML file.&quot;
+    Just object -&gt; putStrLn &quot;Successfully parsed.&quot;
+</code></pre>
+<p>If you just want to throw any parse errors as IO exception, you can use join:</p>
+<pre><code>import Control.Monad (join)
+object &lt;- join $ decodeFile &quot;myfile.yaml&quot;
+</code></pre>
+<p>This takes advantage of the IO instance of Failure.</p>
+<h2 id="parsing-an-object">Parsing an Object</h2>
+<p>In order to pull the data out of an Object, you can use the helper functions from Data.Object. For example:</p>
+<pre><code>import Data.Object
+import Data.Object.Yaml
+import Control.Monad
+
+main = do
+    object &lt;- join $ decodeFile &quot;myfile.yaml&quot;
+    people &lt;- fromMapping object
+    michael &lt;- lookupMapping &quot;Michael&quot; people
+    age &lt;- lookupScalar &quot;age&quot; michael
+    putStrLn $ &quot;Michael is &quot; ++ age ++ &quot; years old.&quot;
+</code></pre>
+<h2 id="and-thats-it">And that's it</h2>
+<p>There's really not more to know about this library. Enjoy!</p>

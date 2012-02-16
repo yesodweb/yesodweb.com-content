@@ -1,0 +1,326 @@
+<h1>Joins</h1>
+  <p class="hascomments" id="file1371-joins-x-3">As we said in the introduction to this chapter, Persistent is non-relational: it works
+   perfectly well with either SQL or non-SQL, and there is nothing inherent in its design which
+   requires relations. On the other hand, <a href="http://www.yesodweb.com/redirector/home%2F1%2Fbook%2Fyesod-web-framework-book%2Fpersistent-060%2Frelations.dita">this
+    very chapter gave advice on modeling relations</a>. What gives?</p>
+  <p class="hascomments" id="file1371-joins-x-5">Both statements are true: you&#39;re not tied to relations, but they&#39;re available if you want to
+   use them. And when the time comes, Persistent provides you with the tools to easily create
+   efficient relational queries, or in SQL terms: table joins.</p>
+  <p class="hascomments" id="file1371-joins-x-6">To play along with our existing no-SQL slant, the basic approach to doing joins in Persistent
+   does not actually use any joins in SQL. This means that a Persistent join will work perfectly
+   well with MongoDB, even though Mongo doesn&#39;t natively support joins. However, when dealing with a
+   SQL database, most of the time you&#39;ll want to use the database&#39;s join abilities. And for this,
+   Persistent provides an alternate module that works just that way. (Obviously, that module is
+   incompatible with Mongo.)</p>
+  <p class="hascomments" id="file1371-joins-x-7">The best part? These two modules have an identical API. All you have to do is swap out which
+   runJoin function you import, and the behavior changes as well.</p>
+  <p class="hascomments" id="file1371-joins-x-8">So how does this joining work? Let&#39;s look at a one-to-many relationship, such as a car/owner
+   example above. Every car has an owner, and every owner has zero or more cars. The
+   Database.Persist.Query.Join module provides a datatype, SelectOneMany, that contains a bunch of join
+   settings, such as how to sort the owners (somOrderOne) and how to filter the cars
+   (somFitlterMany).</p>
+  <p class="hascomments" id="file1371-joins-x-9">In addition, there is a selectOneMany function, which will fill in defaults for all the
+   settings except two. This function needs to be told how to filter the cars based on an owner, and
+   how to determine the owner from a car value.</p>
+  <aside class="note" id="file1371-joins-x-10">You might be thinking this is something that Persistent could automate away for us. Well, in
+   theory yes, but there are two complications to be taken into account: there might be multiple
+   relations between entities (e.g., a car could have both an owner and a mechanic), or that might
+   not be any relations. In my opinion, the simplest, most consistent API results from just making
+   these things explicit parameters.</aside>
+  <p class="hascomments" id="file1371-joins-x-11">When you run a SelectOneMany, it will return something with a bit of a crazy type signature:
+    <code id="file1371-joins-x-12">[((PersonId, Person), [(CarId, Car)])]</code>. This might look intimidating, but lets
+   simplify it just a bit:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">PersonPair</span> = (<span style="color: blue;">PersonId</span>, <span style="color: blue;">Person</span>)
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">CarPair</span> = (<span style="color: blue;">CarId</span>, <span style="color: blue;">Car</span>)
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Result</span> = [(<span style="color: blue;">PersonPair</span>, [<span style="color: blue;">CarPair</span>])]
+</pre></pre>
+  <p class="hascomments" id="file1371-joins-x-14">In other words, all this means is a grouped list of people to their cars.</p>
+  <p class="hascomments" id="file1371-joins-x-15">What happens if a person doesn&#39;t have a car? By default, they won&#39;t show up in the output,
+   though you can override this with the somIncludeNoMatch record. The default behavior matches the
+   behavior of a SQL inner join. Overriding this matches the behavior of a SQL left join.</p>
+  <p class="hascomments" id="file1371-joins-x-16">One other note: while the somOrderOne field is optional, you&#39;ll almost always want to provide
+   it. Without it, there is no guarantee that the cars will be grouped appropriately. You might end
+   up with multiple records for a single person.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE TypeFamilies, TemplateHaskell, MultiParamTypeClasses,</span>
+<span style="color: gray;">GADTs, QuasiQuotes, OverloadedStrings, FlexibleContexts #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.Sqlite</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.TH</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.Query.Join</span> (<span style="color: blue;">SelectOneMany</span> (..), selectOneMany)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+
+<span style="color: gray;">-- We&#39;ll use the SQL-enhanced joins. If you want the in-application join</span>
+<span style="color: gray;">-- behavior instead, just import runJoin from Database.Persist.Query.Join</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.Query.Join.Sql</span> (runJoin)
+
+<span style="color: blue;font-weight: bold;">share</span> [mkPersist sqlSettings, mkMigrate <span style="color: green;">&quot;migrateAll&quot;</span>] [persist|
+<span style="color: blue;">Person</span>
+    name <span style="color: blue;">String</span>
+<span style="color: blue;">Car</span>
+    owner <span style="color: blue;">PersonId</span>
+    name <span style="color: blue;">String</span>
+|]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = withSqliteConn <span style="color: green;">&quot;:memory:&quot;</span> $ runSqlConn $ <span style="color: green;font-weight: bold;">do</span>
+    runMigration migrateAll
+
+    bruce &lt;- insert $ <span style="color: blue;">Person</span> <span style="color: green;">&quot;Bruce Wayne&quot;</span>
+    insert $ <span style="color: blue;">Car</span> bruce <span style="color: green;">&quot;Bat Mobile&quot;</span>
+    insert $ <span style="color: blue;">Car</span> bruce <span style="color: green;">&quot;Porsche&quot;</span>
+    <span style="color: gray;">-- this could go on a while</span>
+
+    peter &lt;- insert $ <span style="color: blue;">Person</span> <span style="color: green;">&quot;Peter Parker&quot;</span>
+    <span style="color: gray;">-- poor Spidey, no car</span>
+
+    logan &lt;- insert $ <span style="color: blue;">Person</span> <span style="color: green;">&quot;James Logan&quot;</span> <span style="color: gray;">-- Wolverine</span>
+    insert $ <span style="color: blue;">Car</span> logan <span style="color: green;">&quot;Harley&quot;</span>
+
+    britt &lt;- insert $ <span style="color: blue;">Person</span> <span style="color: green;">&quot;Britt Reid&quot;</span> <span style="color: gray;">-- The Green Hornet</span>
+    insert $ <span style="color: blue;">Car</span> britt <span style="color: green;">&quot;The Black Beauty&quot;</span>
+
+    results &lt;- runJoin (selectOneMany (<span style="color: blue;">CarOwner</span> &lt;-.) carOwner)
+        { somOrderOne = [<span style="color: blue;">Asc</span> <span style="color: blue;">PersonName</span>]
+        }
+
+    liftIO $ printResults results
+
+<span style="color: blue;font-weight: bold;">printResults</span> :: [(<span style="color: blue;">Entity</span> <span style="color: blue;">Person</span>, [<span style="color: blue;">Entity</span> <span style="color: blue;">Car</span>])] -&gt; <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">printResults</span> =
+    mapM_ goPerson
+  <span style="color: green;font-weight: bold;">where</span>
+    goPerson :: (<span style="color: blue;">Entity</span> <span style="color: blue;">Person</span>, [<span style="color: blue;">Entity</span> <span style="color: blue;">Car</span>]) -&gt; <span style="color: blue;">IO</span> ()
+    goPerson ((<span style="color: blue;">Entity</span> _personid person), cars) = <span style="color: green;font-weight: bold;">do</span>
+        putStrLn $ personName person
+        mapM_ goCar cars
+        putStrLn <span style="color: green;">&quot;&quot;</span>
+
+    goCar :: (<span style="color: blue;">Entity</span> <span style="color: blue;">Car</span>) -&gt; <span style="color: blue;">IO</span> ()
+    goCar (<span style="color: blue;">Entity</span> _carid car) = putStrLn $ <span style="color: green;">&quot;    &quot;</span> ++ carName car
+</pre></pre>
+ <h1>Monadic Forms</h1>
+        <p class="hascomments" id="file1368-monadic-x-3">Often times, a simple form layout is adequate, and applicative forms excel at
+            this approach. Sometimes, however, you&#39;ll want to have a more customized look to your
+            form.</p>
+        <figure id="file1368-monadic-x-4"><figcaption>A non-standard form layout</figcaption>
+            
+            <img id="file1368-monadic-image_d604c9d5-b1e2-447a-a3ee-efe4559f0d2f" src="http://www.yesodweb.com/redirector/home%2F1%2Fbook%2Fyesod-web-framework-book%2Fforms-09%2Fmonadic-form.png"/></figure>
+        <p class="hascomments" id="file1368-monadic-x-6">For these use cases, monadic forms fit the bill. They are a bit more verbose
+            than their applicative cousins, but this verbosity allows you to have complete control
+            over what the form will look like. In order to generate the form above, we could code
+            something like this.</p>
+        <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,</span>
+<span style="color: gray;">TemplateHaskell, MultiParamTypeClasses #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Yesod</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Applicative</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Monadic</span> = <span style="color: blue;">Monadic</span>
+
+<span style="color: blue;font-weight: bold;">mkYesod</span> <span style="color: green;">&quot;Monadic&quot;</span> [parseRoutes|
+/ <span style="color: blue;">RootR</span> <span style="color: blue;">GET</span>
+|]
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">Yesod</span> <span style="color: blue;">Monadic</span>
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">RenderMessage</span> <span style="color: blue;">Monadic</span> <span style="color: blue;">FormMessage</span> <span style="color: green;font-weight: bold;">where</span>
+    renderMessage _ _ = defaultFormMessage
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Person</span> = <span style="color: blue;">Person</span> { personName :: <span style="color: blue;">Text</span>, personAge :: <span style="color: blue;">Int</span> }
+    <span style="color: green;font-weight: bold;">deriving</span> <span style="color: blue;">Show</span>
+
+<span style="color: blue;font-weight: bold;">personForm</span> :: <span style="color: blue;">Html</span> -&gt; <span style="color: blue;">MForm</span> <span style="color: blue;">Monadic</span> <span style="color: blue;">Monadic</span> (<span style="color: blue;">FormResult</span> <span style="color: blue;">Person</span>, <span style="color: blue;">Widget</span>)
+<span style="color: blue;font-weight: bold;">personForm</span> extra = <span style="color: green;font-weight: bold;">do</span>
+    (nameRes, nameView) &lt;- mreq textField <span style="color: green;">&quot;this is not used&quot;</span> <span style="color: blue;">Nothing</span>
+    (ageRes, ageView) &lt;- mreq intField <span style="color: green;">&quot;neither is this&quot;</span> <span style="color: blue;">Nothing</span>
+    <span style="color: green;font-weight: bold;">let</span> personRes = <span style="color: blue;">Person</span> &lt;$&gt; nameRes &lt;*&gt; ageRes
+    <span style="color: green;font-weight: bold;">let</span> widget = <span style="color: green;font-weight: bold;">do</span>
+            toWidget [lucius|
+##{fvId ageView} {
+    width: <span style="color: teal;">3</span>em;
+}
+|]
+            [whamlet|
+<span style="color: blue;text-decoration: underline;">#</span>{extra}
+&lt;p&gt;
+    <span style="color: blue;">Hello</span>, my name is #
+    ^{fvInput nameView}
+    \ and <span style="color: blue;">I</span> am #
+    ^{fvInput ageView}
+    \ years old. #
+    &lt;input <span style="color: green;font-weight: bold;">type</span>=submit value=<span style="color: green;">&quot;Introduce myself&quot;</span>&gt;
+|]
+    return (personRes, widget)
+
+<span style="color: blue;font-weight: bold;">getRootR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getRootR</span> = <span style="color: green;font-weight: bold;">do</span>
+    ((res, widget), enctype) &lt;- runFormGet personForm
+    defaultLayout [whamlet|
+&lt;p&gt;<span style="color: blue;">Result</span>: #{show res}
+&lt;form enctype=#{enctype}&gt;
+    ^{widget}
+|]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = warpDebug <span style="color: teal;">3000</span> <span style="color: blue;">Monadic</span>
+</pre></pre>
+        <p class="hascomments" id="file1368-monadic-x-8">Similar to the applicative <code id="file1368-monadic-x-9">areq</code>, we use <code id="file1368-monadic-x-10">mreq</code> for monadic forms. (And yes, there&#39;s also
+                <code id="file1368-monadic-x-19">mopt</code> for optional fields.) But there&#39;s a big difference:
+                <code id="file1368-monadic-x-20">mreq</code> gives us back a pair of values. Instead of hiding away the
+                <a href="http://hackage.haskell.org/packages/archive/yesod-form/latest/doc/html/Yesod-Form-Types.html#t:FieldView">FieldView</a> value and
+            automatically inserting it into a widget, we get the control to insert it as we see
+            fit.</p>
+        <p class="hascomments" id="file1368-monadic-x-12"><code id="file1368-monadic-x-21">FieldView</code> has a number of pieces of information. The most
+            important is <code id="file1368-monadic-x-22">fvInput</code>, which is the actual form field. In this example,
+            we also use <code id="file1368-monadic-x-23">fvId</code>, which gives us back the HTML <code id="file1368-monadic-x-24">id</code>
+            attribute of the input tag. In our example, we use that to specify the width of the
+            field.</p>
+        <p class="hascomments" id="file1368-monadic-x-13">You might be wondering what the story is with the &quot;this is not used&quot; and
+            &quot;neither is this&quot; values. <code id="file1368-monadic-x-25">mreq</code> takes a <code id="file1368-monadic-x-26">FieldSettings</code> as its second argument. Since <code>FieldSettings</code>
+            provides an <code>IsString</code> instance, the strings are essentially expanded by
+            the compiler
+            to:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">fromString</span> <span style="color: green;">&quot;this is not used&quot;</span> == <span style="color: blue;">FieldSettings</span>
+    { fsLabel = <span style="color: green;">&quot;this is not used&quot;</span>
+    , fsTooltip = <span style="color: blue;">Nothing</span>
+    , fsId = <span style="color: blue;">Nothing</span>
+    , fsName = <span style="color: blue;">Nothing</span>
+    , fsClass = []
+    }
+</pre></pre>In
+            the case of applicative forms, the <code>fsLabel</code> and
+                <code>fsTooltip</code> values are used when constructing your HTML. In the case
+            of monadic forms, Yesod does not generate any of the &quot;wrapper&quot; HTML for you, and
+            therefore these values are ignored.</p>
+        <p class="hascomments" id="file1368-monadic-x-14">The other interesting bit is the <code id="file1368-monadic-x-15">extra</code> value.
+                <code id="file1368-monadic-x-33">GET</code> forms include an extra field to indicate that they have been
+            submitted, and <code id="file1368-monadic-x-34">POST</code> forms include a security tokens to prevent CSRF
+            attacks. If you don&#39;t include this extra hidden field in your form, Yesod will not
+            accept it.</p>
+        <p class="hascomments" id="file1368-monadic-x-16">Other than that, things are pretty straight-forward. We create our
+                <code id="file1368-monadic-x-35">personRes</code> value by combining together the <code id="file1368-monadic-x-36">nameRes</code>
+            and <code id="file1368-monadic-x-37">ageRes</code> values, and then return a tuple of the person and the
+            widget. And in the <code id="file1368-monadic-x-38">getRootR</code> function, everything looks just like an
+            applicative form. In fact, you could swap out our monadic form with an applicative one
+            and the code would still work.</p>
+        <aside class="note" id="file1368-monadic-x-17">Well, that&#39;s not <b id="file1368-monadic-x-18">exactly</b> true. It would compile and build,
+            but you wouldn&#39;t have a submit button.</aside>
+    <h1>Input forms</h1>
+  <p class="hascomments" id="file1369-input-x-3">Applicative and monadic forms handle both the generation of your HTML code and the parsing of
+   user input. Sometimes, you only want to do the latter, such as when there&#39;s an already-existing
+   form in HTML somewhere, or if you want to generate a form dynamically using Javascript. In such a
+   case, you&#39;ll want input forms.</p>
+  <p class="hascomments" id="file1369-input-x-4">These work mostly the same as applicative and monadic forms, with some differences:</p>
+  <ul id="file1369-input-ul_e3c4dff2-c3cd-4ba1-b146-3841e6018b14"><li id="file1369-input-x-5">You use <code id="file1369-input-x-11">runInputPost</code> and <code id="file1369-input-x-12">runInputGet</code>.</li>
+   <li id="file1369-input-x-6">You use <code id="file1369-input-x-13">ireq</code> and <code id="file1369-input-x-14">iopt</code>. These functions now only
+    take two arguments: the field type and the name (i.e., HTML <code id="file1369-input-x-15">name</code> attribute) of
+    the field in question.</li>
+   <li id="file1369-input-x-7">After running a form, it returns the value. It doesn&#39;t return a widget or an
+                encoding type.</li>
+   <li id="file1369-input-x-8">If there are any validation errors, the page returns an &quot;invalid arguments&quot; error page.</li>
+  </ul>
+  <p class="hascomments" id="file1369-input-x-9">You can use input forms to recreate the previous example. Note, however, that the
+   input version is less user friendly. If you make a mistake in an applicative or monadic form, you
+   will be brought back to the same page, with your previously entered values in the form, and an
+   error message explaning what you need to correct. With input forms, the user simply gets an error
+   message.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,</span>
+<span style="color: gray;">TemplateHaskell, MultiParamTypeClasses #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Yesod</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Applicative</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Input</span> = <span style="color: blue;">Input</span>
+
+<span style="color: blue;font-weight: bold;">mkYesod</span> <span style="color: green;">&quot;Input&quot;</span> [parseRoutes|
+/ <span style="color: blue;">RootR</span> <span style="color: blue;">GET</span>
+/input <span style="color: blue;">InputR</span> <span style="color: blue;">GET</span>
+|]
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">Yesod</span> <span style="color: blue;">Input</span>
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">RenderMessage</span> <span style="color: blue;">Input</span> <span style="color: blue;">FormMessage</span> <span style="color: green;font-weight: bold;">where</span>
+    renderMessage _ _ = defaultFormMessage
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Person</span> = <span style="color: blue;">Person</span> { personName :: <span style="color: blue;">Text</span>, personAge :: <span style="color: blue;">Int</span> }
+    <span style="color: green;font-weight: bold;">deriving</span> <span style="color: blue;">Show</span>
+
+<span style="color: blue;font-weight: bold;">getRootR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getRootR</span> = defaultLayout [whamlet|
+&lt;form action=@{<span style="color: blue;">InputR</span>}&gt;
+    &lt;p&gt;
+        <span style="color: blue;">My</span> name is #
+        &lt;input <span style="color: green;font-weight: bold;">type</span>=text name=name&gt;
+        \ and <span style="color: blue;">I</span> am #
+        &lt;input <span style="color: green;font-weight: bold;">type</span>=text name=age&gt;
+        \ years old. #
+        &lt;input <span style="color: green;font-weight: bold;">type</span>=submit value=<span style="color: green;">&quot;Introduce myself&quot;</span>&gt;
+|]
+
+<span style="color: blue;font-weight: bold;">getInputR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getInputR</span> = <span style="color: green;font-weight: bold;">do</span>
+    person &lt;- runInputGet $ <span style="color: blue;">Person</span>
+                &lt;$&gt; ireq textField <span style="color: green;">&quot;name&quot;</span>
+                &lt;*&gt; ireq intField <span style="color: green;">&quot;age&quot;</span>
+    defaultLayout [whamlet|&lt;p&gt;#{show person}|]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = warpDebug <span style="color: teal;">3000</span> <span style="color: blue;">Input</span>
+</pre></pre>
+ <h1>Custom fields</h1>
+  <p class="hascomments" id="file1370-custom-x-3">The fields that come built-in with Yesod will likely cover the vast majority of your
+   form needs. But occassionally, you&#39;ll need something more specialized. Fortunately, you can
+   create new forms in Yesod yourself. The <code id="file1370-custom-x-19">Field</code> datatype has two records:
+    <code id="file1370-custom-x-20">fieldParse</code> takes a list of values submitted by the user and returns one of
+   three results:</p>
+  <ul id="file1370-custom-ul_d7bb7211-f4dc-4239-a2b0-ae26a58b6290"><li id="file1370-custom-x-4">An error message saying validation failed.</li>
+   <li id="file1370-custom-x-5">The parsed value.</li>
+   <li id="file1370-custom-x-6">Nothing, indicating that no data was supplied.</li>
+  </ul>
+  <p class="hascomments" id="file1370-custom-x-7">That last case might sound surprising: shouldn&#39;t Yesod automatically know that no information
+   is supplied when the input list is empty? Well, no actually. Checkboxes, for instance, indicate
+   an unchecked state by sending in an empty list.</p>
+  <p class="hascomments" id="file1370-custom-x-8">Also, what&#39;s up with the list? Shouldn&#39;t it be a <code id="file1370-custom-x-21">Maybe</code>? Well, that&#39;s
+   also not the case. With grouped checkboxes and multi-select lists, you&#39;ll have multiple widgets
+   with the same name. We also use this trick in our example below.</p>
+  <p class="hascomments" id="file1370-custom-x-9">The second record is <code id="file1370-custom-x-22">fieldView</code>, and it renders a widget to display to
+   the user. This function has four arguments: the <code id="file1370-custom-x-23">id</code> attribute, the
+    <code id="file1370-custom-x-24">name</code> attribute, the result and a <code id="file1370-custom-x-25">Bool</code> indicating if the field
+   is required.</p>
+  <p class="hascomments" id="file1370-custom-x-10">What did I mean by result? It&#39;s actually an <code id="file1370-custom-x-26">Either</code>, giving either
+   the unparsed input (when parsing failed) or the successfully parsed value.
+    <code id="file1370-custom-x-27">intField</code> is a great example of how this works. If you type in <kbd id="file1370-custom-x-11">42</kbd>, the value of result will be <code id="file1370-custom-x-12">Right 42</code>. But
+   if you type in <kbd id="file1370-custom-x-13">turtle</kbd>, the result will be <code id="file1370-custom-x-14">Left
+    &quot;turtle&quot;</code>. This lets you put in a value attribute on your input tag that will give the
+   user a consistent experience.</p>
+  <p class="hascomments" id="file1370-custom-x-15">As a small example, we&#39;ll create a new field type that is a password confirm field.
+            This field has two text inputs- both with the same name attribute- and returns an error
+            message if the values don&#39;t match. Note that, unlike most fields, it does <i id="file1370-custom-x-16">not</i> provide a value attribute on the input tags, as you don&#39;t want to send back
+            a user-entered password in your HTML <b id="file1370-custom-x-17">ever</b>.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">passwordConfirmField</span> :: <span style="color: blue;">Field</span> sub master <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">passwordConfirmField</span> = <span style="color: blue;">Field</span>
+    { fieldParse = \rawVals -&gt;
+        <span style="color: green;font-weight: bold;">case</span> rawVals <span style="color: green;font-weight: bold;">of</span>
+            [a, b]
+                | a == b -&gt; return $ <span style="color: blue;">Right</span> $ <span style="color: blue;">Just</span> a
+                | otherwise -&gt; return $ <span style="color: blue;">Left</span> <span style="color: green;">&quot;Passwords don&#39;t match&quot;</span>
+            [] -&gt; return $ <span style="color: blue;">Right</span> <span style="color: blue;">Nothing</span>
+            _ -&gt; return $ <span style="color: blue;">Left</span> <span style="color: green;">&quot;You must enter two values&quot;</span>
+    , fieldView = \idAttr nameAttr _ eResult isReq -&gt; [whamlet|
+&lt;input id=#{idAttr} name=#{nameAttr} <span style="color: green;font-weight: bold;">type</span>=password&gt;
+&lt;div&gt;<span style="color: blue;">Confirm</span>:
+&lt;input id=#{idAttr}-confirm name=#{nameAttr} <span style="color: green;font-weight: bold;">type</span>=password&gt;
+|]
+    }
+
+<span style="color: blue;font-weight: bold;">getRootR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getRootR</span> = <span style="color: green;font-weight: bold;">do</span>
+    ((res, widget), enctype) &lt;- runFormGet $ renderDivs
+        $ areq passwordConfirmField <span style="color: green;">&quot;Password&quot;</span> <span style="color: blue;">Nothing</span>
+    defaultLayout [whamlet|
+&lt;p&gt;<span style="color: blue;">Result</span>: #{show res}
+&lt;form enctype=#{enctype}&gt;
+    ^{widget}
+    &lt;input <span style="color: green;font-weight: bold;">type</span>=submit value=<span style="color: green;">&quot;Change password&quot;</span>&gt;
+|]
+</pre></pre>
+ 

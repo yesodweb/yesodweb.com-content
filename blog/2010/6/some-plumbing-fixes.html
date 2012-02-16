@@ -1,0 +1,34 @@
+<p>As I've said, the main feature goal for the 0.4.0 release of Yesod is widgets. However, before I get started on that feature, there's a number of issues that I wanted to address. These are improvements that introduce breaking changes in the API, and so must wait for a major release.</p>
+<h3>persistent: split up PersistEntity</h3>
+<p>Version 0.0.0 of persistent had a typeclass called <code>PersistEntity</code>. Without getting into details, this typeclass essentially defined exactly how a datatype could be persisted to a particular database. Some advantages to this approach are:</p>
+<ul><li>You could have any datatype for the key that the backend required.</li>
+<li>In theory, <b>any</b> backend could be written; it just required some template haskell code.</li>
+</ul>
+<p>However, there are some major disadvantages to this approach:</p>
+<ul><li>It requires a large amount of template haskell code.</li>
+<li>A datatype could only have a single PersistEntity instance, meaning it could only be persisted to a single backend.</li>
+<li>Type signatures could become appallingly difficult.</li>
+</ul>
+<p>So instead, persistent 0.1.0 will split up the work into two type classes: PersistEntity and PersistBackend. The former gives information on a datatype, such as what columns exist, how it can be sorted, unique keys, etc. It contains nothing backend specific. The latter typeclass is for each backend- like Sqlite and Postgresql. It is implemented without any TH code.</p>
+<p>One downside is that a new backend must deal with the information provided by the PersistEntity typeclass. If it needs extra information that's not there, it won't work. I'm not so worried about this one, since I'm currently the only backend writer, and if someone else wants to write a backend that requires more information than is currently available in PersistEntity, I can just add it later.</p>
+<p>The other downside is that database keys are all required to be Int64s. In practice, I don't think this is a problem at all: the only backend I know of that would really prefer a different key is Amazon SimpleDB, and even there I'm sure an Int64 would work.</p>
+<h3>web-routes-quasi: major overhaul</h3>
+<p>When Jeremy Shaw put together web-routes, I thought that web-routes-quasi would interact with it very well. Unfortunately, as the complexity of the package began to grow, I realized that it was really just becoming tailor-made for Yesod. This was a sub-optimal situation. And each new release of web-routes-quasi just added more Yesod-specific features.</p>
+<p>This release (0.5.0) will be different. It no longer defines a QuasiSite datatype; we reuse the Site datatype from web-routes. It also cleanly exposes different TH functions for the four relevant declarations it provides for: creating the type-safe URL datatype, the parse function, the render function and the dispatch function.</p>
+<p>The main reason I decided to start on this rewrite is to allow the dispatch function to return values still inside the Handler monad. Previously, web-routes-quasi would unwrap that monad itself, using a provided explode function. The plus was this provided a nice way to deal with the difference in type signature to subsite handlers (<code>GHandler sub master</code>) and master site handlers (<code>GHandler master master</code>); unfortunately, it made it difficult to provide features like authorization.</p>
+<p>So now web-routes-quasi simply promotes the subsite handler functions into master site handler function. It needs three pieces of information to do this:</p>
+<ul><li>The master site argument to subsite argument conversion function.</li>
+<li>The subsite route to master site route constructor.</li>
+<li>The subsite route that was created.</li>
+</ul>
+<p>The first of these is provided by the user when declaring routes; the last two are handled automatically by web-routes-quasi.</p>
+<h3>yesod: No more ContT</h3>
+<p>It seems now that <a href="http://www.snoyman.com/blog/entry/handler-monad/">migrating over to ContT for the Handler monad</a> was a mistake. In particular, it has a broken MonadCatchIO instance, which leads to a number of annoying bugs (seg faults in sqlite because it double-frees memory). Of course, I still hate the ErrorT transformer, both for the super-class requirement and the orphan Monad instance.</p>
+<p>So I've created a new package: <a href="http://github.com/snoyberg/neither">neither</a>. I originally thought of the name as a joke; in fact, my wife (a Greek/Latin major) helped me come up with a great datatype:</p>
+<pre><code>data Neither a b = Sinister a | Dexter b</code></pre>
+<p>However, it now provides three useful datatypes: AEither for an applicative-style either type, which combines <code>Left</code>s via <code>mappend</code>; MEither for a monad instance; and MEitherT for a monad transformer. And you can use them all without any orphan instances. It also provides both mtl and transformers instances of MonadIO, MonadTrans and MonadCatchIO.</p>
+<p>Also, as a result of really hideous error messages, I've switched GHandler to be a newtype instead of a type.</p>
+<h3>yesod TODO: merge Yesod.Form and Yesod.Formable</h3>
+<p>These two modules currently provide related functionality: the former is for getting GET and POST parameters without generating HTML forms. The latter is for generating HTML forms and automated parsing of POST parameters. It shouldn't be too difficult to combine the two together.</p>
+<h3>Other changes</h3>
+<p>I've added Facebook support to the authenticate repo, and passed that support up to the Yesod.Helpers.Auth module. It keeps track of the access token for you, so you can easily make requests against the Facebook graph API.</p>

@@ -1,0 +1,27 @@
+<p>I'm still working on some of the underpinning libraries for Yesod, and wanted to report on some of the recently released packages. The main theme is still to reduce dependencies.</p>
+
+<h3>clientsession 0.4.0</h3>
+<p>clientsession 0.3.0 had three notable dependencies: SimpleAES, dataenc and pureMD5. I had a number of issues with this:</p>
+<ul><li>SimpleAES didn't work on 32-bit systems (bad).</li>
+<li>All three of these packages treated data differently: strict bytestrings, lazy bytestrings and string.</li>
+</ul>
+<p>I really disliked all the conversions, so I decided to do something truly evil: I wrote the whole thing in C. For those who don't know, clientsession takes some data, hashes it, encrypts it and base64-encodes it, so that you can stick it in a cookie and not worry about tracking session data on your server. I used a BSD checksum-inspired hash algorithm and wrote a basic base64-encoder based on <a href="http://base64.sourceforge.net/b64.c">some prior art</a>. I also went with a <a href="http://code.google.com/p/byte-oriented-aes/">pure C AES implementation</a> to avoid architecture issues.</p>
+<p>Upshot: library is now very fast, no dependencies, and your data doesn't get passed around a bunch.</p>
+<h3>wai-extra 0.1.2</h3>
+<p>The 0.1 series has been fun so far. 0.1.0 removed the clientsession middleware (best to just use the clientsession library directly) and thereby cut dependencies drastically. 0.1.1 switched from the zlib package to an enumerator-based wrapper around the C zlib library. 0.1.2 introduces the Network.Wai.Parse module, which handles query string, POST request, Accept header and cookie parsing. This is meant to be a replacement for web-encodings, specialized for the WAI datatypes.</p>
+<p>Overall, the library should be much more efficient than web-encodings, since it uses some strict bytestring specific tricks like unfoldrN to squeeze out performance.</p>
+<h3>wai 0.1.0</h3>
+<p>This is a relatively minor change, but did introduce a breaking change in the API, so it gets a major version bump. Gregory Collins pointed out that it didn't make much sense to do a case-sensitive comparison for request and response headers, so this version fixes that. The only breaking change is that the RequestHeader and ResponseHeader constructors now take two parameters: the header itself and then a lowercase version. However, you should use the requestHeader and responseHeader functions instead, which handle the case conversion for you.</p>
+<p>I also released wai-handler-fastcgi 0.0.0.2 to include this version bump. wai-extra reflects this bump in 0.1.2.</p>
+<h3>hamlet 0.2.3.1</h3>
+<p>Just a minor fix for Windows to account for carriage returns in the quasi-quoted data. However, I am beginning to think about internationalization in Hamlet; if anyone's interested in this, please let me know and I'll put up a post with my ideas.</p>
+<h3>Next steps</h3>
+<p>There was a good discussion <a href="http://www.snoyman.com/blog/entry/really-type-safe-urls/#comment-51328768">on a previous post</a> about web-routes-quasi, and zs had some very good ideas. I think I'll be working on web-routes-quasi 0.3.0 and include that in Yesod 0.2.0. Sorry for pushing off the release, but I think it's worth it.</p>
+<p>The change will allow you to have arbitrary datatypes in your routes. For example:</p>
+<code>/book/lookup/#ISBN BookLookupR GET
+</code>
+<p>And then the ISBN datatype will be able to parse the path piece appropriately. It involves a fairly substantially modification of the Template Haskell URL parse code, but I don't think it should be too much of a problem.</p>
+<p>Also, I've just pushed version 0.2.0 of Yesod into the master branch; I should have done that quite a while ago.</p>
+<p>The other big change is that I'm cutting ties from web-encodings. The main reason for this is specialization: web-encodings works with Strings, strict/lazy ByteStrings and strict/lazy Texts; WAI clearly defines all the datatypes, and so I can use more efficient functions. The best example is using unfoldrN for URL decoding.</p>
+<p>The big hurdle was writing the multi-part parser; I aimed to avoid bytestring concatenations as much as possible, and so it should be a fairly fast, space-efficient implementation.</p>
+<p>I haven't uploaded any of these packages yet, but they're all available on Github. I'm also trying to test all the packages on Windows now as well; so far found a few minor issues with missing libraries and CRLF in Hamlet, but nothing too serious.</p>

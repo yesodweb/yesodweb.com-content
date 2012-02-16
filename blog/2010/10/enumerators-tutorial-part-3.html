@@ -1,0 +1,138 @@
+<p>This content is now part of the <a href="http://www.yesodweb.com/book/enumerator">Yesod book</a>. It is recommended to read there, since the content is more up-to-date.</p>
+<p>This is part 3 of a series of tutorials on the <a href="http://hackage.haskell.org/package/enumerator">enumerator package</a>. As usual, the code for this part of the tutorial is available as <a href="http://gist.github.com/615786">a github gist</a>.</p>
+<h2 id="generalizing-getnumberenum">Generalizing getNumberEnum</h2>
+<p>In <a href="http://docs.yesodweb.com/blog/enumerators-tutorial-part-2/">part 2</a> of this series, we created a getNumberEnum function with a type signature:</p>
+<pre><code>getNumberEnum :: MonadIO m =&gt; Enumerator Int m b
+</code></pre>
+<p>If you don't remember, this means getNumberEnum produces a stream of <code>Int</code>s. In particular, our getNumberEnum function read lines from stdin, converted them to ints and fed them into an iteratee. It stopped reading lines when it saw a &quot;q&quot;.</p>
+<p>But this functionality seems like it could be useful outside the realm of Ints. We may like to deal with the original Strings, for example, or Bools, or a bunch of other things. We could easily define a more generalized function which simply doesn't do the String to Int conversion:</p>
+<pre><code>lineEnum :: MonadIO m =&gt; Enumerator String m b
+lineEnum (Continue k) = do
+    x &lt;- liftIO getLine
+    if x == &quot;q&quot;
+        then continue k
+        else k (Chunks [x]) &gt;&gt;== lineEnum
+lineEnum step = returnI step
+</code></pre>
+<p>Cool, let's plug this into our sumIter function (I've renamed the sum6 function from the previous two parts):</p>
+<pre><code>lineEnum $$ sumIter
+</code></pre>
+<p>Actually, that doesn't type check: lineEnum produces <code>String</code>s, and sumIter takes <code>Int</code>s. We need to modify one of them somehow.</p>
+<pre><code>sumIterString :: Monad m =&gt; Iteratee String m Int
+sumIterString = Iteratee $ do
+    innerStep &lt;- runIteratee sumIter
+    return $ go innerStep
+  where
+    go :: Monad m =&gt; Step Int m Int -&gt; Step String m Int
+    go (Yield res _) = Yield res EOF
+    go (Error err) = Error err
+    go (Continue k) = Continue $ \strings -&gt; Iteratee $ do
+        let ints = fmap read strings :: Stream Int
+        step &lt;- runIteratee $ k ints
+        return $ go step
+</code></pre>
+<p>What we've done here is wrap around the original iteratee. As usual, we first need to unwrap the Iteratee constructor and the monad to get at the heart of the Step value. Once we have that innerStep value, we pass it to the go function, which simply transforms that values in the Stream value from Strings to Ints.</p>
+<h2 id="even-more-general">Even more general</h2>
+<p>Of course, it would be nice if we could apply this transformation to <em>any</em> iteratee. To start with, let's just pass the inner iteratee and the mapping function as parameters.</p>
+<pre><code>mapIter :: Monad m =&gt; (aOut -&gt; aIn) -&gt; Iteratee aIn m b -&gt; Iteratee aOut m b
+mapIter f innerIter = Iteratee $ do
+    innerStep &lt;- runIteratee innerIter
+    return $ go innerStep
+  where
+    go (Yield res _) = Yield res EOF
+    go (Error err) = Error err
+    go (Continue k) = Continue $ \strings -&gt; Iteratee $ do
+        let ints = fmap f strings
+        step &lt;- runIteratee $ k ints
+        return $ go step
+</code></pre>
+<p>We could call this like:</p>
+<pre><code>run_ (lineEnum $$ mapIter read sumIter) &gt;&gt;= print
+</code></pre>
+<p>Nothing much to see here, it's basically identical to the previous version. What's funny is that enumerator comes built in with a <code>map</code> function to do just this, but it has a significantly different type signature:</p>
+<pre><code>map :: Monad m =&gt; (ao -&gt; ai) -&gt; Enumeratee ao ai m b
+</code></pre>
+<p>since:</p>
+<pre><code>type Enumeratee aOut aIn m b = Step aIn m b -&gt; Iteratee aOut m (Step aIn m b)
+</code></pre>
+<p>that's equivalent to:</p>
+<pre><code>map :: Monad m =&gt; (aOut -&gt; aIn) -&gt; Step aIn m b -&gt; Iteratee aOut m (Step aIn m b)
+</code></pre>
+<p>What's with all this extra complication in type signature? Well, it's not necessary for map itself, but it <em>is</em> necessary for a whole bunch of other similar functions. But let's focus on this map for a second so we don't get lost: the first argument is the same old mapping function we had before. The second argument is a Step value. This isn't really so surprising: in our mapIter, we took an Iteratee with the same parameters, and we internally just unwrapped it to a Step.</p>
+<p>But what's happening with that return value? Remembering the meanings for all these datatypes, it's an Iteratee which will be fed a stream of <code>aOut</code>s and return a Step (aka, a new iteratee, right?). This kind of makes intuitive sense: we've introduced a middle man which accepts input from one source and transforms a Step to a newer state.</p>
+<p>But now perhaps the trickiest part of the whole thing: how do we actually <em>use</em> this map function? It turns out that an Enumeratee is close enough in type signature to an Enumerator that we can just do:</p>
+<pre><code>map read $$ sumIter
+</code></pre>
+<p>But the type signature on <em>that</em> turns out to be a little bit weird:</p>
+<pre><code>Iteratee String m (Step Int m Int)
+</code></pre>
+<p>Remembering that an Iteratee is just a wrapped up Step, what we've got <em>here</em> is an iteratee that takes Strings and returns an Iteratee, which in turn takes Ints and produces an Int. Having this fancy result allows us to do one of our great tricks with iteratees: plug in data from multiple sources. For example, we could plug some Strings into this whole ugly thing, run it, get a <em>new</em> iteratee which takes Ints, feed <em>that</em> some Ints and get an Int result.</p>
+<p>(If all that went over your head, don't worry. I won't be talking about that kind of stuff any more.)</p>
+<p>But often times, we <em>don't</em> need all of that power. We just want to stick our enumeratee onto our iteratee and get a new iteratee. In our case, we want to attach our map onto the sumIter to produce a new iteratee that takes Strings and returns Ints. In order to do that, we need a function like this:</p>
+<pre><code>unnest :: Monad m =&gt; Iteratee String m (Step Int m Int) -&gt; Iteratee String m Int
+unnest outer = do -- using the Monad instance of Iteratee
+    inner &lt;- outer -- inner :: Step Int m Int
+    go inner
+  where
+    go (Error e) = throwError e
+    go (Yield x _) = yield x EOF
+    go (Continue k) = k EOF &gt;&gt;== go
+</code></pre>
+<p>We can then run our unholy mess with:</p>
+<pre><code>run_ (lineEnum $$ unnest $ map read $$ sumIter) &gt;&gt;= print
+</code></pre>
+<p>And actually, the unnest function is available in Data.Enumerator, and it's called joinI. So we should really write:</p>
+<pre><code>run_ (lineEnum $$ joinI $ map read $$ sumIter) &gt;&gt;= print
+</code></pre>
+<h2 id="skipping">Skipping</h2>
+<p>Let's write a slightly more interesting enumeratee: this one skips every other input value.</p>
+<pre><code>skip :: Monad m =&gt; Enumeratee a a m b
+skip (Continue k) = do
+    x &lt;- head
+    _ &lt;- head -- the one we're skipping
+    case x of
+        Nothing -&gt; return $ Continue k
+        Just y -&gt; do
+            newStep &lt;- lift $ runIteratee $ k $ Chunks [y]
+            skip newStep
+skip step = return step
+</code></pre>
+<p>What's interesting about the approach here is how similar it looks to an Enumerator. We're doing a lot of the same things: checking if the Step value is a Continue; if it's not, then simply return it. Then we capitalize on the Iteratee Monad instance, using the head function to pop two values out of the stream. If there's no more data, we return the original Continue value: just like with an Enumerator, we don't give an EOF so that we can feed more data into the iteratee later. If there is data, we pass it off to the iteratee, get our new step value and then loop.</p>
+<p>And what's cool about enumeratees is we can chain these all together:</p>
+<pre><code>run_ (lineEnum $$ joinI $ skip $$ joinI $ map read $$ sumIter) &gt;&gt;= print
+</code></pre>
+<p>Here, we read lines, skip every other input, convert the Strings to Ints and sum them.</p>
+<h2 id="real-life-examples-http-enumerator-package">Real life examples: http-enumerator package</h2>
+<p>I started working on these tutorials as I was working on the <a href="http://hackage.haskell.org/package/http-enumerator">http-enumerator</a> package. I think the usage of enumeratees there is a great explanation of the benefits they can offer in real life. There are three different ways the response body can be broken up:</p>
+<ul><li><p>Chunked encoding. In this case, the web server gives a hex string specifying the length of the next chunk and then that chunk. At the end, it sends a 0 to indicate the end of that response.</p></li>
+<li><p>Content length. Here, the web server sends a header before any of the body is sent specifying the total length of the body.</p></li>
+<li><p>Nothing at all. In this case, the response body lasts until an end-of-file.</p></li>
+</ul>
+<p>In addition, the body may or may not be GZIP compressed. We end up with the following enumeratees, each with type signature <code>Enumeratee ByteString ByteString m b</code>: chunkedEncoding, contentLength and ungzip. We then get to do something akin to:</p>
+<pre><code>let parseBody x =
+        if (&quot;transfer-encoding&quot;, &quot;chunked&quot;) `elem` responseHeaders
+            then joinI $ chunkedEncoding $$ x
+            else case mlen of
+                    Just len -&gt; joinI $ contentLength len $$ x
+                    Nothing -&gt; x -- no enumeratee applied at all
+let decompress x =
+        if (&quot;content-encoding&quot;, &quot;gzip&quot;) `elem` responseHeaders
+            then joinI $ ungzip $$ x
+            else x
+run_ $ socketEnumerator $$ parseBody $ decompress $ bodyIteratee
+</code></pre>
+<p>We create a chain: the data from the server is fed into the parseBody function. In the case of chunked encoding, the data is processed appropriately and then headers are filtered out. If we are dealing with content length, then only the specified number of bytes are read. And in the case of neither of those, parseBody is a no-op.</p>
+<p>Whatever the case may be, the raw response body is then fed into decompress. If the body is GZIPed, then ungzip inflates it, otherwise decompress is a no-op. Finally, the parsed and inflated data is fed into the user-supplied bodyIteratee function. The user remains blissfully unaware of any steps the data took to get to him/her.</p>
+<h2 id="exercises">Exercises</h2>
+<ul><li><p>Write an enumeratee which takes hex chars (eg, &quot;DEADBEEF&quot;) to Word8s. Its type signature should be <code>Enumeratee Char Word8 m b</code>.</p></li>
+<li><p>Write the opposite enumeratee, eg <code>Enumeratee Word8 Char m b</code>.</p></li>
+<li><p>Create a quickcheck property that ensures that these two functions work correctly.</p></li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<ul><li><p>Enumeratees are the pipes connecting enumerators to iteratees.</p></li>
+<li><p>The strange type signature of an Enumeratee hides a lot of possible power. Especially notice how similar their type signatures are to Enumerators.</p></li>
+<li><p>You can merge an Enumeratee into an Iteratee with <code>joinI $ enumeratee $$ iteratee</code>.</p></li>
+<li><p>Don't forget that you can use the Monad instance of Iteratee when creating your own enumeratees.</p></li>
+<li><p>You can always compose multiple enumeratees together, such as in http-enumerator.</p></li>
+</ul>
+<p>This concludes the three parts of the tutorial that I'd planned. If people had particular questions or topics they wanted me to cover, just leave a comment or send me an email.</p>

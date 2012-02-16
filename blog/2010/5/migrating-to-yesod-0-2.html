@@ -1,0 +1,27 @@
+<p>I've nearly completed the migration of <a href="http://www.search-once.com/">my largest site</a> from the current version of Yesod to the <a href="http://docs.yesodweb.com/yesod/">upcoming Yesod 0.2 release</a>. I just wanted to share some of my experience.</p>
+<ul><li>In this site, the code fairly evenly splits into three parts: database interaction, logic code (site parsing to be specific) and the web interface. As would be expected, the first two required no modification at all.</li>
+<li>The most time was spent migrating from HStringTemplate to Hamlet, but I'm very happy with the results over all. Overall, I'd break it down like this:
+<h4>Advantages</h4>
+<ul><li>Easier to follow nesting.</li>
+<li>Less typing.</li>
+<li>Nicer to declare a new datatype than to create arbitrary nested-string-like data structures.</li>
+<li>Type-safe URLs are a <b>huge</b> win.</li>
+<li>When I'm lazy in a conversion, I can just copy in HTML code, and it usually works.</li>
+</ul>
+<h4>Disadvantages</h4>
+<ul><li>There's not good way to conditionally add a attribute. Most of the time, that's no big deal; but when you want to add "selected" to an option tag, it's an annoyance. I ended up writing code like this:
+<pre><code>&lt;option foo=bar
+$if shouldBeSelected
+   selected
+&gt;&lt;/option&gt;</code></pre>
+This is clearly sub-optimal.</li>
+<li>You can have multi-word values for attributes embedded in the template. So in order to achieve <code>&lt;input type="submit" value="Click me"&gt;</code>, I ended up writing <code>%input!type=submit!value=clickMe</code>, and declaring a function <code>clickMe _ = cs "Click me"</code>.</li>
+<li>It <i>can</i> be a little tedious having all those extra datatypes just for template arguments, but I suppose that's the price to pay for type safety.</li>
+</ul>
+</li>
+<li>I much prefer the new route syntax. Previously, it used Yaml; that was really too verbose. Now each resource is defined on a single line, and handler names are automatically determined from the constructor name.</li>
+<li>Type-safe URLs already caught a few bugs for me. I think this will be a major cornerstone for Yesod programming. I can now easily write code such as <code>redirect RedirectTemporary $ UserPage userId</code>, and it <i>just works</i>.</li>
+<li>Subsites are great, but it's a very complicated concept. It's made web-routes-quasi more complex than I would have hoped to, and necesitated added some extra information to the Handler monad. I think that this will pay off in the end; unfortunately, Yesod 0.2 subsites may still be a little unpolished.</li>
+</ul>
+<p>For those of you playing around with Hamlet, I would definitely point out: do not be afraid to define helper functions that ignore their first argument. It's been completely necessary for me.</p>
+<p>I'm still adding tutorials, refining the documentation and making some code changes, but I should be releasing very soon (latest would be next week). I encourage everyone to <a href="http://docs.yesodweb.com/yesod/">check out the documentation</a> and give me any feedback you have! I'm especially interested in people's thoughts on a persistance layer, which is notably <i>lacking</i> right now.</p>

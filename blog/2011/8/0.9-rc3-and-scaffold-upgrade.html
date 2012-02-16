@@ -1,0 +1,72 @@
+<h2 id="yesod-release-candidate-3-is-out">Yesod Release Candidate 3 is out!</h2>
+<p>Thanks to those who spotted issues with the scaffolding in the previous release candidates. So far no issues have been reported in Yesod proper, so if we keep the streak going through the weekend we will put out the official release.</p>
+<p>Also, we are going to version bump from 0.9.0 to 0.9.1 after the release so that you don't have to blow away your .ghc folder when the release comes out. So now you have no excuse to avoid upgrading right now.</p>
+<p>To get the latest RC, add this to your ~/.cabal/config:</p>
+<pre><code>remote-repo: yesod-yackage:http://yackage.yesodweb.com
+</code></pre>
+<p>And run:</p>
+<pre><code>cabal update &amp;&amp; cabal install 'yesod &gt;= 0.9.0'
+</code></pre>
+<h1 id="more-information-on-upgrading-your-site">More Information on upgrading your site</h1>
+<p>First, see the <a href="http://www.yesodweb.com/blog/2011/08/yesod-0-9-release-candidate">previous upgrading post</a>, which tackles most of the upgrade issues. I will first mention a couple more changes I had to do, that will be obvious when you compile:</p>
+<ul><li>import Text.Blaze.Renderer.String (renderHtml) -&gt; import Text.Blaze.Renderer.Text (renderHtml)</li>
+<li>tabs are not allowed in hamlet</li>
+</ul>
+<h2 id="extra-hamlet-upgrade-info">Extra Hamlet Upgrade Info</h2>
+<p>A big change not mentioned in specific detail is changing the use of [hamlet||]. You should probably just skip this paragraph and read the <a href="http://www.yesodweb.com/show/map/118">new documentation</a>, which covers how to use Yesod 0.9. When you upgrade your site, you may have to use the terms ihamlet, whamlet, or even shamlet. Which one of these funny names should you use? It is pretty simple, the first letter stands for something. <code>ihamlet</code> isn't an Apple device that makes pork, it just allows internationalization interpolation in hamlet.</p>
+<table><thead><tr class="header"><th align="left">QuasiQuoter</th>
+<th align="left">Prefix letter</th>
+<th align="left">Interpolation</th>
+</tr>
+</thead>
+<tbody><tr class="odd"><td align="left">shamlet</td>
+<td align="left">s = simple</td>
+<td align="left">#{}</td>
+</tr>
+<tr class="even"><td align="left">hamlet</td>
+<td align="left">none</td>
+<td align="left">#{} @{}</td>
+</tr>
+<tr class="odd"><td align="left">ihamlet</td>
+<td align="left">i = internationalized</td>
+<td align="left">#{} @{} ^{} _{}</td>
+</tr>
+<tr class="even"><td align="left">whamlet</td>
+<td align="left">w = widgets</td>
+<td align="left">#{} @{} ^{} _{}</td>
+</tr>
+</tbody>
+</table>
+<p>And you need to prefix using these templates with toWidget (or if you were using addHtml or something similar, remove that and use toWidget). This all seems like extra work, but we are hoping it will pay off with understandable error messages.</p>
+<h2 id="scaffolding-changes">Scaffolding Changes</h2>
+<p>One of the reasons the scaffolding had a couple issues in the RC is because of all the great stuff that has been added to it. We are going to work on taking some of the code out of the scaffold and into the library, but much of this does belong in the scaffold to be configured by the user. These changes should effect just a few key common files instead of your entire site, but they are also a more error-prone and manual process. You don't have to do all of this conversion now if you don't need the features. But I highly recommend getting the new logger working properly, even if you don't need all the new configurable settings.</p>
+<p>I recommend generating a new scaffold with the same foundation type, and copying over the new functionality. Luckily we know the compiler will guide you with your changes.</p>
+<h3 id="settings.hs-and-cabal-file">Settings.hs, and cabal file</h3>
+<ul><li>copy over config/settings.yml, and change the settings appropriately (to match what is in your Settings.hs file)</li>
+<li>copy over Settings.hs, but you have to manually inspect against your config/Settings.hs and make sure you don't lose any needed customizations.</li>
+<li>copy over main.hs (previously it was named after your project and located in the config dir), and change your cabal file so the executable points to main.hs. Likely you don't have anything you care about that gets overwritten (but double check).</li>
+<li>while in your cabal file, add dependencies for cmd-args, data-object, data-object-yaml, yesod-core, shakespeare-text, and unix (if you are on a unix based system).</li>
+<li>move config/StaticFiles.hs to Settings/StaticFile.hs (create the Settings directory first) and then you can remove config from the hs-source-dirs section of your cabal file. This can make life easier for some IDEs.</li>
+</ul>
+<h3 id="controller.hs---application.hs">Controller.hs -&gt; Application.hs</h3>
+<ul><li>rename Controller.hs to Application.hs</li>
+</ul>
+<p>The best approach may be to copy over the Application.hs file from a new scaffolded site. Here are instructions for making indifidual changes:</p>
+<ul><li>approot = Settings.appRoot . settings</li>
+<li>add to Application.hs:</li>
+</ul>
+<pre class="sourceCode"><code class="sourceCode haskell"><span class="kw">import</span> <span class="dt">Yesod.Logger</span> (makeLogger, flushLogger, <span class="dt">Logger</span>, logLazyText, logString)<br/><span class="kw">import</span> <span class="dt">Network.Wai.Middleware.Debug</span> (debugHandle)<br/><span class="co">-- only if on unix</span><br/><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">System.Posix.Signals</span> <span class="kw">as</span> <span class="dt">Signal</span><br/><span class="kw">import</span> <span class="dt">Control.Concurrent</span> (forkIO, killThread)<br/><span class="kw">import</span> <span class="dt">Control.Concurrent.MVar</span> (newEmptyMVar, putMVar, takeMVar)</code></pre>
+<ul><li>copy the new withFOUNDATION handlers from the new scaffolding site you generated.</li>
+</ul>
+<h3 id="foundation-file---foundation.hs">foundation file -&gt; Foundation.hs</h3>
+<ul><li><p>rename your foundation type file (the one with <code>instance Yesod</code> to Foundation.hs. This isn't necessary, but will allow you to communicate better with others about your site.</p></li>
+<li><p>add these to your foundation type</p></li>
+</ul>
+<pre class="sourceCode"><code class="sourceCode haskell"><span class="ot">settings </span><span class="ot">::</span> <span class="dt">Settings.AppConfig</span><br/><span class="ot">getLogger </span><span class="ot">::</span> <span class="dt">Logger</span></code></pre>
+<ul><li>add to your imports</li>
+</ul>
+<pre class="sourceCode"><code class="sourceCode haskell"><span class="kw">import</span> <span class="dt">Yesod.Logger</span> (<span class="dt">Logger</span>, logLazyText)</code></pre>
+<ul><li>add to your Yesod instance</li>
+</ul>
+<pre class="sourceCode"><code class="sourceCode haskell">messageLogger y loc level msg <span class="fu">=</span><br/>formatLogMessage loc level msg <span class="fu">&gt;&gt;=</span> logLazyText (getLogger y)</code></pre>
+<p>When this is all working, you should see all requests logged, and logging messages should be thread-safe, and you should be able to configure your application as you see fit. We will go over some more aspects of these features in the release announcement.</p>

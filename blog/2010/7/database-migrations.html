@@ -1,0 +1,32 @@
+<p>I usually blog much less about Yesod when the changes going on aren't near finalization. But I wanted to get out at least one post letting people know what's in the works. Just remember: we're early in the cycle for the next release, so a lot of these features are really wild guesses.</p>
+<h3>Database migrations</h3>
+<p>Thanks to some motivation from <a href="http://blog.thoughtfolder.com/">Greg Weber</a>, I've finally gotten around to working on database migrations. The code is currently only functional for PostgreSQL, but it's already being heavily battle tested: my main project relies very heavily on this feature to deal with the ever-changing specs that are thrown at me.</p>
+<p>What I think is a relatively unique feature in persistent is <b>database introspection</b>. The migration code looks at your table structure, including default values, NULL/NOT NULL and type, and compares that to your entity definitions. In addition, some pretty cool features:</p>
+<ul><li>There's a separation between "find the differences" and "apply changes." This allows you do store the migration information in a separate file, or use some external tool (such as <a href="http://hackage.haskell.org/package/dbmigrations">dbmigrations</a>) to manage the actual migrations.</li>
+<li>There are two different functions for applying the changes: the "safe" version never drops columns, whereas the unsafe one does. If you use the safe version (I do) you'll have to manually drop columns.</li>
+</ul>
+<p>migrate will replace the initialize function in persistent 0.2. I still have to implement the code for Sqlite. Unfortunately, sqlite does not provide the same level of introspection and alteration abilities that postgresql does. Most likely, I will need to parse the CREATE TABLE statements and copy table contents for any migration, but it should be manageable. And when it comes to schema-less databases like Redis, migrations shouldn't be necessary.</p>
+<h3>Improved select function</h3>
+<p><a href="http://github.com/rehno-lindeque">Rehno Lindeque</a> pointed out that we were missing two important features in persistent: getting the number of records and limiting/offsetting a result set. For the former feature, I was hoping to write something more generic, allowing <i>any</i> aggregate functions. Unfortunately, I haven't come up with a type-safe approach to this yet, so we'll just have a count function for the moment. If anyone has a brilliant insight, let me know.</p>
+<p>The select function is now a bit more complicated. In addition to a list of filters and a list of orders, it now also takes an offset and limit. If the limit is 0, then no limit is imposed.</p>
+<p>Finally, select no longer returns a list of records. For this usage, use the selectList function. select now has an enumerator interface; you provide it with a seed value and an iteratee. I'm debating whether to use the iteratee package for this interface; input is welcome.</p>
+<h3>Foreign keys and deleteCascade</h3>
+<p>For postgresql, we now support foreign key references. persistent figures these out in one of two ways:</p>
+<ul><li>If you provide a references=tblName attribute, then we create such a reference to that table's primary key. If you provide a noreference attribute, then no reference is created.</li>
+<li>If neither of the above attributes exist, and the data type for a field is SomeNameId, than a reference is created to the primary key of tblsomename.</li>
+</ul>
+<p>This makes it exceedingly difficult to actually delete data from a database; having any references to data you try deleting will result in an exception. So I've also added a DeleteCascade typeclass and a TH helper function to automatically create "deep deletes".</p>
+<h3>Some forms cleanup</h3>
+<p>Back to Greg Weber, we've been working together on cleaning up the Yesod.Form module a bit. Here are some notable changes:</p>
+<ul><li>You can supply id=someId and name=someName attributes in the entity definition and mkToForm will set HTML attributes accordingly. This can be useful for creating separate CSS files.</li>
+<li>We're making the locations of Javascript and CSS files customizable. Now there is a YesodJquery typeclass that has functions you can override. This makes it much easier to use a local copy of the jQuery code, or switch a jQuery UI theme. This change precipitated some major reworkings of the ToForm typeclass, in particular it is now a <abbr title="Multi Parameter Type Class">MPTC</abbr>.</li>
+<li>There are no longer special datatypes for javascript-enabled fields. For example, in order to create a jQuery UI date picker field, you would now specify in your entity definition <code>day Day toFormField=YesodJquery.jqueryDayField</code>. The YesodJquery prefix specifies that this function requires a YesodJquery instance.</li>
+</ul>
+<h3>nginx</h3>
+<p>I've added an nginx section to the <a href="http://docs.yesodweb.com/yesod/deploying.html">deploying page</a> of the Yesod docs site.</p>
+<h3>Questions for the community</h3>
+<ul><li>What kind of changes would people like to the layout of the yesod docs site?</li>
+<li>Do people prefer screencasts or text tutorials?</li>
+<li>Do you have any Yesod projects that are not listed in the <a href="http://docs.yesodweb.com/#ready">powered by Yesod</a> section?</li>
+</ul>
+<p>One final note: I'm in the process of some big changes over here (my wife's expecting any day now, and we're probably moving apartments in the next few weeks), and I need to make sure I don't slip too far behind in my day job. Don't be surprised if I suddenly stop answering my email for a few days; it's probably because I'm either in the hospital with a new baby or between apartments without internet access.</p>

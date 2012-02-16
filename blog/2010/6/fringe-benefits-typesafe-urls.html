@@ -1,0 +1,31 @@
+<p>I speak a lot about how awesome type-safe URLs are. They give you a huge level of confidence in the validity of all your links, let you change your URL structure at will and let you pass type-safe parameters to your handler functions. That's all well and good, but let's talk about some of the <i>minor</i> benefits of these things. Consider this the first in a mini-series focusing on some of the lesser known features of Yesod.</p>
+<h3>Breadcrumbs</h3>
+<p>Let me describe a project from hell. Imagine a site that has a navigational structure sometimes 8 levels deep. Imagine a client that can't write a spec, but knows exactly what he wants. And imagine that the &quot;exactly what he wants&quot; changes on a daily basis.</p>
+<p>Breadcrumbs was a major annoyance on this project. Let's say we suddenly need to move one branch of the sitemap somewhere else. Using a normal, manual breadcrumbs approach, you have to change <b>every single child page in the hierarchy</b> to reflect things. Let's say the client decides you need to suddenly rename the root of the tree: <b>you have to change every single page</b>.</p>
+<p>But if you think about it, breadcrumbs should really be very simple. For any page on your site, you need to know 1) the title of the page and 2) the parent page, if any. Turns out that type-safe URLs make this really easy to express as:</p>
+<pre><code>breadcrumb :: url -&gt; (String, Maybe url)</code></pre>
+<p>If this is a top-level page, return Nothing in the second part of the tuple. Otherwise, return the parent. The first part in the tuple is the page title. I went ahead and packaged this into a typeclass, made the type signature a little more complex to run inside the Handler monad, and you have:</p>
+<pre><code>class YesodBreadcrumbs y where
+    breadcrumb :: Routes y -&gt; Handler y (String, Maybe (Routes y))
+breadcrumbs :: YesodBreadcrumbs y =&gt; Handler y (String, [(Routes y, String)])</code></pre>
+<p>The <code>breadcrumbs</code> function returns the title of the current page and the chain of parents along with their titles. You can easily turn that into some HTML using Hamlet:</p>
+<pre><code>1 (title, parents) &lt;- breadcrumbs
+2 return [$hamlet|
+3 #breadcrumbs
+4    $forall parents parent
+5        %a!href=@fst.parent@ $string.snd.parent$
+6        &amp;gt; $
+7    $string.title$
+8 |]</code></pre>
+<p>Just to point out some of the Hamlet syntax: the trailing dollar sign on line 6 is simply to demarcate the extra space at the end of the line; Hamlet ignores it. On line 5, the at signs denote a type-safe URL, whereas the dollar signs represent HTML content. <code>string</code> is a function from BlazeHtml to convert a String into the Html datatype.</p><h3>Static files host</h3>
+<p>As fast as Yesod is, it's not as fast as a static file server. It makes a lot of sense to server the static content from a different server (not to mention you avoid the cookie-transport cost). However, when developing the application, we want to be able to simply use the simple server and not set up a dedicated static file server.</p>
+<p>That's where urlRenderOverride comes into play. Given a type-safe URL, it <i>might</i> return a replacement absolute URL. urlRenderOverride is part of the Yesod typeclass, where we keep a lot of optional settings. By default, the function always returns <code>Nothing</code>, which allows normal URL rendering to take place. However, you can set up your production code to intercept all of your static file requests and send them to a different server.</p>
+<p>For an example of how to do static file server, see <a href="http://www.yesodweb.com/book/example-ajax" title="" target="">the Ajax tutorial</a>.</p>
+<p>One of the more recent additions to the Yesod typeclass is the <code>isAuthorized</code> function. Unfortunately, it was not done properly in 0.3.0, but I intend to fix that in 0.4.0. In any event, here's the idea: Given a type-safe URL, it returns Nothing if the request is authorized, or Just with a message if unauthorized. If you want the user to authenticate first, or provide some other information, you can use a redirect to send them to a different page.</p>
+<p>The problem is that I wrote this to live in the IO monad instead of the Handler monad, so it doesn't have access to request information or the ability to send a redirect. Once this is fixed, it should provide a very light-weight access-control-list mechanism.</p>
+<h3>Conclusion</h3>
+<p>All three of these methods offer two serious benefits from a program safety standpoint:</p>
+<ul><li>It puts all of the code for a specific concept into a single location.</li>
+<li>The compiler can check to make sure you've considered all possibilities.</li>
+</ul>
+<p>I'm sure a lot of this could be implemented in a different way than type-safe URLs, but I think that we see here a natural result of a good design decision.</p>

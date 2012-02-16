@@ -1,0 +1,8 @@
+<p>The Yesod team is very happy to announce the first <a href="http://www.yesodweb.com/book/conduit">conduit</a>-based release of <a href="http://hackage.haskell.org/package/wai">WAI</a> and <a href="http://hackage.haskell.org/package/warp">Warp</a>. We've received a lot of positive feedback on the new API, our tests show it working correctly, and benchmarks put it at the same (fast) speed as previous releases. All in all, we're very happy with this new version.</p>
+<p>We've bumped the version number on all WAI packages to 1.0. We've done this for three reasons:</p>
+<ul><li>Indicate that this is a significant change.</li>
+<li>Make it clear that after years of active development and use, we feel that the WAI ecosystem is now fully stable.</li>
+<li>Allow anyone interested in continuing the enumerator-based WAI to use the 0.* version numbers to do so. Please contact me if you're interested.</li>
+</ul>
+<p>In addition to upgrading all WAI packages, we're also releasing a new package: <a href="http://hackage.haskell.org/package/warp-tls">warp-tls</a>. This package allows you to serve your WAI applications over a secure connection, using Vincent Hanquez's wonderful <a href="http://hackage.haskell.org/package/tls">tls</a> package. The architecture has been set up in a modular enough fashion that creating other SSL backends (e.g., openssl, gnutls) is entirely possible. If anyone is interested in either using or developing such a backend, please let me know.</p>
+<p>The upcoming 0.10 release of Yesod is built fully on WAI/Warp 1.0. This release is our first step towards a Yesod 0.10 beta release (probably early next week).</p>

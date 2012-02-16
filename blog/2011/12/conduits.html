@@ -1,0 +1,361 @@
+<h1>Conduits</h1>
+  <p class="hascomments">Conduits are a solution to the streaming data problem. They fit the same solution space as
+   enumerators, in that we want to have deterministic resource handling, constant memory usage, and
+   composability. However, conduits have been designed based on a huge amount of experience using
+   enumerators in real life projects. They intend to solve the same problems in a simpler, more
+   robust way.</p>
+  <p class="hascomments">This post is not intended to be a detailed comparison between enumerators and conduits, though
+   it will be impossible to avoid some comparison. Instead, the goal is to explain the design
+   decisions and usage of conduits, and give enough information that a reader familiar with both
+   concepts can draw his/her own conclusions. In addition, the README file of the <a href="https://github.com/snoyberg/conduit">conduit repo on
+    Github</a> provides some of the motivation for conduits.</p>
+  <p class="hascomments">Note that this article will assume a basic understanding of the Resource monad transformer,
+   which was described in a <a href="http://www.yesodweb.com/blog/2011/12/resourcet">previous article</a>. Also, conduits have not yet been
+   released to Hackage, though the code in question is mostly stable, and is in fact in production
+   use already.</p>
+ <section class="subtopic" id="file1683-conceptId"><h1>Goals</h1>
+  <p class="hascomments">We often talk vaguely about having streaming, composable data. Let&#39;s give some concrete ideas
+   of what we want out of this library:</p>
+  <ul id="file1683-conceptId-ul_lwt_nqx_re"><li>A unified interface for streaming data from and piping data into various places, whether they
+    be files, sockets, or memory-based.</li>
+   <li>Some technique for modifying this stream of data in some way, such as applying HTTP chunking
+    to a stream of bytes of decoding a stream of bytes into a stream of characters.</li>
+   <li>Deterministic resource management. If we read data from a file, we want the file to be closed
+    immediately after an EOF is reached. We should not need to wait for any finalizer to be called.
+    (This is a common complaint against lazy I/O.)</li>
+   <li>Exception safety. All resources should be freed, even in the presence of exceptions, and even
+    if those exceptions are asynchronous.</li>
+   <li>Any part of the conduit pipeline- including the data consumer- should be able to safely
+    acquire scarce resources and know that they will be released. (This is a downside of the
+    enumerator approach, and one of our main design goals.)</li>
+   <li>Conduits should interoperate well with monad transformer stacks. Almost all frameworks today
+    use a monad stack in some way, and we want easy interoperability.</li>
+   <li>The developer should be free to choose the control flow of the program. (This is another
+    complaint against enumerator, which creates a form of &quot;inversion of control.&quot;)</li>
+   <li>Finally, conduits should be <b>simple</b>. The majority of this article should be
+    understandable by almost any Haskell developer. If not, I&#39;ve failed in either my writing or my
+    coding.</li>
+  </ul>
+ </section><section class="subtopic" id="file1691-conceptId"><h1>Conduits in Five Minutes</h1>
+  <p class="hascomments">While a good understanding of the lower-level mechanics of conduits is advisable, you can get
+   very far without it. Let&#39;s start off with some high-level examples. Don&#39;t worry if some of the
+   details seem a bit magical right now. We&#39;ll cover everything in the course of this series. Let&#39;s
+   start with the terminology, and then some sample code.</p>
+  <dl><dt>Source</dt>
+    <dd>A producer of data. The data could be in a file, coming from a socket, or in memory as a
+     list. To access this data, we <dfn>pull</dfn> from the source.</dd>
+   
+   
+    <dt>Sink</dt>
+    <dd>A consumer of data. Basic examples would be a sum function (adding up a stream of numbers
+     fed in), a file sink (which writes all incoming bytes to a file), or a socket. We
+      <dfn>push</dfn> data into a sink. When the sink finishes processing (we&#39;ll explain that
+     later), it returns some value.</dd>
+   
+   
+    <dt>Conduit</dt>
+    <dd>A transformer of data. The simplest example is a map function, though there are many others.
+     Like a sink, we <dfn>push</dfn> data into a conduit. But instead of returning a single value
+     at the end, a conduit can return multiple outputs every time it is pushed to.</dd>
+   
+   
+    <dt>Fuse</dt>
+    <dd>(Thanks to David Mazieres for the term.) A conduit can be <dfn>fused</dfn> with a source
+     to produce a new, modified source (the <code>$=</code> operator). For example, you could
+     have a source that reads bytes from a file, and a conduit that decodes bytes into text. If you
+     fuse them together, you would now have a source that reads text from a file. Likewise, a
+     conduit and a sink can fuse into a new sink (<code>=$</code>), and two conduits can fuse
+     into a new conduit (<code>=$=</code>).</dd>
+   
+   
+    <dt>Connect</dt>
+    <dd>You can connect a source to a sink using the <code>$$</code> operator. Doing so will
+     pull data from the source and push it to the sink, until either the source or sink signals that
+     they are &quot;done.&quot;</dd>
+   
+  </dl>
+  <p class="hascomments">Let&#39;s see some examples of conduit code.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span> <span style="color: gray;">-- the core library</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Conduit.List</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">CL</span> <span style="color: gray;">-- some list-like functions</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Conduit.Binary</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">CB</span> <span style="color: gray;">-- bytes</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Conduit.Text</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">CT</span>
+
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.ByteString</span> (<span style="color: blue;">ByteString</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Text</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">T</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.ST</span> (runST)
+
+<span style="color: gray;">-- Let&#39;s start with the basics: connecting a source to a sink. We&#39;ll use the</span>
+<span style="color: gray;">-- built in file functions to implementing efficient, constant-memory,</span>
+<span style="color: gray;">-- resource-friendly file copying.</span>
+--
+<span style="color: gray;">-- Two things to note: we use $$ to connect our source to our sink, and then</span>
+<span style="color: gray;">-- use runResourceT.</span>
+<span style="color: blue;font-weight: bold;">copyFile</span> :: <span style="color: blue;">FilePath</span> -&gt; <span style="color: blue;">FilePath</span> -&gt; <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">copyFile</span> src dest = runResourceT $ <span style="color: blue;">CB.</span>sourceFile src $$ <span style="color: blue;">CB.</span>sinkFile dest
+
+
+<span style="color: gray;">-- The Data.Conduit.List module provides a number of helper functions for</span>
+<span style="color: gray;">-- creating sources, sinks, and conduits. Let&#39;s look at a typical fold: summing</span>
+<span style="color: gray;">-- numbers.</span>
+<span style="color: blue;font-weight: bold;">sumSink</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Sink</span> <span style="color: blue;">Int</span> m <span style="color: blue;">Int</span>
+<span style="color: blue;font-weight: bold;">sumSink</span> = <span style="color: blue;">CL.</span>fold (+) <span style="color: teal;">0</span>
+
+<span style="color: gray;">-- If we want to go a little more low-level, we can code our sink with the</span>
+<span style="color: gray;">-- sinkState function. This function takes three parameters: an initial state,</span>
+<span style="color: gray;">-- a push function (receive some more data), and a close function.</span>
+<span style="color: blue;font-weight: bold;">sumSink2</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Sink</span> <span style="color: blue;">Int</span> m <span style="color: blue;">Int</span>
+<span style="color: blue;font-weight: bold;">sumSink2</span> = sinkState
+    <span style="color: teal;">0</span> <span style="color: gray;">-- initial value</span>
+
+    <span style="color: gray;">-- update the state with the new input and</span>
+    <span style="color: gray;">-- indicate that we want more input</span>
+    (\accum i -&gt; return $ <span style="color: blue;">StateProcessing</span> (accum + i))
+    (\accum -&gt; return accum) <span style="color: gray;">-- return the current accum value on close</span>
+
+<span style="color: gray;">-- Another common helper function is sourceList. Let&#39;s see how we can combine</span>
+<span style="color: gray;">-- that function with our sumSink to reimplement the built-in sum function.</span>
+<span style="color: blue;font-weight: bold;">sum&#39;</span> :: [<span style="color: blue;">Int</span>] -&gt; <span style="color: blue;">Int</span>
+<span style="color: blue;font-weight: bold;">sum&#39;</span> input = runST $ runResourceT $ <span style="color: blue;">CL.</span>sourceList input $$ sumSink
+
+<span style="color: gray;">-- Since this is Haskell, let&#39;s write a source to generate all of the</span>
+<span style="color: gray;">-- Fibonacci numbers. We&#39;ll use sourceState. The state will contain the next</span>
+<span style="color: gray;">-- two numbers in the sequence. We also need to provide a pull function, which</span>
+<span style="color: gray;">-- will return the next number and update the state.</span>
+<span style="color: blue;font-weight: bold;">fibs</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Source</span> m <span style="color: blue;">Int</span>
+<span style="color: blue;font-weight: bold;">fibs</span> = sourceState
+    (<span style="color: teal;">0</span>, <span style="color: teal;">1</span>) <span style="color: gray;">-- initial state</span>
+    (\(x, y) -&gt; return $ <span style="color: blue;">StateOpen</span> (y, x + y) x)
+
+<span style="color: gray;">-- Suppose we want to get the sum of the first 10 Fibonacci numbers. We can use</span>
+<span style="color: gray;">-- the isolate conduit to make sure the sum sink only consumes 10 values.</span>
+<span style="color: blue;font-weight: bold;">sumTenFibs</span> :: <span style="color: blue;">Int</span>
+<span style="color: blue;font-weight: bold;">sumTenFibs</span> =
+        runST <span style="color: gray;">-- runs fine in pure code</span>
+      $ runResourceT
+      $ fibs
+    $= <span style="color: blue;">CL.</span>isolate <span style="color: teal;">10</span> <span style="color: gray;">-- fuse the source and conduit into a source</span>
+    $$ sumSink
+
+<span style="color: gray;">-- We can also fuse the conduit into the sink instead, we just swap a few</span>
+<span style="color: gray;">-- operators.</span>
+<span style="color: blue;font-weight: bold;">sumTenFibs2</span> :: <span style="color: blue;">Int</span>
+<span style="color: blue;font-weight: bold;">sumTenFibs2</span> =
+        runST
+      $ runResourceT
+      $ fibs
+    $$ <span style="color: blue;">CL.</span>isolate <span style="color: teal;">10</span>
+    =$ sumSink
+
+<span style="color: gray;">-- Alright, let&#39;s make some conduits. Let&#39;s turn our numbers into text. Sounds</span>
+<span style="color: gray;">-- like a job for a map...</span>
+
+<span style="color: blue;font-weight: bold;">intToText</span> :: <span style="color: blue;">Int</span> -&gt; <span style="color: blue;">Text</span> <span style="color: gray;">-- just a helper function</span>
+<span style="color: blue;font-weight: bold;">intToText</span> = <span style="color: blue;">T.</span>pack . show
+
+<span style="color: blue;font-weight: bold;">textify</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Conduit</span> <span style="color: blue;">Int</span> m <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">textify</span> = <span style="color: blue;">CL.</span>map intToText
+
+<span style="color: gray;">-- Like previously, we can use a conduitState helper function. But here, we</span>
+<span style="color: gray;">-- don&#39;t even need state, so we provide a dummy state value.</span>
+<span style="color: blue;font-weight: bold;">textify2</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Conduit</span> <span style="color: blue;">Int</span> m <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">textify2</span> = conduitState
+    ()
+    (\() input -&gt; return $ <span style="color: blue;">StateProducing</span> () [intToText input])
+    (\() -&gt; return [])
+
+<span style="color: gray;">-- Let&#39;s make the unlines conduit, that puts a newline on the end of each piece</span>
+<span style="color: gray;">-- of input. We&#39;ll just use CL.map; feel free to write it with conduitState as</span>
+<span style="color: gray;">-- well for practice.</span>
+<span style="color: blue;font-weight: bold;">unlines&#39;</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">Conduit</span> <span style="color: blue;">Text</span> m <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">unlines&#39;</span> = <span style="color: blue;">CL.</span>map $ \t -&gt; t `<span style="color: blue;">T.</span>append` <span style="color: green;">&quot;\n&quot;</span>
+
+<span style="color: gray;">-- And let&#39;s write a function that prints the first N fibs to a file. We&#39;ll</span>
+<span style="color: gray;">-- use UTF8 encoding.</span>
+<span style="color: blue;font-weight: bold;">writeFibs</span> :: <span style="color: blue;">Int</span> -&gt; <span style="color: blue;">FilePath</span> -&gt; <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">writeFibs</span> count dest =
+      runResourceT
+    $ fibs
+   $= <span style="color: blue;">CL.</span>isolate count
+   $= textify
+   $= unlines&#39;
+   $= <span style="color: blue;">CT.</span>encode <span style="color: blue;">CT.</span>utf8
+   $$ <span style="color: blue;">CB.</span>sinkFile dest
+
+<span style="color: gray;">-- We used the $= operator to fuse the conduits into the sources, producing a</span>
+<span style="color: gray;">-- single source. We can also do the opposite: fuse the conduits into the sink. We can even combine the two.</span>
+<span style="color: blue;font-weight: bold;">writeFibs2</span> :: <span style="color: blue;">Int</span> -&gt; <span style="color: blue;">FilePath</span> -&gt; <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">writeFibs2</span> count dest =
+      runResourceT
+    $ fibs
+   $= <span style="color: blue;">CL.</span>isolate count
+   $= textify
+   $$ unlines&#39;
+   =$ <span style="color: blue;">CT.</span>encode <span style="color: blue;">CT.</span>utf8
+   =$ <span style="color: blue;">CB.</span>sinkFile dest
+
+<span style="color: gray;">-- Or we could fuse all those inner conduits into a single conduit...</span>
+<span style="color: blue;font-weight: bold;">someIntLines</span> :: <span style="color: blue;">ResourceThrow</span> m <span style="color: gray;">-- encoding can throw an exception</span>
+             =&gt; <span style="color: blue;">Int</span>
+             -&gt; <span style="color: blue;">Conduit</span> <span style="color: blue;">Int</span> m <span style="color: blue;">ByteString</span>
+<span style="color: blue;font-weight: bold;">someIntLines</span> count =
+      <span style="color: blue;">CL.</span>isolate count
+  =$= textify
+  =$= unlines&#39;
+  =$= <span style="color: blue;">CT.</span>encode <span style="color: blue;">CT.</span>utf8
+
+<span style="color: gray;">-- and then use that conduit</span>
+<span style="color: blue;font-weight: bold;">writeFibs3</span> :: <span style="color: blue;">Int</span> -&gt; <span style="color: blue;">FilePath</span> -&gt; <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">writeFibs3</span> count dest =
+      runResourceT
+    $ fibs
+   $= someIntLines count
+   $$ <span style="color: blue;">CB.</span>sinkFile dest
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = <span style="color: green;font-weight: bold;">do</span>
+    putStrLn $ <span style="color: green;">&quot;First ten fibs: &quot;</span> ++ show sumTenFibs
+    writeFibs <span style="color: teal;">20</span> <span style="color: green;">&quot;fibs.txt&quot;</span>
+    copyFile <span style="color: green;">&quot;fibs.txt&quot;</span> <span style="color: green;">&quot;fibs2.txt&quot;</span>
+</pre></pre>
+ </section><section class="subtopic" id="file1693-conceptId"><h1>Source</h1>
+  <p class="hascomments">I think it&#39;s simplest to understand sources by looking at the types:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">SourceResult</span> m a = <span style="color: blue;">Open</span> (<span style="color: blue;">Source</span> m a) a | <span style="color: blue;">Closed</span>
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Source</span> m a = <span style="color: blue;">Source</span>
+    { sourcePull :: <span style="color: blue;">ResourceT</span> m (<span style="color: blue;">SourceResult</span> m a)
+    , sourceClose :: <span style="color: blue;">ResourceT</span> m ()
+    }
+</pre></pre>
+  <p class="hascomments">A source has just two operations on it: you can pull data from it, and you can close it (think
+      of closing a file handle). When you pull, you either get some data and the a new
+        <code>Source</code> (the source is still open), or nothing (the source is closed). Let&#39;s
+      look at some of the simplest sources:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Prelude</span> <span style="color: green;font-weight: bold;">hiding</span> (repeat)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+
+<span style="color: gray;">-- | Never give any data</span>
+<span style="color: blue;font-weight: bold;">eof</span> :: <span style="color: blue;">Monad</span> m =&gt; <span style="color: blue;">Source</span> m a
+<span style="color: blue;font-weight: bold;">eof</span> = <span style="color: blue;">Source</span>
+    { sourcePull = return <span style="color: blue;">Closed</span>
+    , sourceClose = return ()
+    }
+
+<span style="color: gray;">-- | Always give the same value</span>
+<span style="color: blue;font-weight: bold;">repeat</span> :: <span style="color: blue;">Monad</span> m =&gt; a -&gt; <span style="color: blue;">Source</span> m a
+<span style="color: blue;font-weight: bold;">repeat</span> a = <span style="color: blue;">Source</span>
+    { sourcePull = return $ <span style="color: blue;">Open</span> (repeat a) a
+    , sourceClose = return ()
+    }
+</pre></pre>
+  <p class="hascomments">These sources are very straight-forward, since they always return the same results.
+      Additionally, their close records don&#39;t do anything. You might think that this is a bug:
+      shouldn&#39;t a call to <code>sourcePull</code> return <code>Closed</code> after it&#39;s been
+      closed? This isn&#39;t required, since one of the rules of sources is that they can never be
+      reused. In other words:</p>
+    <ul id="file1693-conceptId-ul_evz_rnk_df"><li>If a <code>Source</code> returns <code>Open</code>, it has provided you with a new
+          <code>Source</code> which you should use in place of the original one.</li>
+      <li>If it returns <code>Closed</code>, then you cannot perform any more operations on
+        it.</li>
+    </ul>
+  <p class="hascomments">Don&#39;t worry too much about the invariant. In practice, you will almost never call
+        <code>sourcePull</code> or <code>sourceClose</code> yourself. In fact, you hardly
+      even write them yourself either (that&#39;s what <code>sourceState</code> and
+        <code>sourceIO</code> are for). The point is that we can make some assumptions when we
+      implement our sources.</p>
+ <section class="subtopic" id="file1685-conceptId"><h1>State</h1>
+  <p class="hascomments">There is something similar about the two sources mentioned above: they never change. They
+    <i>always</i> return the same value. In other words, they have no state. For almost all serious
+   sources, we&#39;ll need some kind of state.</p>
+  <aside class="note">The state might actually be defined outside of our program. For example, if we write a
+   source that reads data from a <code>Handle</code>, we don&#39;t need to manually specify any
+   state, since the <code>Handle</code> itself already has.</aside>
+  <p class="hascomments">The way we store state in a source is by updating the returned <code>Source</code> value in
+   the <code>Open</code> constructor. This is best seen with an example.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.Trans.Resource</span>
+
+<span style="color: gray;">-- | Provide data from the list, one element at a time.</span>
+<span style="color: blue;font-weight: bold;">sourceList</span> :: <span style="color: blue;">Resource</span> m =&gt; [a] -&gt; <span style="color: blue;">Source</span> m a
+<span style="color: blue;font-weight: bold;">sourceList</span> list = <span style="color: blue;">Source</span>
+    { sourcePull =
+        <span style="color: green;font-weight: bold;">case</span> list <span style="color: green;font-weight: bold;">of</span>
+            [] -&gt; return <span style="color: blue;">Closed</span> <span style="color: gray;">-- no more data</span>
+
+            <span style="color: gray;">-- This is where we store our state: by return a new</span>
+            <span style="color: gray;">-- Source with the rest of the list</span>
+            x:xs -&gt; return $ <span style="color: blue;">Open</span> (sourceList xs) x
+        , sourceClose = return ()
+        }
+</pre></pre>
+  <p class="hascomments">Each time we pull from the source, it checks the input list. If the list is empty, pulling
+   returns <code>Closed</code>, which makes sense. If the list is not empty, pulling returns
+    <code>Open</code> with both the next value in the list, and a new <code>Source</code>
+   value containing the rest of the input list.</p>
+ </section><section class="subtopic" id="file1692-conceptId"><h1>sourceState and sourceIO</h1>
+  <p class="hascomments">In addition to being able to manually create <code>Source</code>s, we also have a few
+   convenience functions that allow us to create most sources in a more high-level fashion.
+    <code>sourceState</code> let&#39;s you write code similar to how you would use the
+    <code>State</code> monad. You provide an initial state, your pull function is provided with
+   the current state, and it returns a new state and a return value. Let&#39;s use this to reimplement
+   sourceList.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.Trans.Resource</span>
+
+<span style="color: gray;">-- | Provide data from the list, one element at a time.</span>
+<span style="color: blue;font-weight: bold;">sourceList</span> :: <span style="color: blue;">Resource</span> m =&gt; [a] -&gt; <span style="color: blue;">Source</span> m a
+<span style="color: blue;font-weight: bold;">sourceList</span> state0 = sourceState
+    state0
+    pull
+  <span style="color: green;font-weight: bold;">where</span>
+    pull [] = return <span style="color: blue;">StateClosed</span>
+    pull (x:xs) = return $ <span style="color: blue;">StateOpen</span> xs x
+</pre></pre>
+  <p class="hascomments">Notice the usage of the <code>StateClosed</code> and <code>StateOpen</code>
+   constructors. These are very similar to <code>Closed</code> and <code>Open</code>, except
+   that instead of specifying the next <code>Source</code> to be used, you provide the next
+   state (here, the remainder of the list).</p>
+  <p class="hascomments">The other common activity is to perform some I/O allocation (like opening a file), registering
+   some cleanup action (closing that file), and having a function for pulling data from that
+   resource. <code>conduit</code> comes built-in with a <code>sourceFile</code> function
+   that gives a stream of <code>ByteString</code>s. Let&#39;s write a wildly inefficient alternative
+   that returns a stream of characters.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.Trans.Resource</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">System.IO</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+
+<span style="color: blue;font-weight: bold;">sourceFile</span> :: <span style="color: blue;">ResourceIO</span> m =&gt; <span style="color: blue;">FilePath</span> -&gt; <span style="color: blue;">Source</span> m <span style="color: blue;">Char</span>
+<span style="color: blue;font-weight: bold;">sourceFile</span> fp = sourceIO
+    (openFile fp <span style="color: blue;">ReadMode</span>)
+    hClose
+    (\h -&gt; liftIO $ <span style="color: green;font-weight: bold;">do</span>
+        eof &lt;- hIsEOF h
+        <span style="color: green;font-weight: bold;">if</span> eof
+            <span style="color: green;font-weight: bold;">then</span> return <span style="color: blue;">IOClosed</span>
+            <span style="color: green;font-weight: bold;">else</span> fmap <span style="color: blue;">IOOpen</span> $ hGetChar h)
+</pre></pre>
+  <p class="hascomments">Like <code>sourceState</code>, it uses a variant on the <code>Open</code> and
+    <code>Closed</code> constructors. <code>sourceIO</code> does a number of things for
+   us:</p>
+  <ul id="file1692-conceptId-ul_rwv_vbu_se"><li>It registers the cleanup function with the <code>ResourceT</code> transformer, ensuring
+    it gets called even in the presence of exceptions.</li>
+   <li>It sets up the <code>sourceClose</code> record to release the resource immediately.</li>
+   <li>As soon as you return <code>IOClosed</code>, it will release the resource.</li>
+  </ul>
+ </section></section><section class="subtopic" id="file1689-conceptId"><h1>Next time</h1>
+  <p class="hascomments">Everyone loves cliffhangers, right? Well, there&#39;s too much information to stick into a single
+   blog post, so here are the topics I&#39;m hoping to cover in the rest of this series:</p>
+  <ul id="file1689-conceptId-ul_kmi_biy_re"><li>Sinks</li>
+   <li>Connecting sources to sinks</li>
+   <li>Conduits</li>
+   <li>The fuse operators</li>
+   <li>The rules of data loss</li>
+   <li>Buffering/resumable sources</li>
+   <li>Using conduits in pure code</li>
+   <li>Building up conduits from sinks</li>
+   <li>Some real-life examples</li>
+  </ul>
+  <p class="hascomments">Remember that conduit has not yet been officially released, and some of the information in this
+   article may change over time. However, the core concepts are mostly solidified now.</p>
+ </section>

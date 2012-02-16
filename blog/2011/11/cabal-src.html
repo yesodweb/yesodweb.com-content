@@ -1,0 +1,20 @@
+<p>I'm happy to announce the first release of <a href="http://hackage.haskell.org/package/cabal-src">cabal-src</a>. cabal-src is a package intended to help solve the Cabal diamond dependency problem. In the Yesod development process- due to the large number of packages involved- we often run into &quot;dependency hell&quot; during development. Hopefully, this tool will allow us to fix all that by simply replacing &quot;cabal install&quot; with &quot;cabal-src-install&quot;.</p>
+<p>The package is now available on Hackage, and is therefore a simple &quot;cabal install cabal-src-install&quot; away. You can also <a href="https://github.com/yesodweb/cabal-src">view the code on Github</a>.</p>
+<h2 id="the-problem">The problem</h2>
+<p>Let's say you have three packages. foo depends on the text package, and can use any version of it. bar depends on text as well, but requires version 0.10.*. foobar depends on both of those.</p>
+<p>If you upload these three packages to Hackage and install foobar, cabal will build foo and bar against the same version of text, and then build foobar against them. However, if you install these packages locally, foo will be built against the most recent version of text (currently 0.11.something), and then foobar will be unbuildable, since its dependencies depend on different versions of text.</p>
+<p>You can see sample packages demonstrating the issue in the <em>example</em> folder.</p>
+<p>This is just one example of the diamond dependency issue. When dealing with complicated systems such as Yesod, with dozens of packages that are in development, the situation becomes much worse.</p>
+<h2 id="our-solution">Our solution</h2>
+<p>The important thing to note is that, if the packages are on Hackage, Cabal can handle the situation. The reason is that Cabal has enough information to calculate the correct versions of all dependencies to be used. So our goal is to give Cabal access to information on all dependencies, even those not yet on Hackage.</p>
+<p>Instead of installing a local package with &quot;cabal install&quot;, you can now use &quot;cabal-src-install&quot;. This program actually calls out to &quot;cabal install&quot;, and if that build succeeds, will perform the following steps:</p>
+<ol style="list-style-type: decimal"><li><p>Create a source tarball via &quot;cabal sdist&quot;</p></li>
+<li><p>Copy this tarball into a special location in your .cabal folder.</p></li>
+<li><p>Update a 00-index.tar file specifically kept for cabal-src.</p></li>
+<li><p>Update your .cabal/config file to recognize the special cabal-src folder as necessary.</p></li>
+</ol>
+<p>If you now install your &quot;foo&quot; and &quot;bar&quot; packages via &quot;cabal-src-install&quot;, Cabal has full access to their source code. When it comes time to install foobar, Cabal can determine that foo can be recompiled with text 0.10 and will do so automatically.</p>
+<h2 id="project-status">Project status</h2>
+<p>This software should be considered alpha. We'll likely be using it for all Yesod development going forward, so I expect that alpha to be upgraded to beta and finally production quality in short order. All feedback is welcome!</p>
+<h2 id="usage">Usage</h2>
+<p>Simply replace a call to &quot;cabal install&quot; with a call to &quot;cabal-src-install&quot;. If you would like to only install the source tarball without actually installing the binary package, run it with &quot;cabal-src-install --src-only&quot;.</p>

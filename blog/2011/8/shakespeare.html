@@ -1,0 +1,556 @@
+<h1>Status Update</h1><p>We&#39;re coming along very nicely on the Yesod 0.9 release. The goal is to have the release candidate out on Monday. However, at this point, the code in the repo is in active use in a number of different sites, and we aren&#39;t running into any issues any more. So all signs indicate that this will be the most solid release of Yesod to date.</p>
+<p>One thing that&#39;s still necessary is updating the book for the changes in the packages. There are four chapters that need to be reworked: templates, widgets, forms and persistent. I present to you the first of these revised chapters; as usual, feedback appreciated.</p><h1>Shakespearean Templates</h1>
+  <p class="hascomments" id="file885-shakespearean-templates-x1">Yesod uses the Shakespearean family of template languages as its standard approach to HTML, CSS
+   and Javascript creation. This language family shares some common syntax, as well as overarching
+    principles:<ul id="file885-shakespearean-templates-ul_49ef34dd-2fd1-41b2-9c21-eb1bf09ac57a"><li id="file885-shakespearean-templates-x2">As little interference to the underlying template language as possible, while providing
+     conveniences where possible.</li>
+    <li id="file885-shakespearean-templates-x3">Compile-time guarantees on well-formed content.</li>
+    <li id="file885-shakespearean-templates-x4">Strict type safety, extending to the prevention of XSS (cross-site scripting) attacks.</li>
+    <li id="file885-shakespearean-templates-x5">Automated checking of valid URLs, whenever possible, through <dfn id="file885-shakespearean-templates-x6">type-safe
+     URLs</dfn>.</li>
+   </ul></p>
+  <p class="hascomments" id="file885-shakespearean-templates-x7">There&#39;s is nothing inherently tying Yesod to these languages, or the other way around: each can
+   be used independently of the other. This chapter will address these template languages on their
+   own, while the remainder of the book will use them to enhance Yesod application development.</p>
+ <section .subtopic=""><h1>Synopsis</h1><section .subtopic=""><h1>Hamlet (HTML)</h1>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;">!!!
+<span style="color: blue;">&lt;html&gt;</span>
+    <span style="color: blue;">&lt;head&gt;</span>
+        <span style="color: blue;">&lt;title&gt;</span>#{pageTitle} - My Site
+        <span style="color: blue;">&lt;link</span> <span style="color: green;font-weight: bold;">rel</span>=<span style="color: green;">&quot;stylesheet&quot;</span> <span style="color: green;font-weight: bold;">href</span>=@{Stylesheet}
+    &lt;body<span style="color: blue;">&gt;</span>
+        <span style="color: blue;">&lt;h1</span> .page-title<span style="color: blue;">&gt;</span>#{pageTitle}
+        <span style="color: blue;">&lt;p&gt;</span>Here is a list of your friends:
+        $if null friends
+            <span style="color: blue;">&lt;p&gt;</span>Sorry, I lied, you don&#39;t have any friends.
+        $else
+            <span style="color: blue;">&lt;ul&gt;</span>
+                $forall friend &lt;- friends
+                    <span style="color: blue;">&lt;li&gt;</span>#{friendName friend} (#{show $ friendAge friend} years old)
+        <span style="color: blue;">&lt;footer&gt;</span>^{copyright}
+</pre></pre>
+ </section><section .subtopic=""><h1>Cassius (CSS)</h1>
+  <pre class="codeblock" id="file863-cassius-css-x1">#myid
+    color: #{red}
+    font-size: #{bodyFontSize}
+foo bar baz
+    background-image: url(@{MyBackgroundR})</pre>
+ </section><section .subtopic=""><h1>Lucius (CSS)</h1>
+  <pre class="codeblock" id="file864-lucius-css-x1">section.blog {
+    padding: 1em;
+    border: 1px solid #000;
+    h1 {
+        color: #{headingColor};
+    }
+}</pre>
+ </section><section .subtopic=""><h1>Julius (Javascript)</h1>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;">$(<span style="color: green;font-weight: bold;">function</span>()<span style="color: red;">{</span>
+    $(<span style="color: green;">&quot;section.#{sectionClass}&quot;</span>).<span style="color: blue;font-weight: bold;">hide</span>();
+    $(<span style="color: green;">&quot;#mybutton&quot;</span>).<span style="color: blue;font-weight: bold;">click</span>(<span style="color: green;font-weight: bold;">function</span>()<span style="color: red;">{</span>document.location = <span style="color: green;">&quot;@{SomeRouteR}&quot;</span>;<span style="color: red;">}</span>);
+    ^<span style="color: red;">{</span>addBling<span style="color: red;">}</span>
+<span style="color: red;">}</span>);
+</pre></pre>
+ </section></section><section .subtopic=""><h1>Types</h1>  <p class="hascomments" id="file868-types-x1">Before we jump into syntax, let&#39;s take a look at the various types involved. We mentioned in
+   the introduction that types help protect us from XSS attacks. For example, let&#39;s say that we have
+   an HTML template that should display someone&#39;s name; it might look like
+    this:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;p&gt;</span>Hello, my name is #{name}
+</pre></pre><aside class="note" id="file868-types-x3">Yes, #{...} is how we do
+    variable interpolation in Shakespeare.</aside></p>
+  <p class="hascomments" id="file868-types-x4">What should happen to <var id="file868-types-x5">name</var>, and what should its datatype be? A naive
+   approach would be to use a Text value, and insert it verbatim. But that would give us quite a
+   problem when <code id="file868-types-x6">name=&quot;&lt;script src=&#39;http://nefarious.com/evil.js&#39;&gt;&lt;/script&gt;&quot;</code>.
+   What we want is to be able to entity-encode the name, so that &quot;&lt;&quot; becomes &quot;&amp;lt;&quot;.</p>
+  <p class="hascomments" id="file868-types-x7">An equally naive approach is to simply entity-encode <b id="file868-types-x8">every</b> piece of text that gets
+   embedded. What happens when you have some preexisting HTML generated from another process? For
+   example, in this book, all Haskell code snippets are run through a colorizing that wraps up words
+   in appropriate <code id="file868-types-x9">span</code> tags. If we entity escaped everything, code snippets would
+   be completely unreadable!</p>
+  <p class="hascomments" id="file868-types-x10">Instead, we have an Html datatype. In order to generate an Html value, we have two options for
+   APIs: the ToHtml typeclass provides a way to convert String and Text values into Html, via its
+   toHtml function, automatically escaping entities along the way. This would be the approach we&#39;d
+   want for the name above. For the code snippet example, we would use the preEscaped family of
+   functions.</p>
+  <p class="hascomments" id="file868-types-x11">When you use variable interpolation in Hamlet (the HTML Shakespeare language), it automatically
+   applies a toHtml call to the value inside. So if you interpolate a String, it will be
+   entity-escaped. But if you provide an Html value, it will appear unmodified. In the code snippet
+   example, we might interpolate with something like <code id="file868-types-x12">#{preEscapedText
+    myHaskellHtml}</code>.</p>
+  <aside class="note" id="file868-types-x13">The Html datatype, as well as the functions mentioned, are all provided by the
+    <a href="http://hackage.haskell.org/package/blaze-html">blaze-html</a> package. This allows Hamlet to interact very nicely with all other
+   blaze-html packages, and lets Hamlet provide a general solution for producing blaze-html values.
+   Also, we get to take advantage of blaze-html&#39;s amazing performance.</aside>
+  <p class="hascomments" id="file868-types-x15">Similarly, we have Css/ToCss, as well as Javascript/ToJavascript. In those cases, the goal is
+   not really security, as it is very uncommon to be interpolating user input to CSS and Javascript.
+   Instead, this just provides some nice compile-time guarantees that we haven&#39;t accidently stuck
+   some HTML in our CSS.</p>
+  <aside class="note" id="file868-types-x16">One other advantage on the CSS side is some helper datatypes for colors and units. While this
+   feature is not covered in this chapter, I encourage you to look at the API documentation and try
+   it out yourself.</aside>
+ <section .subtopic=""><h1>Type-safe URLs</h1>
+  <p class="hascomments" id="file867-type-safe-urls-x1">One of the biggest unique features in Yesod is type-safe URLs, and the ability to use them
+   conveniently is provided directly by Shakespeare. Usage is very similar to variable
+   interpolation, we just use the at-sign (@) instead. We&#39;ll cover the syntax later; first, let&#39;s
+   clarify the intuition.</p>
+  <p class="hascomments" id="file867-type-safe-urls-x2">Let&#39;s say that we&#39;ve got an application with two routes:
+    <code class="filepath" id="file867-type-safe-urls-x3">http://example.com/profile/home</code> is the homepage, and
+    <code class="filepath" id="file867-type-safe-urls-x4">http://example.com/display/time</code> displays the current time. And let&#39;s say we
+   want to link from the homepage to the time. I can think of three different ways of constructing
+   the URL:<ol id="file867-type-safe-urls-ol_4c46dd3b-9cb4-4c02-ac0c-c70e5a19d0c5"><li id="file867-type-safe-urls-x5">As a relative link: <code class="filepath" id="file867-type-safe-urls-x6">../display/time</code></li>
+    <li id="file867-type-safe-urls-x7">As an absolute link, without a domain: <code class="filepath" id="file867-type-safe-urls-x8">/display/time</code></li>
+    <li id="file867-type-safe-urls-x9">As an absolute link, with a domain:
+     <code class="filepath" id="file867-type-safe-urls-x10">http://example.com/display/time</code></li>
+   </ol></p>
+  <p class="hascomments" id="file867-type-safe-urls-x11">There are problems with each approach: the first will break if either URL changes. Also, it&#39;s
+   not suitable for all use cases; RSS and Atom feeds, for instance, require absolute URLs. The
+   second is more resilient to change than the first, but still won&#39;t be acceptable for RSS and
+   Atom. And while the third works fine for all use cases, you&#39;ll need to update every single URL in
+   your application whenever your domain name changes. You think that doesn&#39;t happen often? Just
+   wait till you move from your development to staging and finally production server.</p>
+  <p class="hascomments" id="file867-type-safe-urls-x12">But more importantly, there is one huge problem with all approaches: if you change your routes
+   at all, the compiler won&#39;t warn you about the broken links. Not to mention that typos can wreak
+   havoc as well.</p>
+  <p class="hascomments" id="file867-type-safe-urls-x13">The goal of type-safe URLs is to let the compiler check things for us as much as possible. In
+   order to facilitate this, our first step must be to move away from plain old text, which the
+   compiler doesn&#39;t understand, to some well defined datatypes. For our simple application, let&#39;s
+   model our routes with a simple sum type:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">MyRoute</span> = <span style="color: blue;">Home</span> | <span style="color: blue;">Time</span>
+</pre></pre></p>
+  <p class="hascomments" id="file867-type-safe-urls-x15">Now instead of placing a link like /display/time in our template, we can just use the Time
+   constructor. But at the end of the day, HTML is made up of text, not data types, so we need some
+   way to convert these values to text. We call this a <dfn id="file867-type-safe-urls-x16">URL rendering function</dfn>, and a
+   simple one
+   is:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">renderMyRoute</span> :: <span style="color: blue;">MyRoute</span> -&gt; <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">renderMyRoute</span> <span style="color: blue;">Home</span> = <span style="color: green;">&quot;http://example.com/profile/home&quot;</span>
+<span style="color: blue;font-weight: bold;">renderMyRoute</span> <span style="color: blue;">Time</span> = <span style="color: green;">&quot;http://example.com/display/time&quot;</span>
+</pre></pre></p>
+  <p class="hascomments" id="file867-type-safe-urls-x18">URL rendering functions are actually a bit more complicated than this. They need to address
+   query string parameters, handle records within the constructor, more intelligently handle the
+   domain name. But in practice, you don&#39;t need to worry about this, since Yesod will automatically
+   create your render functions. The one thing to point out is that the type signature is actually a
+   little more complicated to handle query
+   strings:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Query</span> = [(<span style="color: blue;">Text</span>, <span style="color: blue;">Text</span>)]
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Render</span> url :: url -&gt; <span style="color: blue;">Query</span> -&gt; <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">renderMyRoute</span> :: <span style="color: blue;">Render</span> <span style="color: blue;">MyRoute</span>
+<span style="color: blue;font-weight: bold;">renderMyRoute</span> <span style="color: blue;">Home</span> _ = ...
+</pre></pre></p>
+  <p class="hascomments" id="file867-type-safe-urls-x20">OK, we have our render function, and we have type-safe URLs embedded in the templates. How does
+   this fit together exactly? Well, instead of generating an Html (or Css or Javascript) value
+   directly, Shakespearean templates actually produce a function, that takes this render function
+   and produces HTML. To see this better, let&#39;s have a quick (fake) peek at how Hamlet would work
+   under the surface. Supposing we had a
+   template:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;a</span> <span style="color: green;font-weight: bold;">href</span>=@{Time}<span style="color: blue;">&gt;</span>The time
+</pre></pre>this would translate roughly into the
+   Haskell
+   code:<pre class="codeblock"><pre style="padding: 0;margin: 0;">\render -&gt; mconcat [<span style="color: green;">&quot;&lt;a href=&#39;&quot;</span>, render <span style="color: blue;">Time</span>, <span style="color: green;">&quot;&#39;&gt;The time&lt;/a&gt;&quot;</span>]
+</pre></pre></p>
+ </section></section><section .subtopic=""><h1>Syntax</h1><section .subtopic=""><h1>Hamlet Syntax</h1><section .subtopic=""><h1>Tags</h1>  <p class="hascomments" id="file869-tags-x1">Obviously tags will play an important part of any HTML template language. In Hamlet, we try to
+   stick very close to existing HTML syntax to make the language more comfortable. However, instead
+   of using closing tags to denote nesting, we use indentation. So something like this in
+   HTML:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;body&gt;</span>
+<span style="color: blue;">&lt;p&gt;</span>Some paragraph.<span style="color: blue;">&lt;/p&gt;</span>
+<span style="color: blue;">&lt;ul&gt;</span>
+<span style="color: blue;">&lt;li&gt;</span>Item 1<span style="color: blue;">&lt;/li&gt;</span>
+<span style="color: blue;">&lt;li&gt;</span>Item 2<span style="color: blue;">&lt;/li&gt;</span>
+<span style="color: blue;">&lt;/ul&gt;</span>
+<span style="color: blue;">&lt;/body&gt;</span>
+</pre></pre>would
+   be<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;body&gt;</span>
+    <span style="color: blue;">&lt;p&gt;</span>Some paragraph.
+    <span style="color: blue;">&lt;ul&gt;</span>
+        <span style="color: blue;">&lt;li&gt;</span>Item 1
+        <span style="color: blue;">&lt;li&gt;</span>Item 2
+</pre></pre></p>
+  <p class="hascomments" id="file869-tags-x4">In general, we find this to be easier to follow than HTML once you get accustomed to it. The
+   only tricky part comes with dealing with whitespace before and after tags. For example, let&#39;s say
+   you want to create the
+   HTML<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;p&gt;</span>Paragraph <span style="color: blue;">&lt;i&gt;</span>italic<span style="color: blue;">&lt;/i&gt;</span> end.<span style="color: blue;">&lt;/p&gt;</span>
+</pre></pre>We want to make sure
+   that there is a whitespace preserved after the word &quot;Paragraph&quot; and before the word &quot;end&quot;. To do
+   so, we use two simple escape
+   characters:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;p&gt;</span>
+    Paragraph #
+    <span style="color: blue;">&lt;i&gt;</span>italic
+    \ end.
+</pre></pre>The
+   whitespace escape rules are actually very simple:<ol id="file869-tags-ol_kvy_tku_id"><li id="file869-tags-x7">If the first non-space character in a line is a backslash, the backslash is ignored.</li>
+    <li id="file869-tags-x8">If the last character in a line is a hash, it is ignored.</li>
+   </ol></p>
+  <p class="hascomments" id="file869-tags-x9">One other thing. Hamlet does <b id="file869-tags-x10">not</b> escape entities within its content. This is done on
+   purpose to allow existing HTML to be more easily copied in. So the example above could also be
+   written as:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;p&gt;</span>Paragraph <span style="color: blue;">&lt;i&gt;</span>italic<span style="color: blue;">&lt;/i&gt;</span> end.
+</pre></pre>Notice that the first
+   tag will be automatically closed by Hamlet, while the inner &quot;i&quot; tag will not. You are free to use
+   whichever approach you want, there is no penalty for either choice.</p>
+ </section><section .subtopic=""><h1>Interpolation</h1>  <p class="hascomments" id="file870-interpolation-x1">What we have so far is a nice, simplified HTML, but it doesn&#39;t let us interact with our Haskell
+   code at all. How do we pass in variables? Simple: with
+   interpolation:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;head&gt;</span>
+    <span style="color: blue;">&lt;title&gt;</span>#{title}
+</pre></pre>The hash followed be a pair
+   of braces denotes <b id="file870-interpolation-x3">variable interpolation</b>. In the case above, the <code id="file870-interpolation-x4">title</code>
+   variable from the scope in which the template was called will be used. Let me state that again:
+   Hamlet automatically has access to the variables in scope when it&#39;s called. There is no need to
+   specifically pass variables in.</p>
+  <p class="hascomments" id="file870-interpolation-x5">But it gets better still. You can apply functions within an interpolation. You can use string
+   and numeric literals in an interpolation. You can use qualified modules. Both parentheses and the
+   dollar sign can be used to group statements together. And at the end, the toHtml function is
+   applied to the result, meaning <i id="file870-interpolation-x6">any</i> instance of ToHtml can be interpolated.</p>
+  <figure id="file870-interpolation-x7"><figcaption>Variable Interpolation</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">-- Just ignore the quasiquote stuff for now, and that shamlet thing.</span>
+<span style="color: gray;">-- It will be explained later.</span>
+<span style="color: gray;">{-# LANGUAGE QuasiQuotes #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Hamlet</span> (shamlet)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Blaze.Renderer.String</span> (renderHtml)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Char</span> (toLower)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.List</span> (sort)
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Person</span> = <span style="color: blue;">Person</span>
+    { name :: <span style="color: blue;">String</span>
+    , age  :: <span style="color: blue;">Int</span>
+    }
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = putStrLn $ renderHtml [shamlet|
+&lt;p&gt;<span style="color: blue;">Hello</span>, my name is #{name person} and <span style="color: blue;">I</span> am #{show $ age person}.
+&lt;p&gt;
+    <span style="color: blue;">Let&#39;s</span> <span style="color: green;font-weight: bold;">do</span> some funny stuff with my name: #
+    &lt;b&gt;#{sort $ map toLower (name person)}
+&lt;p&gt;<span style="color: blue;">Oh</span>, and <span style="color: green;font-weight: bold;">in</span> <span style="color: teal;">5</span> years <span style="color: blue;">I&#39;ll</span> be #{show $ (+) <span style="color: teal;">5</span> (age person)} years old.
+|]
+  <span style="color: green;font-weight: bold;">where</span>
+    person = <span style="color: blue;">Person</span> <span style="color: green;">&quot;Michael&quot;</span> <span style="color: teal;">26</span>
+</pre></pre>
+  </figure>
+  <p class="hascomments" id="file870-interpolation-x10">What about our much-touted type-safe URLs? They are almost identical to variable interpolation
+   in every way, except they start with an at-sign (@) instead. In addition, there is embedding via
+   a caret (^) which allows you to embed another template of the same type.</p>
+  <figure id="file870-interpolation-x11"><figcaption>URL Interpolation and Embedding</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE QuasiQuotes #-}</span>
+<span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Hamlet</span> (<span style="color: blue;">HtmlUrl</span>, hamlet)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Blaze.Renderer.String</span> (renderHtml)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">MyRoute</span> = <span style="color: blue;">Home</span>
+
+<span style="color: blue;font-weight: bold;">render</span> :: <span style="color: blue;">MyRoute</span> -&gt; [(<span style="color: blue;">Text</span>, <span style="color: blue;">Text</span>)] -&gt; <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">render</span> <span style="color: blue;">Home</span> _ = <span style="color: green;">&quot;/home&quot;</span>
+
+<span style="color: blue;font-weight: bold;">footer</span> :: <span style="color: blue;">HtmlUrl</span> <span style="color: blue;">MyRoute</span>
+<span style="color: blue;font-weight: bold;">footer</span> = [hamlet|
+&lt;footer&gt;
+    <span style="color: blue;">Return</span> to #
+    &lt;a href=@{<span style="color: blue;">Home</span>}&gt;<span style="color: blue;">Homepage</span>
+    .
+|]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = putStrLn $ renderHtml $ [hamlet|
+&lt;body&gt;
+    &lt;p&gt;<span style="color: blue;">This</span> is my page.
+    ^{footer}
+|] render
+</pre></pre>
+  </figure>
+ </section><section .subtopic=""><h1>Attributes</h1>
+  <p class="hascomments" id="file871-attributes-x1">If you paid close attention there, you&#39;ll have noticed that we put an href attribute on the &quot;a&quot;
+   tag. That syntax is pretty straight-forward, but let&#39;s clarify some things:<ul id="file871-attributes-ul_zmk_qnu_id"><li id="file871-attributes-x2">You can have interpolations on the right-hand-side of the equals sign.</li>
+    <li id="file871-attributes-x3">The equals sign and value for an attribute are optional, just like in HTML. So
+      <code id="file871-attributes-x4">&lt;input type=checkbox checked&gt;</code> is perfectly valid.</li>
+    <li id="file871-attributes-x5">There are two convenience attributes: for id, you can use the hash, and for classes, the
+     period. In other words, <code id="file871-attributes-x6">&lt;p #paragraphid .class1 .class2&gt;</code>.</li>
+    <li id="file871-attributes-x7">While quotes around the attribute value are optional, they are required if you want to embed
+     spaces.</li>
+    <li id="file871-attributes-x8">You can add an attribute optionally by using colons. To check a checkbox only checked if the
+     variable isChecked is True, you would write <code id="file871-attributes-x9">&lt;input type=checkbox
+      :isChecked:checked&gt;</code>. To have a paragraph be optionally red, you could use
+      <code id="file871-attributes-x10">&lt;p :isRed:style=&quot;color:red&quot;&gt;</code>.</li>
+   </ul></p>
+ </section><section .subtopic=""><h1>Conditionals</h1>
+  <p class="hascomments" id="file872-conditionals-x1">Eventually, you&#39;ll want to put in some logic in your page. The goal of Hamlet is to make the
+   logic as minimalistic as possible, pushing the heavy lifting into Haskell. As such, our logical
+   statements are very basic... so basic, that it&#39;s if, elseif, and
+   else.<pre class="codeblock"><pre style="padding: 0;margin: 0;">$if isAdmin
+    <span style="color: blue;">&lt;p&gt;</span>Welcome to the admin section.
+$elseif isLoggedIn
+    <span style="color: blue;">&lt;p&gt;</span>You are not the administrator.
+$else
+    <span style="color: blue;">&lt;p&gt;</span>I don&#39;t know who you are. Please log in so I can decide if you get access.
+</pre></pre>All
+   the same rules of normal interpolation apply to the content of the conditionals.</p>
+ </section><section .subtopic=""><h1>Maybe</h1>
+  <p class="hascomments" id="file873-maybe-x1">Similarly, we have a special construct for dealing with Maybe values. This could technically be
+   dealt with using if, isJust and fromJust, but this is more convenient and avoids partial
+   functions.<pre class="codeblock"><pre style="padding: 0;margin: 0;">$maybe name &lt;- maybeName
+    <span style="color: blue;">&lt;p&gt;</span>Your name is #{name}
+$nothing
+    <span style="color: blue;">&lt;p&gt;</span>I don&#39;t know your name.
+</pre></pre>The
+   left hand side of the &lt;- must be a simple identifier; the right can be anything that goes in
+   an interpolation.</p>
+ </section><section .subtopic=""><h1>Forall</h1>
+  <p class="hascomments" id="file874-forall-x1">And what about looping over lists? We have you covered there
+   too:<pre class="codeblock"><pre style="padding: 0;margin: 0;">$if null people
+    <span style="color: blue;">&lt;p&gt;</span>No people.
+$else
+    <span style="color: blue;">&lt;ul&gt;</span>
+        $forall person &lt;- people
+            <span style="color: blue;">&lt;li&gt;</span>#{person}
+</pre></pre></p>
+ </section><section .subtopic=""><h1>With</h1>  <p class="hascomments" id="file875-with-x1">Rounding out our statements, we have with. It&#39;s basically just a convenience for declaring a
+   synonym for a long
+   expression.<pre class="codeblock"><pre style="padding: 0;margin: 0;">$with foo &lt;- some very (long ugly) expression that $ should only $ happen once
+    <span style="color: blue;">&lt;p&gt;</span>But I&#39;m going to use #{foo} multiple times. #{foo}
+</pre></pre></p>
+ </section><section .subtopic=""><h1>Doctype</h1>
+  <p class="hascomments" id="file876-doctype-x1">Last bit of syntactic sugar: the doctype statement. Just use the triple exclamation point on a
+   line by itself. Hamlet uses HTML5 by default, so the generated doctype is <code id="file876-doctype-x2">&lt;!DOCTYPE
+    html&gt;</code>.<pre class="codeblock"><pre style="padding: 0;margin: 0;">!!!
+<span style="color: blue;">&lt;html&gt;</span>
+    <span style="color: blue;">&lt;head&gt;</span>
+        <span style="color: blue;">&lt;title&gt;</span>Hamlet is Awesome
+    <span style="color: blue;">&lt;body&gt;</span>
+        <span style="color: blue;">&lt;p&gt;</span>All done.
+</pre></pre></p>
+ </section></section><section .subtopic=""><h1>Cassius Syntax</h1>
+  <p class="hascomments" id="file878-cassius-syntax-x1">Cassius is the original CSS template language. It uses simple whitespace rules to delimit
+   blocks, making braces and semicolons unnecessary. It supports both variable and URL
+   interpolation, but not embedding. The syntax is very
+   straight-forward:<pre class="codeblock" id="file878-cassius-syntax-x2">#banner
+    border: 1px solid #{bannerColor}
+    background-image: url(@{BannerImageR})</pre></p>
+ </section><section .subtopic=""><h1>Lucius Syntax</h1>
+  <p class="hascomments" id="file879-lucius-syntax-x1">While Cassius uses a modified, whitespace-sensitive syntax for CSS, Lucius is true to the
+   original. You can take almost any CSS file out there and it will be a valid Lucius file. There
+   are, however, two additions to Lucius:<ul id="file879-lucius-syntax-ul_a847e33f-f3af-4fe1-9a3b-d7b2353921f7"><li id="file879-lucius-syntax-x2">Like Cassius, we allow both variable and URL interpolation.</li>
+    <li id="file879-lucius-syntax-x3">CSS blocks are allowed to nest.</li>
+   </ul></p>
+  <p class="hascomments" id="file879-lucius-syntax-x4">That second point requires a bit of explanation. Let&#39;s say you want to have some special
+   styling for some tags within your <code id="file879-lucius-syntax-x5">article</code>. In plain ol&#39; CSS, you&#39;d have to
+   write:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;">article</span> <span style="color: green;">code</span> <span style="color: red;">{</span> <span style="color: green;">background-color</span>: grey; <span style="color: red;">}</span>
+<span style="color: green;">article</span> <span style="color: green;">p</span> <span style="color: red;">{</span> <span style="color: green;">text-indent</span>: <span style="color: teal;">2</span>em; <span style="color: red;">}</span>
+<span style="color: green;">article</span> <span style="color: green;">a</span> <span style="color: red;">{</span> <span style="color: green;">text-decoration</span>: none; <span style="color: red;">}</span>
+</pre></pre>In
+   this case, there aren&#39;t that many clauses, but having to type out article each time is still a
+   bit of a nuisance. Imagine if you had a dozen or so of these. Not the worst thing in the world,
+   but a bit of an annoyance. Lucius helps you out
+   here:<pre class="codeblock" id="file879-lucius-syntax-x7">article {
+    code { background-color: grey; }
+    p { text-indent: 2em; }
+    a { text-decoration: none; }
+}</pre></p>
+  <p class="hascomments" id="file879-lucius-syntax-x8">Other than that, Lucius is identical to CSS.</p>
+ </section><section .subtopic=""><h1>Julius Syntax</h1>
+  <p class="hascomments" id="file880-julius-syntax-x1">Julius is the simplest of the languages discussed here. In fact, some might even say it&#39;s not
+   really its own language. Julius allows the three forms of interpolation we&#39;ve mentioned so far,
+   and otherwise applies no transformations to your content.<aside class="note" id="file880-julius-syntax-x2">If you use Julius with the
+    scaffolded Yesod site, you may notice that your Javascript is automatically minified. This is
+    not a feature of Julius; instead, Yesod uses the <a href="http://hackage.haskell.org/package/hjsmin">hjsmin</a> package to minify
+    Julius output.</aside></p>
+ </section></section><section .subtopic=""><h1>Calling Shakespeare</h1>  <p class="hascomments" id="file883-calling-shakespeare-x1">The question of course arises at some point: how do I actually use this stuff? There are three
+   different ways to call out to Shakespeare from your Haskell code:</p>
+  <dl id="file883-calling-shakespeare-x2"><dt id="file883-calling-shakespeare-x4">Quasiquotes</dt>
+    <dd id="file883-calling-shakespeare-x5">Quasiquotes allow you to embed arbitrary content within your Haskell, and for it to be
+     converted into Haskell code at compile time.</dd>
+   
+   
+    <dt id="file883-calling-shakespeare-x7">External file</dt>
+    <dd id="file883-calling-shakespeare-x8">In this case, the template code is in a separate file which is referenced via Template
+     Haskell.</dd>
+   
+   
+    <dt id="file883-calling-shakespeare-x10">Debug mode</dt>
+    <dd id="file883-calling-shakespeare-x11">Both of the above modes require a full recompile to see any changes. In debug mode, your
+     template is kept in a separate file and referenced via Template Haskell. But at runtime, the
+     external file is reparsed from scratch each time.<aside class="note" id="file883-calling-shakespeare-x12">Debug mode is not available for Hamlet,
+      only for Cassius, Lucius and Julius.</aside></dd>
+   
+  </dl>
+  <p class="hascomments" id="file883-calling-shakespeare-x13">One of the first two approaches should be used in production. They both embed the entirety of
+   the template in the final executable, simplifying deployment and increasing performance. The
+   advantage of the quasiquoter is the simplicity: everything stays in a single file. For short
+   templates, this can be a very good fit. However, in general, the external file approach is
+   recommended because:<ul id="file883-calling-shakespeare-ul_bbc_seu_id"><li id="file883-calling-shakespeare-x14">It follows nicely in the tradition of separate logic from presentation.</li>
+    <li id="file883-calling-shakespeare-x15">You can easily switch between external file and debug mode with some simple CPP macros,
+     meaning you can keep rapid development and still achieve high performance in production.</li>
+   </ul></p>
+  <p class="hascomments" id="file883-calling-shakespeare-x16">Since these are special quasiquoters and TH functions, you need to be sure to enable the
+   appropriate language extensions and use correct syntax. A simple example of each.</p>
+  <figure id="file883-calling-shakespeare-x17"><figcaption>Quasiquoter</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span> <span style="color: gray;">-- we&#39;re using Text below</span>
+<span style="color: gray;">{-# LANGUAGE QuasiQuotes #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Hamlet</span> (<span style="color: blue;">HtmlUrl</span>, hamlet)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Blaze.Renderer.String</span> (renderHtml)
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">MyRoute</span> = <span style="color: blue;">Home</span> | <span style="color: blue;">Time</span> | <span style="color: blue;">Stylesheet</span>
+
+<span style="color: blue;font-weight: bold;">render</span> :: <span style="color: blue;">MyRoute</span> -&gt; [(<span style="color: blue;">Text</span>, <span style="color: blue;">Text</span>)] -&gt; <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">render</span> <span style="color: blue;">Home</span> _ = <span style="color: green;">&quot;/home&quot;</span>
+<span style="color: blue;font-weight: bold;">render</span> <span style="color: blue;">Time</span> _ = <span style="color: green;">&quot;/time&quot;</span>
+<span style="color: blue;font-weight: bold;">render</span> <span style="color: blue;">Stylesheet</span> _ = <span style="color: green;">&quot;/style.css&quot;</span>
+
+<span style="color: blue;font-weight: bold;">template</span> :: <span style="color: blue;">Text</span> -&gt; <span style="color: blue;">HtmlUrl</span> <span style="color: blue;">MyRoute</span>
+<span style="color: blue;font-weight: bold;">template</span> title = [hamlet|
+!!!
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;#{title}
+        &lt;link rel=stylesheet href=@{<span style="color: blue;">Stylesheet</span>}&gt;
+    &lt;body&gt;
+        &lt;h1&gt;#{title}
+|]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = putStrLn $ renderHtml $ template <span style="color: green;">&quot;My Title&quot;</span> render
+</pre></pre>
+  </figure>
+  <figure id="file883-calling-shakespeare-x20"><figcaption>External file</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span> <span style="color: gray;">-- we&#39;re using Text below</span>
+<span style="color: gray;">{-# LANGUAGE TemplateHaskell #-}</span>
+<span style="color: gray;">{-# LANGUAGE CPP #-}</span> <span style="color: gray;">-- to control production versus debug</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Lucius</span> (<span style="color: blue;">CssUrl</span>, luciusFile, luciusFileDebug, renderCss)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Text.Lazy.IO</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">TLIO</span>
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">MyRoute</span> = <span style="color: blue;">Home</span> | <span style="color: blue;">Time</span> | <span style="color: blue;">Stylesheet</span>
+
+<span style="color: blue;font-weight: bold;">render</span> :: <span style="color: blue;">MyRoute</span> -&gt; [(<span style="color: blue;">Text</span>, <span style="color: blue;">Text</span>)] -&gt; <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">render</span> <span style="color: blue;">Home</span> _ = <span style="color: green;">&quot;/home&quot;</span>
+<span style="color: blue;font-weight: bold;">render</span> <span style="color: blue;">Time</span> _ = <span style="color: green;">&quot;/time&quot;</span>
+<span style="color: blue;font-weight: bold;">render</span> <span style="color: blue;">Stylesheet</span> _ = <span style="color: green;">&quot;/style.css&quot;</span>
+
+<span style="color: blue;font-weight: bold;">template</span> :: <span style="color: blue;">CssUrl</span> <span style="color: blue;">MyRoute</span>
+<span style="color: blue;text-decoration: underline;">#if</span> <span style="color: blue;">PRODUCTION</span>
+<span style="color: blue;font-weight: bold;">template</span> = $(luciusFile <span style="color: green;">&quot;template.lucius&quot;</span>)
+<span style="color: blue;text-decoration: underline;">#else</span>
+<span style="color: blue;font-weight: bold;">template</span> = $(luciusFileDebug <span style="color: green;">&quot;template.lucius&quot;</span>)
+<span style="color: blue;text-decoration: underline;">#endif</span>
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = <span style="color: blue;">TLIO.</span>putStrLn $ renderCss $ template render
+</pre></pre>
+   <pre class="codeblock" id="file883-calling-shakespeare-x51">-- @template.lucius
+foo { bar: baz }</pre>
+  </figure>
+  <p class="hascomments" id="file883-calling-shakespeare-x23">The naming scheme for the functions is very consistent.</p>
+  <table id="file883-calling-shakespeare-simpletable_kvg_tgu_id"><thead id="file883-calling-shakespeare-x24"><td id="file883-calling-shakespeare-x25">Language</td>
+    <td id="file883-calling-shakespeare-x26">Quasiquoter</td>
+    <td id="file883-calling-shakespeare-x27">External file</td>
+    <td id="file883-calling-shakespeare-x28">Debug</td>
+   </thead>
+   <tr id="file883-calling-shakespeare-x29"><td id="file883-calling-shakespeare-x30">Hamlet</td>
+    <td id="file883-calling-shakespeare-x31"><a href="http://hackage.haskell.org/packages/archive/hamlet/latest/doc/html/Text-Hamlet.html#v:hamlet">hamlet</a></td>
+    <td id="file883-calling-shakespeare-x32">hamletFile</td>
+    <td id="file883-calling-shakespeare-x33"><i id="file883-calling-shakespeare-x34">N/A</i></td>
+   </tr>
+   <tr id="file883-calling-shakespeare-x35"><td id="file883-calling-shakespeare-x36">Cassius</td>
+    <td id="file883-calling-shakespeare-x37">cassius</td>
+    <td id="file883-calling-shakespeare-x38">cassiusFile</td>
+    <td id="file883-calling-shakespeare-x39">cassiusFileDebug</td>
+   </tr>
+   <tr id="file883-calling-shakespeare-x40"><td id="file883-calling-shakespeare-x41">Lucius</td>
+    <td id="file883-calling-shakespeare-x42">lucius</td>
+    <td id="file883-calling-shakespeare-x43">luciusFile</td>
+    <td id="file883-calling-shakespeare-x44">luciusFileDebug</td>
+   </tr>
+   <tr id="file883-calling-shakespeare-x45"><td id="file883-calling-shakespeare-x46">Julius</td>
+    <td id="file883-calling-shakespeare-x47">julius</td>
+    <td id="file883-calling-shakespeare-x48">juliusFile</td>
+    <td id="file883-calling-shakespeare-x49">juliusFileDebug</td>
+   </tr>
+  </table>
+ <section .subtopic=""><h1>Alternate Hamlet Types</h1>
+  <p class="hascomments" id="file882-alternate-hamlet-types-x1">So far, we&#39;ve seen how to generate an <code id="file882-alternate-hamlet-types-x2">HtmlUrl</code> value from Hamlet, which is a
+   piece of HTML with embedded type-safe URLs. There are currently three other values we can
+   generate using Hamlet: plain HTML, HTML with URLs <b id="file882-alternate-hamlet-types-x3">and</b> internationalized messages, and
+   widgets. That last one will be covered in the widgets chapter.</p>
+  <p class="hascomments" id="file882-alternate-hamlet-types-x4">To generate plain HTML without any embedded URLs, we use &quot;simplified Hamlet&quot;. There are a few
+    changes:<ul id="file882-alternate-hamlet-types-ul_ker_khu_id"><li id="file882-alternate-hamlet-types-x5">We use a different set of functions, prefixed with an &quot;s&quot;. So the quasiquoter is
+      <code id="file882-alternate-hamlet-types-x6">shamlet</code> and the external file function is <code id="file882-alternate-hamlet-types-x7">shamletFile</code>. How
+     we pronounce those is still up for debate.</li>
+    <li id="file882-alternate-hamlet-types-x8">No URL interpolation is allowed. Doing so will result in a compile-time error.</li>
+    <li id="file882-alternate-hamlet-types-x9">Embedding (the caret-interpolator) no longer allows arbitrary <code id="file882-alternate-hamlet-types-x10">HtmlUrl</code>
+     values. The rule is that the embedded value must have the same type as the template itself, so
+     in this case it must be <code id="file882-alternate-hamlet-types-x11">Html</code>. That means that for shamlet, embedding can be
+     completely replaced with normal variable interpolation (with a hash).</li>
+   </ul></p>
+  <p class="hascomments" id="file882-alternate-hamlet-types-x12">Internationalized (from now on, i18n) is a bit more complicated than normal Hamlet. This is
+   based around the idea of a message datatype, very similar in concept and implementation to a
+   type-safe URL. As a motivating example, let&#39;s say we want to have an application that tells you
+   hello and how many apples you have eaten. We could represent those messages with a
+   datatype.<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Msg</span> = <span style="color: blue;">Hello</span> | <span style="color: blue;">Apples</span> <span style="color: blue;">Int</span>
+</pre></pre>Next, we would
+   want to be able to convert that into something human-readable, so we define some render
+   functions:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">renderEnglish</span> :: <span style="color: blue;">Msg</span> -&gt; <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">renderEnglish</span> <span style="color: blue;">Hello</span> = <span style="color: green;">&quot;Hello&quot;</span>
+<span style="color: blue;font-weight: bold;">renderEnglish</span> (<span style="color: blue;">Apples</span> <span style="color: teal;">0</span>) = <span style="color: green;">&quot;You did not buy any apples.&quot;</span>
+<span style="color: blue;font-weight: bold;">renderEnglish</span> (<span style="color: blue;">Apples</span> <span style="color: teal;">1</span>) = <span style="color: green;">&quot;You bought 1 apple.&quot;</span>
+<span style="color: blue;font-weight: bold;">renderEnglish</span> (<span style="color: blue;">Apples</span> i) = <span style="color: blue;">T.</span>concat [<span style="color: green;">&quot;You bought &quot;</span>, <span style="color: blue;">T.</span>pack $ show i, <span style="color: green;">&quot; apples.&quot;</span>]
+</pre></pre>Now
+   we want to interpolate those Msg values directly in the template. For that, we use underscore
+   interpolation.<pre class="codeblock"><pre style="padding: 0;margin: 0;">!!!
+<span style="color: blue;">&lt;html&gt;</span>
+    <span style="color: blue;">&lt;head&gt;</span>
+        <span style="color: blue;">&lt;title&gt;</span>i18n
+    <span style="color: blue;">&lt;body&gt;</span>
+        <span style="color: blue;">&lt;h1&gt;</span>_{Hello}
+        <span style="color: blue;">&lt;p&gt;</span>_{Apples count}
+</pre></pre></p>
+  <p class="hascomments" id="file882-alternate-hamlet-types-x16">This kind of a template now needs some way to turn those values into HTML. So just like
+   type-safe URLs, we pass in a render function. To represent this, we define a new type
+   synonym:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Render</span> url = url -&gt; [(<span style="color: blue;">Text</span>, <span style="color: blue;">Text</span>)] -&gt; <span style="color: blue;">Text</span>
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Translate</span> msg = msg -&gt; <span style="color: blue;">Html</span>
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">HtmlUrlI18n</span> msg url = <span style="color: blue;">Translate</span> msg -&gt; <span style="color: blue;">Render</span> url -&gt; <span style="color: blue;">Html</span>
+</pre></pre>At
+   this point, you can pass off renderEnglish, renderSpanish, or renderKlingon to this template, and
+   it will generate nicely translated output (depending, of course, on the quality of your
+   translators). A full sample program follows.</p>
+  <figure id="file882-alternate-hamlet-types-x18"><figcaption>i18n Example</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE QuasiQuotes #-}</span>
+<span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Text</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">T</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Hamlet</span> (<span style="color: blue;">HtmlUrlI18n</span>, ihamlet)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Blaze</span> (toHtml)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Blaze.Renderer.String</span> (renderHtml)
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">MyRoute</span> = <span style="color: blue;">Home</span> | <span style="color: blue;">Time</span> | <span style="color: blue;">Stylesheet</span>
+
+<span style="color: blue;font-weight: bold;">renderUrl</span> :: <span style="color: blue;">MyRoute</span> -&gt; [(<span style="color: blue;">Text</span>, <span style="color: blue;">Text</span>)] -&gt; <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">renderUrl</span> <span style="color: blue;">Home</span> _ = <span style="color: green;">&quot;/home&quot;</span>
+<span style="color: blue;font-weight: bold;">renderUrl</span> <span style="color: blue;">Time</span> _ = <span style="color: green;">&quot;/time&quot;</span>
+<span style="color: blue;font-weight: bold;">renderUrl</span> <span style="color: blue;">Stylesheet</span> _ = <span style="color: green;">&quot;/style.css&quot;</span>
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Msg</span> = <span style="color: blue;">Hello</span> | <span style="color: blue;">Apples</span> <span style="color: blue;">Int</span>
+
+<span style="color: blue;font-weight: bold;">renderEnglish</span> :: <span style="color: blue;">Msg</span> -&gt; <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">renderEnglish</span> <span style="color: blue;">Hello</span> = <span style="color: green;">&quot;Hello&quot;</span>
+<span style="color: blue;font-weight: bold;">renderEnglish</span> (<span style="color: blue;">Apples</span> <span style="color: teal;">0</span>) = <span style="color: green;">&quot;You did not buy any apples.&quot;</span>
+<span style="color: blue;font-weight: bold;">renderEnglish</span> (<span style="color: blue;">Apples</span> <span style="color: teal;">1</span>) = <span style="color: green;">&quot;You bought 1 apple.&quot;</span>
+<span style="color: blue;font-weight: bold;">renderEnglish</span> (<span style="color: blue;">Apples</span> i) = <span style="color: blue;">T.</span>concat [<span style="color: green;">&quot;You bought &quot;</span>, <span style="color: blue;">T.</span>pack $ show i, <span style="color: green;">&quot; apples.&quot;</span>]
+
+<span style="color: blue;font-weight: bold;">template</span> :: <span style="color: blue;">Int</span> -&gt; <span style="color: blue;">HtmlUrlI18n</span> <span style="color: blue;">Msg</span> <span style="color: blue;">MyRoute</span>
+<span style="color: blue;font-weight: bold;">template</span> count = [ihamlet|
+!!!
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;i18n
+    &lt;body&gt;
+        &lt;h1&gt;_{<span style="color: blue;">Hello</span>}
+        &lt;p&gt;_{<span style="color: blue;">Apples</span> count}
+|]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = putStrLn $ renderHtml
+     $ (template <span style="color: teal;">5</span>) (toHtml . renderEnglish) renderUrl
+</pre></pre>
+  </figure>
+ </section></section><section .subtopic=""><h1>General Recommendations</h1><p class="hascomments" id="file884-general-recommendations-x1">Here are some general hints from the Yesod community on how to get the most out of Shakespeare. (If you have more, please add them in a comment to this paragraph:</p>
+<ul id="file884-general-recommendations-x2"><li id="file884-general-recommendations-x3">For actual sites, use external files. For libraries, it&#39;s OK to use quasiquoters, assuming they aren&#39;t too long.</li>
+<li id="file884-general-recommendations-x4">Patrick Brisbin has put together a <a href="https://github.com/pbrisbin/html-template-syntax">Vim code highlighter</a> that can help out immensely.</li>
+<li id="file884-general-recommendations-x6">You should almost always start Hamlet tags on their own line instead of embedding start/end tags after an existing tag. The only exception to this is the occasional &lt;i&gt; or &lt;b&gt; tag inside a large block of text.</li>
+</ul></section>

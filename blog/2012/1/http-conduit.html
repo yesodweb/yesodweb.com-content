@@ -1,0 +1,193 @@
+<h1>http-conduit</h1>
+  <p class="hascomments" id="file1730-conceptId-x-3">Most of Yesod is about serving content over HTTP. But that&#39;s only half the story: someone has
+   to receive it. And even when you&#39;re writing a web app, sometimes that someone will be you. If you
+   want to consume content from other services or interact with RESTful APIs, you&#39;ll need to write
+   client code. And the recommended approach for that is <a href="http://hackage.haskell.org/package/http-conduit">http-conduit</a>.</p>
+  <p class="hascomments" id="file1730-conceptId-x-5">This chapter is not directly connected to Yesod, and will be generally useful for anyone
+   wanting to make HTTP requests.</p>
+ <section class="subtopic" id="file1724-conceptId"><h1>Synopsis</h1>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.HTTP.Conduit</span> <span style="color: gray;">-- the main module</span>
+
+<span style="color: gray;">-- The streaming interface uses conduits</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit.Binary</span> (sinkFile)
+
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.ByteString.Lazy</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">L</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = <span style="color: green;font-weight: bold;">do</span>
+    <span style="color: gray;">-- Simplest query: just download the information from the given URL as a</span>
+    <span style="color: gray;">-- lazy ByteString.</span>
+    simpleHttp <span style="color: green;">&quot;http://www.example.com/foo.txt&quot;</span> &gt;&gt;= <span style="color: blue;">L.</span>writeFile <span style="color: green;">&quot;foo.txt&quot;</span>
+
+    <span style="color: gray;">-- Use the streaming interface instead. We need to run all of this inside a</span>
+    <span style="color: gray;">-- ResourceT, to ensure that all our connections get properly cleaned up in</span>
+    <span style="color: gray;">-- the case of an exception.</span>
+    runResourceT $ <span style="color: green;font-weight: bold;">do</span>
+        <span style="color: gray;">-- We need a Manager, which keeps track of open connections. simpleHttp</span>
+        <span style="color: gray;">-- creates a new manager on each run (i.e., it never reuses</span>
+        <span style="color: gray;">-- connections).</span>
+        manager &lt;- liftIO $ newManager def
+
+        <span style="color: gray;">-- A more efficient version of the simpleHttp query above. First we</span>
+        <span style="color: gray;">-- parse the URL to a request.</span>
+        req &lt;- liftIO $ parseUrl <span style="color: green;">&quot;http://www.example.com/foo.txt&quot;</span>
+
+        <span style="color: gray;">-- Now get the response</span>
+        res &lt;- http req manager
+
+        <span style="color: gray;">-- And finally stream the value to a file</span>
+        responseBody res $$ sinkFile <span style="color: green;">&quot;foo.txt&quot;</span>
+
+        <span style="color: gray;">-- Make it a POST request, don&#39;t follow redirects, and accept any</span>
+        <span style="color: gray;">-- status code.</span>
+        <span style="color: green;font-weight: bold;">let</span> req2 = req
+                { method = <span style="color: green;">&quot;POST&quot;</span>
+                , redirectCount = <span style="color: teal;">0</span>
+                , checkStatus = \_ _ -&gt; <span style="color: blue;">Nothing</span>
+                }
+        res2 &lt;- http req2 manager
+        responseBody res2 $$ sinkFile <span style="color: green;">&quot;post-foo.txt&quot;</span>
+</pre></pre>
+ </section><section class="subtopic" id="file1725-conceptId"><h1>Concepts</h1>
+  <p class="hascomments" id="file1725-conceptId-x-3">The simplest way to make a request in <code id="file1725-conceptId-x-4">http-conduit</code> is with the
+    <code id="file1725-conceptId-x-5">simpleHttp</code> function. This function takes a <code id="file1725-conceptId-x-6">String</code> giving a URL
+   and returns a <code id="file1725-conceptId-x-7">ByteString</code> with the contents of that URL. But under the surface,
+   there are a few more steps:</p>
+  <ul id="file1725-conceptId-ul_jap_okc_we"><li id="file1725-conceptId-x-8">A new connection <code id="file1725-conceptId-x-9">Manager</code> is allocated.</li>
+   <li id="file1725-conceptId-x-10">The URL is parsed to a <code id="file1725-conceptId-x-11">Request</code>. If the URL is invalid, then an exception is
+    thrown.</li>
+   <li id="file1725-conceptId-x-12">The HTTP request is made, following any redirects from the server.</li>
+   <li id="file1725-conceptId-x-13">If the response has a status code outside the 200-range, an exception is thrown.</li>
+   <li id="file1725-conceptId-x-14">The response body is read into memory and returned.</li>
+   <li id="file1725-conceptId-x-15"><code id="file1725-conceptId-x-16">runResourceT</code> is called, which will free up any resources (e.g., the open
+    socket to the server).</li>
+  </ul>
+  <p class="hascomments" id="file1725-conceptId-x-17">If you want more control of what&#39;s going on, then you can configure any of the steps above
+   (plus a few more) by explicitly creating a <code id="file1725-conceptId-x-18">Request</code> value, allocating your
+    <code id="file1725-conceptId-x-19">Manager</code> manually, and using the <code id="file1725-conceptId-x-20">http</code> and
+    <code id="file1725-conceptId-x-21">httpLbs</code> functions.</p>
+ </section><section class="subtopic" id="file1726-conceptId"><h1>Request</h1>
+  <p class="hascomments" id="file1726-conceptId-x-3">The easiest way to creating a <code id="file1726-conceptId-x-4">Request</code> is with the <code id="file1726-conceptId-x-5">parseUrl</code>
+   function. This function will return a value in any <code id="file1726-conceptId-x-6">Failure</code> monad, such as
+    <code id="file1726-conceptId-x-7">Maybe</code> or <code id="file1726-conceptId-x-8">IO</code>. The last of those is the most commonly used, and
+   results in a runtime exception whenever an invalid URL is provided. However, you can use a
+   different monad if, for example, you want to validate user input.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.HTTP.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">System.Environment</span> (getArgs)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.ByteString.Lazy</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">L</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = <span style="color: green;font-weight: bold;">do</span>
+    args &lt;- getArgs
+    <span style="color: green;font-weight: bold;">case</span> args <span style="color: green;font-weight: bold;">of</span>
+        [urlString] -&gt;
+            <span style="color: green;font-weight: bold;">case</span> parseUrl urlString <span style="color: green;font-weight: bold;">of</span>
+                <span style="color: blue;">Nothing</span> -&gt; putStrLn <span style="color: green;">&quot;Sorry, invalid URL&quot;</span>
+                <span style="color: blue;">Just</span> req -&gt; withManager $ \manager -&gt; <span style="color: green;font-weight: bold;">do</span>
+                    <span style="color: blue;">Response</span> _ _ lbs &lt;- httpLbs req manager
+                    liftIO $ <span style="color: blue;">L.</span>putStr lbs
+        _ -&gt; putStrLn <span style="color: green;">&quot;Sorry, please provide example one URL&quot;</span>
+</pre></pre>
+  <p class="hascomments" id="file1726-conceptId-x-10">The <code id="file1726-conceptId-x-11">Request</code> type is abstract so that <code id="file1726-conceptId-x-12">http-conduit</code> can add new
+   settings in the future without breaking the API (see the <a href="http://www.yesodweb.com/redirector/home%2F1%2Fblogs%2F2011%2F10%2Fsettings-types.dita">Settings Type</a>
+   chapter for more information). In order to make changes to individual records, you use record
+   notation. For example, a modification to our program that issues <code id="file1726-conceptId-x-14">HEAD</code> requests
+   and prints the response headers would be:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.HTTP.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">System.Environment</span> (getArgs)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.ByteString.Lazy</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">L</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.IO.Class</span> (liftIO)
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = <span style="color: green;font-weight: bold;">do</span>
+    args &lt;- getArgs
+    <span style="color: green;font-weight: bold;">case</span> args <span style="color: green;font-weight: bold;">of</span>
+        [urlString] -&gt;
+            <span style="color: green;font-weight: bold;">case</span> parseUrl urlString <span style="color: green;font-weight: bold;">of</span>
+                <span style="color: blue;">Nothing</span> -&gt; putStrLn <span style="color: green;">&quot;Sorry, invalid URL&quot;</span>
+                <span style="color: blue;">Just</span> req -&gt; withManager $ \manager -&gt; <span style="color: green;font-weight: bold;">do</span>
+                    <span style="color: green;font-weight: bold;">let</span> reqHead = req { method = <span style="color: green;">&quot;HEAD&quot;</span> }
+                    <span style="color: blue;">Response</span> status headers _ &lt;- http reqHead manager
+                    liftIO $ <span style="color: green;font-weight: bold;">do</span>
+                        print status
+                        mapM_ print headers
+        _ -&gt; putStrLn <span style="color: green;">&quot;Sorry, please provide example one URL&quot;</span>
+</pre></pre>
+  <p class="hascomments" id="file1726-conceptId-x-16">There are a number of different configuration settings in the API, some noteworthy ones
+   are:</p>
+  <dl id="file1726-conceptId-x-17"><dt id="file1726-conceptId-x-19">proxy</dt>
+    <dd id="file1726-conceptId-x-20">Allows you to pass the request through the given proxy server.</dd>
+   
+   
+    <dt id="file1726-conceptId-x-22">redirectCount</dt>
+    <dd id="file1726-conceptId-x-23">Indicate how many redirects to follow. Default is 10.</dd>
+   
+   
+    <dt id="file1726-conceptId-x-25">checkStatus</dt>
+    <dd id="file1726-conceptId-x-26">Check the status code of the return value. By default, gives an exception for any non-2XX
+     response.</dd>
+   
+   
+    <dt id="file1726-conceptId-x-28">requestBody</dt>
+    <dd id="file1726-conceptId-x-29">The request body to be sent. Be sure to also update the <code id="file1726-conceptId-x-30">method</code>. For the
+     common case of url-encoded data, you can use the <code id="file1726-conceptId-x-31">urlEncodedBody</code> function.</dd>
+   
+  </dl>
+ </section><section class="subtopic" id="file1727-conceptId"><h1>Manager</h1>
+  <p class="hascomments" id="file1727-conceptId-x-3">The connection manager allows you to reuse connections. When making multiple queries to a
+   single server (e.g., accessing Amazon S3), this can be critical for creating efficient code. A
+   manager will keep track of multiple connections to a given server (taking into account port and
+   SSL as well), automatically reaping unused connections as needed. When you make a request,
+    <code id="file1727-conceptId-x-4">http-conduit</code> first tries to check out an existing connection. When you&#39;re
+   finished with the connection (if the server allows keep-alive), the connection is returned to the
+   manager. If anything goes wrong, the connection is closed.</p>
+  <p class="hascomments" id="file1727-conceptId-x-5">To keep our code exception-safe, we use the <code id="file1727-conceptId-x-6">ResourceT</code> monad transformer. All
+   this means for you is that your code needs to be wrapped inside a call to
+    <code id="file1727-conceptId-x-7">runResourceT</code>, either implicitly or explicitly, and that code inside that block
+   will need to <code id="file1727-conceptId-x-8">liftIO</code> to perform normal IO actions.</p>
+  <p class="hascomments" id="file1727-conceptId-x-9">There are two ways you can get ahold of a manager. <code id="file1727-conceptId-x-10">newManager</code> will return a
+   manager that will not be automatically closed (you can use <code id="file1727-conceptId-x-11">closeManager</code> to do so
+   manually), while <code id="file1727-conceptId-x-12">withManager</code> will start a new <code id="file1727-conceptId-x-13">ResourceT</code> block,
+   allow you to use the manager, and then automatically close the <code id="file1727-conceptId-x-14">ResourceT</code> when
+   you&#39;re done. If you want to use a <code id="file1727-conceptId-x-15">ResourceT</code> for an entire application, and have
+   no need to close it, you should probably use <code id="file1727-conceptId-x-16">newManager</code>.</p>
+  <p class="hascomments" id="file1727-conceptId-x-17">One other thing to point out: you obviously don&#39;t want to create a new manager for each and
+   every request; that would defeat the whole purpose. You should create your
+    <code id="file1727-conceptId-x-18">Manager</code> early and then share it.</p>
+ </section><section class="subtopic" id="file1728-conceptId"><h1>Response</h1>
+  <p class="hascomments" id="file1728-conceptId-x-3">The <code id="file1728-conceptId-x-4">Response</code> datatype has three pieces of information: the status code, the
+   response headers, and the response body. The first two are straight-forward; let&#39;s discuss the
+   body.</p>
+  <p class="hascomments" id="file1728-conceptId-x-5">The <code id="file1728-conceptId-x-6">Response</code> type has a type variable to allow the response body to be of
+   multiple types. If you want to use <code id="file1728-conceptId-x-7">http-conduit</code>&#39;s streaming interface, you want
+   this to be a <code id="file1728-conceptId-x-8">Source</code>. For the simple interface, it will be a lazy
+    <code id="file1728-conceptId-x-9">ByteString</code>. One thing to note is that, even though we use a lazy
+    <code id="file1728-conceptId-x-10">ByteString</code>, <i id="file1728-conceptId-x-11">the entire response is held in memory</i>. In other words, we
+   perform no lazy I/O in this package.</p>
+  <aside class="note" id="file1728-conceptId-x-12">The <code id="file1728-conceptId-x-13">conduit</code> package does provide a lazy module which would allow you to
+   read this value in lazily, but like any lazy I/O, it&#39;s a bit unsafe, and definitely
+   non-deterministic. If you need it though, you can use it.</aside>
+ </section><section class="subtopic" id="file1729-conceptId"><h1>http and httpLbs</h1>
+  <p class="hascomments" id="file1729-conceptId-x-3">So let&#39;s tie it together. The <code id="file1729-conceptId-x-4">http</code> function gives you access to the streaming
+   interface (i.e., it returns a <code id="file1729-conceptId-x-5">Response</code> using a <code id="file1729-conceptId-x-6">BufferedSource</code>)
+   while <code id="file1729-conceptId-x-7">httpLbs</code> returns a lazy <code id="file1729-conceptId-x-8">ByteString</code>. Both of these return
+   values in the <code id="file1729-conceptId-x-9">ResourceT</code> transformer so that they can access the
+    <code id="file1729-conceptId-x-10">Manager</code> and have connections handled properly in the case of exceptions.</p>
+  <p class="hascomments" id="file1729-conceptId-x-11">Here are a bunch of random comments about the library. Consider it the FAQ. Likewise, if you
+   have a question, please ask it so that this section can be updated.</p>
+  <dl id="file1729-conceptId-x-12"><dt id="file1729-conceptId-x-14">How do I ignore the remainder of a response body without reading it?</dt>
+    <dd id="file1729-conceptId-x-15">Connect it to the <code id="file1729-conceptId-x-16">sinkNull</code> sink.</dd>
+   
+   
+    <dt id="file1729-conceptId-x-18">I want to share a single <code id="file1729-conceptId-x-19">Manager</code> across my entire application. How can I do
+     this?</dt>
+    <dd id="file1729-conceptId-x-20">Use the <code id="file1729-conceptId-x-21">newManager</code> function at the beginning of your application, and pass
+     it to all functions that need it.</dd>
+   
+  </dl>
+ </section>

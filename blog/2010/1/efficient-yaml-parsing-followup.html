@@ -1,0 +1,37 @@
+<p>Just wanted to give an update on my quest for my efficient YAML file parsing. You can <a href="http://www.snoyman.com/blog/entry/efficient-yaml-parsing/">read the previous post</a> for more information. The code has not yet been released, but you can download it from github (repos linked in the previous article).</p>
+<p>The use case I'm working on is generating the <a href="http://www.snoyman.com/photos/feed/">Atom feed</a> for <a href="http://www.snoyman.com/photos/">the photo blog</a>. I have benchmarked three versions of this generation:</p>
+<ol><li>The version I've been using up until now, based on data-object-yaml 0.0.0. This version converts the entire YAML data file into an in-memory representation and then converts it to the atom feed data.</li>
+<li>The same as the previous one, but built on the most recent version of data-object-yaml.</li>
+<li>A version using the new low-level monadic API in the Text.Libyaml module. This code <a href="http://github.com/snoyberg/photoblog/commit/a3d6756fee8328f72428c67b69183f960ada6bc7#diff-1">lives in its own module</a>, and is rather ugly (more on this below).</li>
+</ol>
+<p>Without further ado: the benchmark results.</p>
+<table border="1"><thead><tr><th>Results</th>
+<th>Version 1</th>
+<th>Version 2</th>
+<th>Version 3</th>
+</tr>
+</thead>
+<tbody><tr><th>Maximum memory residency (bytes)</th>
+<td>5,474,840</td>
+<td>3,987,280</td>
+<td>186,504</td>
+</tr>
+<tr><th>Heap allocation (bytes)</th>
+<td>136,454,032</td>
+<td>148,156,096</td>
+<td>13,856,304</td>
+</tr>
+<tr><th>Total execution time</th>
+<td>0.28s</td>
+<td>0.28s</td>
+<td>0.03s</td>
+</tr>
+</tbody>
+</table>
+<p>Unsurprisingly, there are huge gains in memory usage from the third version. There have been minor optimizations made to the library overall (not allocating space for missing tags, for example) which make version 2 more memory efficient than 1, but clearly 3 takes the cake here.</p>
+<p>However, why the drastic change in execution time? The efficient version aborts the YAML parsing after finding ten entries; the other two versions read the whole file. This is actually a significant change in behavior; the third version will completely ignore YAML parse errors- or any other kinds of failures- beyond those first ten entries.</p>
+<h2>That code is <i>ugly</i></h2>
+<p>For those of you that looked at the EfficientFeed module, you'll notice how long and tedious it is. Compare it to the beauty and conciseness of <a href="http://github.com/snoyberg/photoblog/blob/master/Model.hs#L143">the inefficient version</a>. This means:</p>
+<ul><li>Don't bother using the low-level library for small YAML files. If you use YAML for settings, data-object-yaml is, in my opinion, a good compromise between ease and complexity.</li>
+<li>The EfficientFeed module looks very boilerplate to me. So boilerplate, in fact, that I think I can write some type of declarative framework for generating that code. I have to play around with the ideas a bit, but I expect it to make the cut into the 0.2.0 release. I'm just not sure if it belongs in yaml or data-object-yaml (I'm leaning to the former).</li>
+</ul>

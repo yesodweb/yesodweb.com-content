@@ -1,0 +1,601 @@
+<h1>xml-conduit</h1>
+  <p class="hascomments" id="file1482-conceptId-x-3">Many developers cringe at the thought of dealing with XML files. XML has the reputation of
+   having a complicated data model, with obfuscated libraries and huge layers of complexity sitting
+   between you and your goal. I&#39;d like to posit that a lot of that pain is actually a language and
+   library issue, not inherent to XML.</p>
+  <p class="hascomments" id="file1482-conceptId-x-4">Once again, Haskell&#39;s type system allows us to easily break down the problem to its most basic
+   form. The <a href="http://hackage.haskell.org/package/xml-types">xml-types</a> package neatly deconstructs the XML data model (both a
+   streaming and DOM-based approach) into some simple ADTs. Haskell&#39;s standard immutable data
+   structures make it easier to apply transforms to documents, and a simple set of functions makes
+   parsing and rendering a breeze.</p>
+  <p class="hascomments" id="file1482-conceptId-x-6">We&#39;re going to be covering the <a href="http://hackage.haskell.org/package/xml-conduit">xml-conduit</a> package. Under
+   the surface, this package uses a lot of the approaches Yesod in general does for high
+   performance: <a href="http://hackage.haskell.org/package/blaze-builder">blaze-builder</a>, <a href="http://hackage.haskell.org/package/text">text</a>,
+    <a href="http://hackage.haskell.org/package/conduit">conduit</a> and <a href="http://hackage.haskell.org/package/attoparsec">attoparsec</a>. But from a
+   user perspective, it provides everything from the simplest APIs
+    (<code id="file1482-conceptId-x-15">readFile</code>/<code id="file1482-conceptId-x-16">writeFile</code>) through full control of XML event
+   streams.</p>
+  <p class="hascomments" id="file1482-conceptId-x-12">In addition to <code id="file1482-conceptId-x-17">xml-conduit</code>, there are a few related packages that
+   come into play, like <a href="http://hackage.haskell.org/package/xml-hamlet">xml-hamlet</a> and <a href="http://hackage.haskell.org/package/xml2html">xml2html</a>. We&#39;ll cover both how to use all these packages, and when they should be
+   used.</p>
+ <section class="subtopic" id="file1473-conceptId"><h1>Synopsis</h1>
+  <figure id="file1473-conceptId-x-3"><figcaption>Input XML file</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;document</span> <span style="color: green;font-weight: bold;">title</span>=<span style="color: green;">&quot;My Title&quot;</span><span style="color: blue;">&gt;</span>
+    <span style="color: blue;">&lt;para&gt;</span>This is a paragraph. It has <span style="color: blue;">&lt;em&gt;</span>emphasized<span style="color: blue;">&lt;/em&gt;</span> and <span style="color: blue;">&lt;strong&gt;</span>strong<span style="color: blue;">&lt;/strong&gt;</span> words.<span style="color: blue;">&lt;/para&gt;</span>
+    <span style="color: blue;">&lt;image</span> <span style="color: green;font-weight: bold;">href</span>=<span style="color: green;">&quot;myimage.png&quot;</span>/<span style="color: blue;">&gt;</span>
+<span style="color: blue;">&lt;/document&gt;</span>
+</pre></pre>
+  </figure>
+  <figure id="file1473-conceptId-x-6"><figcaption>Haskell code</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE QuasiQuotes #-}</span>
+<span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Prelude</span> <span style="color: green;font-weight: bold;">hiding</span> (readFile, writeFile)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Hamlet.XML</span>
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = <span style="color: green;font-weight: bold;">do</span>
+    <span style="color: gray;">-- readFile will throw any parse errors as runtime exceptions</span>
+    <span style="color: gray;">-- def uses the default settings</span>
+    <span style="color: blue;">Document</span> prologue root epilogue &lt;- readFile def <span style="color: green;">&quot;input.xml&quot;</span>
+
+    <span style="color: gray;">-- root is the root element of the document, let&#39;s modify it</span>
+    <span style="color: green;font-weight: bold;">let</span> root&#39; = transform root
+
+    <span style="color: gray;">-- And now we write out. Let&#39;s indent our output</span>
+    writeFile def
+        { rsPretty = <span style="color: blue;">True</span>
+        } <span style="color: green;">&quot;output.html&quot;</span> $ <span style="color: blue;">Document</span> prologue root&#39; epilogue
+
+<span style="color: gray;">-- We&#39;ll turn out &lt;document&gt; into an XHTML document</span>
+<span style="color: blue;font-weight: bold;">transform</span> :: <span style="color: blue;">Element</span> -&gt; <span style="color: blue;">Element</span>
+<span style="color: blue;font-weight: bold;">transform</span> (<span style="color: blue;">Element</span> _name attrs children) = <span style="color: blue;">Element</span> <span style="color: green;">&quot;html&quot;</span> [] [xml|
+&lt;head&gt;
+    &lt;title&gt;
+        $maybe title &lt;- lookup <span style="color: green;">&quot;title&quot;</span> attrs
+            \#{title}
+        $nothing
+            <span style="color: blue;">Untitled</span> <span style="color: blue;">Document</span>
+&lt;body&gt;
+    $forall child &lt;- children
+        ^{goNode child}
+|]
+
+<span style="color: blue;font-weight: bold;">goNode</span> :: <span style="color: blue;">Node</span> -&gt; [<span style="color: blue;">Node</span>]
+<span style="color: blue;font-weight: bold;">goNode</span> (<span style="color: blue;">NodeElement</span> e) = [<span style="color: blue;">NodeElement</span> $ goElem e]
+<span style="color: blue;font-weight: bold;">goNode</span> (<span style="color: blue;">NodeContent</span> t) = [<span style="color: blue;">NodeContent</span> t]
+<span style="color: blue;font-weight: bold;">goNode</span> (<span style="color: blue;">NodeComment</span> _) = [] <span style="color: gray;">-- hide comments</span>
+<span style="color: blue;font-weight: bold;">goNode</span> (<span style="color: blue;">NodeInstruction</span> _) = [] <span style="color: gray;">-- and hide processing instructions too</span>
+
+<span style="color: gray;">-- convert each source element to its XHTML equivalent</span>
+<span style="color: blue;font-weight: bold;">goElem</span> :: <span style="color: blue;">Element</span> -&gt; <span style="color: blue;">Element</span>
+<span style="color: blue;font-weight: bold;">goElem</span> (<span style="color: blue;">Element</span> <span style="color: green;">&quot;para&quot;</span> attrs children) =
+    <span style="color: blue;">Element</span> <span style="color: green;">&quot;p&quot;</span> attrs $ concatMap goNode children
+<span style="color: blue;font-weight: bold;">goElem</span> (<span style="color: blue;">Element</span> <span style="color: green;">&quot;em&quot;</span> attrs children) =
+    <span style="color: blue;">Element</span> <span style="color: green;">&quot;i&quot;</span> attrs $ concatMap goNode children
+<span style="color: blue;font-weight: bold;">goElem</span> (<span style="color: blue;">Element</span> <span style="color: green;">&quot;strong&quot;</span> attrs children) =
+    <span style="color: blue;">Element</span> <span style="color: green;">&quot;b&quot;</span> attrs $ concatMap goNode children
+<span style="color: blue;font-weight: bold;">goElem</span> (<span style="color: blue;">Element</span> <span style="color: green;">&quot;image&quot;</span> attrs _children) =
+    <span style="color: blue;">Element</span> <span style="color: green;">&quot;img&quot;</span> (map fixAttr attrs) [] <span style="color: gray;">-- images can&#39;t have children</span>
+  <span style="color: green;font-weight: bold;">where</span>
+    fixAttr (<span style="color: green;">&quot;href&quot;</span>, value) = (<span style="color: green;">&quot;src&quot;</span>, value)
+    fixAttr x = x
+<span style="color: blue;font-weight: bold;">goElem</span> (<span style="color: blue;">Element</span> name attrs children) =
+    <span style="color: gray;">-- don&#39;t know what to do, just pass it through...</span>
+    <span style="color: blue;">Element</span> name attrs $ concatMap goNode children
+</pre></pre>
+  </figure>
+  <figure id="file1473-conceptId-x-9"><figcaption>Output XHTML</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;text-decoration: underline;">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+<span style="color: blue;">&lt;html&gt;</span>
+    <span style="color: blue;">&lt;head&gt;</span>
+        <span style="color: blue;">&lt;title&gt;</span>
+            My Title
+        <span style="color: blue;">&lt;/title&gt;</span>
+    <span style="color: blue;">&lt;/head&gt;</span>
+    <span style="color: blue;">&lt;body&gt;</span>
+        <span style="color: blue;">&lt;p&gt;</span>
+            This is a paragraph. It has 
+            <span style="color: blue;">&lt;i&gt;</span>
+                emphasized
+            <span style="color: blue;">&lt;/i&gt;</span>
+            and 
+            <span style="color: blue;">&lt;b&gt;</span>
+                strong
+            <span style="color: blue;">&lt;/b&gt;</span>
+            words.
+        <span style="color: blue;">&lt;/p&gt;</span>
+        <span style="color: blue;">&lt;img</span> <span style="color: green;font-weight: bold;">src</span>=<span style="color: green;">&quot;myimage.png&quot;</span>/<span style="color: blue;">&gt;</span>
+    <span style="color: blue;">&lt;/body&gt;</span>
+<span style="color: blue;">&lt;/html&gt;</span>
+</pre></pre>
+  </figure>
+ </section><section class="subtopic" id="file1477-conceptId"><h1>Types</h1>
+  <p class="hascomments" id="file1477-conceptId-x-3">Let&#39;s take a bottom-up approach to analyzing types. This section will also serve as a primer on
+   the XML data model itself, so don&#39;t worry if you&#39;re not completely familiar with it.</p>
+  <p class="hascomments" id="file1477-conceptId-x-4">I think the first place where Haskell really shows its strength is with the
+    <a href="http://hackage.haskell.org/packages/archive/xml-types/latest/doc/html/Data-XML-Types.html#t:Name">Name</a> datatype. Many languages (like Java) struggle
+   with properly expressing names. The issue is that there are in fact three components to a name:
+   its local name, its namespace (optional), and its prefix (also optional). Let&#39;s look at some XML
+   to explain:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;no</span>-namespace/<span style="color: blue;">&gt;</span>
+<span style="color: blue;">&lt;no</span>-prefix <span style="color: green;font-weight: bold;">xmlns</span>=<span style="color: green;">&quot;first-namespace&quot;</span> first-<span style="color: green;font-weight: bold;">attr</span>=<span style="color: green;">&quot;value1&quot;</span>/<span style="color: blue;">&gt;</span>
+<span style="color: blue;">&lt;foo:with</span>-prefix xmlns:<span style="color: green;font-weight: bold;">foo</span>=<span style="color: green;">&quot;second-namespace&quot;</span> foo:second-<span style="color: green;font-weight: bold;">attr</span>=<span style="color: green;">&quot;value2&quot;</span>/<span style="color: blue;">&gt;</span>
+</pre></pre>
+  <p class="hascomments" id="file1477-conceptId-x-7">The first tag has a local name of <code id="file1477-conceptId-x-8">no-namespace</code>, and no
+   namespace or prefix. The second tag (local name: <code id="file1477-conceptId-x-9">no-prefix</code>) <i id="file1477-conceptId-x-10">also</i> has no prefix, but it does have a namespace (<code id="file1477-conceptId-x-11">first-namespace</code>). <code id="file1477-conceptId-x-24">first-attr</code>, however, does <i id="file1477-conceptId-x-12">not</i>
+   inherit that namespace: attribute namespaces must always be explicitly set with a prefix.</p>
+  <aside class="note" id="file1477-conceptId-x-13">Namespaces are almost always URIs of some sort, though there is nothing in any specification
+   requiring that it be so.</aside>
+  <p class="hascomments" id="file1477-conceptId-x-14">The third tag has a local name of <code id="file1477-conceptId-x-15">with-prefix</code>, a prefix of
+    <code id="file1477-conceptId-x-16">foo</code> and a namespace of <code id="file1477-conceptId-x-17">second-namespace</code>.
+   Its attribute has a <code id="file1477-conceptId-x-25">second-attr</code> local name and the same prefix and namespace.
+   The <code id="file1477-conceptId-x-26">xmlns</code> and <code id="file1477-conceptId-x-27">xmlns:foo</code> attributes are part of the namespace
+   specification, and are not considered attributes of their respective elements.</p>
+  <p class="hascomments" id="file1477-conceptId-x-18">So let&#39;s review what we need from a name: every name has a local name, and it can optionally
+   have a prefix and namespace. Seems like a simple fit for a record type:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Name</span> = <span style="color: blue;">Name</span>
+    { nameLocalName :: <span style="color: blue;">Text</span>
+    , nameNamespace :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Text</span>
+    , namePrefix :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Text</span>
+    }
+</pre></pre>
+  <p class="hascomments" id="file1477-conceptId-x-20">According the the XML namespace standard, two names are considered equivalent if they
+   have the same localname and namespace. In other words, the prefix is not important. Therefore,
+    <code id="file1477-conceptId-x-28">xml-types</code> defines <code id="file1477-conceptId-x-29">Eq</code> and <code id="file1477-conceptId-x-30">Ord</code> instances that
+   ignore the prefix.</p>
+  <p class="hascomments" id="file1477-conceptId-x-21">The last class instance worth mentioning is <code id="file1477-conceptId-x-31">IsString</code>. It would be
+   very tedious to have to manually type out <code id="file1477-conceptId-x-22">Name &quot;p&quot; Nothing Nothing</code>
+   every time we want a paragraph. If you turn on <code id="file1477-conceptId-x-32">OverloadedStrings</code>,
+    <code id="file1477-conceptId-x-33">&quot;p&quot;</code> will resolve to that all by itself! In addition, the
+    <code id="file1477-conceptId-x-34">IsString</code> instance recognizes something called Clark notation, which allows you
+   to prefix the namespace surrounded in curly brackets. In other words:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;">&quot;{namespace}element&quot;</span> == <span style="color: blue;">Name</span> <span style="color: green;">&quot;element&quot;</span> (<span style="color: blue;">Just</span> <span style="color: green;">&quot;namespace&quot;</span>) <span style="color: blue;">Nothing</span>
+<span style="color: green;">&quot;element&quot;</span> == <span style="color: blue;">Name</span> <span style="color: green;">&quot;element&quot;</span> <span style="color: blue;">Nothing</span> <span style="color: blue;">Nothing</span>
+</pre></pre>
+ <section class="subtopic" id="file1474-conceptId"><h1>The Four Types of Nodes</h1>
+  <p class="hascomments" id="file1474-conceptId-x-3">XML documents are a tree of nested nodes. There are in fact four different types of nodes
+   allowed: elements, content (i.e., text), comments, and processing instructions.</p>
+  <aside class="note" id="file1474-conceptId-x-4">You may not be familiar with that last one, it&#39;s less commonly used. It is marked up
+   as:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;text-decoration: underline;">&lt;?target data?&gt;</span>
+</pre></pre>There are two commonly held
+   misconceptions about processing instructions. Let&#39;s set them to rest now:<ul id="file1474-conceptId-ul_zfo_vsx_md"><li id="file1474-conceptId-x-6">PIs don&#39;t have attributes. While often times you&#39;ll see processing instructions that appear
+     to have attributes, there are in fact no rules about that data of an instruction.</li>
+    <li id="file1474-conceptId-x-7">The &lt;?xml ...?&gt; stuff at the beginning of a document is not a processing instruction. It
+     is simply the beginning of the document, and happens to look an awful lot like a PI. The
+     difference though is that the &lt;?xml ...?&gt; line will not appear in your parsed content.</li>
+   </ul></aside>
+  <p class="hascomments" id="file1474-conceptId-x-8">Since processing instructions have two pieces of text associated with them (the target and the
+   data), we have a simple data type:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Instruction</span> = <span style="color: blue;">Instruction</span>
+    { instructionTarget :: <span style="color: blue;">Text</span>
+    , instructionData :: <span style="color: blue;">Text</span>
+    }
+</pre></pre>
+  <p class="hascomments" id="file1474-conceptId-x-10">Comments have no special datatype, since they are just text. But content is an
+   interesting one: it could contain either plain text or unresolved entities (e.g.,
+    <code id="file1474-conceptId-x-19">&amp;copyright-statement;</code>). <a href="http://hackage.haskell.org/package/xml-types">xml-types</a> keeps those
+   unresolved entities in all the data types in order to completely match the spec. However, in
+   practice, it can be very tedious to program against those data types. And in most use cases, an
+   unresolved entity is going to end up as an error anyway.</p>
+  <p class="hascomments" id="file1474-conceptId-x-12">So the <a href="http://hackage.haskell.org/packages/archive/xml-conduit/latest/doc/html/Text-XML.html">Text.XML</a> module defines its own set
+   of datatypes for nodes, elements and documents that removes all unresolved entities. If you need
+   to deal with unresolved entities instead, you should use the <a href="http://hackage.haskell.org/packages/archive/xml-conduit/latest/doc/html/Text-XML-Unresolved.html">Text.XML.Unresolved</a> module. From now on, we&#39;ll be focusing only on the
+    <code id="file1474-conceptId-x-20">Text.XML</code> data types, though they are almost identical to the
+    <code id="file1474-conceptId-x-21">xml-types</code> versions.</p>
+  <p class="hascomments" id="file1474-conceptId-x-15">Anyway, after that detour: content is just a piece of text, and therefore it too does
+   not have a special datatype. The last node type is an element, which contains three pieces of
+   information: a name, a list of attributes and a list of children nodes. An attribute has two
+   pieces of information: a name and a value. (In <code id="file1474-conceptId-x-22">xml-types</code>, this value could
+   contain unresolved entities as well.) So our <code id="file1474-conceptId-x-23">Element</code> is defined as:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Element</span> = <span style="color: blue;">Element</span>
+    { elementName :: <span style="color: blue;">Name</span>
+    , elementAttributes :: [(<span style="color: blue;">Name</span>, <span style="color: blue;">Text</span>)]
+    , elementNodes :: [<span style="color: blue;">Node</span>]
+    }
+</pre></pre>
+  <p class="hascomments" id="file1474-conceptId-x-17">Which of course begs the question: what does a <code id="file1474-conceptId-x-24">Node</code> look like? This
+   is where Haskell really shines: its sum types model the XML data model perfectly.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Node</span>
+    = <span style="color: blue;">NodeElement</span> <span style="color: blue;">Element</span>
+    | <span style="color: blue;">NodeInstruction</span> <span style="color: blue;">Instruction</span>
+    | <span style="color: blue;">NodeContent</span> <span style="color: blue;">Text</span>
+    | <span style="color: blue;">NodeComment</span> <span style="color: blue;">Text</span>
+</pre></pre>
+ </section><section class="subtopic" id="file1475-conceptId"><h1>Documents</h1>
+  <p class="hascomments" id="file1475-conceptId-x-3">So now we have elements and nodes, but what about an entire document? Let&#39;s just lay out the
+   datatypes:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Document</span> = <span style="color: blue;">Document</span>
+    { documentPrologue :: <span style="color: blue;">Prologue</span>
+    , documentRoot :: <span style="color: blue;">Element</span>
+    , documentEpilogue :: [<span style="color: blue;">Miscellaneous</span>]
+    }
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Prologue</span> = <span style="color: blue;">Prologue</span>
+    { prologueBefore :: [<span style="color: blue;">Miscellaneous</span>]
+    , prologueDoctype :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Doctype</span>
+    , prologueAfter :: [<span style="color: blue;">Miscellaneous</span>]
+    }
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Miscellaneous</span>
+    = <span style="color: blue;">MiscInstruction</span> <span style="color: blue;">Instruction</span>
+    | <span style="color: blue;">MiscComment</span> <span style="color: blue;">Text</span>
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Doctype</span> = <span style="color: blue;">Doctype</span>
+    { doctypeName :: <span style="color: blue;">Text</span>
+    , doctypeID :: <span style="color: blue;">Maybe</span> <span style="color: blue;">ExternalID</span>
+    }
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">ExternalID</span>
+    = <span style="color: blue;">SystemID</span> <span style="color: blue;">Text</span>
+    | <span style="color: blue;">PublicID</span> <span style="color: blue;">Text</span> <span style="color: blue;">Text</span>
+</pre></pre>
+  <p class="hascomments" id="file1475-conceptId-x-5">The XML spec says that a document has a single root element
+    (<code id="file1475-conceptId-x-9">documentRoot</code>). It also has an optional doctype statement. Before and after
+   both the doctype and the root element, you are allowed to have comments and processing
+   instructions. (You can also have whitespace, but that is ignored in the parsing.)</p>
+  <p class="hascomments" id="file1475-conceptId-x-6">So what&#39;s up with the doctype? Well, it specifies the root element of the document, and then
+   optional public and system identifiers. These are used to refer to DTD files, which give more
+   information about the file (e.g., validation rules, default attributes, entity resolution). Let&#39;s
+   see some examples:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;text-decoration: underline;">&lt;!DOCTYPE root&gt;</span> <span style="color: gray;">&lt;!-- no external identifier --&gt;</span>
+<span style="color: blue;text-decoration: underline;">&lt;!DOCTYPE root SYSTEM &quot;root.dtd&quot;&gt;</span> <span style="color: gray;">&lt;!-- a system identifier --&gt;</span>
+<span style="color: blue;text-decoration: underline;">&lt;!DOCTYPE root PUBLIC &quot;My Root Public Identifier&quot; &quot;root.dtd&quot;&gt;</span> <span style="color: gray;">&lt;!-- public identifiers have a system ID as well --&gt;</span>
+</pre></pre>
+  <p class="hascomments" id="file1475-conceptId-x-8">And that, my friends, is the entire XML data model. For many parsing purposes, you&#39;ll
+   be able to simply ignore the entire <code id="file1475-conceptId-x-10">Document</code> datatype and go immediately to the
+    <code id="file1475-conceptId-x-11">documentRoot</code>.</p>
+ </section><section class="subtopic" id="file1476-conceptId"><h1>Events</h1>
+  <p class="hascomments" id="file1476-conceptId-x-3">In addition to the document API, <code id="file1476-conceptId-x-5">xml-types</code> defines an <a href="http://hackage.haskell.org/packages/archive/xml-types/latest/doc/html/Data-XML-Types.html#t:Event">Event</a> datatype. This can be used for constructing
+   streaming tools, which can be much more memory efficient for certain kinds of processing (eg,
+   adding an extra attribute to all elements). We will not be covering the streaming API currently,
+   though it should look very familiar after analyzing the document API.</p>
+  <aside class="note" id="file1476-conceptId-x-6">You can see an example of the streaming API in the <a href="http://www.yesodweb.com/redirector/home%2F1%2Fbook%2Fyesod-web-framework-book%2Fcase-study-sphinx%2Fcase-study-sphinx.dita">Sphinx case
+    study</a>.</aside>
+ </section></section><section class="subtopic" id="file1478-conceptId"><h1>Text.XML</h1>
+  <p class="hascomments" id="file1478-conceptId-x-3">The recommended entry point to xml-conduit is the <a href="http://hackage.haskell.org/packages/archive/xml-conduit/latest/doc/html/Text-XML.html">Text.XML</a> module. This module exports all of the datatypes you&#39;ll need to
+   manipulate XML in a DOM fashion, as well as a number of different approaches for parsing and
+   rendering XML content. Let&#39;s start with the simple
+   ones:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">readFile</span>  :: <span style="color: blue;">ParseSettings</span>  -&gt; <span style="color: blue;">FilePath</span> -&gt; <span style="color: blue;">IO</span> <span style="color: blue;">Document</span>
+<span style="color: blue;font-weight: bold;">writeFile</span> :: <span style="color: blue;">RenderSettings</span> -&gt; <span style="color: blue;">FilePath</span> -&gt; <span style="color: blue;">Document</span> -&gt; <span style="color: blue;">IO</span> ()
+</pre></pre>This
+   introduces the <code id="file1478-conceptId-x-6">ParseSettings</code> and <code id="file1478-conceptId-x-7">RenderSettings</code> datatypes. You can use these to modify the behavior of the parser and
+   renderer, such as adding character entities and turning on pretty (i.e., indented) output. Both
+   these types are instances of the <a href="http://hackage.haskell.org/packages/archive/data-default/latest/doc/html/Data-Default.html#t:Default">Default</a>
+   typeclass, so you can simply use <code id="file1478-conceptId-x-9">def</code> when these need to be supplied.
+   That is how we will supply these values through the rest of the chapter; please see the API docs
+   for more information.</p>
+  <p class="hascomments" id="file1478-conceptId-x-14">It&#39;s worth pointing out that in addition to the file-based API, there is also a text- and
+   bytestring-based API. The bytestring-powered functions all perform intelligent encoding
+   detections, and support UTF-8, UTF-16 and UTF-32, in either big or little endian, with and
+   without a Byte-Order Marker (BOM). All output is generated in UTF-8.</p>
+  <p class="hascomments" id="file1478-conceptId-x-15">For complex data lookups, we recommend using the higher-level cursors API. The
+   standard <code id="file1478-conceptId-x-10">Text.XML</code> API not only forms the basis for that higher level, but is
+   also a great API for simple XML transformations and for XML generation. See the synopsis for an
+   example.</p>
+ <section class="subtopic" id="file1723-conceptId"><h1>A note about file paths</h1>
+  <p class="hascomments" id="file1723-conceptId-x-3">In the type signature above, we have a type <code id="file1723-conceptId-x-4">FilePath</code>. However, <b id="file1723-conceptId-x-5">this isn&#39;t
+     <code id="file1723-conceptId-x-6">Prelude.FilePath</code></b>. The standard <code id="file1723-conceptId-x-7">Prelude</code> defines a type
+   synonym <code id="file1723-conceptId-x-8">type FilePath = [Char]</code>. Unfortunately, there are many limitations to
+   using such an approach, including confusion of filename character encodings and differences in
+   path separators.</p>
+  <p class="hascomments" id="file1723-conceptId-x-9">Instead, <code id="file1723-conceptId-x-10">xml-conduit</code> uses the <a href="http://hackage.haskell.org/package/system-filepath">system-filepath</a> package,
+   which defines an abstract <code id="file1723-conceptId-x-12">FilePath</code> type. I&#39;ve personally found this to be a much
+   nicer approach to work with. The package is fairly easy to follow, so I won&#39;t go into details
+   here. But I do want to give a few quick explanations of how to use it:</p>
+  <ul id="file1723-conceptId-ul_lgl_lyb_we"><li id="file1723-conceptId-x-13">Since a <code id="file1723-conceptId-x-14">FilePath</code> is an instance of <code id="file1723-conceptId-x-15">IsString</code>, you can type
+    in regular strings and they will be treated properly, as long as the
+     <code id="file1723-conceptId-x-16">OverloadedStrings</code> extension is enabled. (I highly recommend enabling it
+    anyway, as it makes dealing with <code id="file1723-conceptId-x-17">Text</code> values much more pleasant.)</li>
+   <li id="file1723-conceptId-x-18">If you need to explicitly convert to or from <code id="file1723-conceptId-x-19">Prelude</code>&#39;s
+     <code id="file1723-conceptId-x-20">FilePath</code>, you should use the
+     <a href="http://hackage.haskell.org/packages/archive/system-filepath/latest/doc/html/Filesystem-Path-CurrentOS.html#v:encodeString">encodeString</a> and
+     <a href="http://hackage.haskell.org/packages/archive/system-filepath/latest/doc/html/Filesystem-Path-CurrentOS.html#v:decodeString">decodeString</a>, respectively. This
+    takes into account file path encodings.</li>
+   <li id="file1723-conceptId-x-23">Instead of manually splicing together directory names and file names with extensions, use the
+    operators in the <code id="file1723-conceptId-x-24">Filesystem.Path.CurrentOS</code> module, e.g. <code id="file1723-conceptId-x-25">myfolder &lt;/&gt;
+     filename &lt;.&gt; extension</code>.</li>
+  </ul>
+ </section></section><section class="subtopic" id="file1479-cursor"><h1>Cursor</h1>
+  <p class="hascomments" id="file1479-cursor-x-3">Suppose you want to pull the title out of an XHTML document. You could do so with the
+    <code id="file1479-cursor-x-49">Text.XML</code> interface we just described, using standard pattern matching on the
+   children of elements. But that would get very tedious, very quickly. Probably the gold standard
+   for these kinds of lookups is XPath, where you would be able to write <code id="file1479-cursor-x-4">/html/head/title</code>. And that&#39;s exactly what inspired the design of the <a href="http://hackage.haskell.org/packages/archive/xml-conduit/latest/doc/html/Text-XML-Cursor.html">Text.XML.Cursor</a> combinators.</p>
+  <p class="hascomments" id="file1479-cursor-x-6">A cursor is an XML node that knows its location in the tree; it&#39;s able to traverse
+   upwards, sideways, and downwards. (Under the surface, this is achieved by <a href="http://www.haskell.org/haskellwiki/Tying_the_Knot">tying
+    the knot</a>.) There are two functions available for creating cursors from
+    <code id="file1479-cursor-x-50">Text.XML</code> types: <code id="file1479-cursor-x-51">fromDocument</code> and
+   <code id="file1479-cursor-x-52">fromNode</code>.</p>
+  <p class="hascomments" id="file1479-cursor-x-8">We also have the concept of an <dfn id="file1479-cursor-x-9">Axis</dfn>, defined as <code id="file1479-cursor-x-10">type Axis = Cursor -&gt; [Cursor]</code>. It&#39;s easiest to get started by looking at
+   example axes: child returns zero or more cursors that are the child of the current one, parent
+   returns the single parent cursor of the input, or an empty list if the input is the root element,
+   and so on.</p>
+  <p class="hascomments" id="file1479-cursor-x-11">In addition, there are some axes that take predicates. <code id="file1479-cursor-x-12">element</code> is a commonly
+   used function that filters down to only elements which match the given name. For example,
+    <code id="file1479-cursor-x-13">element &quot;title&quot;</code> will return the input element if its name is &quot;title&quot;, or an
+   empty list otherwise.</p>
+  <p class="hascomments" id="file1479-cursor-x-14">Another common function which isn&#39;t quite an axis is <code id="file1479-cursor-x-15">content :: Cursor -&gt;
+    [Text]</code>. For all content nodes, it returns the contained text; otherwise, it returns an
+   empty list.</p>
+  <p class="hascomments" id="file1479-cursor-x-16">And thanks to the monad instance for lists, it&#39;s easy to string all of these
+   together. For example, to do our title lookup, we would write the following program:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Prelude</span> <span style="color: green;font-weight: bold;">hiding</span> (readFile)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML.Cursor</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Text</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">T</span>
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = <span style="color: green;font-weight: bold;">do</span>
+    doc &lt;- readFile def <span style="color: green;">&quot;test.xml&quot;</span>
+    <span style="color: green;font-weight: bold;">let</span> cursor = fromDocument doc
+    print $ <span style="color: blue;">T.</span>concat $
+            child cursor &gt;&gt;= element <span style="color: green;">&quot;head&quot;</span> &gt;&gt;= child
+                         &gt;&gt;= element <span style="color: green;">&quot;title&quot;</span> &gt;&gt;= descendant &gt;&gt;= content
+</pre></pre>
+  <p class="hascomments" id="file1479-cursor-x-18">What this says is:</p>
+  <ol id="file1479-cursor-ol_d37c1613-8879-4be8-862c-9823d88f5b90"><li id="file1479-cursor-x-19">Get me all the child nodes of the root element</li>
+   <li id="file1479-cursor-x-20">Filter down to only the elements named &quot;head&quot;</li>
+   <li id="file1479-cursor-x-21">Get all the children of all those head elements</li>
+   <li id="file1479-cursor-x-22">Filter down to only the elements named &quot;title&quot;</li>
+   <li id="file1479-cursor-x-23">Get all the descendants of all those title elements. (A descendant is a child, or a
+    descendant of a child. Yes, that was a recursive definition.)</li>
+   <li id="file1479-cursor-x-24">Get only the text nodes.</li>
+  </ol>
+  <p class="hascomments" id="file1479-cursor-x-25">So for the input document:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;html&gt;</span>
+    <span style="color: blue;">&lt;head&gt;</span>
+        <span style="color: blue;">&lt;title&gt;</span>My <span style="color: blue;">&lt;b&gt;</span>Title<span style="color: blue;">&lt;/b&gt;&lt;/title&gt;</span>
+    <span style="color: blue;">&lt;/head&gt;</span>
+    <span style="color: blue;">&lt;body&gt;</span>
+        <span style="color: blue;">&lt;p&gt;</span>Foo bar baz<span style="color: blue;">&lt;/p&gt;</span>
+    <span style="color: blue;">&lt;/body&gt;</span>
+<span style="color: blue;">&lt;/html&gt;</span>
+</pre></pre>
+  <p class="hascomments" id="file1479-cursor-x-27">We end up with the output <code id="file1479-cursor-x-28">My Title</code>. This is all well and good, but it&#39;s much
+   more verbose than the XPath solution. To combat this verbosity, Aristid Breitkreuz added a set of
+   operators to the Cursor module to handle many common cases. So we can rewrite our example as:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Prelude</span> <span style="color: green;font-weight: bold;">hiding</span> (readFile)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML.Cursor</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Text</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">T</span>
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = <span style="color: green;font-weight: bold;">do</span>
+    doc &lt;- readFile def <span style="color: green;">&quot;test.xml&quot;</span>
+    <span style="color: green;font-weight: bold;">let</span> cursor = fromDocument doc
+    print $ <span style="color: blue;">T.</span>concat $
+        cursor $/ element <span style="color: green;">&quot;head&quot;</span> &amp;/ element <span style="color: green;">&quot;title&quot;</span> &amp;// content
+</pre></pre>
+  <p class="hascomments" id="file1479-cursor-x-30"><code id="file1479-cursor-x-31">$/</code> says to apply the axis on the right to the cursor on
+   the left. <code id="file1479-cursor-x-32">&amp;/</code> is almost identical, but is instead used to combine
+   two axes together. This is a general rule in <code id="file1479-cursor-x-53">Text.XML.Cursor</code>: operators
+   beginning with $ directly apply an axis, while &amp; will combine two together. <code id="file1479-cursor-x-33">&amp;//</code> is used for applying an axis to all descendants.</p>
+  <p class="hascomments" id="file1479-cursor-x-34">Let&#39;s go for a more complex, if more contrived, example. We have a document that looks
+   like:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;html&gt;</span>
+    <span style="color: blue;">&lt;head&gt;</span>
+        <span style="color: blue;">&lt;title&gt;</span>Headings<span style="color: blue;">&lt;/title&gt;</span>
+    <span style="color: blue;">&lt;/head&gt;</span>
+    <span style="color: blue;">&lt;body&gt;</span>
+        <span style="color: blue;">&lt;hgroup&gt;</span>
+            <span style="color: blue;">&lt;h1&gt;</span>Heading 1 foo<span style="color: blue;">&lt;/h1&gt;</span>
+            <span style="color: blue;">&lt;h2</span> <span style="color: green;font-weight: bold;">class</span>=<span style="color: green;">&quot;foo&quot;</span><span style="color: blue;">&gt;</span>Heading 2 foo<span style="color: blue;">&lt;/h2&gt;</span>
+        <span style="color: blue;">&lt;/hgroup&gt;</span>
+        <span style="color: blue;">&lt;hgroup&gt;</span>
+            <span style="color: blue;">&lt;h1&gt;</span>Heading 1 bar<span style="color: blue;">&lt;/h1&gt;</span>
+            <span style="color: blue;">&lt;h2</span> <span style="color: green;font-weight: bold;">class</span>=<span style="color: green;">&quot;bar&quot;</span><span style="color: blue;">&gt;</span>Heading 2 bar<span style="color: blue;">&lt;/h2&gt;</span>
+        <span style="color: blue;">&lt;/hgroup&gt;</span>
+    <span style="color: blue;">&lt;/body&gt;</span>
+<span style="color: blue;">&lt;/html&gt;</span>
+</pre></pre>
+  <p class="hascomments" id="file1479-cursor-x-36">We want to get the content of all the <code id="file1479-cursor-x-37">h1</code> tags which precede an
+    <code id="file1479-cursor-x-38">h2</code> tag with a <code id="file1479-cursor-x-39">class</code> attribute of &quot;bar&quot;. To perform this
+   convoluted lookup, we can write:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Prelude</span> <span style="color: green;font-weight: bold;">hiding</span> (readFile)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML.Cursor</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Text</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">T</span>
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = <span style="color: green;font-weight: bold;">do</span>
+    doc &lt;- readFile def <span style="color: green;">&quot;test2.xml&quot;</span>
+    <span style="color: green;font-weight: bold;">let</span> cursor = fromDocument doc
+    print $ <span style="color: blue;">T.</span>concat $
+        cursor $// element <span style="color: green;">&quot;h2&quot;</span>
+               &gt;=&gt; attributeIs <span style="color: green;">&quot;class&quot;</span> <span style="color: green;">&quot;bar&quot;</span>
+               &gt;=&gt; precedingSibling
+               &gt;=&gt; element <span style="color: green;">&quot;h1&quot;</span>
+               &amp;// content
+</pre></pre>
+  <p class="hascomments" id="file1479-cursor-x-41">Let&#39;s step through that. First we get all h2 elements in the document.
+    (<code id="file1479-cursor-x-54">$//</code> gets all descendants of the root element.) Then we filter out only those
+   with <code id="file1479-cursor-x-55">class=bar</code>. That <code id="file1479-cursor-x-42">&gt;=&gt;</code> operator is actually
+   the standard operator from <a href="http://hackage.haskell.org/packages/archive/base/latest/doc/html/Control-Monad.html">Control.Monad</a>; yet another advantage
+   of the monad instance of lists. <code id="file1479-cursor-x-56">precedingSibling</code> finds all nodes that come
+   before our node <b id="file1479-cursor-x-44">and</b> share the same parent. (There is also a <code id="file1479-cursor-x-45">preceding</code> axis which takes all elements earlier in the tree.) We then take just the
+    <code id="file1479-cursor-x-57">h1</code> elements, and then grab their content.</p>
+  <aside class="note" id="file1479-cursor-x-46">The equivalent XPath, for comparison, would be <code id="file1479-cursor-x-47">//h2[@class =
+    &#39;bar&#39;]/preceding-sibling::h1//text()</code>.</aside>
+  <p class="hascomments" id="file1479-cursor-x-48">While the cursor API isn&#39;t quite as succinct as XPath, it has the advantages of being standard
+   Haskell code, and of type safety.</p>
+ </section><section class="subtopic" id="file1480-xml-hamlet"><h1>xml-hamlet</h1>
+  <p class="hascomments" id="file1480-xml-hamlet-x-3">Thanks to the simplicity of Haskell&#39;s data type system, creating
+            XML content with the <code id="file1480-xml-hamlet-x-24">Text.XML API</code> is easy, if a bit verbose. The
+            following code:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Prelude</span> <span style="color: green;font-weight: bold;">hiding</span> (writeFile)
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> =
+    writeFile def <span style="color: green;">&quot;test3.xml&quot;</span> $ <span style="color: blue;">Document</span> (<span style="color: blue;">Prologue</span> [] <span style="color: blue;">Nothing</span> []) root []
+  <span style="color: green;font-weight: bold;">where</span>
+    root = <span style="color: blue;">Element</span> <span style="color: green;">&quot;html&quot;</span> []
+        [ <span style="color: blue;">NodeElement</span> $ <span style="color: blue;">Element</span> <span style="color: green;">&quot;head&quot;</span> []
+            [ <span style="color: blue;">NodeElement</span> $ <span style="color: blue;">Element</span> <span style="color: green;">&quot;title&quot;</span> []
+                [ <span style="color: blue;">NodeContent</span> <span style="color: green;">&quot;My &quot;</span>
+                , <span style="color: blue;">NodeElement</span> $ <span style="color: blue;">Element</span> <span style="color: green;">&quot;b&quot;</span> []
+                    [ <span style="color: blue;">NodeContent</span> <span style="color: green;">&quot;Title&quot;</span>
+                    ]
+                ]
+            ]
+        , <span style="color: blue;">NodeElement</span> $ <span style="color: blue;">Element</span> <span style="color: green;">&quot;body&quot;</span> []
+            [ <span style="color: blue;">NodeElement</span> $ <span style="color: blue;">Element</span> <span style="color: green;">&quot;p&quot;</span> []
+                [ <span style="color: blue;">NodeContent</span> <span style="color: green;">&quot;foo bar baz&quot;</span>
+                ]
+            ]
+        ]
+</pre></pre>
+  <p class="hascomments" id="file1480-xml-hamlet-x-5">produces</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;text-decoration: underline;">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+<span style="color: blue;">&lt;html&gt;&lt;head&gt;&lt;title&gt;</span>My <span style="color: blue;">&lt;b&gt;</span>Title<span style="color: blue;">&lt;/b&gt;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;p&gt;</span>foo bar baz<span style="color: blue;">&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</span>
+</pre></pre>
+  <p class="hascomments" id="file1480-xml-hamlet-x-7">This is leaps and bounds easier than having to deal with an imperative, mutable-value-based API
+   (cough, Java, cough), but it&#39;s far from pleasant, and obscures what we&#39;re really trying to
+   achieve. To simplify things, we have the <a href="http://hackage.haskell.org/package/xml-hamlet">xml-hamlet</a> package, which using
+   Quasi-Quotation to allow you to type in your XML in a natural syntax. For example, the above
+   could be rewritten as:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: gray;">{-# LANGUAGE QuasiQuotes #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Hamlet.XML</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Prelude</span> <span style="color: green;font-weight: bold;">hiding</span> (writeFile)
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> =
+    writeFile def <span style="color: green;">&quot;test3.xml&quot;</span> $ <span style="color: blue;">Document</span> (<span style="color: blue;">Prologue</span> [] <span style="color: blue;">Nothing</span> []) root []
+  <span style="color: green;font-weight: bold;">where</span>
+    root = <span style="color: blue;">Element</span> <span style="color: green;">&quot;html&quot;</span> [] [xml|
+&lt;head&gt;
+    &lt;title&gt;
+        <span style="color: blue;">My</span> #
+        &lt;b&gt;<span style="color: blue;">Title</span>
+&lt;body&gt;
+    &lt;p&gt;foo bar baz
+|]
+</pre></pre>
+  <p class="hascomments" id="file1480-xml-hamlet-x-10">Let&#39;s make a few points:</p>
+  <ul id="file1480-xml-hamlet-ul_56cf6fac-3c78-4e75-b51a-7dfd6b087eeb"><li id="file1480-xml-hamlet-x-11">The syntax is almost identical to normal Hamlet, except URL-interpolation (@{...}) has been
+    removed. As such:<ul id="file1480-xml-hamlet-ul_db2c4193-433e-48a6-abe9-29ca9b3835bc"><li id="file1480-xml-hamlet-x-12">No close tags.</li>
+     <li id="file1480-xml-hamlet-x-13">Whitespace-sensitive.</li>
+     <li id="file1480-xml-hamlet-x-14">If you want to have whitespace at the end of a line, use a # at the end. At the beginning,
+      use a backslash.</li>
+    </ul></li>
+   <li id="file1480-xml-hamlet-x-15">An <code id="file1480-xml-hamlet-x-25">xml</code> interpolation will return a list of <code id="file1480-xml-hamlet-x-16">Node</code>s. So you still need to wrap up the output in all the normal
+                    <code id="file1480-xml-hamlet-x-26">Document</code> and root <code id="file1480-xml-hamlet-x-27">Element</code> constructs.</li>
+   <li id="file1480-xml-hamlet-x-17">There is no support for the special <code id="file1480-xml-hamlet-x-28">.class</code> and
+                    <code id="file1480-xml-hamlet-x-29">#id</code> attribute forms.</li>
+  </ul>
+  <p class="hascomments" id="file1480-xml-hamlet-x-18">And like normal Hamlet, you can use variable interpolation and control structures. So a
+   slightly more complex example would be:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: gray;">{-# LANGUAGE QuasiQuotes #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Hamlet.XML</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Prelude</span> <span style="color: green;font-weight: bold;">hiding</span> (writeFile)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>, pack)
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Person</span> = <span style="color: blue;">Person</span>
+    { personName :: <span style="color: blue;">Text</span>
+    , personAge :: <span style="color: blue;">Int</span>
+    }
+
+<span style="color: blue;font-weight: bold;">people</span> :: [<span style="color: blue;">Person</span>]
+<span style="color: blue;font-weight: bold;">people</span> =
+    [ <span style="color: blue;">Person</span> <span style="color: green;">&quot;Michael&quot;</span> <span style="color: teal;">26</span>
+    , <span style="color: blue;">Person</span> <span style="color: green;">&quot;Miriam&quot;</span> <span style="color: teal;">25</span>
+    , <span style="color: blue;">Person</span> <span style="color: green;">&quot;Eliezer&quot;</span> <span style="color: teal;">3</span>
+    , <span style="color: blue;">Person</span> <span style="color: green;">&quot;Gavriella&quot;</span> <span style="color: teal;">1</span>
+    ]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> =
+    writeFile def <span style="color: green;">&quot;people.xml&quot;</span> $ <span style="color: blue;">Document</span> (<span style="color: blue;">Prologue</span> [] <span style="color: blue;">Nothing</span> []) root []
+  <span style="color: green;font-weight: bold;">where</span>
+    root = <span style="color: blue;">Element</span> <span style="color: green;">&quot;html&quot;</span> [] [xml|
+&lt;head&gt;
+    &lt;title&gt;<span style="color: blue;">Some</span> <span style="color: blue;">People</span>
+&lt;body&gt;
+    &lt;h1&gt;<span style="color: blue;">Some</span> <span style="color: blue;">People</span>
+    $<span style="color: green;font-weight: bold;">if</span> null people
+        &lt;p&gt;<span style="color: blue;">There</span> are no people.
+    $<span style="color: green;font-weight: bold;">else</span>
+        &lt;dl&gt;
+            $forall person &lt;- people
+                ^{personNodes person}
+|]
+
+<span style="color: blue;font-weight: bold;">personNodes</span> :: <span style="color: blue;">Person</span> -&gt; [<span style="color: blue;">Node</span>]
+<span style="color: blue;font-weight: bold;">personNodes</span> person = [xml|
+&lt;dt&gt;#{personName person}
+&lt;dd&gt;#{pack $ show $ personAge person}
+|]
+</pre></pre>
+  <p class="hascomments" id="file1480-xml-hamlet-x-20">A few more notes:</p>
+  <ul id="file1480-xml-hamlet-ul_4f926e00-4348-4801-97a1-a9d95fb18a04"><li id="file1480-xml-hamlet-x-21">The caret-interpolation (^{...}) takes a list of nodes, and so can easily embed
+                other <code id="file1480-xml-hamlet-x-30">xml</code>-quotations.</li>
+   <li id="file1480-xml-hamlet-x-22">Unlike Hamlet, hash-interpolations (#{...}) are not polymorphic, and can <i id="file1480-xml-hamlet-x-23">only</i> accept <code id="file1480-xml-hamlet-x-31">Text</code> values.</li>
+  </ul>
+ </section><section class="subtopic" id="file1481-xml2html"><h1>xml2html</h1>
+  <p class="hascomments" id="file1481-xml2html-x-3">So far in this chapter, our examples have revolved around XHTML. I&#39;ve done that so far
+   simply because it is likely to be the most familiar form of XML for most of our readers. But
+   there&#39;s an ugly side to all this that we must acknowledge: not all XHTML will be correct HTML.
+   The following discrepancies exist:</p>
+  <ul id="file1481-xml2html-ul_5c05f060-0943-46e4-96f3-b7c06feaf381"><li id="file1481-xml2html-x-4">There are some void tags (e.g., <code id="file1481-xml2html-x-24">img</code>, <code id="file1481-xml2html-x-25">br</code>) in HTML
+    which do not need to have close tags, and in fact are not allowed to.</li>
+   <li id="file1481-xml2html-x-5">HTML does not understand self-closing tags, so <code id="file1481-xml2html-x-6">&lt;script&gt;&lt;/script&gt;</code> and
+     <code id="file1481-xml2html-x-7">&lt;script/&gt;</code> mean very different things.</li>
+   <li id="file1481-xml2html-x-8">Combining the previous two points: you are free to self-close void tags, though to a browser
+    it won&#39;t mean anything.</li>
+   <li id="file1481-xml2html-x-9">In order to avoid quirks mode, you should start your HTML documents with a
+     <code id="file1481-xml2html-x-26">DOCTYPE</code> statement.</li>
+   <li id="file1481-xml2html-x-10">We do not want the XML declaration <code id="file1481-xml2html-x-11">&lt;?xml ...?&gt;</code> at the top of an HTML
+    page</li>
+   <li id="file1481-xml2html-x-12">We do not want any namespaces used in HTML, while XHTML is fully namespaced.</li>
+   <li id="file1481-xml2html-x-13">The contents of <code id="file1481-xml2html-x-27">&lt;style&gt;</code> and <code id="file1481-xml2html-x-28">&lt;script&gt;</code>
+    tags should not be escaped.</li>
+  </ul>
+  <p class="hascomments" id="file1481-xml2html-x-14">That&#39;s where the <a href="http://hackage.haskell.org/package/xml2html">xml2html</a> package comes into play. It provides a
+    <a href="http://hackage.haskell.org/packages/archive/blaze-html/latest/doc/html/Text-Blaze.html#t:ToHtml">ToHtml</a> instance for <code id="file1481-xml2html-x-17">Node</code>s,
+    <code id="file1481-xml2html-x-18">Document</code>s and <code id="file1481-xml2html-x-19">Element</code>s. In order to use it, just import the
+    <a href="http://hackage.haskell.org/packages/archive/xml2html/latest/doc/html/Text-XML-Xml2Html.html">Text.XML.Xml2Html</a> module.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings, QuasiQuotes #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Blaze</span> (toHtml)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Blaze.Renderer.String</span> (renderHtml)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Hamlet.XML</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML.Xml2Html</span> ()
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = putStr $ renderHtml $ toHtml $ <span style="color: blue;">Document</span> (<span style="color: blue;">Prologue</span> [] <span style="color: blue;">Nothing</span> []) root []
+
+<span style="color: blue;font-weight: bold;">root</span> :: <span style="color: blue;">Element</span>
+<span style="color: blue;font-weight: bold;">root</span> = <span style="color: blue;">Element</span> <span style="color: green;">&quot;html&quot;</span> [] [xml|
+&lt;head&gt;
+    &lt;title&gt;<span style="color: blue;">Test</span>
+    &lt;script&gt;<span style="color: green;font-weight: bold;">if</span> (<span style="color: teal;">5</span> &lt; <span style="color: teal;">6</span> || <span style="color: teal;">8</span> &gt; <span style="color: teal;">9</span>) alert(<span style="color: green;">&quot;Hello World!&quot;</span>);
+    &lt;style&gt;body &gt; h1 { color: red }
+&lt;body&gt;
+    &lt;h1&gt;<span style="color: blue;">Hello</span> <span style="color: blue;">World</span>!
+|]
+</pre></pre>
+  <p class="hascomments" id="file1481-xml2html-x-22">Outputs: (whitespace added)</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;text-decoration: underline;">&lt;!DOCTYPE HTML&gt;</span>
+<span style="color: blue;">&lt;html&gt;</span>
+    <span style="color: blue;">&lt;head&gt;</span>
+        <span style="color: blue;">&lt;title&gt;</span>Test<span style="color: blue;">&lt;/title&gt;</span>
+        <span style="color: blue;">&lt;script&gt;</span><span style="color: blue;font-weight: bold;">if </span>(<span style="color: teal;">5</span> &lt; <span style="color: teal;">6</span> || <span style="color: teal;">8</span> &gt; <span style="color: teal;">9</span>) <span style="color: blue;font-weight: bold;">alert</span>(<span style="color: green;">&quot;Hello World!&quot;</span>);<span style="color: blue;">&lt;/script&gt;</span>
+        <span style="color: blue;">&lt;style&gt;</span><span style="color: green;">body</span> &gt; <span style="color: green;">h1</span> <span style="color: red;">{</span> <span style="color: green;">color</span>: red <span style="color: red;">}</span><span style="color: blue;">&lt;/style&gt;</span>
+    <span style="color: blue;">&lt;/head&gt;</span>
+    <span style="color: blue;">&lt;body&gt;</span>
+        <span style="color: blue;">&lt;h1&gt;</span>Hello World!<span style="color: blue;">&lt;/h1&gt;</span>
+    <span style="color: blue;">&lt;/body&gt;</span>
+<span style="color: blue;">&lt;/html&gt;</span>
+</pre></pre>
+ </section>

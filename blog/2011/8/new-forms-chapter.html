@@ -1,0 +1,489 @@
+<h1>Forms</h1>
+  <p class="hascomments" id="file443-forms-x1">I&#39;ve mentioned the boundary issue already: whenever data enters or leaves an application, we
+   need to validate our data. Probably the most difficult place this occurs is forms. Coding forms
+   is complex; in an ideal world, we&#39;d like a solution that addresses the following problems:</p>
+  <ul id="file443-forms-ul_fvy_beg_md"><li id="file443-forms-x2">Ensure data is valid.</li>
+   <li id="file443-forms-x3">Marshal string data in the form submission to Haskell datatypes.</li>
+   <li id="file443-forms-x4">Generate HTML code for displaying the form.</li>
+   <li id="file443-forms-x5">Generate Javascript to do clientside validation and provide more user-friendly widgets, such
+    as date pickers.</li>
+   <li id="file443-forms-x6">Build up more complex forms by combining together simpler forms.</li>
+   <li id="file443-forms-x7">Automatically assign names to our fields that are guaranteed to be unique.</li>
+  </ul>
+  <p class="hascomments" id="file443-forms-x8">The <a href="http://hackage.haskell.org/package/yesod-form">yesod-form</a> package provides all these features in a simple, declarative
+   API. It builds on top of Yesod&#39;s widgets to simplify styling of forms and applying Javascript
+   appropriately. And like the rest of Yesod, it uses Haskell&#39;s type system to make sure everything
+   is working correctly.</p>
+ <section .subtopic=""><h1>Synopsis</h1>  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,</span>
+<span style="color: gray;">OverloadedStrings, TypeFamilies #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Yesod</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Yesod.Form.Jquery</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Time</span> (<span style="color: blue;">Day</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Applicative</span> ((&lt;$&gt;), (&lt;*&gt;))
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Synopsis</span> = <span style="color: blue;">Synopsis</span>
+
+<span style="color: blue;font-weight: bold;">mkYesod</span> <span style="color: green;">&quot;Synopsis&quot;</span> [parseRoutes|
+/ <span style="color: blue;">RootR</span> <span style="color: blue;">GET</span>
+/person <span style="color: blue;">PersonR</span> <span style="color: blue;">POST</span>
+|]
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">Yesod</span> <span style="color: blue;">Synopsis</span> <span style="color: green;font-weight: bold;">where</span>
+    approot _ = <span style="color: green;">&quot;&quot;</span>
+
+<span style="color: gray;">-- Tells our application to use the standard English messages.</span>
+<span style="color: gray;">-- If you want i18n, then you can supply a translating function instead.</span>
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">RenderMessage</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">FormMessage</span> <span style="color: green;font-weight: bold;">where</span>
+    renderMessage _ _ = defaultFormMessage
+
+<span style="color: gray;">-- And tell us where to find the jQuery libraries. We&#39;ll just use the defaults,</span>
+<span style="color: gray;">-- which point to the Google CDN.</span>
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">YesodJquery</span> <span style="color: blue;">Synopsis</span>
+
+<span style="color: gray;">-- The datatype we wish to receive from the form</span>
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Person</span> = <span style="color: blue;">Person</span>
+    { personName :: <span style="color: blue;">Text</span>
+    , personBirthday :: <span style="color: blue;">Day</span>
+    , personFavoriteColor :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Text</span>
+    , personEmail :: <span style="color: blue;">Text</span>
+    , personWebsite :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Text</span>
+    }
+  <span style="color: green;font-weight: bold;">deriving</span> <span style="color: blue;">Show</span>
+
+<span style="color: gray;">-- Declare the form. The type signature is a bit intimidating, but here&#39;s the</span>
+<span style="color: gray;">-- overview:</span>
+--
+<span style="color: gray;">-- * The Html parameter is used for encoding some extra information, such as a</span>
+<span style="color: gray;">-- nonce for avoiding CSRF attacks</span>
+--
+<span style="color: gray;">-- * We have the sub and master site types, as usual.</span>
+--
+<span style="color: gray;">-- * FormResult can be in three states: FormMissing (not data available),</span>
+<span style="color: gray;">-- FormFailure (invalid data) and FormSuccess</span>
+--
+<span style="color: gray;">-- * The Widget is the viewable form to place into the web page.</span>
+<span style="color: blue;font-weight: bold;">personForm</span> :: <span style="color: blue;">Html</span> -&gt; <span style="color: blue;">Form</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Synopsis</span> (<span style="color: blue;">FormResult</span> <span style="color: blue;">Person</span>, <span style="color: blue;">Widget</span>)
+<span style="color: blue;font-weight: bold;">personForm</span> = renderDivs $ <span style="color: blue;">Person</span>
+    &lt;$&gt; areq textField <span style="color: green;">&quot;Name&quot;</span> <span style="color: blue;">Nothing</span>
+    &lt;*&gt; areq (jqueryDayField def
+        { jdsChangeYear = <span style="color: blue;">True</span> <span style="color: gray;">-- give a year dropdown</span>
+        , jdsYearRange = <span style="color: green;">&quot;1900:-5&quot;</span> <span style="color: gray;">-- 1900 till five years ago</span>
+        }) <span style="color: green;">&quot;Birthday&quot;</span> <span style="color: blue;">Nothing</span>
+    &lt;*&gt; aopt textField <span style="color: green;">&quot;Favorite color&quot;</span> <span style="color: blue;">Nothing</span>
+    &lt;*&gt; areq emailField <span style="color: green;">&quot;Email address&quot;</span> <span style="color: blue;">Nothing</span>
+    &lt;*&gt; aopt urlField <span style="color: green;">&quot;Website&quot;</span> <span style="color: blue;">Nothing</span>
+
+<span style="color: gray;">-- The GET handler displays the form</span>
+<span style="color: blue;font-weight: bold;">getRootR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getRootR</span> = <span style="color: green;font-weight: bold;">do</span>
+    <span style="color: gray;">-- Generate the form to be displayed</span>
+    ((_, widget), enctype) &lt;- generateFormPost personForm
+    defaultLayout [whamlet|
+&lt;p&gt;<span style="color: blue;">The</span> widget generated contains only the contents <span style="color: green;font-weight: bold;">of</span> the form, not the form tag itself. <span style="color: blue;">So.</span>..
+&lt;form method=post action=@{<span style="color: blue;">PersonR</span>} enctype=#{enctype}&gt;
+    ^{widget}
+    &lt;p&gt;<span style="color: blue;">It</span> also doesn&#39;t include the submit button.
+    &lt;input <span style="color: green;font-weight: bold;">type</span>=submit&gt;
+|]
+
+<span style="color: gray;">-- The POST handler processes the form. If it is successful, it displays the</span>
+<span style="color: gray;">-- parsed person. Otherwise, it displays the form again with error messages.</span>
+<span style="color: blue;font-weight: bold;">postPersonR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">postPersonR</span> = <span style="color: green;font-weight: bold;">do</span>
+    ((result, widget), enctype) &lt;- runFormPost personForm
+    <span style="color: green;font-weight: bold;">case</span> result <span style="color: green;font-weight: bold;">of</span>
+        <span style="color: blue;">FormSuccess</span> person -&gt; defaultLayout [whamlet|&lt;p&gt;#{show person}|]
+        _ -&gt; defaultLayout [whamlet|
+&lt;p&gt;<span style="color: blue;">Invalid</span> input, let&#39;s try again.
+&lt;form method=post action=@{<span style="color: blue;">PersonR</span>} enctype=#{enctype}&gt;
+    ^{widget}
+    &lt;input <span style="color: green;font-weight: bold;">type</span>=submit&gt;
+|]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = warpDebug <span style="color: teal;">3000</span> <span style="color: blue;">Synopsis</span>
+</pre></pre>
+ </section><section .subtopic=""><h1>Kinds of Forms</h1>
+  <p class="hascomments" id="file433-kinds-of-forms-x1">Before jumping into the types themselves, we should begin with an overview of the different
+   kinds of forms. There are three categories:</p>
+  <dl id="file433-kinds-of-forms-x2"><dt id="file433-kinds-of-forms-x4">Applicative</dt>
+    <dd id="file433-kinds-of-forms-x5">These are the most commonly used (it&#39;s what appeared in the synopsis). Applicative gives us
+     some nice properties of letting error messages coallesce together and keep a very high-level,
+     declarative approach.</dd>
+   
+   
+    <dt id="file433-kinds-of-forms-x7">Monadic</dt>
+    <dd id="file433-kinds-of-forms-x8">A more powerful alternative to applicative. While this allows you more flexibility, at the
+     cost of being more verbose. Useful if you want to create forms that don&#39;t fit into the standard
+     two-column look.</dd>
+   
+   
+    <dt id="file433-kinds-of-forms-x10">Input</dt>
+    <dd id="file433-kinds-of-forms-x11">Used only for receiving input. Does not generate any HTML for receiving the user input.
+     Useful for interacting with existing forms.</dd>
+   
+  </dl>
+  <p class="hascomments" id="file433-kinds-of-forms-x12">In addition, there are a number of different variables that come into play for each form and
+   field you will want to set up:</p>
+  <ul id="file433-kinds-of-forms-ul_ibl_vig_md"><li id="file433-kinds-of-forms-x13">Is the field required or optional?</li>
+   <li id="file433-kinds-of-forms-x14">Should it be submitted with GET or POST?</li>
+   <li id="file433-kinds-of-forms-x15">Does it have a default value, or not?</li>
+  </ul>
+  <p class="hascomments" id="file433-kinds-of-forms-x16">An overriding goal is to minimize the number of field definitions and let them work in as many
+   contexts as possible. One result of this is that we end up with a few extra words for each field.
+   In the synopsis, you may have noticed things like areq and that extra Nothing parameter. We&#39;ll
+   cover why all of those exist in the course of this chapter, but for now realize that by making
+   these parameters explicit, we are able to reuse the individuals fields (like
+    <a href="http://hackage.haskell.org/packages/archive/yesod-form/latest/doc/html/Yesod-Form-Fields.html#v:intField">intField</a>) in many different ways.</p>
+ </section><section .subtopic=""><h1>Types</h1>
+  <p class="hascomments" id="file434-types-x1">The <a href="http://hackage.haskell.org/packages/archive/yesod-form/latest/doc/html/Yesod-Form-Types.html">Yesod.Form.Types</a> module declares a few types. Let&#39;s start off
+   with some simple helpers:</p>
+  <dl id="file434-types-x3"><dt id="file434-types-x5">Enctype</dt>
+    <dd id="file434-types-x6">The encoding type, either UrlEncoded or Multipart. This datatype declares an instance of
+     ToHtml, so you can use the enctype directly in Hamlet.</dd>
+   
+   
+    <dt id="file434-types-x8">Env</dt>
+    <dd id="file434-types-x9">Maps a parameter name to a list of values.</dd>
+   
+   
+    <dt id="file434-types-x11">FileEnv</dt>
+    <dd id="file434-types-x12">Maps a parameter name to the associated uploaded file.</dd>
+   
+   
+    <dt id="file434-types-x14">Ints</dt>
+    <dd id="file434-types-x15">As mentioned in the introduction, yesod-form automatically assigns a unique name to each
+     field. Ints is used to keep track of the next number to assign.</dd>
+   
+   
+    <dt id="file434-types-x17">FormResult</dt>
+    <dd id="file434-types-x18">Has one of three possible states: FormMissing if no data was submitted, FormFailure if there
+     was an error parsing the form (e.g., missing a required field, invalid content), or FormSuccess
+     if everything went smoothly.</dd>
+   
+  </dl>
+  <p class="hascomments" id="file434-types-x19">Next we have three datatypes used for defining individual fields.</p>
+  <aside class="note" id="file434-types-x20">A field is a single piece of information, such as a number, a string or an email address.
+   Fields are combined together to build forms.</aside>
+  <dl id="file434-types-x21"><dt id="file434-types-x23">Field</dt>
+    <dd id="file434-types-x24">Defines two pieces of functionality: how to parse the text input from a user into a Haskell
+     value, and how to create the widget to be displayed to the user. yesod-form defines a number of
+     individual Fields in <a href="http://hackage.haskell.org/packages/archive/yesod-form/latest/doc/html/Yesod-Form-Fields.html">Yesod.Form.Fields</a>.</dd>
+   
+   
+    <dt id="file434-types-x27">FieldSettings</dt>
+    <dd id="file434-types-x28">Basic information on how a field should be displayed, such as the display name, an optional
+     tooltip, and possibly hardcoded id and name attributes. (If none are provided, they are
+     automatically generated.)<aside class="note" id="file434-types-x29">FieldSettings provides an IsString instance, so you can usually
+      just type in the name of the field. That&#39;s how we interacted with it in the
+     synopsis.</aside></dd>
+   
+   
+    <dt id="file434-types-x31">FieldView</dt>
+    <dd id="file434-types-x32">An intermediate format containing a bunch of view information on a field. This is hardly
+     ever used directly by the user, we&#39;ll see more details later.</dd>
+   
+  </dl>
+  <p class="hascomments" id="file434-types-x33">And finally, we get to the important stuff: the forms themselves. There are three types for
+   this: Form is for monadic forms, AForm for Applicative and IForm (declared in
+    <a href="http://hackage.haskell.org/packages/archive/yesod-form/latest/doc/html/Yesod-Form-Input.html#t:IForm">IForm</a>) for input. Form is actually just a simple
+   type synonym for a monad stack that provides the following features:</p>
+  <ul id="file434-types-ul_cju_elg_md"><li id="file434-types-x35">A Reader monad giving us the parameters (Env and FileEnv), the master site argument and the
+    list of languages the user supports. The last two are used for i18n (more on this later).</li>
+   <li id="file434-types-x36">A Writer monad keeping track of the Enctype. A form will always be UrlEncoded, unless there
+    is a file input field, which will force us to use multipart instead.</li>
+   <li id="file434-types-x37">A State monad holding an Ints to keep track of the next unique name to produce.</li>
+  </ul>
+  <p class="hascomments" id="file434-types-x38">An AForm is pretty similar. However, there are a few major differences:</p>
+  <ul id="file434-types-ul_atf_olg_md"><li id="file434-types-x39">It produces a list of FieldViews. This allows us to keep an abstract idea of the form
+    display, and then at the end of the day choose an appropriate function for laying it out on the
+    page. In the synopsis, we used renderDivs, which creates a bunch of div tags. Another options
+    would be renderTable.</li>
+   <li id="file434-types-x40">It does not provide a Monad instance. The goal of Applicative is to allow the entire form to
+    run, grab as much information on each field as possible, and then create the final result. This
+    cannot work in the context of Monad.</li>
+  </ul>
+  <p class="hascomments" id="file434-types-x41">An IForm is even simpler: it returns either a list of error messages or a result.</p>
+ </section><section .subtopic=""><h1>Converting</h1>
+  <p class="hascomments" id="file435-converting-x1">&quot;But wait a minute,&quot; you say. &quot;You said the synopsis uses applicative forms, but I&#39;m sure the
+   type signature said Form. Shouldn&#39;t it be Monadic?&quot; That&#39;s true, the final form we produced was
+   monadic. But what really happened is that we converted an applicative form to a monadic one.</p>
+  <p class="hascomments" id="file435-converting-x2">Again, our goal is to reuse code as much as possible, and minimize the number of functions in
+   the API. And Monadic forms are more powerful than Applicative, if more clumsy, so anything that
+   can be expressed in an Applicative form could also be expressed in a Monadic form. There are two
+   core functions that help out with this: aformToForm converts any applicative form to a monadic
+   one, and formToAForm converts certain kinds of monadic forms to applicative forms.</p>
+  <p class="hascomments" id="file435-converting-x3">&quot;But wait <b id="file435-converting-x4">another</b> minute,&quot; you insist. &quot;I didn&#39;t see any aformToForm!&quot; Also true. The
+   renderDivs function takes care of that for us.</p>
+ </section><section .subtopic=""><h1>Create AForms</h1>
+  <p class="hascomments" id="file437-create-aforms-x1">Now that I&#39;ve (hopefully) convinced you that in our synopsis we were really dealing with
+   applicative forms, let&#39;s have a look and try to understand how these things get created. Let&#39;s
+   take a simple example:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Car</span> = <span style="color: blue;">Car</span>
+    { carModel :: <span style="color: blue;">Text</span>
+    , carYear :: <span style="color: blue;">Int</span>
+    }
+  <span style="color: green;font-weight: bold;">deriving</span> <span style="color: blue;">Show</span>
+
+<span style="color: blue;font-weight: bold;">carAForm</span> :: <span style="color: blue;">AForm</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Car</span>
+<span style="color: blue;font-weight: bold;">carAForm</span> = <span style="color: blue;">Car</span>
+    &lt;$&gt; areq textField <span style="color: green;">&quot;Model&quot;</span> <span style="color: blue;">Nothing</span>
+    &lt;*&gt; areq intField <span style="color: green;">&quot;Year&quot;</span> <span style="color: blue;">Nothing</span>
+
+<span style="color: blue;font-weight: bold;">carForm</span> :: <span style="color: blue;">Html</span> -&gt; <span style="color: blue;">Form</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Synopsis</span> (<span style="color: blue;">FormResult</span> <span style="color: blue;">Car</span>, <span style="color: blue;">Widget</span>)
+<span style="color: blue;font-weight: bold;">carForm</span> = renderTable carAForm
+</pre></pre>
+  <p class="hascomments" id="file437-create-aforms-x3">Here, we&#39;ve explicitly split up applicative and monadic forms. In carAForm, we use the &lt;$&gt;
+   and &lt;*&gt; operators. This should be surprising; these are almost always used in
+   applicative-style code. (For more information on applicative code, see <a href="http://www.haskell.org/haskellwiki/Applicative_functor">the
+    Haskell wiki</a>.) And we have one line for each record in our Car datatype. Perhaps
+   unsurprisingly, we have a textField for the Text record, and an intField for the Int record.</p>
+  <p class="hascomments" id="file437-create-aforms-x5">Let&#39;s look a bit more closely at the areq function. Its (simplified) type signature is
+    <code id="file437-create-aforms-x6">Field a -&gt; FieldSettings -&gt; Maybe a -&gt; AForm a</code>. So that first argument is going
+   to determine the datatype of this field, how to parse it, and how to render it. The next
+   argument, FieldSettings, tells us the label, tooltip, name and ID of the field. In this case,
+   we&#39;re using the previously-mentioned IsString instance of FieldSettings.</p>
+  <p class="hascomments" id="file437-create-aforms-x7">And what&#39;s up with that Maybe a? It provides the optional default value. So let&#39;s say we want
+   our form to fill in &quot;2007&quot; as the default car year, we would use <code id="file437-create-aforms-x8">areq intField &quot;Year&quot;
+    (Just 2007)</code>. We can even take this to the next level, and have a form that takes an
+   optional parameter giving the default values.</p>
+  <figure id="file437-create-aforms-x9"><figcaption>Form with default values</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">carAForm</span> :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Car</span> -&gt; <span style="color: blue;">AForm</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Car</span>
+<span style="color: blue;font-weight: bold;">carAForm</span> mcar = <span style="color: blue;">Car</span>
+    &lt;$&gt; areq textField <span style="color: green;">&quot;Model&quot;</span> (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq intField <span style="color: green;">&quot;Year&quot;</span> (carYear &lt;$&gt; mcar)
+</pre></pre>
+  </figure>
+ <section .subtopic=""><h1>Optional fields</h1>  <p class="hascomments" id="file436-optional-fields-x1">Now let&#39;s say that we wanted to have an optional field (like the car color). All we do instead
+   is use the aopt function.</p>
+  <figure id="file436-optional-fields-x2"><figcaption>Optional fields</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Car</span> = <span style="color: blue;">Car</span>
+    { carModel :: <span style="color: blue;">Text</span>
+    , carYear :: <span style="color: blue;">Int</span>
+    , carColor :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Text</span>
+    }
+  <span style="color: green;font-weight: bold;">deriving</span> <span style="color: blue;">Show</span>
+
+<span style="color: blue;font-weight: bold;">carAForm</span> :: <span style="color: blue;">AForm</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Car</span>
+<span style="color: blue;font-weight: bold;">carAForm</span> = <span style="color: blue;">Car</span>
+    &lt;$&gt; areq textField <span style="color: green;">&quot;Model&quot;</span> <span style="color: blue;">Nothing</span>
+    &lt;*&gt; areq intField <span style="color: green;">&quot;Year&quot;</span> <span style="color: blue;">Nothing</span>
+    &lt;*&gt; aopt textField <span style="color: green;">&quot;Color&quot;</span> <span style="color: blue;">Nothing</span>
+</pre></pre>
+  </figure>
+  <p class="hascomments" id="file436-optional-fields-x5">And like required fields, the last argument is the optional default value. However, this has
+   two layers of Maybe wrapping. This may seem redundant (and it is), but it makes it much easier to
+   write code that takes an optional default form parameter.</p>
+  <figure id="file436-optional-fields-x6"><figcaption>Default optional fields</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Car</span> = <span style="color: blue;">Car</span>
+    { carModel :: <span style="color: blue;">Text</span>
+    , carYear :: <span style="color: blue;">Int</span>
+    , carColor :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Text</span>
+    }
+  <span style="color: green;font-weight: bold;">deriving</span> <span style="color: blue;">Show</span>
+
+<span style="color: blue;font-weight: bold;">carAForm</span> :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Car</span> -&gt; <span style="color: blue;">AForm</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Car</span>
+<span style="color: blue;font-weight: bold;">carAForm</span> mcar = <span style="color: blue;">Car</span>
+    &lt;$&gt; areq textField <span style="color: green;">&quot;Model&quot;</span> (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq intField <span style="color: green;">&quot;Year&quot;</span> (carYear &lt;$&gt; mcar)
+    &lt;*&gt; aopt textField <span style="color: green;">&quot;Color&quot;</span> (carColor &lt;$&gt; mcar)
+
+<span style="color: blue;font-weight: bold;">carForm</span> :: <span style="color: blue;">Html</span> -&gt; <span style="color: blue;">Form</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Synopsis</span> (<span style="color: blue;">FormResult</span> <span style="color: blue;">Car</span>, <span style="color: blue;">Widget</span>)
+<span style="color: blue;font-weight: bold;">carForm</span> = renderTable $ carAForm $ <span style="color: blue;">Just</span> $ <span style="color: blue;">Car</span> <span style="color: green;">&quot;Forte&quot;</span> <span style="color: teal;">2010</span> $ <span style="color: blue;">Just</span> <span style="color: green;">&quot;gray&quot;</span>
+</pre></pre>
+  </figure>
+ </section></section><section .subtopic=""><h1>Validation</h1>
+  <p class="hascomments" id="file438-validation-x1">Let&#39;s say we only want to accept cars created after 1990. How would we go about limiting
+   things? If you remember, we said above that the Field itself contained the information on what is
+   a valid entry. So all we need to do is write a new Field, right? Well, that would be a bit
+   tedious. Instead, let&#39;s just modify an existing one:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">carAForm</span> :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Car</span> -&gt; <span style="color: blue;">AForm</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Car</span>
+<span style="color: blue;font-weight: bold;">carAForm</span> mcar = <span style="color: blue;">Car</span>
+    &lt;$&gt; areq textField <span style="color: green;">&quot;Model&quot;</span> (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField <span style="color: green;">&quot;Year&quot;</span> (carYear &lt;$&gt; mcar)
+    &lt;*&gt; aopt textField <span style="color: green;">&quot;Color&quot;</span> (carColor &lt;$&gt; mcar)
+  <span style="color: green;font-weight: bold;">where</span>
+    errorMessage :: <span style="color: blue;">Text</span>
+    errorMessage = <span style="color: green;">&quot;Your car is too old, get a new one!&quot;</span>
+
+    carYearField = check validateYear intField
+
+    validateYear y
+        | y &lt; <span style="color: teal;">1990</span> = <span style="color: blue;">Left</span> errorMessage
+        | otherwise = <span style="color: blue;">Right</span> y
+</pre></pre>
+  <p class="hascomments" id="file438-validation-x3">The trick here is the check function. It takes a function (validateYear) that returns either an
+   error message or a modified field value. In this example, we haven&#39;t modified the value at all.
+   That is usually going to be the case. Of course, this kind of checking is very common, so we have
+   a shortcut:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;">carYearField = checkBool (&gt;= <span style="color: teal;">1990</span>) errorMessage intField
+</pre></pre>
+  <p class="hascomments" id="file438-validation-x5">checkBool takes two parameters: a condition that must be fulfilled, and an error message to be
+   displayed if it was not.</p>
+  <aside class="note" id="file438-validation-x6">You may have noticed the explicit Text type signature on errorMessage. In the presence of
+   OverloadedStrings, this is necessary. In order to support i18n, messages can have many different
+   datatypes, and GHC has no way of determining which instance of IsString you intended to
+   use.</aside>
+  <p class="hascomments" id="file438-validation-x7">This is great to make sure the car isn&#39;t too old. But what if we want to make sure that the
+   year specified is not from the future? In order to look up the year, we&#39;ll need to run some IO.
+   For such circumstances, we&#39;ll need checkM:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;">carYearField = checkM inPast $ checkBool (&gt;= <span style="color: teal;">1990</span>) errorMessage intField
+
+    inPast y = <span style="color: green;font-weight: bold;">do</span>
+        thisYear &lt;- liftIO getCurrentYear
+        return $ <span style="color: green;font-weight: bold;">if</span> y &lt;= thisYear
+            <span style="color: green;font-weight: bold;">then</span> <span style="color: blue;">Right</span> y
+            <span style="color: green;font-weight: bold;">else</span> <span style="color: blue;">Left</span> (<span style="color: green;">&quot;You have a time machine!&quot;</span> :: <span style="color: blue;">Text</span>)
+
+<span style="color: blue;font-weight: bold;">getCurrentYear</span> :: <span style="color: blue;">IO</span> <span style="color: blue;">Int</span>
+<span style="color: blue;font-weight: bold;">getCurrentYear</span> = <span style="color: green;font-weight: bold;">do</span>
+    now &lt;- getCurrentTime
+    <span style="color: green;font-weight: bold;">let</span> today = utctDay now
+    <span style="color: green;font-weight: bold;">let</span> (year, _, _) = toGregorian today
+    return $ fromInteger year
+</pre></pre>
+  <p class="hascomments" id="file438-validation-x9">inPast is a simple function that will return an Either result. However, it uses a Handler
+   monad. We use <code id="file438-validation-x10">liftIO getCurrentYear</code> to get the current year and then compare it
+   against the user-supplied year. Also, notice how we can easily chain together multiple
+   validators.</p>
+  <aside class="note" id="file438-validation-x11">Since the checkM validator runs in the Handler monad, it has access to a lot of the stuff
+   you can normally do in Yesod. This is especially useful for running database actions, which we&#39;ll
+   cover in the Persistent chapter.</aside>
+ </section><section .subtopic=""><h1>More sophiticated fields</h1>
+  <p class="hascomments" id="file439-more-sophiticated-fields-x1">Our color entry field is nice, but it&#39;s not exactly user-friendly. What we really want is a
+   dropdown list.</p>
+  <figure id="file439-more-sophiticated-fields-x2"><figcaption>Drop-down lists</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Car</span> = <span style="color: blue;">Car</span>
+    { carModel :: <span style="color: blue;">Text</span>
+    , carYear :: <span style="color: blue;">Int</span>
+    , carColor :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Color</span>
+    }
+  <span style="color: green;font-weight: bold;">deriving</span> <span style="color: blue;">Show</span>
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Color</span> = <span style="color: blue;">Red</span> | <span style="color: blue;">Blue</span> | <span style="color: blue;">Gray</span> | <span style="color: blue;">Black</span>
+    <span style="color: green;font-weight: bold;">deriving</span> (<span style="color: blue;">Show</span>, <span style="color: blue;">Eq</span>, <span style="color: blue;">Enum</span>, <span style="color: blue;">Bounded</span>)
+
+<span style="color: blue;font-weight: bold;">carAForm</span> :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Car</span> -&gt; <span style="color: blue;">AForm</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Car</span>
+<span style="color: blue;font-weight: bold;">carAForm</span> mcar = <span style="color: blue;">Car</span>
+    &lt;$&gt; areq textField <span style="color: green;">&quot;Model&quot;</span> (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField <span style="color: green;">&quot;Year&quot;</span> (carYear &lt;$&gt; mcar)
+    &lt;*&gt; aopt (selectField colors) <span style="color: green;">&quot;Color&quot;</span> (carColor &lt;$&gt; mcar)
+  <span style="color: green;font-weight: bold;">where</span>
+    colors = [(<span style="color: green;">&quot;Red&quot;</span>, <span style="color: blue;">Red</span>), (<span style="color: green;">&quot;Blue&quot;</span>, <span style="color: blue;">Blue</span>), (<span style="color: green;">&quot;Gray&quot;</span>, <span style="color: blue;">Gray</span>), (<span style="color: green;">&quot;Black&quot;</span>, <span style="color: blue;">Black</span>)]
+</pre></pre>
+  </figure>
+  <p class="hascomments" id="file439-more-sophiticated-fields-x5">selectField takes a list of pairs. The first item in the pair is the text displayed to the user
+   in the drop-down list, and the second item is the actual Haskell value. Of course, the code above
+   looks really repetitive; we can get the same result using the Enum and Bounded instance GHC
+   automatically derives for us.</p>
+  <figure id="file439-more-sophiticated-fields-x6"><figcaption>Uses Enum and Bounded</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Car</span> = <span style="color: blue;">Car</span>
+    { carModel :: <span style="color: blue;">Text</span>
+    , carYear :: <span style="color: blue;">Int</span>
+    , carColor :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Color</span>
+    }
+  <span style="color: green;font-weight: bold;">deriving</span> <span style="color: blue;">Show</span>
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Color</span> = <span style="color: blue;">Red</span> | <span style="color: blue;">Blue</span> | <span style="color: blue;">Gray</span> | <span style="color: blue;">Black</span>
+    <span style="color: green;font-weight: bold;">deriving</span> (<span style="color: blue;">Show</span>, <span style="color: blue;">Eq</span>, <span style="color: blue;">Enum</span>, <span style="color: blue;">Bounded</span>)
+
+<span style="color: blue;font-weight: bold;">carAForm</span> :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Car</span> -&gt; <span style="color: blue;">AForm</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Car</span>
+<span style="color: blue;font-weight: bold;">carAForm</span> mcar = <span style="color: blue;">Car</span>
+    &lt;$&gt; areq textField <span style="color: green;">&quot;Model&quot;</span> (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField <span style="color: green;">&quot;Year&quot;</span> (carYear &lt;$&gt; mcar)
+    &lt;*&gt; aopt (selectField colors) <span style="color: green;">&quot;Color&quot;</span> (carColor &lt;$&gt; mcar)
+  <span style="color: green;font-weight: bold;">where</span>
+    colors = map (pack . show &amp;&amp;&amp; id) $ [minBound..maxBound]
+</pre></pre>
+  </figure>
+  <p class="hascomments" id="file439-more-sophiticated-fields-x9">[minBound..maxBound] gives us a list of all the different Color values. We then apply a map and
+   &amp;&amp;&amp; to turn that into a list of pairs.</p>
+  <p class="hascomments" id="file439-more-sophiticated-fields-x10">Of course, some people prefer radio buttons to drop-down lists. Fortunately, this is just a
+   one-word change.</p>
+  <figure id="file439-more-sophiticated-fields-x11"><figcaption>Radio buttons</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Car</span> = <span style="color: blue;">Car</span>
+    { carModel :: <span style="color: blue;">Text</span>
+    , carYear :: <span style="color: blue;">Int</span>
+    , carColor :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Color</span>
+    }
+  <span style="color: green;font-weight: bold;">deriving</span> <span style="color: blue;">Show</span>
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Color</span> = <span style="color: blue;">Red</span> | <span style="color: blue;">Blue</span> | <span style="color: blue;">Gray</span> | <span style="color: blue;">Black</span>
+    <span style="color: green;font-weight: bold;">deriving</span> (<span style="color: blue;">Show</span>, <span style="color: blue;">Eq</span>, <span style="color: blue;">Enum</span>, <span style="color: blue;">Bounded</span>)
+
+<span style="color: blue;font-weight: bold;">carAForm</span> :: <span style="color: blue;">Maybe</span> <span style="color: blue;">Car</span> -&gt; <span style="color: blue;">AForm</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Synopsis</span> <span style="color: blue;">Car</span>
+<span style="color: blue;font-weight: bold;">carAForm</span> mcar = <span style="color: blue;">Car</span>
+    &lt;$&gt; areq textField <span style="color: green;">&quot;Model&quot;</span> (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField <span style="color: green;">&quot;Year&quot;</span> (carYear &lt;$&gt; mcar)
+    &lt;*&gt; aopt (radioField colors) <span style="color: green;">&quot;Color&quot;</span> (carColor &lt;$&gt; mcar)
+  <span style="color: green;font-weight: bold;">where</span>
+    colors = map (pack . show &amp;&amp;&amp; id) $ [minBound..maxBound]
+</pre></pre>
+  </figure>
+ </section><section .subtopic=""><h1>Running forms</h1>
+  <p class="hascomments" id="file440-running-forms-x1">At some point, we&#39;re going to need to take our beautiful forms and produce some results. There
+   are a number of different functions available for this, each with its own purpose. I&#39;ll go
+   through them, starting with the most common.</p>
+  <dl id="file440-running-forms-x2"><dt id="file440-running-forms-x4">runFormPost</dt>
+    <dd id="file440-running-forms-x5">This will run your form against any submitted POST parameter. If this is not a POST
+     submission, it will return a FormMissing. This automatically inserts a nonce as a hidden form
+     field to avoid <a href="http://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF</a> attacks.</dd>
+   
+   
+    <dt id="file440-running-forms-x8">runFormGet</dt>
+    <dd id="file440-running-forms-x9">Same as runFormPost, for GET submissions. In order to distinguish a normal GET page load
+     from a GET submission, it includes an extra _hasdata hidden field in the form.</dd>
+   
+   
+    <dt id="file440-running-forms-x11">runFormPostNoNonce</dt>
+    <dd id="file440-running-forms-x12">Same as runFormPost, but does not include (or require) the CSRF nonce.</dd>
+   
+   
+    <dt id="file440-running-forms-x14">generateFormPost</dt>
+    <dd id="file440-running-forms-x15">Instead of binding to existing POST parameters, acts as if there are none. This can be
+     useful when you want to generate a new form after a previous form was submitted, such as in a
+     wizard.</dd>
+   
+   
+    <dt id="file440-running-forms-x17">generateFormGet</dt>
+    <dd id="file440-running-forms-x18">Same as generateFormPost, but for GET.</dd>
+   
+  </dl>
+  <p class="hascomments" id="file440-running-forms-x19">The return type from the first three is <code id="file440-running-forms-x20">((FormResult a, Widget), Enctype)</code>. The
+   Widget will already have any valdiation errors and previously submitted values.</p>
+ </section><section .subtopic=""><h1>i18n</h1>
+  <p class="hascomments" id="file441-i18n-x1">There have been a few references to i18n in this chapter. The topic will get more thorough
+   coverage in its own chapter, but since it has such a profound effect on yesod-form, I wanted to
+   give a brief overview. The idea behind i18n in Yesod is to have data types represent messages.
+   Each site can have an instance of RenderMessage for a given datatype which will translate that
+   message based on a list of languages the user accepts. As a result of all this, there are a few
+   things you should be aware of:</p>
+  <ul id="file441-i18n-ul_pgx_iyg_md"><li id="file441-i18n-x2">There is an automatic instance of RenderMessage for Text in every site, so you can just use
+    plain strings if you don&#39;t care about i18n support. However, you may need to use explicit type
+    signatures occassionally.</li>
+   <li id="file441-i18n-x3">yesod-form expresses all of its messages in terms of the FormMessage datatype. Therefore, to
+    use yesod-form, you&#39;ll need to have an appropriate RenderMessage instance. A simple one that
+    uses the default English translations would
+    be:<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">RenderMessage</span> <span style="color: blue;">MyApp</span> <span style="color: blue;">FormMessage</span> <span style="color: green;font-weight: bold;">where</span>
+    renderMessage _ _ = defaultFormMessage
+</pre></pre>This
+    is provided automatically by the scaffolded site.</li>
+   <li id="file441-i18n-x5">In order to allow multiple different message types to co-exist, we use an existential type
+    called SomeMessage. You will occassionally need to wrap your values inside of it, though this is
+    not common in normal library use.</li>
+  </ul>
+ </section><section .subtopic=""><h1>TODO</h1>
+  <p class="hascomments" id="file442-todo-x1">This chapter still needs a bit more work. In particular, it should cover:</p>
+  <ul id="file442-todo-ul_jhk_zyg_md"><li id="file442-todo-x2">Monadic forms</li>
+   <li id="file442-todo-x3">Input forms</li>
+   <li id="file442-todo-x4">Creating new fields</li>
+  </ul>
+  <p class="hascomments" id="file442-todo-x5">If you can think of anything else it&#39;s missing, please leave a comment.</p>
+ </section>

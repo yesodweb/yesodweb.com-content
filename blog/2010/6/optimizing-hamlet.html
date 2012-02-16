@@ -1,0 +1,27 @@
+<h3 style="margin-top:2em">Overview</h3>
+<p>You can find <a href="http://old.nabble.com/Google-Summer-of-Code:-BlazeHTML-RFC-to28690433.html">the original benchmarks by Jeremy Shaw</a> for Blaze and Hsp. The Hamlet-3 benchmark is now <a href="http://github.com/snoyberg/hamlet/blob/master/bigtable.hs">part of the Hamlet repository</a>. The final results are as follows:</p>
+<a href="http://www.chartgo.com/linkshare.do?id=86813994aa"><img src="http://www.chartgo.com/link.do?id=86813994aa" alt="Haskell Templating Systems BigTable Benchmark" border="0"></a>
+<h3>Introduction</h3>
+<p>It seems like the new cool thing in the Haskell web ecosystem is benchmarking: we all want to use the fastest libraries out there. Personally, I'm much more interested in type-safe, concise code than having the fastest library... but sometimes it's fun to optimize things.</p>
+<p>When I ran the last set of bigtable benchmarks, I was trying to determine the best backends for serving Yesod applications. However, I stumbled upon some strange performance results: namely, the text package was slower than either bytestrings or plain Strings by a significant margin. Given that Hamlet is based on the text package, this worried me a little bit. After some profiling, I noticed that there was also significant overhead from the enumerator interface.</p>
+<p>So when Jeremy Shaw posted some Criterion-based benchmarking code for Blaze and HSP, I was curious to see how Hamlet stacked up. The first set of results (based on Hamlet 0.2.3.1) were encouraging: Blaze took 105ms while Hamlet took 121ms. Hsp meanwhile pulled in at 140ms. So I was already in the ballpark of Blaze, and beating Hsp.</p>
+<p>However, I wasn't very happy with this result: Hamlet does most of its work at compile time. It's able to concatenate adjacent pieces of static text into a single string. So I began working on Hamlet 0.3, and in particular 2 optimizations.</p>
+<h3>Replace text with UTF-8 bytestrings</h3>
+<p>How many of you still write web applications with a non-UTF8 encoding? Not many I suppose. The text package, however, uses UTF-16 internally. Thus, there's a lot of extra encoding going on when using the text package as the backend.</p>
+<p>Swapping in bytestrings allowed me to completely avoid runtime-encoding of static text, and ensure that dynamic text is encoded only once. We now have 3 basic functions for creating Hamlet values:</p>
+<pre><code>output :: ByteString -&gt; Hamlet ...
+outputOctets :: String -&gt; Hamlet ...
+outputString :: String -&gt; Hamlet ...</code></pre>
+<p>I put an ellipsis at the end there because the type of Hamlet is going to change throughout this post. The important thing here is the difference between outputOctets and outputString: the former converts the String to a ByteString via Data.ByteString.Char8.pack. In other words, <i>it performs no UTF-8 encoding</i>. The Hamlet quasi-quoter UTF-8 encodes all compile-time strings and then generates code which calls outputOctets. outputString, on the other hand, <i>does</i> perform UTF-8 encoding, and is used for runtime-generated strings.</p>
+<p>This optimization showed great results: the bigtable benchmark dropped from 120ms to 70ms.</p>
+<h3>Remove monadic interleaving</h3>
+<p>Hamlet was originally designed to support monadic action interleaving. I thought this would be a great feature: you could interleave file access with template execution, pull in a database result via an enumerator, and then have an enumerator interface for generating template results.</p>
+<p>After writing a hell of a lot of Hamlet-based code, I have not used this feature once. I'm not aware of <i>anyone</i> using this feature. My profiling also indicated that this was another source of a performance hit. So I decided to remove it entirely.</p>
+<p>The first step was to redefine the Hamlet datatype. Previously, it was a newtype wrapper around an enumerator interface. Now, it's much simpler: <code>newtype Hamlet url = Hamlet ((url -> String) -> [ByteString] -> [ByteString])</code>. The first argument in there is the URL render function, and then we return a bytestring-list endomorphism. This allows very efficiecient appending of Hamlets. The main typeclass instance we use is the Monoid one:</p>
+<pre><code>instance Monoid Hamlet where
+    mempty = Hamlet $ const id
+    mappend (Hamlet x) (Hamlet y) = Hamlet $ \r -> (x r) . (y r)</code></pre>
+<p>The internals of the quasi-quote also became much simpler. Another advantage I had not anticipated is much friendlier error messages.</p>
+<p>Final result: bigtable runs in only 40ms. This is a 66% improvement upon Hamlet 0.2, and a 60% advantage over BlazeHtml.</p>
+<h3>Conclusion</h3>
+<p>The code for Hamlet 0.3 is available on Github, but not yet released. Since it introduces breaking changes, it requires a major version jump for dependent packages, in particular Yesod. I'm planning on doing some more testing, perhaps a little more profiling, and releasing it fairly soon. The Yesod 0.3 release will most likely wait for a release of persistent, which should also come out soon. I'm in the process now of integrating forms and generics with persistent values; hopefully we can have a first release within the next two weeks.</p>

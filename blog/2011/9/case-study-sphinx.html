@@ -1,0 +1,650 @@
+<h1>Case Study: Sphinx-based Search</h1>
+  <p class="hascomments" id="file792-conceptId-x-3"><a href="http://sphinxsearch.com/">Sphinx</a> is a search
+   server, and powers the search feature on many sites, including Yesod&#39;s own site. While the actual
+   code necessary to integrate Yesod with Sphinx is relatively short, it touches on a number of
+   complicated topics, and is therefore a great case study in how to play with some of the
+   under-the-surface details of Yesod.</p>
+  <p class="hascomments" id="file792-conceptId-x-5">There are essentially three different pieces at play here:</p>
+  <ul id="file792-conceptId-ul_bqg_pbh_rd"><li id="file792-conceptId-x-6">Storing the content we wish to search. This is fairly straight-forward Persistent code, and
+    we won&#39;t dwell on it much in this chapter.</li>
+   <li id="file792-conceptId-x-7">Accessing Sphinx search results from inside Yesod. Thanks to the <a href="http://hackage.haskell.org/package/sphinx">sphinx</a>
+    package, this is actually very easy.</li>
+   <li id="file792-conceptId-x-9">Providing the document content to Sphinx. This is where the interesting stuff happens, and
+    will show how to deal with streaming content from a database directly to XML, which gets sent
+    directly over the wire to the client.</li>
+  </ul>
+ <section class="subtopic" id="file787-conceptId"><h1>Sphinx Setup</h1>
+  <p class="hascomments" id="file787-conceptId-x-3">Unlike many of our other examples, to start with here we&#39;ll need to actually configure
+   and run our external Sphinx server. I&#39;m not going to go into all the details of Sphinx, partly
+   because it&#39;s not relevant to our point here, and mostly because I&#39;m not an expert on Sphinx.</p>
+  <p class="hascomments" id="file787-conceptId-x-4">Sphinx provides three main command line utilities: <code id="file787-conceptId-x-5">searchd</code>
+   is the actual search daemon that receives requests from the client (in this case, our web app)
+   and returns the search results. <code id="file787-conceptId-x-6">indexer</code> parses the set of documents and
+   creates the search index. <code id="file787-conceptId-x-7">search</code> is a debugging utility that will run
+   simple queries against Sphinx.</p>
+  <p class="hascomments" id="file787-conceptId-x-8">There are two important settings: the source and the index. The source tells Sphinx
+   where to read document information from. It has direct support for MySQL and PostgreSQL, as well
+   as a more general XML format known as xmlpipe2. We&#39;re going to use the last one. This not only
+   will give us more flexibility with choosing Persistent backends, but will also demonstrate some
+   more powerful Yesod concepts.</p>
+  <p class="hascomments" id="file787-conceptId-x-9">The second setting is the index. Sphinx can handle multiple indices simultaneously,
+   which allows it to provide search for multiple services at once. Each index will have a source it
+   pulls from.</p>
+  <p class="hascomments" id="file787-conceptId-x-10">In our case, we&#39;re going to provide a URL from our application (/search/xmlpipe) that provides
+   the XML file required by Sphinx, and then pipe that through to the indexer. So we&#39;ll add the
+   following to our Sphinx config file:</p>
+  <pre class="codeblock" id="file787-conceptId-x-11">source searcher_src
+{
+	type = xmlpipe2
+	xmlpipe_command = curl http://localhost:3000/search/xmlpipe
+}
+
+index searcher
+{
+	source = searcher_src
+	path = /var/data/searcher
+	docinfo = extern
+	charset_type = utf-8
+}</pre>
+  <p class="hascomments" id="file787-conceptId-x-12">In order to build your search index, you would run <code id="file787-conceptId-x-13">indexer searcher</code>. Obviously
+   this won&#39;t work until you have your web app running. For a production site, it would make sense
+   to run this command via a crontab script so the index is regularly updated.</p>
+ </section><section class="subtopic" id="file788-conceptId"><h1>Basic Yesod Setup</h1>
+  <p class="hascomments" id="file788-conceptId-x-3">Let&#39;s get our basic Yesod setup going. We&#39;re going to have a single table in the database for
+   holding documents, which consist of a title and content. We&#39;ll store this in a SQLite database,
+   and provide routes for searching, adding documents, viewing documents and providing the xmlpipe
+   file to Sphinx.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">share</span> [mkPersist sqlSettings, mkMigrate <span style="color: green;">&quot;migrateAll&quot;</span>] [persist|
+<span style="color: blue;">Doc</span>
+    title <span style="color: blue;">Text</span>
+    content <span style="color: blue;">Textarea</span>
+|]
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Searcher</span> = <span style="color: blue;">Searcher</span> <span style="color: blue;">ConnectionPool</span>
+
+<span style="color: blue;font-weight: bold;">mkYesod</span> <span style="color: green;">&quot;Searcher&quot;</span> [parseRoutes|
+/ <span style="color: blue;">RootR</span> <span style="color: blue;">GET</span>
+/doc/#<span style="color: blue;">DocId</span> <span style="color: blue;">DocR</span> <span style="color: blue;">GET</span>
+/add-doc <span style="color: blue;">AddDocR</span> <span style="color: blue;">POST</span>
+/search <span style="color: blue;">SearchR</span> <span style="color: blue;">GET</span>
+/search/xmlpipe <span style="color: blue;">XmlpipeR</span> <span style="color: blue;">GET</span>
+|]
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">Yesod</span> <span style="color: blue;">Searcher</span>
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">YesodPersist</span> <span style="color: blue;">Searcher</span> <span style="color: green;font-weight: bold;">where</span>
+    <span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">YesodPersistBackend</span> <span style="color: blue;">Searcher</span> = <span style="color: blue;">SqlPersist</span>
+
+    runDB action = <span style="color: green;font-weight: bold;">do</span>
+        <span style="color: blue;">Searcher</span> pool &lt;- getYesod
+        runSqlPool action pool
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">RenderMessage</span> <span style="color: blue;">Searcher</span> <span style="color: blue;">FormMessage</span> <span style="color: green;font-weight: bold;">where</span>
+    renderMessage _ _ = defaultFormMessage
+</pre></pre>
+  <p class="hascomments" id="file788-conceptId-x-5">Hopefully all of this looks pretty familiar by now. Next we&#39;ll define some forms: one for
+   creating documents, and one for searching:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">addDocForm</span> :: <span style="color: blue;">Html</span> -&gt; <span style="color: blue;">MForm</span> <span style="color: blue;">Searcher</span> <span style="color: blue;">Searcher</span> (<span style="color: blue;">FormResult</span> <span style="color: blue;">Doc</span>, <span style="color: blue;">Widget</span>)
+<span style="color: blue;font-weight: bold;">addDocForm</span> = renderTable $ <span style="color: blue;">Doc</span>
+    &lt;$&gt; areq textField <span style="color: green;">&quot;Title&quot;</span> <span style="color: blue;">Nothing</span>
+    &lt;*&gt; areq textareaField <span style="color: green;">&quot;Contents&quot;</span> <span style="color: blue;">Nothing</span>
+
+<span style="color: blue;font-weight: bold;">searchForm</span> :: <span style="color: blue;">Html</span> -&gt; <span style="color: blue;">MForm</span> <span style="color: blue;">Searcher</span> <span style="color: blue;">Searcher</span> (<span style="color: blue;">FormResult</span> <span style="color: blue;">Text</span>, <span style="color: blue;">Widget</span>)
+<span style="color: blue;font-weight: bold;">searchForm</span> = renderDivs $ areq (searchField <span style="color: blue;">True</span>) <span style="color: green;">&quot;Query&quot;</span> <span style="color: blue;">Nothing</span>
+</pre></pre>
+  <p class="hascomments" id="file788-conceptId-x-7">The <code id="file788-conceptId-x-8">True</code> parameter to searchField makes the field auto-focus on page load.
+   Finally, we have some standard handlers for the homepage (shows the add document form and the
+   search form), the document display, and adding a document.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">getRootR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getRootR</span> = <span style="color: green;font-weight: bold;">do</span>
+    docCount &lt;- runDB $ count ([] :: [<span style="color: blue;">Filter</span> <span style="color: blue;">Doc</span>])
+    ((_, docWidget), _) &lt;- runFormPost addDocForm
+    ((_, searchWidget), _) &lt;- runFormGet searchForm
+    <span style="color: green;font-weight: bold;">let</span> docs = <span style="color: green;font-weight: bold;">if</span> docCount == <span style="color: teal;">1</span>
+                <span style="color: green;font-weight: bold;">then</span> <span style="color: green;">&quot;There is currently 1 document.&quot;</span>
+                <span style="color: green;font-weight: bold;">else</span> <span style="color: green;">&quot;There are currently &quot;</span> ++ show docCount ++ <span style="color: green;">&quot; documents.&quot;</span>
+    defaultLayout [whamlet|
+&lt;p&gt;<span style="color: blue;">Welcome</span> to the search application. #{docs}
+&lt;form method=post action=@{<span style="color: blue;">AddDocR</span>}&gt;
+    &lt;table&gt;
+        ^{docWidget}
+        &lt;tr&gt;
+            &lt;td colspan=<span style="color: teal;">3</span>&gt;
+                &lt;input <span style="color: green;font-weight: bold;">type</span>=submit value=<span style="color: green;">&quot;Add document&quot;</span>&gt;
+&lt;form method=get action=@{<span style="color: blue;">SearchR</span>}&gt;
+    ^{searchWidget}
+    &lt;input <span style="color: green;font-weight: bold;">type</span>=submit value=<span style="color: blue;">Search</span>&gt;
+|]
+
+<span style="color: blue;font-weight: bold;">postAddDocR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">postAddDocR</span> = <span style="color: green;font-weight: bold;">do</span>
+    ((res, docWidget), _) &lt;- runFormPost addDocForm
+    <span style="color: green;font-weight: bold;">case</span> res <span style="color: green;font-weight: bold;">of</span>
+        <span style="color: blue;">FormSuccess</span> doc -&gt; <span style="color: green;font-weight: bold;">do</span>
+            docid &lt;- runDB $ insert doc
+            setMessage <span style="color: green;">&quot;Document added&quot;</span>
+            redirect $ <span style="color: blue;">DocR</span> docid
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=post action=@{<span style="color: blue;">AddDocR</span>}&gt;
+    &lt;table&gt;
+        ^{docWidget}
+        &lt;tr&gt;
+            &lt;td colspan=<span style="color: teal;">3</span>&gt;
+                &lt;input <span style="color: green;font-weight: bold;">type</span>=submit value=<span style="color: green;">&quot;Add document&quot;</span>&gt;
+|]
+
+<span style="color: blue;font-weight: bold;">getDocR</span> :: <span style="color: blue;">DocId</span> -&gt; <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getDocR</span> docid = <span style="color: green;font-weight: bold;">do</span>
+    doc &lt;- runDB $ get404 docid
+    defaultLayout $
+        [whamlet|
+&lt;h1&gt;#{docTitle doc}
+&lt;div .content&gt;#{docContent doc}
+|]
+</pre></pre>
+ </section><section class="subtopic" id="file789-searching"><h1>Searching</h1>
+  <p class="hascomments" id="file789-searching-x-3">Now that we&#39;ve got the boring stuff out of the way, let&#39;s jump into the actual searching. We&#39;re
+   going to need three pieces of information for displaying a result: the document ID it comes from,
+   the title of that document, and the <dfn id="file789-searching-x-4">excerpts</dfn>. Excerpts are the highlighted portions
+   of the document which contain the search term.</p>
+  <figure id="file789-searching-x-5"><figcaption>Search Result</figcaption>
+   
+   <img id="file789-searching-image_dba_loh_rd" src="http://www.yesodweb.com/redirector/home%2F1%2Fbook%2Fyesod-web-framework-book%2Fcase-study-sphinx%2Fsearch-results.png"/></figure>
+  <p class="hascomments" id="file789-searching-x-7">So let&#39;s start off by defining a Result datatype:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Result</span> = <span style="color: blue;">Result</span>
+    { resultId :: <span style="color: blue;">DocId</span>
+    , resultTitle :: <span style="color: blue;">Text</span>
+    , resultExcerpt :: <span style="color: blue;">Html</span>
+    }
+</pre></pre>
+  <p class="hascomments" id="file789-searching-x-9">Next we&#39;ll look at the search handler:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">getSearchR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getSearchR</span> = <span style="color: green;font-weight: bold;">do</span>
+    ((formRes, searchWidget), _) &lt;- runFormGet searchForm
+    searchResults &lt;-
+        <span style="color: green;font-weight: bold;">case</span> formRes <span style="color: green;font-weight: bold;">of</span>
+            <span style="color: blue;">FormSuccess</span> qstring -&gt; getResults qstring
+            _ -&gt; return []
+    defaultLayout $ <span style="color: green;font-weight: bold;">do</span>
+        addLucius [lucius|
+.excerpt {
+    color: green; font-style: italic
+}
+.match {
+    background-color: yellow;
+}
+|]
+        [whamlet|
+&lt;form method=get action=@{<span style="color: blue;">SearchR</span>}&gt;
+    ^{searchWidget}
+    &lt;input <span style="color: green;font-weight: bold;">type</span>=submit value=<span style="color: blue;">Search</span>&gt;
+$<span style="color: green;font-weight: bold;">if</span> not $ null searchResults
+    &lt;h1&gt;<span style="color: blue;">Results</span>
+    $forall result &lt;- searchResults
+        &lt;div .result&gt;
+            &lt;a href=@{<span style="color: blue;">DocR</span> $ resultId result}&gt;#{resultTitle result}
+            &lt;div .excerpt&gt;#{resultExcerpt result}
+|]
+</pre></pre>
+  <p class="hascomments" id="file789-searching-x-11">Nothing magical here, we&#39;re just relying on the <code id="file789-searching-x-27">searchForm</code> defined
+            above, and the <code id="file789-searching-x-28">getResults</code> function which hasn&#39;t been defined yet. This
+            function just takes a search string, and returns a list of results. This is where we
+            first interact with the Sphinx API. We&#39;ll be using two functions: <code id="file789-searching-x-29">query</code>
+            will return a list of matches, and <code id="file789-searching-x-30">buildExcerpts</code> will return the
+            highlighted excerpts. Let&#39;s first look at <code id="file789-searching-x-31">query</code>:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">getResults</span> :: <span style="color: blue;">Text</span> -&gt; <span style="color: blue;">Handler</span> [<span style="color: blue;">Result</span>]
+<span style="color: blue;font-weight: bold;">getResults</span> qstring = <span style="color: green;font-weight: bold;">do</span>
+    sphinxRes&#39; &lt;- liftIO $ <span style="color: blue;">S.</span>query config <span style="color: green;">&quot;searcher&quot;</span> (unpack qstring)
+    <span style="color: green;font-weight: bold;">case</span> sphinxRes&#39; <span style="color: green;font-weight: bold;">of</span>
+        <span style="color: blue;">ST.Ok</span> sphinxRes -&gt; <span style="color: green;font-weight: bold;">do</span>
+            <span style="color: green;font-weight: bold;">let</span> docids = map (<span style="color: blue;">Key</span> . <span style="color: blue;">PersistInt64</span> . <span style="color: blue;">ST.</span>documentId) $ <span style="color: blue;">ST.</span>matches sphinxRes
+            fmap catMaybes $ runDB $ forM docids $ \docid -&gt; <span style="color: green;font-weight: bold;">do</span>
+                mdoc &lt;- get docid
+                <span style="color: green;font-weight: bold;">case</span> mdoc <span style="color: green;font-weight: bold;">of</span>
+                    <span style="color: blue;">Nothing</span> -&gt; return <span style="color: blue;">Nothing</span>
+                    <span style="color: blue;">Just</span> doc -&gt; liftIO $ <span style="color: blue;">Just</span> &lt;$&gt; getResult docid doc qstring
+        _ -&gt; error $ show sphinxRes&#39;
+  <span style="color: green;font-weight: bold;">where</span>
+    config = <span style="color: blue;">S.</span>defaultConfig
+        { <span style="color: blue;">S.</span>port = <span style="color: teal;">9312</span>
+        , <span style="color: blue;">S.</span>mode = <span style="color: blue;">ST.Any</span>
+        }
+</pre></pre>
+  <p class="hascomments" id="file789-searching-x-13"><code id="file789-searching-x-32">query</code> takes three parameters: the configuration options, the index
+            to search against (searcher in this case) and the search string. It returns a list of
+            document IDs that contain the search string. The tricky bit here is that those documents
+            are returned as <code id="file789-searching-x-14">Int64</code> values, whereas we need <code id="file789-searching-x-15">DocId</code>s. We&#39;re taking advantage of the fact that the SQL
+            Persistent backends use a <code id="file789-searching-x-33">PersistInt64</code> constructor for their IDs, and
+            simply wrap up the values appropriately.</p>
+  <aside class="note" id="file789-searching-x-16">If you&#39;re dealing with a backend that has non-numeric IDs, like MongoDB, you&#39;ll need to work
+   out something a bit more clever than this.</aside>
+  <p class="hascomments" id="file789-searching-x-17">We then loop over the resulting IDs to get a <code id="file789-searching-x-18">[Maybe Result]</code> value, and use
+    <code id="file789-searching-x-19">catMaybes</code> to turn it into a <code id="file789-searching-x-20">[Result]</code>. In the where clause, we
+   define our local settings, which override the default port and set up the search to work when
+    <i id="file789-searching-x-21">any</i> term matches the document.</p>
+  <p class="hascomments" id="file789-searching-x-22">Let&#39;s finally look at the <code id="file789-searching-x-34">getResult</code> function:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">getResult</span> :: <span style="color: blue;">DocId</span> -&gt; <span style="color: blue;">Doc</span> -&gt; <span style="color: blue;">Text</span> -&gt; <span style="color: blue;">IO</span> <span style="color: blue;">Result</span>
+<span style="color: blue;font-weight: bold;">getResult</span> docid doc qstring = <span style="color: green;font-weight: bold;">do</span>
+    excerpt&#39; &lt;- <span style="color: blue;">S.</span>buildExcerpts
+        excerptConfig
+        [<span style="color: blue;">T.</span>unpack $ escape $ docContent doc]
+        <span style="color: green;">&quot;searcher&quot;</span>
+        (unpack qstring)
+    <span style="color: green;font-weight: bold;">let</span> excerpt =
+            <span style="color: green;font-weight: bold;">case</span> excerpt&#39; <span style="color: green;font-weight: bold;">of</span>
+                <span style="color: blue;">ST.Ok</span> bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ <span style="color: blue;">L.</span>concat bss
+                _ -&gt; return ()
+    return <span style="color: blue;">Result</span>
+        { resultId = docid
+        , resultTitle = docTitle doc
+        , resultExcerpt = excerpt
+        }
+  <span style="color: green;font-weight: bold;">where</span>
+    excerptConfig = <span style="color: blue;">E.</span>altConfig { <span style="color: blue;">E.</span>port = <span style="color: teal;">9312</span> }
+
+<span style="color: blue;font-weight: bold;">escape</span> :: <span style="color: blue;">Textarea</span> -&gt; <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">escape</span> =
+    <span style="color: blue;">T.</span>concatMap escapeChar . unTextarea
+  <span style="color: green;font-weight: bold;">where</span>
+    escapeChar <span style="color: red;">&#39;&lt;&#39;</span> = <span style="color: green;">&quot;&amp;lt;&quot;</span>
+    escapeChar <span style="color: red;">&#39;&gt;&#39;</span> = <span style="color: green;">&quot;&amp;gt;&quot;</span>
+    escapeChar <span style="color: red;">&#39;&amp;&#39;</span> = <span style="color: green;">&quot;&amp;amp;&quot;</span>
+    escapeChar c   = <span style="color: blue;">T.</span>singleton c
+</pre></pre>
+  <p class="hascomments" id="file789-searching-x-24"><code id="file789-searching-x-35">buildExcerpts</code> takes four parameters: the configuration options, the
+            textual contents of the document, the search index and the search term. The interesting
+            bit is that we entity escape the text content. Sphinx won&#39;t automatically escape these
+            for us, so we must do it explicitly.</p>
+  <p class="hascomments" id="file789-searching-x-25">Similarly, the result from Sphinx is a list of lazy ByteStrings. But of course, we&#39;d rather
+   have Html. So we concat that list into a single lazy ByteString, decode it to a lazy text
+   (ignoring invalid UTF-8 character sequences), and use preEscapedLazyText to make sure that the
+   tags inserted for matches are not escaped. A sample of this HTML is:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;">&amp;#8230;</span> Departments.  The President shall have <span style="color: blue;">&lt;span</span> <span style="color: green;font-weight: bold;">class</span>=<span style="color: green;">&#39;match&#39;</span><span style="color: blue;">&gt;</span>Power<span style="color: blue;">&lt;/span&gt;</span> to fill up all Vacancies
+<span style="color: green;">&amp;#8230;</span>  people. Amendment 11 The Judicial <span style="color: blue;">&lt;span</span> <span style="color: green;font-weight: bold;">class</span>=<span style="color: green;">&#39;match&#39;</span><span style="color: blue;">&gt;</span>power<span style="color: blue;">&lt;/span&gt;</span> of the United States shall
+<span style="color: green;">&amp;#8230;</span> jurisdiction. 2. Congress shall have <span style="color: blue;">&lt;span</span> <span style="color: green;font-weight: bold;">class</span>=<span style="color: green;">&#39;match&#39;</span><span style="color: blue;">&gt;</span>power<span style="color: blue;">&lt;/span&gt;</span> to enforce this article by
+<span style="color: green;">&amp;#8230;</span> 5. The Congress shall have <span style="color: blue;">&lt;span</span> <span style="color: green;font-weight: bold;">class</span>=<span style="color: green;">&#39;match&#39;</span><span style="color: blue;">&gt;</span>power<span style="color: blue;">&lt;/span&gt;</span> to enforce, by appropriate legislation
+<span style="color: green;">&amp;#8230;</span>
+</pre></pre>
+ </section><section class="subtopic" id="file790-conceptId"><h1>Streaming xmlpipe output</h1>
+  <p class="hascomments" id="file790-conceptId-x-3">We&#39;ve saved the best for last. For the majority of Yesod handlers, the recommended approach is
+   to load up the database results into memory and then produce the output document based on that.
+   It&#39;s simpler to work with, but more importantly it&#39;s more resilient to exceptions. If there&#39;s a
+   problem loading the data from the database, the user will get a proper 500 response code.</p>
+  <aside class="note" id="file790-conceptId-x-4">What do I mean by &quot;proper 500 response code?&quot; If you start streaming a response to a client,
+   and encounter an exception halfway through, there&#39;s no way to change the status code; the user
+   will see a 200 response that simply stops in the middle. Not only can this partial content be
+   confusing, but it&#39;s an invalid usage of the HTTP spec.</aside>
+  <p class="hascomments" id="file790-conceptId-x-5">However, generating the xmlpipe output is a perfect example of the alternative. There are
+   potentially a huge number of documents (the yesodweb.com code handles tens of thousands of
+   these), and documents could easily be several hundred kilobytes. If we take a non-streaming
+   approach, this can lead to huge memory usage and slow response times.</p>
+  <p class="hascomments" id="file790-conceptId-x-6">So how exactly do we create a streaming response? As we cover in <a href="http://www.yesodweb.com/redirector/home%2F1%2Fbook%2Fyesod-web-framework-book%2Fweb-application-interface%2Fweb-application-interface.dita">the WAI chapter</a>, we have a <code id="file790-conceptId-x-39">ResponseSource</code> constructor that
+   uses a stream of blaze-builder <code id="file790-conceptId-x-8">Builder</code>s. From the Yesod side, we can
+   avoid the normal Yesod response procedure and send a WAI response directly using the <code id="file790-conceptId-x-9">sendWaiResponse</code> function. So there are at least two of the pieces of this
+   puzzle.</p>
+  <p class="hascomments" id="file790-conceptId-x-10">Now we know we want to create a stream of <code id="file790-conceptId-x-40">Builder</code>s from some XML
+   content. Fortunately, the <a href="http://hackage.haskell.org/package/xml-conduit">xml-conduit</a> package provides this
+   interface directly. <code id="file790-conceptId-x-41">xml-conduit</code> provides some high-level interfaces for dealing
+   with documents as a whole, but in our case, we&#39;re going to need to use the low-level Event
+   interface to ensure minimal memory impact. So the function we&#39;re interested in is:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">renderBuilder</span> :: <span style="color: blue;">Resource</span> m =&gt; <span style="color: blue;">RenderSettings</span> -&gt; <span style="color: blue;">Conduit</span> <span style="color: blue;">Event</span> m <span style="color: blue;">Builder</span> b
+</pre></pre>
+  <p class="hascomments" id="file790-conceptId-x-13">In plain English, that means renderBytes takes some settings (we&#39;ll just use the
+   defaults), and will then convert a stream of <code id="file790-conceptId-x-42">Event</code>s to a stream of
+    <code id="file790-conceptId-x-43">Builder</code>s. This is looking pretty good, all we need now is a stream of
+    <code id="file790-conceptId-x-44">Event</code>s.</p>
+  <p class="hascomments" id="file790-conceptId-x-14">Speaking of which, what should our XML document actually look like? It&#39;s pretty
+   simple, we have a <code id="file790-conceptId-x-15">sphinx:docset</code> root element, a <code id="file790-conceptId-x-16">sphinx:schema</code> element containing a single <code id="file790-conceptId-x-17">sphinx:field</code>
+   (which defines the content field), and then a <code id="file790-conceptId-x-18">sphinx:document</code> for each
+   document in our database. That last element will have an <code id="file790-conceptId-x-45">id</code> attribute and a
+   child <code id="file790-conceptId-x-19">content</code> element.</p>
+  <figure id="file790-conceptId-x-20"><figcaption>Sample xmlpipe document</figcaption>
+   
+   <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;">&lt;sphinx:docset</span> xmlns:<span style="color: green;font-weight: bold;">sphinx</span>=<span style="color: green;">&quot;http://sphinxsearch.com/&quot;</span><span style="color: blue;">&gt;</span>
+    <span style="color: blue;">&lt;sphinx:schema&gt;</span>
+        <span style="color: blue;">&lt;sphinx:field</span> <span style="color: green;font-weight: bold;">name</span>=<span style="color: green;">&quot;content&quot;</span>/<span style="color: blue;">&gt;</span>
+    <span style="color: blue;">&lt;/sphinx:schema&gt;</span>
+    <span style="color: blue;">&lt;sphinx:document</span> <span style="color: green;font-weight: bold;">id</span>=<span style="color: green;">&quot;1&quot;</span><span style="color: blue;">&gt;</span>
+        <span style="color: blue;">&lt;content&gt;</span>bar<span style="color: blue;">&lt;/content&gt;</span>
+    <span style="color: blue;">&lt;/sphinx:document&gt;</span>
+    <span style="color: blue;">&lt;sphinx:document</span> <span style="color: green;font-weight: bold;">id</span>=<span style="color: green;">&quot;2&quot;</span><span style="color: blue;">&gt;</span>
+        <span style="color: blue;">&lt;content&gt;</span>foo bar baz<span style="color: blue;">&lt;/content&gt;</span>
+    <span style="color: blue;">&lt;/sphinx:document&gt;</span>
+<span style="color: blue;">&lt;/sphinx:docset&gt;</span>
+</pre></pre>
+  </figure>
+  <p class="hascomments" id="file790-conceptId-x-23">Every document is going to start off with the same events (start the docset, start
+   the schema, etc) and end with the same event (end the docset). We&#39;ll start off by defining
+   those:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">toName</span> :: <span style="color: blue;">Text</span> -&gt; <span style="color: blue;">X.Name</span>
+<span style="color: blue;font-weight: bold;">toName</span> x = <span style="color: blue;">X.Name</span> x (<span style="color: blue;">Just</span> <span style="color: green;">&quot;http://sphinxsearch.com/&quot;</span>) (<span style="color: blue;">Just</span> <span style="color: green;">&quot;sphinx&quot;</span>)
+
+<span style="color: blue;font-weight: bold;">docset</span>, schema, field, document, content :: <span style="color: blue;">X.Name</span>
+<span style="color: blue;font-weight: bold;">docset</span> = toName <span style="color: green;">&quot;docset&quot;</span>
+<span style="color: blue;font-weight: bold;">schema</span> = toName <span style="color: green;">&quot;schema&quot;</span>
+<span style="color: blue;font-weight: bold;">field</span> = toName <span style="color: green;">&quot;field&quot;</span>
+<span style="color: blue;font-weight: bold;">document</span> = toName <span style="color: green;">&quot;document&quot;</span>
+<span style="color: blue;font-weight: bold;">content</span> = <span style="color: green;">&quot;content&quot;</span> <span style="color: gray;">-- no prefix</span>
+
+<span style="color: blue;font-weight: bold;">startEvents</span>, endEvents :: [<span style="color: blue;">X.Event</span>]
+<span style="color: blue;font-weight: bold;">startEvents</span> =
+    [ <span style="color: blue;">X.EventBeginDocument</span>
+    , <span style="color: blue;">X.EventBeginElement</span> docset []
+    , <span style="color: blue;">X.EventBeginElement</span> schema []
+    , <span style="color: blue;">X.EventBeginElement</span> field [(<span style="color: green;">&quot;name&quot;</span>, [<span style="color: blue;">X.ContentText</span> <span style="color: green;">&quot;content&quot;</span>])]
+    , <span style="color: blue;">X.EventEndElement</span> field
+    , <span style="color: blue;">X.EventEndElement</span> schema
+    ]
+
+<span style="color: blue;font-weight: bold;">endEvents</span> =
+    [ <span style="color: blue;">X.EventEndElement</span> docset
+    ]
+</pre></pre>
+  <p class="hascomments" id="file790-conceptId-x-25">Now that we have the shell of our document, we need to get the <code id="file790-conceptId-x-26">Event</code>s for each individual document. This is actually a fairly simple function:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">entityToEvents</span> :: (<span style="color: blue;">Entity</span> <span style="color: blue;">Doc</span>) -&gt; [<span style="color: blue;">X.Event</span>]
+<span style="color: blue;font-weight: bold;">entityToEvents</span> (<span style="color: blue;">Entity</span> docid doc) =
+    [ <span style="color: blue;">X.EventBeginElement</span> document [(<span style="color: green;">&quot;id&quot;</span>, [<span style="color: blue;">X.ContentText</span> $ toPathPiece docid])]
+    , <span style="color: blue;">X.EventBeginElement</span> content []
+    , <span style="color: blue;">X.EventContent</span> $ <span style="color: blue;">X.ContentText</span> $ unTextarea $ docContent doc
+    , <span style="color: blue;">X.EventEndElement</span> content
+    , <span style="color: blue;">X.EventEndElement</span> document
+    ]
+</pre></pre>
+  <p class="hascomments" id="file790-conceptId-x-28">We start the document element with an <code id="file790-conceptId-x-46">id</code> attribute, start the
+   content, insert the content, and then close both elements. We use <code id="file790-conceptId-x-47">toPathPiece</code> to
+   convert a <code id="file790-conceptId-x-48">DocId</code> into a <code id="file790-conceptId-x-49">Text</code> value. Next, we need to be able to
+   convert a stream of these entities into a stream of events. For this, we can use the built-in
+    <code id="file790-conceptId-x-50">concatMap</code> function from <code id="file790-conceptId-x-51">Data.Conduit.List</code>: <code id="file790-conceptId-x-29">CL.concatMap entityToEvents</code>.</p>
+  <p class="hascomments" id="file790-conceptId-x-30">But what we <i id="file790-conceptId-x-31">really</i> want is to stream those events directly from the
+   database. For most of this book, we&#39;ve used the <code id="file790-conceptId-x-52">selectList</code> function, but
+   Persistent also provides the (more powerful) <code id="file790-conceptId-x-53">selectSourceConn</code> function. So we
+   end up with the function:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">docSource</span> :: <span style="color: blue;">Connection</span> -&gt; <span style="color: blue;">C.Source</span> <span style="color: blue;">IO</span> <span style="color: blue;">X.Event</span>
+<span style="color: blue;font-weight: bold;">docSource</span> conn = selectSourceConn conn [] [] <span style="color: blue;">C.</span>$= <span style="color: blue;">CL.</span>concatMap entityToEvents
+</pre></pre>
+  <p class="hascomments" id="file790-conceptId-x-33">The $= operator joins together a source and a conduit into a new source. Now that we
+   have our <code id="file790-conceptId-x-54">Event</code> source, all we need to do is surround it with the document start
+   and end events. With <code id="file790-conceptId-x-55">Source</code>&#39;s <code id="file790-conceptId-x-56">Monoid</code> instance, this is a piece
+   of cake:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">fullDocSource</span> :: <span style="color: blue;">Connection</span> -&gt; <span style="color: blue;">C.Source</span> <span style="color: blue;">IO</span> <span style="color: blue;">X.Event</span>
+<span style="color: blue;font-weight: bold;">fullDocSource</span> conn = mconcat
+    [ <span style="color: blue;">CL.</span>sourceList startEvents
+    , docSource conn
+    , <span style="color: blue;">CL.</span>sourceList endEvents
+    ]
+</pre></pre>
+  <p class="hascomments" id="file790-conceptId-x-35">We&#39;re almost there, now we just need to tie it together in
+    <code id="file790-conceptId-x-57">getXmlpipeR</code>. We need to get a database connection to be used. Normally,
+   database connections are taken and returned automatically via the <code id="file790-conceptId-x-58">runDB</code>
+   function. In our case, we want to check out a connection and keep it available until the response
+   body is completely sent. To do this, we use the <code id="file790-conceptId-x-59">takeResource</code> function, which
+   registers a cleanup action with the <code id="file790-conceptId-x-60">ResourceT</code> monad.</p>
+  <aside class="note" id="file790-conceptId-x-61">All WAI applications live in a <code id="file790-conceptId-x-62">ResourceT</code> transformer. You can get more
+   information on <code id="file790-conceptId-x-63">ResourceT</code> in the <a href="http://www.yesodweb.com/redirector/home%2F1%2Fbook%2Fyesod-web-framework-book%2Fconduit%2Fconduits.dita">conduit appendix</a>.</aside>
+  <p class="hascomments" id="file790-conceptId-x-36">By default, a resource will not be returned to the pool. This has to do with proper
+   exception handling, but is not relevant for our use case. Therefore, we need to force the
+   connection to be returned to the pool.</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">getXmlpipeR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepXml</span>
+<span style="color: blue;font-weight: bold;">getXmlpipeR</span> = <span style="color: green;font-weight: bold;">do</span>
+    <span style="color: blue;">Searcher</span> pool &lt;- getYesod
+    <span style="color: green;font-weight: bold;">let</span> headers = [(<span style="color: green;">&quot;Content-Type&quot;</span>, <span style="color: green;">&quot;text/xml&quot;</span>)]
+    managedConn &lt;- lift $ takeResource pool
+    <span style="color: green;font-weight: bold;">let</span> conn = mrValue managedConn
+    lift $ mrReuse managedConn <span style="color: blue;">True</span> <span style="color: green;font-weight: bold;">let</span> source = fullDocSource conn <span style="color: blue;">C.</span>$= renderBuilder def
+    sendWaiResponse $ <span style="color: blue;">ResponseSource</span> status200 headers source
+</pre></pre>
+  <p class="hascomments" id="file790-conceptId-x-38">We get our connection pool from the foundation variable, then send a WAI response. We
+   use the <code id="file790-conceptId-x-65">ResponseSource</code> constructor, and provide it the status code, response
+   headers, and body.</p>
+ </section><section class="subtopic" id="file791-fullcode"><h1>Full code</h1>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,</span>
+<span style="color: gray;">QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts</span>
+<span style="color: gray;">#-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Yesod</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text</span> (<span style="color: blue;">Text</span>, unpack)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Applicative</span> ((&lt;$&gt;), (&lt;*&gt;))
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.Sqlite</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.Query.GenericSql</span> (selectSourceConn)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.Store</span> (<span style="color: blue;">PersistValue</span> (<span style="color: blue;">PersistInt64</span>))
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Text.Search.Sphinx</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">S</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Text.Search.Sphinx.Types</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">ST</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Text.Search.Sphinx.ExcerptConfiguration</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">E</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.ByteString.Lazy</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">L</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text.Lazy.Encoding</span> (decodeUtf8With)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Text.Encoding.Error</span> (ignore)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Maybe</span> (catMaybes)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad</span> (forM)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Text</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">T</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.Blaze</span> (preEscapedLazyText)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Conduit</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">C</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.Conduit.List</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">CL</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: green;font-weight: bold;">qualified</span> <span style="color: blue;">Data.XML.Types</span> <span style="color: green;font-weight: bold;">as</span> <span style="color: blue;">X</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.Wai</span> (<span style="color: blue;">Response</span> (<span style="color: blue;">ResponseSource</span>))
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Network.HTTP.Types</span> (status200)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Text.XML.Stream.Render</span> (renderBuilder, def)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Monoid</span> (mconcat)
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit.Pool</span> (takeResource, mrValue, mrReuse)
+
+<span style="color: blue;font-weight: bold;">share</span> [mkPersist sqlSettings, mkMigrate <span style="color: green;">&quot;migrateAll&quot;</span>] [persist|
+<span style="color: blue;">Doc</span>
+    title <span style="color: blue;">Text</span>
+    content <span style="color: blue;">Textarea</span>
+|]
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Searcher</span> = <span style="color: blue;">Searcher</span> <span style="color: blue;">ConnectionPool</span>
+
+<span style="color: blue;font-weight: bold;">mkYesod</span> <span style="color: green;">&quot;Searcher&quot;</span> [parseRoutes|
+/ <span style="color: blue;">RootR</span> <span style="color: blue;">GET</span>
+/doc/#<span style="color: blue;">DocId</span> <span style="color: blue;">DocR</span> <span style="color: blue;">GET</span>
+/add-doc <span style="color: blue;">AddDocR</span> <span style="color: blue;">POST</span>
+/search <span style="color: blue;">SearchR</span> <span style="color: blue;">GET</span>
+/search/xmlpipe <span style="color: blue;">XmlpipeR</span> <span style="color: blue;">GET</span>
+|]
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">Yesod</span> <span style="color: blue;">Searcher</span>
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">YesodPersist</span> <span style="color: blue;">Searcher</span> <span style="color: green;font-weight: bold;">where</span>
+    <span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">YesodPersistBackend</span> <span style="color: blue;">Searcher</span> = <span style="color: blue;">SqlPersist</span>
+
+    runDB action = <span style="color: green;font-weight: bold;">do</span>
+        <span style="color: blue;">Searcher</span> pool &lt;- getYesod
+        runSqlPool action pool
+
+<span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">RenderMessage</span> <span style="color: blue;">Searcher</span> <span style="color: blue;">FormMessage</span> <span style="color: green;font-weight: bold;">where</span>
+    renderMessage _ _ = defaultFormMessage
+
+<span style="color: blue;font-weight: bold;">addDocForm</span> :: <span style="color: blue;">Html</span> -&gt; <span style="color: blue;">MForm</span> <span style="color: blue;">Searcher</span> <span style="color: blue;">Searcher</span> (<span style="color: blue;">FormResult</span> <span style="color: blue;">Doc</span>, <span style="color: blue;">Widget</span>)
+<span style="color: blue;font-weight: bold;">addDocForm</span> = renderTable $ <span style="color: blue;">Doc</span>
+    &lt;$&gt; areq textField <span style="color: green;">&quot;Title&quot;</span> <span style="color: blue;">Nothing</span>
+    &lt;*&gt; areq textareaField <span style="color: green;">&quot;Contents&quot;</span> <span style="color: blue;">Nothing</span>
+
+<span style="color: blue;font-weight: bold;">searchForm</span> :: <span style="color: blue;">Html</span> -&gt; <span style="color: blue;">MForm</span> <span style="color: blue;">Searcher</span> <span style="color: blue;">Searcher</span> (<span style="color: blue;">FormResult</span> <span style="color: blue;">Text</span>, <span style="color: blue;">Widget</span>)
+<span style="color: blue;font-weight: bold;">searchForm</span> = renderDivs $ areq (searchField <span style="color: blue;">True</span>) <span style="color: green;">&quot;Query&quot;</span> <span style="color: blue;">Nothing</span>
+
+<span style="color: blue;font-weight: bold;">getRootR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getRootR</span> = <span style="color: green;font-weight: bold;">do</span>
+    docCount &lt;- runDB $ count ([] :: [<span style="color: blue;">Filter</span> <span style="color: blue;">Doc</span>])
+    ((_, docWidget), _) &lt;- runFormPost addDocForm
+    ((_, searchWidget), _) &lt;- runFormGet searchForm
+    <span style="color: green;font-weight: bold;">let</span> docs = <span style="color: green;font-weight: bold;">if</span> docCount == <span style="color: teal;">1</span>
+                <span style="color: green;font-weight: bold;">then</span> <span style="color: green;">&quot;There is currently 1 document.&quot;</span>
+                <span style="color: green;font-weight: bold;">else</span> <span style="color: green;">&quot;There are currently &quot;</span> ++ show docCount ++ <span style="color: green;">&quot; documents.&quot;</span>
+    defaultLayout [whamlet|
+&lt;p&gt;<span style="color: blue;">Welcome</span> to the search application. #{docs}
+&lt;form method=post action=@{<span style="color: blue;">AddDocR</span>}&gt;
+    &lt;table&gt;
+        ^{docWidget}
+        &lt;tr&gt;
+            &lt;td colspan=<span style="color: teal;">3</span>&gt;
+                &lt;input <span style="color: green;font-weight: bold;">type</span>=submit value=<span style="color: green;">&quot;Add document&quot;</span>&gt;
+&lt;form method=get action=@{<span style="color: blue;">SearchR</span>}&gt;
+    ^{searchWidget}
+    &lt;input <span style="color: green;font-weight: bold;">type</span>=submit value=<span style="color: blue;">Search</span>&gt;
+|]
+
+<span style="color: blue;font-weight: bold;">postAddDocR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">postAddDocR</span> = <span style="color: green;font-weight: bold;">do</span>
+    ((res, docWidget), _) &lt;- runFormPost addDocForm
+    <span style="color: green;font-weight: bold;">case</span> res <span style="color: green;font-weight: bold;">of</span>
+        <span style="color: blue;">FormSuccess</span> doc -&gt; <span style="color: green;font-weight: bold;">do</span>
+            docid &lt;- runDB $ insert doc
+            setMessage <span style="color: green;">&quot;Document added&quot;</span>
+            redirect $ <span style="color: blue;">DocR</span> docid
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=post action=@{<span style="color: blue;">AddDocR</span>}&gt;
+    &lt;table&gt;
+        ^{docWidget}
+        &lt;tr&gt;
+            &lt;td colspan=<span style="color: teal;">3</span>&gt;
+                &lt;input <span style="color: green;font-weight: bold;">type</span>=submit value=<span style="color: green;">&quot;Add document&quot;</span>&gt;
+|]
+
+<span style="color: blue;font-weight: bold;">getDocR</span> :: <span style="color: blue;">DocId</span> -&gt; <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getDocR</span> docid = <span style="color: green;font-weight: bold;">do</span>
+    doc &lt;- runDB $ get404 docid
+    defaultLayout $
+        [whamlet|
+&lt;h1&gt;#{docTitle doc}
+&lt;div .content&gt;#{docContent doc}
+|]
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">Result</span> = <span style="color: blue;">Result</span>
+    { resultId :: <span style="color: blue;">DocId</span>
+    , resultTitle :: <span style="color: blue;">Text</span>
+    , resultExcerpt :: <span style="color: blue;">Html</span>
+    }
+
+<span style="color: blue;font-weight: bold;">getResult</span> :: <span style="color: blue;">DocId</span> -&gt; <span style="color: blue;">Doc</span> -&gt; <span style="color: blue;">Text</span> -&gt; <span style="color: blue;">IO</span> <span style="color: blue;">Result</span>
+<span style="color: blue;font-weight: bold;">getResult</span> docid doc qstring = <span style="color: green;font-weight: bold;">do</span>
+    excerpt&#39; &lt;- <span style="color: blue;">S.</span>buildExcerpts
+        excerptConfig
+        [<span style="color: blue;">T.</span>unpack $ escape $ docContent doc]
+        <span style="color: green;">&quot;searcher&quot;</span>
+        (unpack qstring)
+    <span style="color: green;font-weight: bold;">let</span> excerpt =
+            <span style="color: green;font-weight: bold;">case</span> excerpt&#39; <span style="color: green;font-weight: bold;">of</span>
+                <span style="color: blue;">ST.Ok</span> bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ <span style="color: blue;">L.</span>concat bss
+                _ -&gt; return ()
+    return <span style="color: blue;">Result</span>
+        { resultId = docid
+        , resultTitle = docTitle doc
+        , resultExcerpt = excerpt
+        }
+  <span style="color: green;font-weight: bold;">where</span>
+    excerptConfig = <span style="color: blue;">E.</span>altConfig { <span style="color: blue;">E.</span>port = <span style="color: teal;">9312</span> }
+
+<span style="color: blue;font-weight: bold;">escape</span> :: <span style="color: blue;">Textarea</span> -&gt; <span style="color: blue;">Text</span>
+<span style="color: blue;font-weight: bold;">escape</span> =
+    <span style="color: blue;">T.</span>concatMap escapeChar . unTextarea
+  <span style="color: green;font-weight: bold;">where</span>
+    escapeChar <span style="color: red;">&#39;&lt;&#39;</span> = <span style="color: green;">&quot;&amp;lt;&quot;</span>
+    escapeChar <span style="color: red;">&#39;&gt;&#39;</span> = <span style="color: green;">&quot;&amp;gt;&quot;</span>
+    escapeChar <span style="color: red;">&#39;&amp;&#39;</span> = <span style="color: green;">&quot;&amp;amp;&quot;</span>
+    escapeChar c   = <span style="color: blue;">T.</span>singleton c
+
+<span style="color: blue;font-weight: bold;">getResults</span> :: <span style="color: blue;">Text</span> -&gt; <span style="color: blue;">Handler</span> [<span style="color: blue;">Result</span>]
+<span style="color: blue;font-weight: bold;">getResults</span> qstring = <span style="color: green;font-weight: bold;">do</span>
+    sphinxRes&#39; &lt;- liftIO $ <span style="color: blue;">S.</span>query config <span style="color: green;">&quot;searcher&quot;</span> (unpack qstring)
+    <span style="color: green;font-weight: bold;">case</span> sphinxRes&#39; <span style="color: green;font-weight: bold;">of</span>
+        <span style="color: blue;">ST.Ok</span> sphinxRes -&gt; <span style="color: green;font-weight: bold;">do</span>
+            <span style="color: green;font-weight: bold;">let</span> docids = map (<span style="color: blue;">Key</span> . <span style="color: blue;">PersistInt64</span> . <span style="color: blue;">ST.</span>documentId) $ <span style="color: blue;">ST.</span>matches sphinxRes
+            fmap catMaybes $ runDB $ forM docids $ \docid -&gt; <span style="color: green;font-weight: bold;">do</span>
+                mdoc &lt;- get docid
+                <span style="color: green;font-weight: bold;">case</span> mdoc <span style="color: green;font-weight: bold;">of</span>
+                    <span style="color: blue;">Nothing</span> -&gt; return <span style="color: blue;">Nothing</span>
+                    <span style="color: blue;">Just</span> doc -&gt; liftIO $ <span style="color: blue;">Just</span> &lt;$&gt; getResult docid doc qstring
+        _ -&gt; error $ show sphinxRes&#39;
+  <span style="color: green;font-weight: bold;">where</span>
+    config = <span style="color: blue;">S.</span>defaultConfig
+        { <span style="color: blue;">S.</span>port = <span style="color: teal;">9312</span>
+        , <span style="color: blue;">S.</span>mode = <span style="color: blue;">ST.Any</span>
+        }
+
+<span style="color: blue;font-weight: bold;">getSearchR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepHtml</span>
+<span style="color: blue;font-weight: bold;">getSearchR</span> = <span style="color: green;font-weight: bold;">do</span>
+    ((formRes, searchWidget), _) &lt;- runFormGet searchForm
+    searchResults &lt;-
+        <span style="color: green;font-weight: bold;">case</span> formRes <span style="color: green;font-weight: bold;">of</span>
+            <span style="color: blue;">FormSuccess</span> qstring -&gt; getResults qstring
+            _ -&gt; return []
+    defaultLayout $ <span style="color: green;font-weight: bold;">do</span>
+        addLucius [lucius|
+.excerpt {
+    color: green; font-style: italic
+}
+.match {
+    background-color: yellow;
+}
+|]
+        [whamlet|
+&lt;form method=get action=@{<span style="color: blue;">SearchR</span>}&gt;
+    ^{searchWidget}
+    &lt;input <span style="color: green;font-weight: bold;">type</span>=submit value=<span style="color: blue;">Search</span>&gt;
+$<span style="color: green;font-weight: bold;">if</span> not $ null searchResults
+    &lt;h1&gt;<span style="color: blue;">Results</span>
+    $forall result &lt;- searchResults
+        &lt;div .result&gt;
+            &lt;a href=@{<span style="color: blue;">DocR</span> $ resultId result}&gt;#{resultTitle result}
+            &lt;div .excerpt&gt;#{resultExcerpt result}
+|]
+
+<span style="color: blue;font-weight: bold;">getXmlpipeR</span> :: <span style="color: blue;">Handler</span> <span style="color: blue;">RepXml</span>
+<span style="color: blue;font-weight: bold;">getXmlpipeR</span> = <span style="color: green;font-weight: bold;">do</span>
+    <span style="color: blue;">Searcher</span> pool &lt;- getYesod
+    <span style="color: green;font-weight: bold;">let</span> headers = [(<span style="color: green;">&quot;Content-Type&quot;</span>, <span style="color: green;">&quot;text/xml&quot;</span>)]
+    managedConn &lt;- lift $ takeResource pool
+    <span style="color: green;font-weight: bold;">let</span> conn = mrValue managedConn
+    lift $ mrReuse managedConn <span style="color: blue;">True</span>
+    <span style="color: green;font-weight: bold;">let</span> source = fullDocSource conn <span style="color: blue;">C.</span>$= renderBuilder def
+        flushSource = fmap <span style="color: blue;">C.Chunk</span> source
+    sendWaiResponse $ <span style="color: blue;">ResponseSource</span> status200 headers flushSource
+
+<span style="color: blue;font-weight: bold;">entityToEvents</span> :: (<span style="color: blue;">Entity</span> <span style="color: blue;">Doc</span>) -&gt; [<span style="color: blue;">X.Event</span>]
+<span style="color: blue;font-weight: bold;">entityToEvents</span> (<span style="color: blue;">Entity</span> docid doc) =
+    [ <span style="color: blue;">X.EventBeginElement</span> document [(<span style="color: green;">&quot;id&quot;</span>, [<span style="color: blue;">X.ContentText</span> $ toPathPiece docid])]
+    , <span style="color: blue;">X.EventBeginElement</span> content []
+    , <span style="color: blue;">X.EventContent</span> $ <span style="color: blue;">X.ContentText</span> $ unTextarea $ docContent doc
+    , <span style="color: blue;">X.EventEndElement</span> content
+    , <span style="color: blue;">X.EventEndElement</span> document
+    ]
+
+<span style="color: blue;font-weight: bold;">fullDocSource</span> :: <span style="color: blue;">Connection</span> -&gt; <span style="color: blue;">C.Source</span> <span style="color: blue;">IO</span> <span style="color: blue;">X.Event</span>
+<span style="color: blue;font-weight: bold;">fullDocSource</span> conn = mconcat
+    [ <span style="color: blue;">CL.</span>sourceList startEvents
+    , docSource conn
+    , <span style="color: blue;">CL.</span>sourceList endEvents
+    ]
+
+<span style="color: blue;font-weight: bold;">docSource</span> :: <span style="color: blue;">Connection</span> -&gt; <span style="color: blue;">C.Source</span> <span style="color: blue;">IO</span> <span style="color: blue;">X.Event</span>
+<span style="color: blue;font-weight: bold;">docSource</span> conn = selectSourceConn conn [] [] <span style="color: blue;">C.</span>$= <span style="color: blue;">CL.</span>concatMap entityToEvents
+
+<span style="color: blue;font-weight: bold;">toName</span> :: <span style="color: blue;">Text</span> -&gt; <span style="color: blue;">X.Name</span>
+<span style="color: blue;font-weight: bold;">toName</span> x = <span style="color: blue;">X.Name</span> x (<span style="color: blue;">Just</span> <span style="color: green;">&quot;http://sphinxsearch.com/&quot;</span>) (<span style="color: blue;">Just</span> <span style="color: green;">&quot;sphinx&quot;</span>)
+
+<span style="color: blue;font-weight: bold;">docset</span>, schema, field, document, content :: <span style="color: blue;">X.Name</span>
+<span style="color: blue;font-weight: bold;">docset</span> = toName <span style="color: green;">&quot;docset&quot;</span>
+<span style="color: blue;font-weight: bold;">schema</span> = toName <span style="color: green;">&quot;schema&quot;</span>
+<span style="color: blue;font-weight: bold;">field</span> = toName <span style="color: green;">&quot;field&quot;</span>
+<span style="color: blue;font-weight: bold;">document</span> = toName <span style="color: green;">&quot;document&quot;</span>
+<span style="color: blue;font-weight: bold;">content</span> = <span style="color: green;">&quot;content&quot;</span> <span style="color: gray;">-- no prefix</span>
+
+<span style="color: blue;font-weight: bold;">startEvents</span>, endEvents :: [<span style="color: blue;">X.Event</span>]
+<span style="color: blue;font-weight: bold;">startEvents</span> =
+    [ <span style="color: blue;">X.EventBeginDocument</span>
+    , <span style="color: blue;">X.EventBeginElement</span> docset []
+    , <span style="color: blue;">X.EventBeginElement</span> schema []
+    , <span style="color: blue;">X.EventBeginElement</span> field [(<span style="color: green;">&quot;name&quot;</span>, [<span style="color: blue;">X.ContentText</span> <span style="color: green;">&quot;content&quot;</span>])]
+    , <span style="color: blue;">X.EventEndElement</span> field
+    , <span style="color: blue;">X.EventEndElement</span> schema
+    ]
+
+<span style="color: blue;font-weight: bold;">endEvents</span> =
+    [ <span style="color: blue;">X.EventEndElement</span> docset
+    ]
+
+<span style="color: blue;font-weight: bold;">main</span> :: <span style="color: blue;">IO</span> ()
+<span style="color: blue;font-weight: bold;">main</span> = withSqlitePool <span style="color: green;">&quot;searcher.db3&quot;</span> <span style="color: teal;">10</span> $ \pool -&gt; <span style="color: green;font-weight: bold;">do</span>
+    runSqlPool (runMigration migrateAll) pool
+    warpDebug <span style="color: teal;">3000</span> $ <span style="color: blue;">Searcher</span> pool
+</pre></pre>
+ </section>

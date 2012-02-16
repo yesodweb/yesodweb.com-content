@@ -1,0 +1,20 @@
+<p>This version isn't quite released yet, and I haven't had a chance to update the documentation, but I wanted to get the list of changes out there while it's still fresh.</p>
+<p>The API has not changed at all, but the syntax of Hamlet templates has changed significantly. This is based on some <a href="http://www.snoyman.com/blog/entry/migrating-to-yesod-0-2/">real-world experience</a>. Just to give a little frame of reference, I tested migrating the codebase for <a href="http://www.search-once.com/">Search-Once.com</a> to the new Hamlet, and the result was a net 322 reduction in lines of code.</p>
+<h3>Reversal of identifiers</h3>
+<p>The first major change is a reversal of the order of identifiers in references. In other words, you previously would write <code>person.name</code>, which got translated to the Haskell code <code>name person</code>. I originally chose that ordering to fit in with the object-oriented nature of many templating systems.</p>
+<p>After much use, I've decided it just feels wrong to have identifiers in the reverse order to how Haskell naturally treats them. This is especially true when <i>not</i> dealing with objects; if you are just applying functions, everything is backwards! So now, to apply the function <code>name</code> to the value <code>person</code>, you simply write <code>name.person</code>.</p>
+<h3>No argument</h3>
+<p>Previously, a Hamlet template would generate a function which would take some value, and it would apply all the references inside the template to that value. For example:
+<code>[$hamlet|$name$|]</code>
+would roughly generate the following:
+<code>\arg -> hamletOutput (name arg)</code>
+<p>However, there are <i>many</i> templates that don't need that argument. Also, there are many times when you want to call a function without passing it any arguments. So now, arguments are gone! To get the same effect as above, you would write the following:</p>
+<code>\person -> [$hamlet|$name.person$|]</code>
+
+<h3>Other changes</h3>
+<ul><li>A number of minor bug fixes. If you care to see what those are, look at the Git log.</li>
+<li>Added <a href="http://docs.yesodweb.com/hamlet/maybe.html">$maybe</a>. Very useful for error messages.</li>
+<li>You can use constructors directly in your references. Very useful when constructing URLs.</li>
+<li>You can now include query-string parameters along with your URLs. The syntax is <code>@?variableName@</code>, where <code>variableName :: (url, [(String, String)])</code></li>
+<li>Beginning-of-line escaping. If you begin a line with a backslash, the backslash is dropped and the rest of the line is treated as content. This makes it possible to start a line with a pound or period without it being interpretted as tag information. As a special case, a line containing <i>only</i> a backslash is converted to a newline.</li>
+</ul>

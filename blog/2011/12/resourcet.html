@@ -1,0 +1,287 @@
+<h1>The Resource monad transformer</h1>
+  <p class="hascomments">The Resource transformer (<code>ResourceT</code>) plays a vital role in proper resource
+   management in the conduit project. It is included within the <code>conduit</code> package
+   itself. We&#39;ll explaining <code>ResourceT</code> as its own entity. While some of the design
+   decisions clearly are biased towards conduits, <code>ResourceT</code> should remain a usable
+   tool in its own right.</p>
+ <section class="subtopic" id="file1675-conceptId"><h1>Goals</h1>
+  <p class="hascomments">What&#39;s wrong with the following code?</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">System.IO</span>
+
+<span style="color: blue;font-weight: bold;">main</span> = <span style="color: green;font-weight: bold;">do</span>
+    output &lt;- openFile <span style="color: green;">&quot;output.txt&quot;</span> <span style="color: blue;">WriteMode</span>
+    input  &lt;- openFile <span style="color: green;">&quot;input.txt&quot;</span>  <span style="color: blue;">ReadMode</span>
+    hGetContents input &gt;&gt;= hPutStr output
+    hClose input
+    hClose output
+</pre></pre>
+  <p class="hascomments">If the file <code class="filepath">input.txt</code> does not exist, then an exception will be thrown
+   when trying to open it. As a result, <code>hClose output</code> will never be called, and
+   we&#39;ll have leaked a scarce resource (a file descriptor). In our tiny program, this isn&#39;t a big
+   deal, but clearly we can&#39;t afford such waste in a long running, highly active server process.</p>
+  <p class="hascomments">Fortunately, solving the problem is easy:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">System.IO</span>
+
+<span style="color: blue;font-weight: bold;">main</span> =
+    withFile <span style="color: green;">&quot;output.txt&quot;</span> <span style="color: blue;">WriteMode</span> $ \output -&gt;
+    withFile <span style="color: green;">&quot;input.txt&quot;</span> <span style="color: blue;">ReadMode</span> $ \input -&gt;
+    hGetContents input &gt;&gt;= hPutStr output
+</pre></pre>
+  <p class="hascomments"><code>withFile</code> makes sure that the <code>Handle</code> is always closed, even in
+   the presence of exceptions. It also handles asynchronous exceptions. Overall, it&#39;s a great
+   approach to use... when you can use it. While often <code>withFile</code> is easy to use,
+   sometimes it can require restructuring our programs. And this restructuring can range from mildly
+   tedious to wildly inefficient.</p>
+  <p class="hascomments">Let&#39;s take enumerators for example. If you look in the documentation, there is an
+    <code>enumFile</code> function (for reading contents from a file), but no
+    <code>iterFile</code> (for writing contents to a file). That&#39;s because the flow of control
+   in an iteratee doesn&#39;t allow proper allocation of the Handle. Instead, in order to write to a
+   file, you need to allocate the Handle before entering the Iteratee, e.g.:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">System.IO</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Enumerator</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Enumerator.Binary</span>
+
+<span style="color: blue;font-weight: bold;">main</span> =
+    withFile <span style="color: green;">&quot;output.txt&quot;</span> <span style="color: blue;">WriteMode</span> $ \output -&gt;
+    run_ $ enumFile <span style="color: green;">&quot;input.txt&quot;</span> $$ iterHandle output
+</pre></pre>
+  <p class="hascomments">This code works fine, but imagine that, instead of simply piping data directly to the file,
+   there was a huge amount of computation that occurred before we need to use the output handle. We
+   will have allocated a file descriptor long before we needed it, and thereby locked up a scarce
+   resource in our application. Besides this, there are times when we <i>can&#39;t</i> allocate the file
+   before hand, such as when we won&#39;t know which file to open until we&#39;ve read from the input
+   file.</p>
+  <p class="hascomments">One of the stated goals of conduits is to solve this problem, and it does so via
+    <code>ResourceT</code>. As a result, the above program can be written in conduit as:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE OverloadedStrings #-}</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Data.Conduit.Binary</span>
+
+<span style="color: blue;font-weight: bold;">main</span> = runResourceT $ sourceFile <span style="color: green;">&quot;input.txt&quot;</span> $$ sinkFile <span style="color: green;">&quot;output.txt&quot;</span>
+</pre></pre>
+ </section><section class="subtopic" id="file1676-conceptId"><h1>How it Works</h1>
+  <p class="hascomments">There are essentially three base functions on <code>ResourceT</code>, and then a bunch of
+   conveniences thrown on top. The first function is:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">register</span> :: <span style="color: blue;">IO</span> () -&gt; <span style="color: blue;">ResourceT</span> <span style="color: blue;">IO</span> <span style="color: blue;">ReleaseKey</span>
+</pre></pre>
+  <aside class="note">This function, and the others below, are actually more polymorphic than implied here,
+   allowing other monads besides <code>IO</code>. In fact, almost any transformer on top of
+    <code>IO</code>, as well as any <code>ST</code> stacks, work. We&#39;ll cover the details of
+   that later.</aside>
+  <p class="hascomments">This function registers a piece of code that it asserts <b>must</b> be run. It gives back a
+    <code>ReleaseKey</code>, which is used by the next function:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">release</span> :: <span style="color: blue;">ReleaseKey</span> -&gt; <span style="color: blue;">ResourceT</span> <span style="color: blue;">IO</span> ()
+</pre></pre>
+  <p class="hascomments">Calling <code>release</code> on a <code>ReleaseKey</code> immediately performs the
+   action you previously registered. You may call <code>release</code> on the same
+    <code>ReleaseKey</code> as many times as you like; the first time it is called, it
+    <dfn>unregisters</dfn> the action. This means you can safely register an action like a memory
+   free, and have no concerns that it will be called twice.</p>
+  <p class="hascomments">Eventually, we&#39;ll want to exit our special <code>ResourceT</code>. To do so, we use:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">runResourceT</span> :: <span style="color: blue;">ResourceT</span> <span style="color: blue;">IO</span> a -&gt; <span style="color: blue;">IO</span> a
+</pre></pre>
+  <p class="hascomments">This seemingly innocuous function is where all the magic happens. It runs through all of the
+   registered cleanup actions and performs them. It is fully exception safe, meaning the cleanups
+   will be performed in the presence of both synchronous and asynchronous exceptions. And as
+   mentioned before, calling <code>release</code> will unregister an action, so there is no
+   concern of double-freeing.</p>
+  <p class="hascomments">Finally, as a convenience, we provide one more function for the common case of allocating a
+   resource and registering a release action:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">with</span> :: <span style="color: blue;">IO</span> a <span style="color: gray;">-- ^ allocate</span>
+     -&gt; (a -&gt; <span style="color: blue;">IO</span> ()) <span style="color: gray;">-- ^ free resource</span>
+     -&gt; <span style="color: blue;">ResourceT</span> <span style="color: blue;">IO</span> (<span style="color: blue;">ReleaseKey</span>, a)
+</pre></pre>
+  <p class="hascomments">So, to rework our first buggy example to use <code>ResourceT</code>, we would write:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">System.IO</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.Trans.Resource</span>
+<span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Control.Monad.Trans.Class</span> (lift)
+
+<span style="color: blue;font-weight: bold;">main</span> = runResourceT $ <span style="color: green;font-weight: bold;">do</span>
+    (releaseO, output) &lt;- with (openFile <span style="color: green;">&quot;output.txt&quot;</span> <span style="color: blue;">WriteMode</span>) hClose
+    (releaseI, input)  &lt;- with (openFile <span style="color: green;">&quot;input.txt&quot;</span>  <span style="color: blue;">ReadMode</span>)  hClose
+    lift $ hGetContents input &gt;&gt;= hPutStr output
+    release releaseI
+    release releaseO
+</pre></pre>
+  <p class="hascomments">Now there is no concern of any exceptions preventing the releasing of resources. We could skip
+   the <code>release</code> calls if we want to, and in an example this small, it would not make
+   any difference. But for larger applications, where we want processing to continue, this ensures
+   that the <code>Handle</code>s are freed as early as possible, keeping our scarce resource
+   usage to a minimum.</p>
+ </section><section class="subtopic" id="file1677-conceptId"><h1>Some Type Magic</h1>
+  <p class="hascomments">As alluded to, there&#39;s a bit more to <code>ResourceT</code> than simply running in
+    <code>IO</code>. Let&#39;s cover some of the things we need from this underlying
+    <code>Monad</code>.</p>
+  <ul id="file1677-conceptId-ul_obv_tyw_re"><li>Mutable references to keep track of the registered release actions. You might think we could
+    just use a <code>StateT</code> transformer, but then our state wouldn&#39;t survive
+    exceptions.</li>
+   <li>We only want to register actions in the <dfn>base monad</dfn>. For example, if we have a
+     <code>ResourceT (WriterT [Int] IO)</code> stack, we only want to register
+     <code>IO</code> actions. This makes it easy to lift our stacks around (i.e., add an extra
+    transformer to the middle of an existing stack), and avoids confusing issues about the threading
+    of other monadic side-effects.</li>
+   <li>Some way to guarantee an action is performed, even in the presence of exceptions. This boils
+    down to needing a <code>bracket</code>-like function.</li>
+  </ul>
+  <p class="hascomments">For the first point, we define a new typeclass to represent monads that have mutable
+   references:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">class</span> <span style="color: blue;">Monad</span> m =&gt; <span style="color: blue;">HasRef</span> m <span style="color: green;font-weight: bold;">where</span>
+    <span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Ref</span> m :: * -&gt; *
+    newRef&#39; :: a -&gt; m (<span style="color: blue;">Ref</span> m a)
+    readRef&#39; :: <span style="color: blue;">Ref</span> m a -&gt; m a
+    writeRef&#39; :: <span style="color: blue;">Ref</span> m a -&gt; a -&gt; m ()
+    modifyRef&#39; :: <span style="color: blue;">Ref</span> m a -&gt; (a -&gt; (a, b)) -&gt; m b
+    mask :: ((forall a. m a -&gt; m a) -&gt; m b) -&gt; m b
+    mask_ :: m a -&gt; m a
+    try :: m a -&gt; m (<span style="color: blue;">Either</span> <span style="color: blue;">SomeException</span> a)
+</pre></pre>
+  <p class="hascomments">We have an associated type to signify what the reference type should be. (For fans of fundeps,
+   you&#39;ll see in the next section that this <i>has</i> to be an associated type.) Then we provide a
+   number of basic reference operations. Finally, there are some functions to help with exceptions,
+   which are needed to safely implement the functions described in the last section. The instance
+   for <code>IO</code> is very straight-forward:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">HasRef</span> <span style="color: blue;">IO</span> <span style="color: green;font-weight: bold;">where</span>
+    <span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Ref</span> <span style="color: blue;">IO</span> = <span style="color: blue;">I.IORef</span>
+    newRef&#39; = <span style="color: blue;">I.</span>newIORef
+    modifyRef&#39; = <span style="color: blue;">I.</span>atomicModifyIORef
+    readRef&#39; = <span style="color: blue;">I.</span>readIORef
+    writeRef&#39; = <span style="color: blue;">I.</span>writeIORef
+    mask = <span style="color: blue;">E.</span>mask
+    mask_ = <span style="color: blue;">E.</span>mask_
+    try = <span style="color: blue;">E.</span>try
+</pre></pre>
+  <p class="hascomments">However, we have a problem when it comes to implementing the <code>ST</code> instance:
+   there is no way to deal with exceptions in the <code>ST</code> monad. As a result,
+    <code>mask</code>, <code>mask_</code> and <code>try</code> are given default
+   implementations that do no exception checking. This gives rise to the first word of warning:
+    <b>operations in the ST monad are not exception safe</b>. You should not be allocating scarce
+   resources in ST when using <code>ResourceT</code>. You might be wondering why bother with
+    <code>ResourceT</code> at all then for <code>ST</code>. The answer is that there is a
+   lot you can do with conduits without allocating scarce resources, and <code>ST</code> is a
+   great way to do this in a pure way. But more on this later.</p>
+  <p class="hascomments">Now onto point 2: we need some way to deal with this base monad concept. Again, we use an
+   associated type (again explained in the next section). Our solution looks something like:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">class</span> (<span style="color: blue;">HasRef</span> (<span style="color: blue;">Base</span> m), <span style="color: blue;">Monad</span> m) =&gt; <span style="color: blue;">Resource</span> m <span style="color: green;font-weight: bold;">where</span>
+    <span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Base</span> m :: * -&gt; *
+
+    resourceLiftBase :: <span style="color: blue;">Base</span> m a -&gt; m a
+</pre></pre>
+  <p class="hascomments">But we forgot about point 3: some <code>bracket</code>-like function. So we need one more
+   method in this typeclass:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;">resourceBracket_ :: <span style="color: blue;">Base</span> m a -&gt; <span style="color: blue;">Base</span> m b -&gt; m c -&gt; m c
+</pre></pre>
+  <p class="hascomments">The reason the first two arguments to <code>resourceBracket_</code> (allocation and
+   cleanup) live in <code>Base m</code> instead of <code>m</code> is that, in
+    <code>ResourceT</code>, all allocation and cleanup lives in the base monad.</p>
+  <p class="hascomments">So on top of our <code>HasRef</code> instance for <code>IO</code>, we now need a
+    <code>Resource</code> instance as well. This is similarly straight-forward:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">instance</span> <span style="color: blue;">Resource</span> <span style="color: blue;">IO</span> <span style="color: green;font-weight: bold;">where</span>
+    <span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Base</span> <span style="color: blue;">IO</span> = <span style="color: blue;">IO</span>
+    resourceLiftBase = id
+    resourceBracket_ = <span style="color: blue;">E.</span>bracket_
+</pre></pre>
+  <p class="hascomments">We have similar <code>ST</code> instances, with <code>resourceBracket_</code> having no
+   exception safety. The final step is dealing with monad transformers. We don&#39;t need to provide a
+    <code>HasRef</code> instance, but we do need a <code>Resource</code> instance. The
+   tricky part is providing a valid implementation of <code>resourceBracket_</code>. For this,
+   we use some functions from <a href="http://hackage.haskell.org/package/monad-control">monad-control</a>:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">instance</span> (<span style="color: blue;">MonadTransControl</span> t, <span style="color: blue;">Resource</span> m, <span style="color: blue;">Monad</span> (t m))
+        =&gt; <span style="color: blue;">Resource</span> (t m) <span style="color: green;font-weight: bold;">where</span>
+    <span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">Base</span> (t m) = <span style="color: blue;">Base</span> m
+
+    resourceLiftBase = lift . resourceLiftBase
+    resourceBracket_ a b c =
+        control&#39; $ \run -&gt; resourceBracket_ a b (run c)
+      <span style="color: green;font-weight: bold;">where</span>
+        control&#39; f = liftWith f &gt;&gt;= restoreT . return
+</pre></pre>
+  <p class="hascomments">For any transformer, its base is the base of its inner monad. Similarly, we lift to the base by
+   lifting to the inner monad and then lifting to the base from there. The tricky part is the
+   implemetnation of <code>resourceBracket_</code>. I will not go into a detailed explanation,
+   as I would simply make a fool of myself.</p>
+ </section><section class="subtopic" id="file1678-conceptId"><h1>Definition of ResourceT</h1>
+  <p class="hascomments">We now have enough information to understand the definition of <code>ResourceT</code>:</p>
+  <pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: green;font-weight: bold;">newtype</span> <span style="color: blue;">ReleaseKey</span> = <span style="color: blue;">ReleaseKey</span> <span style="color: blue;">Int</span>
+
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">RefCount</span> = <span style="color: blue;">Int</span>
+<span style="color: green;font-weight: bold;">type</span> <span style="color: blue;">NextKey</span> = <span style="color: blue;">Int</span>
+
+<span style="color: green;font-weight: bold;">data</span> <span style="color: blue;">ReleaseMap</span> base =
+    <span style="color: blue;">ReleaseMap</span> !<span style="color: blue;">NextKey</span> !<span style="color: blue;">RefCount</span> !(<span style="color: blue;">IntMap</span> (base ()))
+
+<span style="color: green;font-weight: bold;">newtype</span> <span style="color: blue;">ResourceT</span> m a =
+    <span style="color: blue;">ResourceT</span> (<span style="color: blue;">Ref</span> (<span style="color: blue;">Base</span> m) (<span style="color: blue;">ReleaseMap</span> (<span style="color: blue;">Base</span> m)) -&gt; m a)
+</pre></pre>
+  <p class="hascomments">We see that <code>ReleaseKey</code> is simply an <code>Int</code>. If you skip a few
+   lines down, this will make sense, since we&#39;re using an <code>IntMap</code> to keep track of
+   the registered actions. We also define two type synonyms: <code>RefCount</code> and
+    <code>NextKey</code>. <code>NextKey</code> keeps track of the most recently assigned
+   value for a key, and is incremented each time <code>register</code> is called. We&#39;ll touch on
+    <code>RefCount</code> later.</p>
+  <p class="hascomments">The <code>ReleaseMap</code> is three pieces of information: the next key and the reference
+   count, and then the map of all registered actions. Notice that <code>ReleaseMap</code> takes
+   a type parameter <code>base</code>, which states which monad release actions must live
+   in.</p>
+  <p class="hascomments">Finally, a <code>ResourceT</code> is essentially a <code>ReaderT</code> that keeps a
+   mutable reference to a <code>ReleaseMap</code>. The reference type is determined by the base
+   of the monad in question, as is the cleanup monad. This is why we need to use associated
+   types.</p>
+  <p class="hascomments">The majority of the rest of the code in the <code>Control.Monad.Trans.Resource</code>
+   module is just providing instances for the <code>ResourceT</code> type.</p>
+ </section><section class="subtopic" id="file1679-conceptId"><h1>Other Typeclasses</h1>
+  <p class="hascomments">There are three other typeclasses provided by the module:</p>
+  <dl><dt>ResourceUnsafeIO</dt>
+    <dd>Any monad which can lift <code>IO</code> actions into it, but that this may be
+     considered unsafe. The prime candidate here is <code>ST</code>. Care should be taken to
+     only lift actions which do not acquire scarce resources and which don&#39;t &quot;fire the missiles.&quot; In
+     other words, all the normal warnings of <code>unsafeIOToST</code> apply.</dd>
+   
+   
+    <dt>ResourceThrow</dt>
+    <dd>For actions that can throw exceptions. This automatically applies to all
+     <code>IO</code>-based monads. For <code>ST</code>-based monads, you can use the
+     supplied <code>ExceptionT</code> transformer to provide exception-throwing capabilities.
+     Some functions in conduit, for example, will require this (e.g., text decoding).</dd>
+   
+   
+    <dt>ResourceIO</dt>
+    <dd>A convenience class tying together a bunch of other classes, included the two mentioned
+     above. This is purely for convenience; you could achieve the same effect without this type
+     class, you&#39;d just have to do a lot more typing.</dd>
+   
+  </dl>
+ </section><section class="subtopic" id="file1680-conceptId"><h1>Forking</h1>
+  <p class="hascomments">It would seem that forking a thread would be inherently unsafe with <code>ResourceT</code>,
+   since the parent thread may call <code>runResourceT</code> while the child thread is still
+   accessing some of the allocated resources. This is indeed true, <i>if</i> you use the normal
+    <code>forkIO</code> function.</p>
+  <aside class="note">You can&#39;t actually use the standard <code>forkIO</code>, since it only operates in the
+    <code>IO</code> monad, but you could use the <code>fork</code> function from
+    <a href="http://hackage.haskell.org/package/lifted-base">lifted-base</a>. In fact, due to this issue, the <a href="http://hackage.haskell.org/package/regions">regions</a>
+   package does not provide a <code>MonadBaseControl</code> instance for its transformer (which
+   is very similar to <code>ResourceT</code>). However, our goal in <code>ResourceT</code>
+   is not to make it impossible for programmers to mess up, only to make it easier to do the right
+   thing. Therefore, we still provide the instance, even though it could be abused.</aside>
+  <p class="hascomments">In order to solve this, <code>ResourceT</code> includes reference counting. When you fork a
+   new thread via <code>resourceForkIO</code>, the <code>RefCount</code> value of the
+    <code>ReleaseMap</code> is incremented. Every time <code>runResourceT</code> is called,
+   the value is decremented. Only when the value hits 0 are all the release actions called.</p>
+ </section><section class="subtopic" id="file1681-conceptId"><h1>Convenience Exports</h1>
+  <p class="hascomments">In addition to what&#39;s been listed so far, there are a few extra functions exported (mostly) for
+   convenience.</p>
+  <ul id="file1681-conceptId-ul_hsd_yex_re"><li><code>newRef</code>, <code>writeRef</code>, and <code>readRef</code> wrap up the
+     <code>HasRef</code> versions of the functions and allow them to run in any
+     <code>ResourceT</code>.</li>
+   <li><code>withIO</code> is essentially a type-restricted version of <code>with</code>,
+    but working around some of the nastiness with types you would otherwise run into. In general:
+    you&#39;ll want to use <code>withIO</code> when writing <code>IO</code> code.</li>
+   <li><code>transResourceT</code> let&#39;s you modify which monad your ResourceT is running in,
+    assuming it keeps the same
+    base.<pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: blue;font-weight: bold;">transResourceT</span> :: (<span style="color: blue;">Base</span> m ~ <span style="color: blue;">Base</span> n)
+               =&gt; (m a -&gt; n a)
+               -&gt; <span style="color: blue;">ResourceT</span> m a
+               -&gt; <span style="color: blue;">ResourceT</span> n a
+<span style="color: blue;font-weight: bold;">transResourceT</span> f (<span style="color: blue;">ResourceT</span> mx) = <span style="color: blue;">ResourceT</span> (\r -&gt; f (mx r))
+</pre></pre></li>
+  </ul>
+ </section>

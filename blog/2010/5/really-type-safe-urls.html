@@ -1,0 +1,31 @@
+<p>It's my son's second birthday. Yay!</p>
+<p>Anyway, on to the real stuff. Every once in a while, you get those "eureka" moments, where something that's been bothering you finally clicks. In this case, it was killing two birds with one stone. The stone is a small changes to web-routes-quasi which makes the generated URL datatypes even <i>more</i> typesafe. But before we talk about the stone anymore, let's discuss those birds.</p>
+<h3>Bird #1: Useless data</h3>
+<p>I've been collecting some data in <a href="http://docs.yesodweb.com/web-routes-quasi/">web-routes-quasi</a> which I've been completely ignoring. For those of you not familiar, web-routes-quasi defines a nice, simple, quasi-quoted syntax for declaring URL dispatch. It converts something like this:
+<pre><code>/            RootR  GET
+/entry/$slug EntryR GET</code></pre>
+into something like this:
+<pre><code>data BlogRoutes = RootR | EntryR String</code></pre>
+It also generates a parse function, dispatch function, and notably here a dispatch function which requires the user to define the following two functions:
+<pre><code>getRootR :: Handler
+getEntryR :: String -> Handler</code></pre>
+</p>
+<p>This is all very nice, but there's one thing bothering me: in the second line of the quasi-quoted data, <b>what the hell does the word slug do</b>? It's just sitting there, having no influence on the code! Well, it <i>does</i> give the programmer an idea of the purpose of that piece of the URL, but the computer completely ignores it.</p>
+<p>Maybe this isn't the worst thing in the world, but it was always lurking in the back of my mind, waiting...</p>
+<h3>Bird #2: Not completely type-safe URLs</h3>
+<p>We've come a long way from the horrors which is PHP. Jeremy Shaw's web-routes package encourages us to never, ever use direct string concatenation to generate URLs. Instead of: <code>"/foo/" ++ bar ++ "/" ++ show baz ++ "/"</code> we can write a beautiful <code>render $ Foo bar baz</code>, and the compiler checks all of our errors for us.</p>
+<p>Wait... <b>all</b> of our errors? Maybe not. Let's say I'm writing an application to calculate your BMI. I want to construct URLs with the datatype <code>data BmiRoute = BmiRoute Integer Integer</code>, where the first integer is your height in centimeters and the second is your weight in kilograms.</p>
+<p>I'm sure you can see where this is going: One day I make a little mistake and type in <code>BmiRoute weight height</code>, and suddenly the entire population is obese.</p>
+<p><b>Damn you web-routes! You failed me!</b> I exclaim in fury as 2000 people e-mail me to let me know how fat they are. On the bright side, I end up getting a very nice check in the mail from Weight Watchers.</p>
+<p>I'm sure most Haskellers already know the solution to this little predicament: I defined my types badly. Instead, I should have done:
+<pre><code>newtype Height = Height Integer
+newtype Weight = Weight Integer
+data BmiRoute = BmiRoute Height Weight</code></pre>
+Then, when I stupidly type in <code>BmiRoute (Weight weight) (Height height)</code>, the compiler automatically catches the mistake.</p>
+<p>That may have been a silly example, but imagine instead we were dealing with database keys; do you want to get your user_id confused with your email_id? I didn't think so.</p>
+<p>The problem is, that web-routes-quasi only handles <code>Integer</code>s, <code>String</code>s and <code>[String]</code>s. So what's a man to do?</p>
+<h3>The stone</h3>
+<p>Many of you have probably already figured out what I'm about to say, but I'll spell it out anyway, cause I'm just too excited to keep quiet (it is my son's birthday after all). That useless syntax in the quasi-quoted routes <b>will now define the datatype of the parameter</b>. To use the BMI example, I could write <code>/bmi/#Height/#Weight Bmi GET</code>, and the resulting constructor will be <code>Bmi Height Weight</code>.</p>
+<p>The pound sign here will still mean only to accept integers, but now the <code>fromInteger</code> method will be called to convert the plain Integer into a Weight and Height. For strings and slurps, you use the ToString and IsSlurp typeclasses, respectively. ToString is a subclass on IsString, adding the toString function, and IsSlurp defines the toSlurp and fromSlurp functions.</p>
+<h3>Epilogue</h3>
+<p>I e-mailed the web-devel list just yesterday saying I thought Yesod 0.2 was feature complete; well, this change is definitely going into Yesod 0.2. The change in web-routes-quasi is done, and will be released as version 0.2 shortly (I'll do a little more testing first).</p>

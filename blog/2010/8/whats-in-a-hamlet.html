@@ -1,0 +1,47 @@
+<p><b>Quick message from our sponsors:</b> I just wanted to inform everyone that I'm nearing a new release of Yesod, version 0.5. This release introduces <i>very few</i> changes versus 0.4, notably some enhancements to forms. The main reason for this release is to upgrade to the (not yet released) persistent 0.2, which adds some <i>major</i> features, most notably database migrations. I encourage everyone to check out the code on github.</p>
+<h3>What's in a Hamlet?</h3>
+<p>Hamlet- for those not familiar- is an HTML templating system for Haskell with a Haml-inspired syntax. It is quasi-quoted, meaning it is fully parsed and converted to Haskell code and checked at compile time with the rest of your code. (I'm currently toying with the idea of adding support for runtime-parsed templates, but that is quite orthogonal to this discussion.)</p>
+<p>Hamlet is built on top of BlazeHtml, and can be called in Haskell code as follows:</p>
+<pre><code>myTemplate = [$hamlet|
+%h1 Hello World!
+%p This is some static stuff.
+%ul
+    $forall people person
+        %li $person$
+|]</code></pre>
+<p>Now, given everything I've just said, you might guess that the type signature for myTemplate is <code>myTemplate :: Html ()</code>; however, you'd be wrong. The actual signature is in fact <code>myTemplate :: (a -> String) -> Html ()</code>. There's a function (hamlet<b>'</b>) in the Hamlet repo which will most likely be included in the next release which would create the former type signature, but for now I want to focus on the latter signature.</p>
+<h3>Coding PHP in Haskell</h3>
+<p>I'm not trying to pick on PHP here (well, maybe a little...). Let's say that I want to create a link in a PHP web app. I'm sure you're used to seeing code like <code>&lt;a href="person.php?person_id=&lt? echo $person_id;?&gt;"&gt;Check out this guy&lt;/a&gt;</code>. I'm sure many web developers can remember getting 404 errors because they forgot to update all their URLs when they renamed person.php to people.php.</p>
+<p>I was serious: I don't want to pick on PHP here. This was a problem back in the days of Perl CGI scripts, or if you were aggressive enough, C CGI scripts as well. For that matter, it's a bane when writing static HTML as well.</p>
+<h3>A partial solution</h3>
+<p>Many (most?) web frameworks try to deal with this problem. My largest pre-Haskell web experience was with Django, so I'll speak to their approach. Caveat emptor: I stopped using Django before they hit 1.0, so my information and terminology is probably dated. Over there, when you declare a route, you can also give a name to that route. You declare routes in Django via regular expressions; you then have utility functions that take a named route and pieces to "fill the gap" in the regular expressions, and thus URLs are born.</p>
+<p>With this approach, it doesn't matter if you change "/person/(\d+)/" to "/people/(\d+)/"; as long as the <i>name</i> stays the same, your code will still point to the right URL. Thus a whole class of annoying 404 bugs are eliminated, and the gods were pleased.</p>
+<h3>But it's still dynamic</h3>
+<p>I'll assume I'm preaching to the choir here: dynamic languages don't give you a lot of safety assurances. The "compiler" will happily accept <code>Print</code> instead of <code>print</code> and then complain at runtime. Many people find this to be an acceptable situation; I assume if you're already using Haskell, you prefer to let the compiler do a lot of the heavy lifting for you.</p>
+<p>So I ask you fellow Haskell web developers: why do you demand such safety in function calls, but not in URL construction? The problem with both the URL-splicing approach <b>and</b> the Django (et al) approach is a <i>lack of compile-time safety</i>!</p>
+<p>I'll admit that original versions of Yesod had the same flaw; fortunately, I was pointed in the <a href="http://hackage.haskell.org/package/web-routes">right direction</a> and now type-safe URLs are a cornerstone of Yesod. The concept is unbelievably simple, and very obvious once stated: we should have a datatype represent URLs. Every URL our application accepts should correlate to some value for that datatype.</p>
+<p>Here's a very basic example: we want to have a blog, which has two types of pages: the homepage, and a page for each entry. URLs look like this:</p>
+<dl><dt>http://www.myblog.com/</dt><dd>Homepage</dd>
+<dt>http://www.myblog.com/2010-01-01/happy-new-year/</dt><dd>Blog post on January 1, 2010.</dd>
+</dl>
+<p>In other words, the homepage requires no extra parameters, and an entry page needs to know the date and the <a href="http://codex.wordpress.org/Glossary#Slug">slug</a> of the entry. This smells a <b>lot</b> like an algebraic data type; let's represent URLs as:</p>
+<pre><code>data BlogRoute = Homepage | Entry Day String</code></pre>
+<p>Along with this datatype, we need some way to <b>parse</b> an incoming URL to a datatype and some way to <b>render</b> a datatype back to a URL. In general, we would want some functions that basically follow these rules:</p>
+<pre><code>parse :: String -&gt; Maybe BlogRoute
+render :: BlogRoute -&gt; String
+-- parse . render = Just</code></pre>
+<p>To avoid the boilerplate of creating the datatypes and proper parse/render functions, Yesod uses <a href="http://docs.yesodweb.com/web-routes-quasi/">web-routes-quasi</a>.</p>
+<h3>Back to Hamlet</h3>
+<p>OK, so the majority of this post was really just speaking the praises of type-safe URLs, my appologies ;). Let's get back to the topic at hand: why does a hamlet have such a strange type signature? As a reminder:</p>
+<pre><code>[$hamlet|%h1 My Blog|] :: (a -&gt; String) -&gt; Html ()</code></pre>
+<p>Well, using our blog example, let's try to make that type signature a little bit clearer now:</p>
+<pre><code>[$hamlet|%a!href=@Homepage@ Go to blog homepage|] :: (BlogRoute -&gt; String) -&gt; Html ()</code></pre>
+<p>at-sign interpolation is used to include a <b>type-safe URL</b>; in this case, a value of type <code>BlogRoute</code>. Suddenly, that mysterious <code>a</code> in the type signature turned into <code>BlogRotue</code>.</p>
+<p>Does anyone notice that we've seen the <code>BlogRoute -&gt; String</code> type signature before? It's in fact the type of <code>render</code>. This is no coincidence: <b>a hamlet takes a URL rendering function</b>. This is a huge boon for creating safe applications: during the entire construction of your template, you can deal with the URL datatypes directly. For the most part, every value for a <code>href</code> or <code>src</code> attribute will be surrounded by at-signs. Finally, as you're ready to render your Hamlet template, you pass it your URL rendering function.</p>
+<h3>Note for Yesod users</h3>
+<p>For those of you using Hamlet in the context of Yesod, you are mostly sheltered from this whole discussion. Yesod provides the hamletToRepHtml and applyLayout functions which automatically apply the Hamlet template to the appropriate URL rendering function. When you want to embed one Hamlet template within another, you use carrot-interpolation (^otherTemplate^) and needn't be concerned about <i>how</i> it works. However, I think it is very important to have this knowledge in the back of your mind.</p>
+<h3>A plea to fellow Haskell web developers</h3>
+<p>I strongly believe that type-safe URLs are one of the most powerful features we Haskell web developers have at our disposal. I'd go so far as to say it should be one of our main advertisements of the power of Haskell.</p>
+<p>Unfortunately, I think that the concept has had a lukewarm reception. Many people seem not to think the effort pays off. I think this is short-sighted; you've already admitted by using Haskell that you think spending a little extra time declaring types correctly is worth the payoff in the end from a more easily maintained codebase. Type-safe URLs are simply an extension of that decision.</p>
+<p>I'll speak a bit from personal experience here: I have a project that's over 10,000 LOC and over 150 separate routes. (I would give more information, but I'm not allowed currently to discuss the project publicly.) At some point, the spec changed, and I suddenly needed to add an extra piece of information to the URL of almost every route. I was able to make the transition in about an hour: I simply changed the routes declaration, hit compile, and the compiler caught <b>every single place that needed to be adjusted</b>.</p>
+<p>Perhaps you think that's an anomalous case. Then again, perhaps you've worked with clients and can empathize.</p>

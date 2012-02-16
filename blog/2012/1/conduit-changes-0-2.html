@@ -1,0 +1,98 @@
+
+  <p class="hascomments"><b>tl;dr</b>: The new Haddocks are available at: <a href="http://www.snoyman.com/haddocks/conduit-0.2.0/index.html">http://www.snoyman.com/haddocks/conduit-0.2.0/index.html</a></p>
+  <p class="hascomments">Even though it&#39;s relatively young, <a href="http://hackage.haskell.org/package/conduit">conduit</a> has gotten a lot of real-world
+   usage, and a fair bit of scrutiny. I think we achieved all of our main objectives with the first
+   release, but that doesn&#39;t mean we&#39;re going to avoid improvements. I asked the community to give
+   their feedback, and here were the main criticisms I&#39;ve heard:</p>
+  <ol id="file2361-conceptId-ol_yax_pem_cf"><li><code>BufferedSource</code> doesn&#39;t feel quite right. One complaint was the name
+     <code>bsourceUnpull</code>, but overall people thought it didn&#39;t fit in well with the rest
+    of the package.</li>
+   <li>Usage of mutable variables for storing state is suboptimal.</li>
+   <li>The split between <code>Source</code> and <code>PreparedSource</code> isn&#39;t very
+    nice.</li>
+  </ol>
+  <p class="hascomments">While I won&#39;t call the first issue fully resolved, I would say that conduit 0.1 was a big step
+   in the right direction. Instead of exposing all the internals of <code>BufferedSource</code>,
+   it&#39;s now an abstract type. (This <i>does</i> solve the <code>bsourceUnpull</code> name
+   dislike, though that&#39;s obviously a minor point.) Overall, we had a move in dependent packages
+   away from using <code>BufferedSource</code> in any external APIs. In other words,
+    <code>BufferedSource</code> is intended purely as an internal tool. For example, in Warp, we
+   use <code>BufferedSource</code> to parse the request headers, but then convert it back to a
+    <code>Source</code> to pass to the application for request body reading.</p>
+  <p class="hascomments">I&#39;ve been opposed to making any changes for the second issue (mutable variables). My belief was
+   that one of the sources of conduits&#39; simplicity relative to enumerators was its usage of mutable
+   state. And in general, I don&#39;t believe in changing something until there&#39;s hard evidence that
+   it&#39;s actually causing problems.</p>
+  <p class="hascomments">Last week, however, Felipe Lessa found one such concrete problem: using
+    <code>SequencedSink</code> was very slow. Upon investigation, I determined that the problem
+   came from <code>Sink</code>&#39;s monadic bind implementation. The issue is that for each bind, a
+   new mutable variable was being allocated, and it needed to be checked to determine its state.
+   Unfortunately, having a long chain of binds resulted in exponential complexity, having to check
+    <code>N</code> variables for each action. This clearly needed to be fixed, but there was no
+   way to do so (that I could see) with the previous types.</p>
+  <p class="hascomments">So I was presented with a dilemna: either continue in the mutable variable path and try to
+   solve the problem, or go in the pure/CPS direction, where I knew a simpler solution existed. The
+   choice was actually pretty easy: go for the pure approach. I had the following reasons:</p>
+  <ul id="file2361-conceptId-ul_jae_fgm_cf"><li>The main motivation to avoid the change to CPS was to keep the simplicity of the current
+    approach. However, I was about to lose that simplicity anyway.</li>
+   <li>Like most Haskellers, I do have an innate dislike for mutable variables.</li>
+   <li>After more work comparing conduits to enumerators, I&#39;ve come to believe that the main source
+    of confusion in enumerators is that the data producer (<code>Enumerator</code>) is just a
+    consumer-transformer. Since the essence of <code>Source</code> would stay the same in CPS, I
+    think that this change does not hinder our simplicity.</li>
+   <li>There was strong reason to believe that GHC would be able to optimize CPS code better than
+    mutable variable code.</li>
+  </ul>
+  <p class="hascomments">So I took the plunge and tried out CPS... and I really like the result! The first change is to
+    <code>SourceResult</code>&#39;s <code>Open</code> constructor: instead of just returning a
+   new value, it returns a new value <b>and</b> a new <code>Source</code>. This allows us to
+   pass our state in that new <code>Source</code>. There are similar changes to
+    <code>SinkResult</code> and <code>ConduitResult</code>. After this, I benchmarked the
+   old and new version, comparing both a monadic-bind-intensive <code>Sink</code> and a
+    <code>Sink</code> without any binds. The former had a ten-fold speedup (not surprising due
+   to the decrease in algorithmic complexity), and the latter had a 20% speedup.</p>
+  <p class="hascomments">But that wasn&#39;t the end of it. This new approach allows us to get rid of the
+    <code>Prepared</code> family of types. Let&#39;s take the <code>sourceFile</code> function
+   as an example, which opens a <code>Handle</code> and reads data from a file. In the old
+   approach, we needed to provide the <code>PreparedSource</code> with the
+    <code>Handle</code> in order for the <code>PreparedSource</code> to read from it.
+   Therefore, we had a <code>Source</code> which opened the <code>Handle</code> and passed
+   it to the <code>PreparedSource</code>. In the new approach, we have a <code>Source</code>
+   that opens a handle, reads some data, and returns a new <code>Source</code> that reads from
+   the <code>Handle</code>.</p>
+  <p class="hascomments">So contrary to my original belief, I think this CPS move actually <i>simplifies</i> conduit
+   greatly.</p>
+  <p class="hascomments">Another, orthogonal change that I put in was better data types in a few places. Previously, if
+   you wanted to use the <code>sourceState</code> function, and had a pull function that
+   returned <code>Closed</code>, you needed to provide a dummy state value. (If you look through
+   current <code>conduit</code> code bases, you&#39;ll see a lot of <code>error</code> calls.)
+   Instead, we now have a specialized data type (<code>ConduitStateResult</code>, name
+   suggestions welcome) that avoids this need. Internally, I also cleaned up a number of the types
+   to enforce invariants at the type level.</p>
+  <p class="hascomments">Speaking of invariants, the final simplification is that we now have just one invariant ruling
+   over the whole package: never reuse a <code>Source</code>, <code>Sink</code>, or
+    <code>Conduit</code>. After you pull from a <code>Source</code>, it will give you a new
+    <code>Source</code>. Do <i>not</i> reuse the original <code>Source</code>. If you get a
+    <code>Closed</code> result, there is no new <code>Source</code>, and therefore you
+   cannot pull again or close the <code>Source</code>.</p>
+  <p class="hascomments">I encourage everyone to have a look at the <a href="http://www.snoyman.com/haddocks/conduit-0.2.0/index.html">Haddocks</a> and give me your
+   feedback.</p>
+  <section><h1>When will this be released?</h1>Likely some time this week. I don&#39;t have any
+   specific changes in mind right now, outside of name adjustments that are suggested by the
+   community.</section>
+  <section><h1>How this affects users</h1>
+   <p class="hascomments">Anyone programming against the high-level conduit API exclusively will have no breakage. If
+    you&#39;re using functions like <code>sourceIO</code> or <code>sinkState</code>, you&#39;ll have
+    minimal changes to use the modified datatypes (essentially changing a few constructors and
+    reordering your arguments). If you&#39;re coding directly against the low-level types, you&#39;ll need
+    to restructure things a bit to pass around continuations.</p>
+   <p class="hascomments">Please email me (or preferably the Haskell cafe) if you want some help on converting old
+    conduit code to this new set of types. For the most part, it&#39;s a mechanical process, and I can
+    give lots of examples from the code I&#39;ve already migrated.</p>
+  </section>
+  <section><h1>How this affects Yesod</h1>
+   <p class="hascomments">Yesod 0.10 will be built off of this new-and-improved conduit. In fact, the code is already
+    updated for it. This likely means that the Yesod release will be about a week later than
+    originally anticipated, maybe in the second week of February.</p>
+  </section>
+ 

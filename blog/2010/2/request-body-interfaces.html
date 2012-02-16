@@ -1,0 +1,90 @@
+<p>Sorry for the long delay since my last post, I've actually been working on a project recently. It should be released last week, but since it's a web application programmed in Haskell, it's given me a chance to do some real-world testing of WAI, wai-extra (my collection of handlers and middlewares) and Yesod (my web framework). None of these have been released yet, though that date is fast approaching.</p>
+<p>Anyway, back to the topic at hand: request body interface. I'm going to skip over the response body for now because, frankly, I think it's less contraversial: enumerators seem to be a good fit. What <i>flavor</i> of enumerator could be a good question, but I'd rather figure out what works best on the request side and then choose something that matches nicely.</p>
+<p>I've been evaluating the choices in order to decide what to use in the <abbr title="Web Application Interface">WAI</a>. In order to get a good comparison of the options, let's start off by stating our goals:</p>
+<ul><li><b>Performant.</b> The main goal of the WAI is not user-friendliness, but to be the most efficient abstraction over different servers possible.</li>
+<li><b>Safe.</b> You'll see below some examples of being unsafe.</li>
+<li><b>Determinstic.</b> We want to make sure that we are never forced to use more than a certain amount of memory.</li>
+<li><b>Early termination.</b> We shouldn't be forced to read the entire contents of a long body, as this could open up DoS attacks.</li>
+<li><b>Simple.</b> Although user-friendliness isn't the first goal, it's still something to consider.</li>
+<li><b>Convertible.</b> In particular, many people will be most comfortable (application-side) using cursors and lazy bytestrings, so we'd like an interface that can be converted to those.</li>
+</ul>
+<p>One other point: we're not going to bother considering anything but bytestrings here. I think the reasons for this are obvious.</p>
+<h3>Lazy bytestring</h3>
+<p>This is the approach currently used by Hack, which is pretty well used and accepted by the community (including myself).</p>
+<h4>Pros</h4>
+<ul><li>Allows both the server and client to write simple code.</li>
+<li>Lots of tools to support it in standard libraries.</li>
+<li>Mostly space efficient.</li>
+</ul>
+<h4>Cons</h4>
+<ul><li>I said mostly space efficient, because you only get the space efficiency if you use lazy I/O. Lazy I/O is also known as unsafeInterleaveIO. Remember that concern about safety I mentioned above? This is it.</li>
+<li>Besides that, lazy I/O is non-deterministic.</li>
+</ul>
+<p>In fact, avoiding lazy I/O is the main impetus for writing the WAI. I don't consider this a possible solution.</p>
+<h3>Source</h3>
+<p>The inspiration for this approach is- frankly- every imperative IO library on the planet. Think of Handle: you have functions to open the handle, close it, test if there's more data (isEOF) and to get more data. In our case, there's no need for the first two (the server performs them before and after calling the application, respectively), so we can actually get away with this definition:</p>
+<code>type Source = IO (Maybe ByteString) -- a strict bytestring</code>
+<p>Each time you call Source, it will return the next bytestring in the request, until the end, where a Nothing is returned.</p>
+<h4>Pros</h4>
+<ul><li>Simple and standard.</li>
+<li>Deterministic.</li>
+<li>Space efficient.</li>
+</ul>
+<h4>Cons</h4>
+<ul><li>This makes the server the callee, not the caller. In general, it is more difficult to write callees, though in the particular case of a server I'm not certain how much more difficult it really is.</li>
+<li>This provides no mechanism for the server to keep state (eg, bytes read so far).</li>
+</ul>
+<p>Overall, this is a pretty good approach nonetheless. Also, at the cost of complicating things a bit, we could redefine Source as:</p>
+<code>type Source a = a -> IO (Maybe (a, ByteString))</code>
+<p>This would solve the second of the problems above by forcing the application to thread the state through.</p>
+<h3>Recursive enumerator</h3>
+<p>The idea for the recursive enumerator comes from a few sources, but I'll cite Hyena for the moment. The idea takes a little bit of time to wrap your mind around, and it doesn't help that there are many definitions of enumerators and iteratees with slightly different definitions. Here I will present a very specialized version of an enumerator, which should hopefully be easier to follow.</p>
+<p>You might be wondering: what's a <i>recursive</i> enumerator? Just ignore the word for now, it will make sense when we discuss the non-recursive variant below.</p>
+<p>Anyway, let's dive right in:</p>
+<code><pre>-- Note: this is a strict byte string
+type Enumerator a = (a -&gt; ByteString -&gt; IO (Either a a))
+                  -&gt; a
+                  -&gt; IO (Either a a)</pre></code>
+<p>I appologize in advance for having slightly complicated this type from its usual form by making the return type IO (Either a a) instead of IO a, but it has some real world uses. I know it's possible to achieve the same result with the latter definition, but it's slightly more work. I'm not opposed to switching back to the former if there's enough desire.</p>
+<p>So what exactly does this mean? An Enumerator is a <b>data producer</b>. When you call the enumerator, it's going to start handing off one bytestring at a time to the <b>iteratee</b>.</p>
+<p>The iteratee is the first argument to the enumerator. It is a <b>data consumer</b>. To put it more directly: the application will be writing an iteratee which receives the raw request body and generates something with it, most likely a list of POST parameters.</p>
+<p>So what's that a? It has a few names: accumulator, seed, or state. That's the way the iteratee is able to keep track of what it's doing. Each step along the way, the enumerator will collect the result of the iteratee and pass it in next time around.</p>
+<p>And finally, what's going on with that Either? That's what allows us to have <i>early termination</i>. If the iteratee returns a Left value, it's a signal to the enumerator to stop processing data. A Right means to keep going. Similarly, when the enumerator finishes, it returns a Left to indicate that the iteratee requested early termination, and Right to indicate that all input was consumed.</p>
+<p>To give a motivating example, here's a function that converts an enumerator into a lazy bytestring. Two things: firstly, this function is <i>not</i> written efficiently, it's meant to be easy to follow. More importantly, this lazy bytestring is not exactly lazy: the entire value must be read into memory. If we were two convert this in reality to a lazy bytestring, we would want to use lazy IO so reduce memory footprint. However, as Nicolas Pouillard pointed out to me, the only way to do this involes forkIO.</p>
+<code><pre>import Network.Wai
+import qualified Data.ByteString as S
+import qualified Data.ByteString.Lazy as L
+import Control.Applicative
+
+type Iteratee a = a -&gt; S.ByteString -&gt; IO (Either a a)
+
+toLBS :: Enumerator [S.ByteString] -&gt; IO L.ByteString
+toLBS e = L.fromChunks . reverse . either id id <$&gt; e="" iter="" []="" where="" iter="" ::="" Iteratee="" [S.ByteString]="" iter="" bs="" b="return" $="" Right="" $="" b="" :="" bs<="" /pre=""></code>
+<p>As this post is already longer than I'd hoped for, I'll skip an explanation and to pros/cons:</p>
+<h4>Pros</h4>
+<ul><li>Space efficient and deterministic.</li>
+<li>Server is the caller, makes it easier to write.</li>
+<li>No need for IORef/MVar at all.</li>
+</ul>
+<h4>Cons</h4>
+<ul><li>Application is the callee, which is more difficult to write. However, this can be mitigated by having a single package which does POST parsing from an enumerator.</li>
+<li>Cannot be (simply) translated into a source or lazy bytestring. Unless someone can show otherwise, you need to start the enumerator is a separate thread and then use MVars or Chans to pass the information back. On top of that, you then need to be certain to use up all input, or else you will have a permanently locked thread.</li>
+</ul>
+<p>While I think this is a great interface for the response body, and I've already implemented working code on top of this, I'm beginning to think we should reconsider going this route.</p>
+<h3>Non-recursive enumerator</h3>
+<p>The inspiration for this approach comes directly from <a href="http://okmij.org/ftp/Haskell/fold-stream.lhs">a paper by Oleg</a>. I found it easier to understand what was going on once I specialized the types Oleg presents, so I will be doing the same here. I will also do a little bit of renaming, so appologies in advance.</p>
+<p>The basic distinction between this and a recursive enumerator is that the latter calls itself after calling the iteratee, while the former is given a function to call.</p>
+<p>I'm not going to go into a full discussion of this here, but I hope to make another post soon explaining exactly what's going on (and perhaps deal with some of the cons).</p>
+<code><pre>type Enumerator a = RecEnumerator a -&gt; RecEnumerator a
+type RecEnumerator a = Iteratee a -&gt; a -&gt; IO (Either a a)
+type Iteratee a = a -&gt; B.ByteString -&gt; IO (Either a a)</pre></code>
+<h4>Pros</h4>
+<ul><li>Allows creation of the source (Oleg calls it a cursor) interface- and thus lazy byte string- without forkIO.</li>
+<li>Space efficient and deterministic.</li>
+</ul>
+<h4>Cons</h4>
+<ul><li>I think it's significantly more complicated than the other approaches, though that could just be the novelty of it.</li>
+<li>It still requires use of an IORef/MVar to track state. I have an idea of how to implement this without that, but it is <b>significantly</b> more complex.</li>
+</ul>
+<h2>Conclusion</h2>
+<p>Well, the conclusion for me is I'm beginning to lean back towards the Source interface. It's especially tempting to try out the source variant I mention, since that would eliminate the need for IORef/MVar. I'd be interested to hear what others have to say though.</p>

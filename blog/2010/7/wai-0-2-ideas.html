@@ -1,0 +1,47 @@
+<p>There's a number of ideas I've had for fixing up the Web Application Interface, and finally decided to put them all together. I've created new branches for <a href="http://github.com/snoyberg/wai/tree/ver0.2">wai</a>, <a href="http://github.com/snoyberg/wai-extra/tree/ver0.2">wai-extra</a> and <a href="http://github.com/snoyberg/yesod/tree/wai0.2">yesod</a>.</p>
+<p>In no particular order, here are the items I've changed. I'm very happy to hear any critiques of these, so don't hold back.</p>
+<h3>Removed the buffer function</h3>
+<p>I wrote a buffer function which performs badly, and I want to remove it. Nuf said.</p>
+<h3>Less data types, more type synonyms</h3>
+<p>An obvious definition for HTTP request methods is:</p>
+<pre><code>data Method = GET | POST | PUT | DELETE</code></pre>
+<p>Obvious... except I forgot OPTIONS. No problem, I'll add it. And I forgot TRACE. OK, add that too. Oh wait: you can have arbitrary HTTP methods if you like. Doh!</p>
+<p>WAI 0.0 and 0.1 therefore had an extra constructor <code>Method B.ByteString</code>, which allowed you to specify any request method you wanted. All seemed well and good to me, until <a href="http://comments.gmane.org/gmane.comp.lang.haskell.web/251">Jeremy Shaw commented</a> on an entirely different topic: "The use of a type ... implies that you want to be pattern matching on the constructors in your code".</p>
+<p>And I realized he was absolutely right. It's a bad idea to create a data type with constructors that can't be pattern matched on, and that's exactly what I'd created. After all, <code>Method "GET" == GET</code>, so pattern matching is out of the question. Sure enough, I've received a few patches for WAI code that mistakenly attempts to pattern match. I'd created a horrible monster which thwarted all that is well and good in type-safe programming! &lt;/drama&gt;</p>
+<p>So instead, the definition is now simply <code>type Method = B.ByteString</code>. And all is good and right in the world.</p>
+<p>This same change was applied to the other relevant datatypes in Network.Wai: HttpVersion, RequestHeader, ResponseHeader and Status.</p>
+<h3>Functions are the new constructors</h3>
+<p>I'm on the fence for this one, so please let me know what you think. I've replaced the <code>GET</code> constructor with a <code>methodGET</code> function. This is simply defined as <code>methodGET = B8.pack "GET"</code>; and the same is done for all other constructors.</p>
+<p>But frankly, I think this just litters the namespace. I have not implemented these functions for RequestHeader and ResponseHeader, and I don't think I will. I'm fairly certain I dislike the functions for Method, but will probably keep the definitions for HttpVersion and Status.</p>
+<h3>Added CIByteString</h3>
+<p>Gregory Collins <a href="http://www.haskell.org/pipermail/web-devel/2010/000111.html">pointed out that request and response headers should be case-insensitive</a>. As a result, WAI 0.1 made sure their Eq instance handled this properly. Now, due to the switch to type synonyms, we define a new datatype named <code>CIByteString</code> (which looks <a href="http://hackage.haskell.org/packages/archive/snap-core/0.2.7.1/doc/html/Data-CIByteString.html">strangely familiar</a>) and use that for RequestHeader and ResponseHeader.</p>
+<h3>RequestBody datatype</h3>
+<p>WAI 0.0/0.1 define a response body as <code>Either FilePath Enumerator</code>. We all know how wonderful enumerators are versus lazy I/O... but how good are they versus lazy <i>evaluation</i>. In other words, which is faster: an enumerator, or a purely created lazy bytestring? I don't have specific benchmarks, but my work on Hamlet indicated to me that lazy bytestrings win.</p>
+<p>The vast majority of web applications will not often need an enumerator interface. Mostly, static files and lazy bytestrings will be sufficient. Hack has done a very good job with only providing a lazy bytestring interface. So I would like to add a lazy bytestring response body to WAI; not to replace enumerators, but to augment them.  So I've created a new datatype:</p>
+<pre><code>data ResponseBody = ResponseFile FilePath
+                  | ResponseEnumerator Enumerator
+                  | ResponseLBS L.ByteString</code></pre>
+<p>This adds a bit of complexity to handler code, but I think it's worth it. I've also replaced the fromEitherFile function with fromResponseBody. As a bonus, I think it's nicer using a specific datatype than an Either.</p>
+<h3>What hasn't changed</h3>
+<p>There are three decisions in particular that I've decided to stick with, even though there's been some pressure to change this. I'd like to state these out loud to re-open the debate, because I want to make sure this is the right decision.</p>
+<p>The first is fairly trivial: whether the Request datatype has a record for script name. Hack and the Hyena WAI both have it, but I've removed it for two reasons:</p>
+<ol><li>It has no meaning for many backends, particularly any stand-alone server.</li>
+<li>Backends where is <b>does</b> have meaning (CGI, FastCGI) do not provide reliable data on it. Whenever you use URL rewriting (which I hope you're using), it's nearly impossible to get a meaningful script name.</li>
+</ol>
+<p>The second issue is the <code>Source</code> datatype as a request body. People have said it should simply be an Enumerator. I have this to say:</p>
+<ol><li>Any Source can be converted to an Enumerator without issue, but the reverse is not true.</li>
+<li>A Source is easier to parse than an Enumerator.</li>
+<li>A Source allows you to implement backtracking parsing of request bodies without reading the entire request body into memory.</li>
+<li>I don't think there is significant difficulty placed on backend implementations to provide the more powerful Source type versus an Enumerator.</li>
+</ol>
+<p>The final issue is the definition of Enumerator. There's lots of work in the iteratee package, and it seems to be blazing the trail for this domain. However:</p>
+<ol><li>WAI should be low-dependency, and introducing a dependency on the iteratee package would be too high a burden. (I realize this isn't a full argument, since I could just copy-paste the definitions from iteratee.)</li>
+<li>The iteratee approach is still evolving, now migrating to a continuations-based approach. It seems too early to try and jump on that band-wagon; let's let the dust settle first.</li>
+<li>
+<p>Much of the complexity introduced by iteratee is totally unnecessary in WAI. For example, we can't have an arbitrary monad, we need IO. We can't have arbitrary chunk data types, we use strict bytestrings.</p>
+<p>However, at a more fundamental level, iteratee is trying to solve problems WAI doesn't have. WAI just needs a way to allow efficient outputting of data with interleaved IO actions. It will always just send one chunk at a time, and either the entire chunk will succeed, or there will be a failure.  iteratee deals with complex problems like partial input consumption.</p>
+<p>In other words: I have not seen a single argument made why switching to iteratee is actually a <b>win</b> for WAI.</p>
+</li>
+<li>And let's face it: enumerators are complicated beasts. People are afraid of them. If the Enumerator type in WAI is as scary as someone holding a knife to you, iteratee is a B2 Bomber.</li>
+</ol>
+<p>That said, I'm happy to hear any explanations and see some examples of why I'm making The Wrong Decision here. For that matter, please tell me if you think any of the changes I'm proposing for WAI are a bad idea.</p>

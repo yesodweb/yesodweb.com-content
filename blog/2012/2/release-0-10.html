@@ -1,0 +1,31 @@
+<p>We are proud to announce the relase of Yesod 0.10 Please note that 0.10 &lt; 1.0</p>
+<p>The main purpose of this release was to switch to conduits. But while we were waiting for the conduit integration to mature, we added a log of great stuff.</p>
+<p>Please see the <a href="http://www.yesodweb.com/wiki/0.10_upgrade">upgrade guide for 0.10</a>. This is a wiki page: please add your notes and improvements.</p>
+<p>If you haven't upgraded to 0.9.4, please see the <a href="http://www.yesodweb.com/blog/2011/12/0-9-4-release">previous release announcement</a>.</p>
+<h1 id="persistent">Persistent</h1>
+<p>There were so many improvements to Persistent, that it needed its own release announcement: <a href="http://www.yesodweb.com/blog/2012/02/persistent-0-8">Persistent 0.8</a></p>
+<p>Some quick highlights:</p>
+<ul><li>New rawSql interface</li>
+<li>New MySQL backend, couchDB in the works</li>
+<li>Support for embedded records, maps, lists, and sets</li>
+</ul>
+<p>For most users, only the initialization of Persistent in their site will be effected: persistent queries are still the same.</p>
+<h1 id="shakespeare">Shakespeare</h1>
+<p>We now use the new addDependentFile for GHC 7.4 users. This means ghc will automatically recompile your shakespeare templates when they change. This takes a burden of dependency tracking away from yesod devel: for 7.4 its main utitlity is to automatically restart compilation.</p>
+<h2 id="shakespeare-js">shakespeare-js</h2>
+<p>Coffeescript compilation is now performed at compilation time. This pattern is now supported in the shakespeare library: if a template needs to execute an external program, that should be done once at compilation time. This finally makes Coffeescript a great, effortless option.</p>
+<p>I am a big fan of using Coffeescript rather than plain Javascript. Coffeescript puts a nicer face on Javascript that gets rid of its inconsistencies and adds conveniences. However, even a well-done Javascript is still a very lacking programming language. I am looking forward to the day that I can write Haskell or at least some language with a great type system and have that easily translated to Javascript. There are some <a href="http://www.haskell.org/haskellwiki/The_JavaScript_Problem">interesting developments going on in this area</a> independent of Yesod, and we look forward to the prospect of integrating these solutions when they mature.</p>
+<h1 id="wai">WAI</h1>
+<p>The big change is the move to conduits. There were also a lot of small bug fixes and performance improvements. The RequestLogger Interface was improved, and a bug in fast-logger that it uses was squashed. We are now experimenting with ways to make WAI a more powerful way to share code. One limiting factor was not being able to pass along arbitrary data. WAI now has a vault parameter for that purpose, which uses the vault package.</p>
+<h1 id="yesod">Yesod</h1>
+<p>Again, the focus of this release was the switch to conduits. For a Yesod user this is mostly an implementation detail. This leaked in two main places: the scaffolding configuration (see upgrade guide), and exception handling. With the move to conduits we have completely removed the liftIOHandler exception handling hack.</p>
+<p>Approot, the setting which generates urls is maturing, see the upgrade guide. You now have the option of changing the url based on request information.</p>
+<p>The redirect system has been reworked to use the correct status and to remove redundancies. The need for RedirectTemporary has been removed, and instead we just default to the correct HTTP status codes. If you want to specify an HTTP status, use redirectWith.</p>
+<p>Improved routing. While there were some bug fixes, the main improvement is a .scalable dispatcher. Most web framework routers dumbly check routes one-by-one until they find a match. Yesod now features an efficent dispatch. The <a href="https://github.com/yesodweb/yesod/blob/master/yesod-routes/Yesod/Routes/Dispatch.lhs">literate haskell source</a> explains the two main optimizations:</p>
+<ul><li>Break up routes based on how many components they can match (slashes in a route). This lookup runs in constant time.</li>
+<li>Use a Map to reduce string comparisons for each route to logarithmic complexity.</li>
+</ul>
+<h1 id="section">1.0</h1>
+<p>We consider this to be a 1.0 release candidate. We want 1.0 to be very solid release, so we definitely needed this extra release cycle for the move to conduits. 1.0 for us means a stable API - now is your last chance to propose good API changes without getting a lot of pushback and requirements for maintaining deprecated APIs.</p>
+<p>If you look at the <a href="http://www.yesodweb.com/blog/2011/03/road-to-yesod-1-0">1.0 roadmap we posted</a>, we have accomplished everything except easy testing integration and static html generation. However, we have pull requests for both of those waiting right now!</p>
+<p>Thanks to everyone that helps improve Yesod. Please upgrade to 0.10 and let us know how to make it even better.</p>

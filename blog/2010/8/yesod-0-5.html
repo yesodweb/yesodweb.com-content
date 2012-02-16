@@ -1,0 +1,17 @@
+<p>I'm very happy to announce a new release of the Yesod Web Framework, along with new releases of Hamlet, Persistent and web-routes-quasi. A big thanks again on this release to Greg Weber who has given lots of API feedback, written some test cases for persistent and started work on a MongoDB backend. It's not yet fully tested, but is very promising. It's also the proving ground that persistent is not tied to SQL.</p>
+<p>As usual, there are a lot of new features in this release, so I'll try to highlight some of the major ones:</p>
+<ul><li>Hamlet now includes Cassius and Julius templating systems for CSS and Javascript, respectively. All three templating systems have a "debug" mode which allows you to see changes to your templates without recompiling. The debug mode has the same API as production mode, so you can easily lose any runtime penalty when compiling your production executable.</li>
+<li>Persistent has seen a lot of cleanup, notably the split between PersistEntity and PersistBackend. The SQL specific code has also been cleaned up significantly, making it easier to add more backends in the future (such as MySQL).</li>
+<li>Database migration code has been added, making it very simple to deal with schema changes. By default, it will only perform safe migrations, meaning migrations which don't lose data.</li>
+<li>Static file serving can now include a hash of the contents to ensure that the contents haven't changed. This allows you to set expiration dates on your static files far in the future without concerns of users getting stale contents.</li>
+<li>And tying together a few different pieces, Cassius and Julius templates can easily be added using widgets, and the concatenated content can now be served as a static file with a name based on the hash. This allows you to have a single stylesheet/javascript file for each page and have the caching hanlded properly.</li>
+<li>The Yesod scaffolding tool has been updated to provide a much nicer file structure, as well as include some more advanced features by default, such as user authentication.</li>
+</ul>
+<p>I've put up a <a href="http://vimeo.com/14516222">screencast introducing Yesod 0.5</a>, and will be following it up with some more hands-on coding examples. Also, I'm reworking the <a href="http://docs.yesodweb.com/">Yesod documentation site</a> to make things more streamlined. In particular, the focus for documentation now will be in a book format, which will hopefully make it more accessible and easier to locate the correct information.</p>
+<p>The four main targets I have for next steps are:</p>
+<ul><li>A comprehensive test suite. Greg has already started laying the foundations for this.</li>
+    <li>Improving <a href="http://www.orangeroster.com/">Orange Roster</a>, which should hopefully give a good example program for people to learn from.</li>
+    <li>Write more of the book.</li>
+    <li>Improve forms. I've been having some discussions via email, and I definitely think we can do better than where we're at right now.</li>
+</ul>
+<p>Happy hacking!</p>

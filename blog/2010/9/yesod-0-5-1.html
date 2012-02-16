@@ -1,0 +1,48 @@
+<p>For the past week or so, most of my programming focus has been going into projects tangential to Yesod development, mostly <a href="http://hackage.haskell.org/package/http-enumerator">http-enumerator</a>. As an aside: I think the <a href="http://hackage.haskell.org/package/enumerator">enumerator</a> package is wonderful; does anyone want me to write up a tutorial on how to use it?</p>
+<p>Anyway, there has been some activity on the Yesod side as well. If you remember, I'd previously mentioned that I thought Yesod was approaching a 1.0 release, marking it as more API-stable. I asked for some input on things people would like to see, and got some great responses. Here's a quick run-down of what's new. Fortunately, this release does not break any APIs, so you can easily upgrade.</p>
+<h3 id="more-comments">More comments</h3>
+<p>Normally I wouldn't mention updating documentation, but this is <em>slightly</em> different. I've now fully commented the site created by the yesod executable scaffolder. It should be easier to understand what's going on in there and why certain design decisions were made.</p>
+<h3 id="html-sanitization">HTML Sanitization</h3>
+<p>Greg Weber wrote the <a href="http://hackage.haskell.org/package/xss-sanitize">xss-sanitize</a> package to remove dangerous bits from HTML. The HTML and NicHTML form fields now use this function to avoid any nefarious user input.</p>
+<h3 id="generalized-hamleteasier-widgets">Generalized Hamlet/Easier Widgets</h3>
+<p>Widgets make it easy to have modular components consisting of HTML, CSS and JavaScript. The downside is that it can be a bit tedious to use them. For example:</p>
+<pre><code>myInnerWidget = do
+    addBody [$hamlet|...|]
+    addStyle [$cassius|...|]
+
+myOuterWidget = do
+    inner &lt;- extractBody myInnerWidget
+    addBody [$hamlet|
+        %h1 This is the inner widget
+        ^inner^
+    |]
+</code></pre>
+<p>Having to use the extractBody is a bit of an annoyance. Fortunately, this is no longer necessary. With the release of Hamlet 0.5.1, Hamlet templates are now generalized using the <a href="http://hackage.haskell.org/packages/archive/hamlet/0.5.1/doc/html/Text-Hamlet.html#t:HamletValue">HamletValue</a> typeclass. This essentially means we can use Hamlet to produce things besides <a href="http://hackage.haskell.org/packages/archive/hamlet/0.5.1/doc/html/Text-Hamlet.html#t:Hamlet">Hamlet</a> values.</p>
+<p>On the Yesod side, we now have an instance of HamletValue for Widget. This means the code above can be written as:</p>
+<pre><code>myInnerWidget = do
+    addBody [$hamlet|...|]
+    addStyle [$cassius|...|]
+
+myOuterWidget = [$hamlet|
+    %h1 This is the inner widget
+    inner &lt;- extractBody myInnerWidget
+    ^myInnerWidget^
+|]
+</code></pre>
+<p>Notice that we no longer prepend a call to addBody; the value of the quasi-quoted template is itself a widget. This also means that if we want to embed plain Hamlet templates, we'd need to do something like this:</p>
+<pre><code>myPlainTemplate :: Hamlet MyRoute
+myPlainTemplate = [$hamlet|...|]
+
+myWidget = [$hamlet|
+    %h1 Embed another widget
+    ^myInnerWidget^
+    %h1 Embed a Hamlet
+    ^addBody.myPlainTemplate^
+|]
+</code></pre>
+<p>This may not seem like a big deal, but I think it will make people's coding much easier and allow us to write widget code in a more modular fashion.</p>
+<h2 id="upcoming-featuresbreaking-changes">Upcoming features/Breaking changes</h2>
+<p>I mentioned previously that I was dissatisfied with the authentication subsite. In Yesod 0.6 I will be removing the Yesod.Helpers.Auth. Instead, I'm creating a separate <a href="http://hackage.haskell.org/package/yesod-auth">yesod-auth</a> package. This will allow us to add dependencies to yesod-auth without affecting yesod, as well as make breaking changes without influencing yesod version numbers.</p>
+<p>As I said at the beginning of this post, I've been working mainly on http-enumerator recently. The impetus to get started on that was to get good OpenID 2 support going for the haskellers.com website (nothing there yet). Currently, the Yesod authentication system only works with OpenID 1. I'm hoping that by Yesod 0.6, we'll have support for both of them.</p>
+<h2 id="for-some-bright-eyed-haskeller-out-there...">For some bright-eyed Haskeller out there...</h2>
+<p>One last feature I'd love to see implemented is a Javascript minifier to attach to Julius. Anyone out there want to take a swing at it?</p>
