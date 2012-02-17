@@ -1,0 +1,126 @@
+Title: Screencasts
+ <p>Some of the specific details shown here may be slightly out of date. The first 3 screencasts are for Yesod 0.5 and are mostly still accurate for Yesod 0.8. The Yesod book is up to date and a more canonical source of information. However, these screencasts still give a great overview in video form.</p> 
+ 
+<article> 
+    <div id="accordion"> 
+      <h3>Yammer (Twitter clone)</h3> 
+      <div> 
+        <p><a href="http://vimeo.com/14922583" class="GENTICS_link_text">Yesod Screencast: Yammer</a> from <a href="http://vimeo.com/user1975429">Michael Snoyman</a> on <a href="http://vimeo.com">Vimeo</a>.</p> 
+      </div> 
+      <h3>Introduction to Yesod Web Framework 0.5</h3> 
+      <div> 
+        <p><a href="http://vimeo.com/14516222" class="GENTICS_link_text">Introduction to Yesod Web Framework 0.5</a> from <a href="http://vimeo.com/user1975429">Michael Snoyman</a> on <a href="http://vimeo.com">Vimeo</a>.</p> 
+      </div> 
+      <h3>Hello World</h3> 
+      <div> 
+ 
+      </div> 
+      <h3>Blog, part 1</h3> 
+      <div> 
+<p><a href="http://vimeo.com/13296597" class="GENTICS_link_text">Blog Tutorial - Part 1 - Yesod Web Framework 0.4.0</a> from <a href="http://vimeo.com/user1975429">Michael Snoyman</a> on <a href="http://vimeo.com">Vimeo</a>.</p> 
+<p>Here's the source code:</p> 
+ 
+<pre><code>{-# LANGUAGE TypeFamilies, QuasiQuotes, GeneralizedNewtypeDeriving #-}
+    import Yesod
+    import Database.Persist.Sqlite
+    import Data.Time (Day)
+    
+    mkPersist [$persist|
+    Entry
+        title String
+        day Day Desc
+        content Html'
+        deriving
+    |]
+    
+    data Blog = Blog { pool :: Pool Connection }
+    
+    mkYesod &quot;Blog&quot; [$parseRoutes|
+    / RootR GET
+    /entry/#EntryId EntryR GET
+    |]
+    
+    instance Yesod Blog where
+        approot _ = &quot;http://localhost:3000&quot;
+    
+    instance YesodPersist Blog where
+        type YesodDB Blog = SqliteReader
+        runDB db = fmap pool getYesod&gt;&gt;= runSqlite db
+    
+    getRootR = do
+        entries &lt;- runDB $ select [] [EntryDayDesc]
+        applyLayoutW $ do
+            setTitle $ string &quot;Yesod Blog Tutorial Homepage&quot;
+            addBody [$hamlet|
+    %h1 Archive
+    %ul
+        $forall entries entry
+            %li
+                %a!href=@EntryR.fst.entry@ $entryTitle.snd.entry$
+    |]
+    
+    getEntryR entryid = do
+        entry &lt;- runDB $ get404 entryid
+        applyLayoutW $ do
+            setTitle $ string $ entryTitle entry
+            addBody [$hamlet|
+    %h1 $entryTitle.entry$
+    %h2 $show.entryDay.entry$
+    $entryContent.entry$
+    |]
+    
+    withBlog f = withSqlite &quot;blog.db3&quot; 8 $ \pool -&gt; do
+        flip runSqlite pool $ initialize (undefined :: Entry)
+        f $ Blog pool
+    
+    main = withBlog $ basicHandler 3000</code></pre> 
+      </div> 
+      <h3>Blog, part 2</h3> 
+      <div> 
+        <p><a href="http://vimeo.com/13353654">Blog Tutorial - Part 2 - Yesod Web Framework 0.4.0</a> from <a href="http://vimeo.com/user1975429">Michael Snoyman</a> on <a href="http://vimeo.com">Vimeo</a>.</p> 
+<p>Here's the source code:</p> 
+<pre><code> 
+{-# LANGUAGE TypeFamilies, QuasiQuotes, GeneralizedNewtypeDeriving #-}
+import Yesod
+import Yesod.Helpers.Crud
+import Database.Persist.Sqlite
+import Data.Time (Day)
+ 
+share2 mkToForm mkPersist [$persist|
+Entry
+    title String
+    day JqueryDay Desc
+    content NicHtml
+    deriving
+|]
+ 
+instance Item Entry where
+    itemTitle = entryTitle
+ 
+data Blog = Blog { pool :: Pool Connection }
+ 
+type EntryCrud = Crud Blog Entry
+ 
+mkYesod &quot;Blog&quot; [$parseRoutes|
+/ RootR GET
+/entry/#EntryId EntryR GET
+/admin AdminR EntryCrud defaultCrud
+|]
+ 
+instance Yesod Blog where
+    approot _ = &quot;http://localhost:3000&quot;
+ 
+instance YesodPersist Blog where
+    type YesodDB Blog = SqliteReader
+    runDB db = fmap pool getYesod&gt;gt;&gt;gt;= runSqlite db
+ 
+getRootR = do
+    entries gt; do
+    flip runSqlite pool $ do
+        initialize (undefined :: Entry)
+    f $ Blog pool
+ 
+main = withBlog $ basicHandler 3000
+</code></pre> 
+      </div> 
+    </div> </article>
