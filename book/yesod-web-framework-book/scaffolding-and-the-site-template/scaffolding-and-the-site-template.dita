@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html>
+        <p id="x-3" class="hascomments">So you're tired of running small examples, and ready to write a real site? Then you're at
+            the right chapter. Even with the entire Yesod library at your fingertips, there are
+            still a lot of steps you need to go through to get a production-quality site setup:</p>
+        <ul id="ul_nys_vtf_42">
+            <li id="x-4">Config file parsing</li>
+            <li id="x-5">Signal handling (*nix)</li>
+            <li id="x-6">More efficient static file serving</li>
+            <li id="x-7">A good file layout</li>
+        </ul>
+        <p id="x-8" class="hascomments">The scaffolded site is a combination of many Yesoders' best practices combined together
+            into a ready-to-use skeleton for your sites. It is highly recommended for all sites.
+            This chapter will explain the overall structure of the scaffolding, how to use it, and
+            some of its less-than-obvious features.</p>
+        <aside id="x-9" class="note">Due to the nature of the scaffolded site, it is the most fluid component of Yesod, and
+            can change from version to version. It is possible that the information in this chapter
+            is slightly outdated.</aside>
+  <p id="x-3" class="hascomments">The yesod package installs both a library and an
+   executable (conveniently named yesod as well). This executable
+   provides a few commands (run yesod by itself to get a list). In order to
+   generate a scaffolding, the command is yesod init. This will start a
+   question-and-answer process where you get to provide basic details (your name, the project name,
+   etc). After answering the questions, you will have a site template in a subfolder with the name
+   of your project.</p>
+  <p id="x-7" class="hascomments">The most important of these questions is the database backend. You get four choices here:
+   SQLite, PostgreSQL, MongoDB, and tiny. tiny is not a database backend; instead, it is specifying
+   that you do not want to use any database. This option also turns off a few extra dependencies,
+   giving you a leaner overall site. The remainder of this chapter will focus on the scaffoldings
+   for one of the database backends. There will be minor differences for the tiny backend.</p>
+  <p id="x-8" class="hascomments">After creating your files, the scaffolder will print a message about getting started.
+   It gives two sets of options for commands: one using cabal, and the other
+   using cabal-dev. cabal-dev is basically a wrapper around
+   cabal which causes all dependencies to be built in a sandbox. Using it is a good way to ensure
+   that installing other packages will not break your site setup. It is strongly recommended. If you
+   don't have cabal-dev, you can install it by running cabal
+    install cabal-dev.</p>
+  <p id="x-10" class="hascomments">Note that you really do need to use the cabal install
+   (or cabal-dev install) command. Most likely, you do not yet have all
+   the dependencies in place needed by your site. For example, none of the database backends, nor
+   the Javascript minifier (hjsmin) are installed when installing the
+    yesod package.</p>
+  <p id="x-14" class="hascomments">Finally, to launch your development site, you would use yesod devel (or
+    yesod --dev devel). This site will automatically reload whenever you change
+   your code.</p>
+ 
+  <p id="x-3" class="hascomments">The scaffolded site is built as a fully cabalized Haskell package. In addition to
+   source files, config files, templates, and static files are produced as well.</p>
+ 
+  <p id="x-3" class="hascomments">Whether directly using cabal, or indirectly using yesod devel, building your code will always go through the cabal file. If
+      you open the file, you'll see that there are both library and executable blocks. Only one of
+      these is built at a time, depending on the value of the library-only
+      flag. If library-only is turned on, then the library is built, which
+      is how yesod devel calls your app. Otherwise, the executable is
+      built.</p>
+    <p id="x-9" class="hascomments">The library-only flag should only be used by
+        yesod devel; you should never be explicitly passing it into
+        cabal. There is an additional flag, dev, that
+      allows cabal to build an executable, but turns on some of the same features as
+      the library-only flag, i.e., no optimizations and reload versions of the Shakespearean
+      template functions.</p>
+  <p id="x-12" class="hascomments">In general, you will build as follows:</p>
+    <ul id="ul_4wr_4wg_42">
+      <li id="x-13">When developing, use yesod devel exclusively.</li>
+      <li id="x-14">When building a production build, perform cabal clean
+          &amp;&amp; cabal configure &amp;&amp; cabal build. This will produce an
+        optimized executable in your dist folder.<aside id="x-16" class="note">In the past we
+          had a -fproduction flag. If you produced a scaffolded site in the past,
+          you may have to use this flag to get a production build.</aside></li>
+    </ul>
+    <p id="x-17" class="hascomments">You'll also notice that we specify all language extensions in the cabal file. The
+      extensions are specified twice: once for the executable, and once for the
+      library. If you add any extensions to the list, add it to both places.</p>
+    <p id="x-19" class="hascomments">You might be surprised to see the NoImplicitPrelude extension. We turn this
+      on since the site includes its own module, Import, with a few changes to the
+      Prelude that make working with Yesod a little more convenient.</p>
+    <p id="x-22" class="hascomments">The last thing to note is the exported-modules list. If you add any modules to your
+      application, you must update this list to get yesod devel to work correctly.
+      Unfortunately, neither Cabal nor GHC will give you a warning if you forgot to make this
+      update, and instead you'll get a very scary-looking error message from yesod devel.<aside id="x-24" class="note">One of our planned improvements to yesod devel is to check if
+        there are any missing modules.</aside></p>
+ 
+  <p id="x-3" class="hascomments">Multiple times in this book, you've seen a comment like "We're declaring our routes/entities
+   with quasiquotes for convenience. In a production site, you should use an external file." The
+   scaffolding uses such an external file.</p>
+  <p id="x-4" class="hascomments">Routes are defined in config/routes, and entities in
+    config/models. They have the exact same syntax as the quasiquoting
+   you've seen throughout the book, and yesod devel knows to automatically
+   recompile the appropriate modules when these files change.</p>
+  <p id="x-7" class="hascomments">The models files is referenced by Model.hs. You are free to declare whatever you like in this file, but here are some
+   guidelines:</p>
+  <ul id="ul_gui_tyg_oe">
+   <li id="x-9">Any data types used in entities
+    must be imported/declared in Model.hs, above the persistFile call.</li>
+   <li id="x-12">Helper utilities should either be declared in Import.hs
+    or, if very model-centric, in a file within the Model folder and
+    imported into Import.hs.</li>
+  </ul>
+ 
+  <p id="x-3" class="hascomments">The mkYesod function which we have used throughout the book declares a few
+   things:</p>
+  <ul id="ul_ajc_dzg_oe">
+   <li id="x-5">Route type</li>
+   <li id="x-6">Route render function</li>
+   <li id="x-7">Dispatch function</li>
+  </ul>
+  <p id="x-8" class="hascomments">The dispatch function refers to all of the handler functions, and therefore all of those must
+   either be defined in the same file as the dispatch function, or be imported by the dispatch
+   function.</p>
+  <p id="x-9" class="hascomments">Meanwhile, the handler functions will almost certainly refer to the route type. Therefore,
+    they must be either in the same file where the route type is defined, or must import that
+   file. If you follow the logic here, your entire application must essentially live in a single
+   file!</p>
+  <p id="x-11" class="hascomments">Clearly this isn't what we want. So instead of using mkYesod, the scaffolding
+   site uses a decomposed version of the function. Foundation calls
+    mkYesodData, which declares the route type and render function. Since it does
+   not declare the dispatch function, the handler functions need not be in scope.
+    Import.hs imports Foundation.hs, and all the handler modules
+   import Import.hs.</p>
+  <p id="x-18" class="hascomments">In Application.hs, we call mkYesodDispatch, which creates our
+   dispatch function. For this to work, all handler functions must be in scope, so be sure to add an
+   import statement for any new handler modules you create.</p>
+  <p id="x-21" class="hascomments">Other than that, Application.hs is pretty simple. It provides
+   two functions: withDevelAppPort is used by yesod
+    devel to launch your app, and getApplication is used by the
+   executable to launch.</p>
+  <p id="x-24" class="hascomments">Foundation.hs is much more exciting. It:</p>
+  <ul id="ul_ero_hah_oe">
+   <li id="x-25">Declares your foundation datatype</li>
+   <li id="x-26">Declares a number of instances, such as Yesod,
+     YesodAuth, and YesodPersist</li>
+   <li id="x-27">Imports the messages files. If you look for the line starting with mkMessage, you will see that it specifies the folder containing the messages
+     (messages) and the default language (en, for English).</li>
+  </ul>
+  <p id="x-30" class="hascomments">This is the right file for adding extra instances for your foundation, such as
+    YesodAuthEmail or YesodBreadcrumbs.</p>
+  <p id="x-31" class="hascomments">We'll be referring back to this file later, as we discussed some of the special
+   implementations of Yesod typeclass methods.</p>
+ 
+  <p id="x-3" class="hascomments">The Import module was born out of a few commonly recurring
+   patterns.</p>
+  <ul id="ul_skn_hbh_oe">
+   <li id="x-4">I want to define some helper functions (maybe the &lt;&gt; = mappend operator)
+    to be used by all handlers.</li>
+   <li id="x-6">I'm always adding the same five import statements (Data.Text,
+     Control.Applicative, etc) to every handler module.</li>
+   <li id="x-7">I want to make sure I never use some evil function (head,
+     readFile, ...) from Prelude.<aside id="x-8" class="note">Yes, evil is
+     hyperbole. If you're wondering why I listed those functions as bad: head is partial, and throws exceptions on an empty list, and readFile uses lazy I/O, which doesn't close file handles quickly enough. Also,
+      readFile uses String instead of
+     Text.</aside></li>
+  </ul>
+  <p id="x-11" class="hascomments">The solution is to turn on the NoImplicitPrelude language extension,
+   re-export the parts of Prelude we want, add in all the other stuff we want,
+   define our own functions as well, and then import this file in all handlers.</p>
+ 
+  <p id="x-3" class="hascomments">Handler modules should go inside the Handler folder. The site
+   template includes one module: Handler/Root.hs. How you split up your handler
+   functions into individual modules is your decision, but a good rule of thumb is:</p>
+  <ul id="ul_esf_zbh_oe">
+   <li id="x-4">Different methods for the same route should go in the same file, e.g.
+     getBlogR and postBlogR.</li>
+   <li id="x-5">Related routes can also usually go in the same file, e.g.,
+     getPeopleR and getPersonR.</li>
+  </ul>
+  <p id="x-6" class="hascomments">Of course, it's entirely up to you. When you add a new handler file, make sure you do the
+   following:</p>
+  <ul id="ul_qml_dch_oe">
+   <li id="x-7">Add it to version control (you are using version control, right?).</li>
+   <li id="x-9">Add it to the cabal file.</li>
+   <li id="x-10">Add it to the Application.hs file.</li>
+   <li id="x-11">Put a module statement at the top, and an import Import line below it.</li>
+  </ul>
+  <aside id="x-20" class="note">One of the planned improvements to the yesod executable is to automate
+   these four steps.</aside>
+ 
+  <p id="x-3" class="hascomments">It's very common to want to include CSS and Javascript specific to a page. You don't want to
+   have to remember to include those Lucius and Julius files manually every time you refer to a
+   Hamlet file. For this, the site template provides the widgetFile function.</p>
+  <p id="x-5" class="hascomments">If you have a handler function:</p>
+  <pre id="x-6">getRootR = defaultLayout $(widgetFile "homepage")</pre>
+  <p id="x-7" class="hascomments">, Yesod will look for the following files:</p>
+  <ul id="ul_vih_ddh_oe">
+   <li id="x-8">templates/homepage.hamlet</li>
+   <li id="x-10">templates/homepage.lucius</li>
+   <li id="x-12">templates/homepage.cassius</li>
+   <li id="x-14">templates/homepage.julius</li>
+  </ul>
+  <p id="x-16" class="hascomments">If any of those files are present, they will be automatically included in the output.</p>
+  <aside id="x-17" class="note">Due to the nature of how this works, if you launch your app with yesod
+    devel, and then create a new file (e.g.,
+    templates/homepage.julius), the contents will not be
+   included until the file calling widgetFile is recompiled. In such a case, you
+   may need to force a save of that file to get yesod devel to recompile.</aside>
+ 
+  <p id="x-3" class="hascomments">One of the first things you're going to want to customize is the look of your site. The layout
+   is actually broken up into two files:</p>
+  <ul id="ul_jjz_kch_oe">
+   <li id="x-4">templates/default-layout-wrapper.hamlet contains just the basic shell of
+    a page. This file is interpreted as plain Hamlet, not as a Widget, and therefore cannot refer
+    to other widgets, embed i18n strings, or add extra CSS/JS.</li>
+   <li id="x-6">templates/default-layout.hamlet is where you would put the bulk of your
+    page. You must remember to include the widget value in the page, as that
+    contains the per-page contents. This file is interpreted as a Widget.</li>
+  </ul>
+  <p id="x-10" class="hascomments">Also, since default-layout is included via the widgetFile function,
+   any Lucius, Cassius, or Julius files named default-layout.* will
+   automatically be included as well.</p>
+ 
+  <p id="x-3" class="hascomments">The scaffolded site automatically includes the static file subsite, optimized for
+   serving files that will not change over the lifetime of the current build. What this means is
+   that:</p>
+  <ul id="ul_rui_odh_oe">
+   <li id="x-4">When your static file identifiers are generated (e.g.,
+     static/mylogo.png becomes mylogo_png), a query-string
+    parameter is added to it with a hash of the contents of the file. All of this happens at compile
+    time.</li>
+   <li id="x-5">When yesod-static serves your static files, it sets expiration
+    headers far in the future, and incldues an etag based on a hash of your content.</li>
+   <li id="x-6">Whenever you embed a link to mylogo_png, the rendering includes the
+    query-string parameter. If you change the logo, recompile, and launch your new app, the query
+    string will have changed, causing users to ignore the cached copy and download a new
+    version.</li>
+  </ul>
+  <p id="x-7" class="hascomments">Additionally, you can set a specific static root in your
+    Settings.hs file to serve from a different domain name. This has the
+   advantage of not requiring transmission of cookies for static file requests, and also lets you
+   offload static file hosting to a CDN or a service like Amazon S3. See the comments in the file
+   for more details.</p>
+  <p id="x-8" class="hascomments">Another optimization is that CSS and Javascript included in your widgets will not be included
+   inside your HTML. Instead, their contents will be written to an external file, and a link given.
+   This file will be named based on a hash of the contents as well, meaning:</p>
+  <ol id="ol_xmt_geh_oe">
+   <li id="x-9">Caching works properly.</li>
+   <li id="x-10">Yesod can avoid an expensive disk write of the CSS/Javascript file contents if a file with
+    the same hash already exists.</li>
+  </ol>
+  <p id="x-11" class="hascomments">Finally, all of your Javascript is automatically minified via hjsmin.</p>
+ 
+  <p id="x-3" class="hascomments">The purpose of this chapter was not to explain every line that exists in the scaffolded site,
+   but instead to give a general overview to how it works. The best way to become more familiar with
+   it is to jump right in and start writing a Yesod site with it.</p>
+ </html>

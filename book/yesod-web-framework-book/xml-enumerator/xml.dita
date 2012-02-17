@@ -1,0 +1,585 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html>
+  <p id="x-3" class="hascomments">Many developers cringe at the thought of dealing with XML files. XML has the reputation of
+   having a complicated data model, with obfuscated libraries and huge layers of complexity sitting
+   between you and your goal. I'd like to posit that a lot of that pain is actually a language and
+   library issue, not inherent to XML.</p>
+  <p id="x-4" class="hascomments">Once again, Haskell's type system allows us to easily break down the problem to its most basic
+   form. The xml-types package neatly deconstructs the XML data model (both a
+   streaming and DOM-based approach) into some simple ADTs. Haskell's standard immutable data
+   structures make it easier to apply transforms to documents, and a simple set of functions makes
+   parsing and rendering a breeze.</p>
+  <p id="x-6" class="hascomments">We're going to be covering the xml-conduit package. Under
+   the surface, this package uses a lot of the approaches Yesod in general does for high
+   performance: blaze-builder, text,
+    conduit and attoparsec. But from a
+   user perspective, it provides everything from the simplest APIs
+    (readFile/writeFile) through full control of XML event
+   streams.</p>
+  <p id="x-12" class="hascomments">In addition to xml-conduit, there are a few related packages that
+   come into play, like xml-hamlet and xml2html. We'll cover both how to use all these packages, and when they should be
+   used.</p>
+ 
+  <figure id="x-3"><figcaption>Input XML file</figcaption>
+   
+   <pre id="x-5">&lt;document title="My Title"&gt;
+    &lt;para&gt;This is a paragraph. It has &lt;em&gt;emphasized&lt;/em&gt; and &lt;strong&gt;strong&lt;/strong&gt; words.&lt;/para&gt;
+    &lt;image href="myimage.png"/&gt;
+&lt;/document&gt;</pre>
+  </figure>
+  <figure id="x-6"><figcaption>Haskell code</figcaption>
+   
+   <pre id="x-8">{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE OverloadedStrings #-}
+import Prelude hiding (readFile, writeFile)
+import Text.XML
+import Text.Hamlet.XML
+
+main :: IO ()
+main = do
+    -- readFile will throw any parse errors as runtime exceptions
+    -- def uses the default settings
+    Document prologue root epilogue &lt;- readFile def "input.xml"
+
+    -- root is the root element of the document, let's modify it
+    let root' = transform root
+
+    -- And now we write out. Let's indent our output
+    writeFile def
+        { rsPretty = True
+        } "output.html" $ Document prologue root' epilogue
+
+-- We'll turn out &lt;document&gt; into an XHTML document
+transform :: Element -&gt; Element
+transform (Element _name attrs children) = Element "html" [] [xml|
+&lt;head&gt;
+    &lt;title&gt;
+        $maybe title &lt;- lookup "title" attrs
+            \#{title}
+        $nothing
+            Untitled Document
+&lt;body&gt;
+    $forall child &lt;- children
+        ^{goNode child}
+|]
+
+goNode :: Node -&gt; [Node]
+goNode (NodeElement e) = [NodeElement $ goElem e]
+goNode (NodeContent t) = [NodeContent t]
+goNode (NodeComment _) = [] -- hide comments
+goNode (NodeInstruction _) = [] -- and hide processing instructions too
+
+-- convert each source element to its XHTML equivalent
+goElem :: Element -&gt; Element
+goElem (Element "para" attrs children) =
+    Element "p" attrs $ concatMap goNode children
+goElem (Element "em" attrs children) =
+    Element "i" attrs $ concatMap goNode children
+goElem (Element "strong" attrs children) =
+    Element "b" attrs $ concatMap goNode children
+goElem (Element "image" attrs _children) =
+    Element "img" (map fixAttr attrs) [] -- images can't have children
+  where
+    fixAttr ("href", value) = ("src", value)
+    fixAttr x = x
+goElem (Element name attrs children) =
+    -- don't know what to do, just pass it through...
+    Element name attrs $ concatMap goNode children</pre>
+  </figure>
+  <figure id="x-9"><figcaption>Output XHTML</figcaption>
+   
+   <pre id="x-11">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;
+            My Title
+        &lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;p&gt;
+            This is a paragraph. It has 
+            &lt;i&gt;
+                emphasized
+            &lt;/i&gt;
+            and 
+            &lt;b&gt;
+                strong
+            &lt;/b&gt;
+            words.
+        &lt;/p&gt;
+        &lt;img src="myimage.png"/&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</pre>
+  </figure>
+ 
+  <p id="x-3" class="hascomments">Let's take a bottom-up approach to analyzing types. This section will also serve as a primer on
+   the XML data model itself, so don't worry if you're not completely familiar with it.</p>
+  <p id="x-4" class="hascomments">I think the first place where Haskell really shows its strength is with the
+    xml-types:Data.XML.Types:Name datatype. Many languages (like Java) struggle
+   with properly expressing names. The issue is that there are in fact three components to a name:
+   its local name, its namespace (optional), and its prefix (also optional). Let's look at some XML
+   to explain:</p>
+  <pre id="x-6">&lt;no-namespace/&gt;
+&lt;no-prefix xmlns="first-namespace" first-attr="value1"/&gt;
+&lt;foo:with-prefix xmlns:foo="second-namespace" foo:second-attr="value2"/&gt;</pre>
+  <p id="x-7" class="hascomments">The first tag has a local name of no-namespace, and no
+   namespace or prefix. The second tag (local name: no-prefix) also has no prefix, but it does have a namespace (first-namespace). first-attr, however, does not
+   inherit that namespace: attribute namespaces must always be explicitly set with a prefix.</p>
+  <aside id="x-13" class="note">Namespaces are almost always URIs of some sort, though there is nothing in any specification
+   requiring that it be so.</aside>
+  <p id="x-14" class="hascomments">The third tag has a local name of with-prefix, a prefix of
+    foo and a namespace of second-namespace.
+   Its attribute has a second-attr local name and the same prefix and namespace.
+   The xmlns and xmlns:foo attributes are part of the namespace
+   specification, and are not considered attributes of their respective elements.</p>
+  <p id="x-18" class="hascomments">So let's review what we need from a name: every name has a local name, and it can optionally
+   have a prefix and namespace. Seems like a simple fit for a record type:</p>
+  <pre id="x-19">data Name = Name
+    { nameLocalName :: Text
+    , nameNamespace :: Maybe Text
+    , namePrefix :: Maybe Text
+    }</pre>
+  <p id="x-20" class="hascomments">According the the XML namespace standard, two names are considered equivalent if they
+   have the same localname and namespace. In other words, the prefix is not important. Therefore,
+    xml-types defines Eq and Ord instances that
+   ignore the prefix.</p>
+  <p id="x-21" class="hascomments">The last class instance worth mentioning is IsString. It would be
+   very tedious to have to manually type out Name "p" Nothing Nothing
+   every time we want a paragraph. If you turn on OverloadedStrings,
+    "p" will resolve to that all by itself! In addition, the
+    IsString instance recognizes something called Clark notation, which allows you
+   to prefix the namespace surrounded in curly brackets. In other words:</p>
+  <pre id="x-23">"{namespace}element" == Name "element" (Just "namespace") Nothing
+"element" == Name "element" Nothing Nothing</pre>
+ 
+  <p id="x-3" class="hascomments">XML documents are a tree of nested nodes. There are in fact four different types of nodes
+   allowed: elements, content (i.e., text), comments, and processing instructions.</p>
+  <aside id="x-4" class="note">You may not be familiar with that last one, it's less commonly used. It is marked up
+   as:<pre id="x-5">&lt;?target data?&gt;</pre>There are two commonly held
+   misconceptions about processing instructions. Let's set them to rest now:<ul id="ul_zfo_vsx_md">
+    <li id="x-6">PIs don't have attributes. While often times you'll see processing instructions that appear
+     to have attributes, there are in fact no rules about that data of an instruction.</li>
+    <li id="x-7">The &lt;?xml ...?&gt; stuff at the beginning of a document is not a processing instruction. It
+     is simply the beginning of the document, and happens to look an awful lot like a PI. The
+     difference though is that the &lt;?xml ...?&gt; line will not appear in your parsed content.</li>
+   </ul></aside>
+  <p id="x-8" class="hascomments">Since processing instructions have two pieces of text associated with them (the target and the
+   data), we have a simple data type:</p>
+  <pre id="x-9">data Instruction = Instruction
+    { instructionTarget :: Text
+    , instructionData :: Text
+    }</pre>
+  <p id="x-10" class="hascomments">Comments have no special datatype, since they are just text. But content is an
+   interesting one: it could contain either plain text or unresolved entities (e.g.,
+    &amp;copyright-statement;). xml-types keeps those
+   unresolved entities in all the data types in order to completely match the spec. However, in
+   practice, it can be very tedious to program against those data types. And in most use cases, an
+   unresolved entity is going to end up as an error anyway.</p>
+  <p id="x-12" class="hascomments">So the xml-conduit:Text.XML module defines its own set
+   of datatypes for nodes, elements and documents that removes all unresolved entities. If you need
+   to deal with unresolved entities instead, you should use the xml-conduit:Text.XML.Unresolved module. From now on, we'll be focusing only on the
+    Text.XML data types, though they are almost identical to the
+    xml-types versions.</p>
+  <p id="x-15" class="hascomments">Anyway, after that detour: content is just a piece of text, and therefore it too does
+   not have a special datatype. The last node type is an element, which contains three pieces of
+   information: a name, a list of attributes and a list of children nodes. An attribute has two
+   pieces of information: a name and a value. (In xml-types, this value could
+   contain unresolved entities as well.) So our Element is defined as:</p>
+  <pre id="x-16">data Element = Element
+    { elementName :: Name
+    , elementAttributes :: [(Name, Text)]
+    , elementNodes :: [Node]
+    }</pre>
+  <p id="x-17" class="hascomments">Which of course begs the question: what does a Node look like? This
+   is where Haskell really shines: its sum types model the XML data model perfectly.</p>
+  <pre id="x-18">data Node
+    = NodeElement Element
+    | NodeInstruction Instruction
+    | NodeContent Text
+    | NodeComment Text</pre>
+ 
+  <p id="x-3" class="hascomments">So now we have elements and nodes, but what about an entire document? Let's just lay out the
+   datatypes:</p>
+  <pre id="x-4">data Document = Document
+    { documentPrologue :: Prologue
+    , documentRoot :: Element
+    , documentEpilogue :: [Miscellaneous]
+    }
+
+data Prologue = Prologue
+    { prologueBefore :: [Miscellaneous]
+    , prologueDoctype :: Maybe Doctype
+    , prologueAfter :: [Miscellaneous]
+    }
+
+data Miscellaneous
+    = MiscInstruction Instruction
+    | MiscComment Text
+
+data Doctype = Doctype
+    { doctypeName :: Text
+    , doctypeID :: Maybe ExternalID
+    }
+
+data ExternalID
+    = SystemID Text
+    | PublicID Text Text</pre>
+  <p id="x-5" class="hascomments">The XML spec says that a document has a single root element
+    (documentRoot). It also has an optional doctype statement. Before and after
+   both the doctype and the root element, you are allowed to have comments and processing
+   instructions. (You can also have whitespace, but that is ignored in the parsing.)</p>
+  <p id="x-6" class="hascomments">So what's up with the doctype? Well, it specifies the root element of the document, and then
+   optional public and system identifiers. These are used to refer to DTD files, which give more
+   information about the file (e.g., validation rules, default attributes, entity resolution). Let's
+   see some examples:</p>
+  <pre id="x-7">&lt;!DOCTYPE root&gt; &lt;!-- no external identifier --&gt;
+&lt;!DOCTYPE root SYSTEM "root.dtd"&gt; &lt;!-- a system identifier --&gt;
+&lt;!DOCTYPE root PUBLIC "My Root Public Identifier" "root.dtd"&gt; &lt;!-- public identifiers have a system ID as well --&gt;</pre>
+  <p id="x-8" class="hascomments">And that, my friends, is the entire XML data model. For many parsing purposes, you'll
+   be able to simply ignore the entire Document datatype and go immediately to the
+    documentRoot.</p>
+ 
+  <p id="x-3" class="hascomments">In addition to the document API, xml-types defines an xml-types:Data.XML.Types:Event datatype. This can be used for constructing
+   streaming tools, which can be much more memory efficient for certain kinds of processing (eg,
+   adding an extra attribute to all elements). We will not be covering the streaming API currently,
+   though it should look very familiar after analyzing the document API.</p>
+  <aside id="x-6" class="note">You can see an example of the streaming API in the <a href="../../yesod-web-framework-book/case-study-sphinx/case-study-sphinx.dita#file199-conceptIdsphinx" id="x-7">Sphinx case
+    study</a>.</aside>
+ 
+  <p id="x-3" class="hascomments">The recommended entry point to xml-conduit is the xml-conduit:Text.XML module. This module exports all of the datatypes you'll need to
+   manipulate XML in a DOM fashion, as well as a number of different approaches for parsing and
+   rendering XML content. Let's start with the simple
+   ones:<pre id="x-5">readFile  :: ParseSettings  -&gt; FilePath -&gt; IO Document
+writeFile :: RenderSettings -&gt; FilePath -&gt; Document -&gt; IO ()</pre>This
+   introduces the ParseSettings and RenderSettings datatypes. You can use these to modify the behavior of the parser and
+   renderer, such as adding character entities and turning on pretty (i.e., indented) output. Both
+   these types are instances of the data-default:Data.Default:Default
+   typeclass, so you can simply use def when these need to be supplied.
+   That is how we will supply these values through the rest of the chapter; please see the API docs
+   for more information.</p>
+  <p id="x-14" class="hascomments">It's worth pointing out that in addition to the file-based API, there is also a text- and
+   bytestring-based API. The bytestring-powered functions all perform intelligent encoding
+   detections, and support UTF-8, UTF-16 and UTF-32, in either big or little endian, with and
+   without a Byte-Order Marker (BOM). All output is generated in UTF-8.</p>
+  <p id="x-15" class="hascomments">For complex data lookups, we recommend using the higher-level cursors API. The
+   standard Text.XML API not only forms the basis for that higher level, but is
+   also a great API for simple XML transformations and for XML generation. See the synopsis for an
+   example.</p>
+ 
+  <p id="x-3" class="hascomments">In the type signature above, we have a type FilePath. However, this isn't
+     Prelude.FilePath. The standard Prelude defines a type
+   synonym type FilePath = [Char]. Unfortunately, there are many limitations to
+   using such an approach, including confusion of filename character encodings and differences in
+   path separators.</p>
+  <p id="x-9" class="hascomments">Instead, xml-conduit uses the system-filepath package,
+   which defines an abstract FilePath type. I've personally found this to be a much
+   nicer approach to work with. The package is fairly easy to follow, so I won't go into details
+   here. But I do want to give a few quick explanations of how to use it:</p>
+  <ul id="ul_lgl_lyb_we">
+   <li id="x-13">Since a FilePath is an instance of IsString, you can type
+    in regular strings and they will be treated properly, as long as the
+     OverloadedStrings extension is enabled. (I highly recommend enabling it
+    anyway, as it makes dealing with Text values much more pleasant.)</li>
+   <li id="x-18">If you need to explicitly convert to or from Prelude's
+     FilePath, you should use the
+     system-filepath:Filesystem.Path.CurrentOS:encodeString and
+     system-filepath:Filesystem.Path.CurrentOS:decodeString, respectively. This
+    takes into account file path encodings.</li>
+   <li id="x-23">Instead of manually splicing together directory names and file names with extensions, use the
+    operators in the Filesystem.Path.CurrentOS module, e.g. myfolder &lt;/&gt;
+     filename &lt;.&gt; extension.</li>
+  </ul>
+ 
+  <p id="x-3" class="hascomments">Suppose you want to pull the title out of an XHTML document. You could do so with the
+    Text.XML interface we just described, using standard pattern matching on the
+   children of elements. But that would get very tedious, very quickly. Probably the gold standard
+   for these kinds of lookups is XPath, where you would be able to write /html/head/title. And that's exactly what inspired the design of the xml-conduit:Text.XML.Cursor combinators.</p>
+  <p id="x-6" class="hascomments">A cursor is an XML node that knows its location in the tree; it's able to traverse
+   upwards, sideways, and downwards. (Under the surface, this is achieved by <a href="http://www.haskell.org/haskellwiki/Tying_the_Knot" id="x-7">tying
+    the knot</a>.) There are two functions available for creating cursors from
+    Text.XML types: fromDocument and
+   fromNode.</p>
+  <p id="x-8" class="hascomments">We also have the concept of an <dfn id="x-9">Axis</dfn>, defined as type Axis = Cursor -&gt; [Cursor]. It's easiest to get started by looking at
+   example axes: child returns zero or more cursors that are the child of the current one, parent
+   returns the single parent cursor of the input, or an empty list if the input is the root element,
+   and so on.</p>
+  <p id="x-11" class="hascomments">In addition, there are some axes that take predicates. element is a commonly
+   used function that filters down to only elements which match the given name. For example,
+    element "title" will return the input element if its name is "title", or an
+   empty list otherwise.</p>
+  <p id="x-14" class="hascomments">Another common function which isn't quite an axis is content :: Cursor -&gt;
+    [Text]. For all content nodes, it returns the contained text; otherwise, it returns an
+   empty list.</p>
+  <p id="x-16" class="hascomments">And thanks to the monad instance for lists, it's easy to string all of these
+   together. For example, to do our title lookup, we would write the following program:</p>
+  <pre id="x-17">{-# LANGUAGE OverloadedStrings #-}
+import Prelude hiding (readFile)
+import Text.XML
+import Text.XML.Cursor
+import qualified Data.Text as T
+
+main :: IO ()
+main = do
+    doc &lt;- readFile def "test.xml"
+    let cursor = fromDocument doc
+    print $ T.concat $
+            child cursor &gt;&gt;= element "head" &gt;&gt;= child
+                         &gt;&gt;= element "title" &gt;&gt;= descendant &gt;&gt;= content</pre>
+  <p id="x-18" class="hascomments">What this says is:</p>
+  <ol id="ol_d37c1613-8879-4be8-862c-9823d88f5b90">
+   <li id="x-19">Get me all the child nodes of the root element</li>
+   <li id="x-20">Filter down to only the elements named "head"</li>
+   <li id="x-21">Get all the children of all those head elements</li>
+   <li id="x-22">Filter down to only the elements named "title"</li>
+   <li id="x-23">Get all the descendants of all those title elements. (A descendant is a child, or a
+    descendant of a child. Yes, that was a recursive definition.)</li>
+   <li id="x-24">Get only the text nodes.</li>
+  </ol>
+  <p id="x-25" class="hascomments">So for the input document:</p>
+  <pre id="x-26">&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;My &lt;b&gt;Title&lt;/b&gt;&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;p&gt;Foo bar baz&lt;/p&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</pre>
+  <p id="x-27" class="hascomments">We end up with the output My Title. This is all well and good, but it's much
+   more verbose than the XPath solution. To combat this verbosity, Aristid Breitkreuz added a set of
+   operators to the Cursor module to handle many common cases. So we can rewrite our example as:</p>
+  <pre id="x-29">{-# LANGUAGE OverloadedStrings #-}
+import Prelude hiding (readFile)
+import Text.XML
+import Text.XML.Cursor
+import qualified Data.Text as T
+
+main :: IO ()
+main = do
+    doc &lt;- readFile def "test.xml"
+    let cursor = fromDocument doc
+    print $ T.concat $
+        cursor $/ element "head" &amp;/ element "title" &amp;// content</pre>
+  <p id="x-30" class="hascomments">$/ says to apply the axis on the right to the cursor on
+   the left. &amp;/ is almost identical, but is instead used to combine
+   two axes together. This is a general rule in Text.XML.Cursor: operators
+   beginning with $ directly apply an axis, while &amp; will combine two together. &amp;// is used for applying an axis to all descendants.</p>
+  <p id="x-34" class="hascomments">Let's go for a more complex, if more contrived, example. We have a document that looks
+   like:</p>
+  <pre id="x-35">&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;Headings&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;hgroup&gt;
+            &lt;h1&gt;Heading 1 foo&lt;/h1&gt;
+            &lt;h2 class="foo"&gt;Heading 2 foo&lt;/h2&gt;
+        &lt;/hgroup&gt;
+        &lt;hgroup&gt;
+            &lt;h1&gt;Heading 1 bar&lt;/h1&gt;
+            &lt;h2 class="bar"&gt;Heading 2 bar&lt;/h2&gt;
+        &lt;/hgroup&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</pre>
+  <p id="x-36" class="hascomments">We want to get the content of all the h1 tags which precede an
+    h2 tag with a class attribute of "bar". To perform this
+   convoluted lookup, we can write:</p>
+  <pre id="x-40">{-# LANGUAGE OverloadedStrings #-}
+import Prelude hiding (readFile)
+import Text.XML
+import Text.XML.Cursor
+import qualified Data.Text as T
+
+main :: IO ()
+main = do
+    doc &lt;- readFile def "test2.xml"
+    let cursor = fromDocument doc
+    print $ T.concat $
+        cursor $// element "h2"
+               &gt;=&gt; attributeIs "class" "bar"
+               &gt;=&gt; precedingSibling
+               &gt;=&gt; element "h1"
+               &amp;// content</pre>
+  <p id="x-41" class="hascomments">Let's step through that. First we get all h2 elements in the document.
+    ($// gets all descendants of the root element.) Then we filter out only those
+   with class=bar. That &gt;=&gt; operator is actually
+   the standard operator from base:Control.Monad; yet another advantage
+   of the monad instance of lists. precedingSibling finds all nodes that come
+   before our node and share the same parent. (There is also a preceding axis which takes all elements earlier in the tree.) We then take just the
+    h1 elements, and then grab their content.</p>
+  <aside id="x-46" class="note">The equivalent XPath, for comparison, would be //h2[@class =
+    'bar']/preceding-sibling::h1//text().</aside>
+  <p id="x-48" class="hascomments">While the cursor API isn't quite as succinct as XPath, it has the advantages of being standard
+   Haskell code, and of type safety.</p>
+ 
+  <p id="x-3" class="hascomments">Thanks to the simplicity of Haskell's data type system, creating
+            XML content with the Text.XML API is easy, if a bit verbose. The
+            following code:</p>
+  <pre id="x-4">{-# LANGUAGE OverloadedStrings #-}
+import Text.XML
+import Prelude hiding (writeFile)
+
+main :: IO ()
+main =
+    writeFile def "test3.xml" $ Document (Prologue [] Nothing []) root []
+  where
+    root = Element "html" []
+        [ NodeElement $ Element "head" []
+            [ NodeElement $ Element "title" []
+                [ NodeContent "My "
+                , NodeElement $ Element "b" []
+                    [ NodeContent "Title"
+                    ]
+                ]
+            ]
+        , NodeElement $ Element "body" []
+            [ NodeElement $ Element "p" []
+                [ NodeContent "foo bar baz"
+                ]
+            ]
+        ]</pre>
+  <p id="x-5" class="hascomments">produces</p>
+  <pre id="x-6">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;html&gt;&lt;head&gt;&lt;title&gt;My &lt;b&gt;Title&lt;/b&gt;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;p&gt;foo bar baz&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</pre>
+  <p id="x-7" class="hascomments">This is leaps and bounds easier than having to deal with an imperative, mutable-value-based API
+   (cough, Java, cough), but it's far from pleasant, and obscures what we're really trying to
+   achieve. To simplify things, we have the xml-hamlet package, which using
+   Quasi-Quotation to allow you to type in your XML in a natural syntax. For example, the above
+   could be rewritten as:</p>
+  <pre id="x-9">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+import Text.XML
+import Text.Hamlet.XML
+import Prelude hiding (writeFile)
+
+main :: IO ()
+main =
+    writeFile def "test3.xml" $ Document (Prologue [] Nothing []) root []
+  where
+    root = Element "html" [] [xml|
+&lt;head&gt;
+    &lt;title&gt;
+        My #
+        &lt;b&gt;Title
+&lt;body&gt;
+    &lt;p&gt;foo bar baz
+|]</pre>
+  <p id="x-10" class="hascomments">Let's make a few points:</p>
+  <ul id="ul_56cf6fac-3c78-4e75-b51a-7dfd6b087eeb">
+   <li id="x-11">The syntax is almost identical to normal Hamlet, except URL-interpolation (@{...}) has been
+    removed. As such:<ul id="ul_db2c4193-433e-48a6-abe9-29ca9b3835bc">
+     <li id="x-12">No close tags.</li>
+     <li id="x-13">Whitespace-sensitive.</li>
+     <li id="x-14">If you want to have whitespace at the end of a line, use a # at the end. At the beginning,
+      use a backslash.</li>
+    </ul></li>
+   <li id="x-15">An xml interpolation will return a list of Nodes. So you still need to wrap up the output in all the normal
+                    Document and root Element constructs.</li>
+   <li id="x-17">There is no support for the special .class and
+                    #id attribute forms.</li>
+  </ul>
+  <p id="x-18" class="hascomments">And like normal Hamlet, you can use variable interpolation and control structures. So a
+   slightly more complex example would be:</p>
+  <pre id="x-19">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+import Text.XML
+import Text.Hamlet.XML
+import Prelude hiding (writeFile)
+import Data.Text (Text, pack)
+
+data Person = Person
+    { personName :: Text
+    , personAge :: Int
+    }
+
+people :: [Person]
+people =
+    [ Person "Michael" 26
+    , Person "Miriam" 25
+    , Person "Eliezer" 3
+    , Person "Gavriella" 1
+    ]
+
+main :: IO ()
+main =
+    writeFile def "people.xml" $ Document (Prologue [] Nothing []) root []
+  where
+    root = Element "html" [] [xml|
+&lt;head&gt;
+    &lt;title&gt;Some People
+&lt;body&gt;
+    &lt;h1&gt;Some People
+    $if null people
+        &lt;p&gt;There are no people.
+    $else
+        &lt;dl&gt;
+            $forall person &lt;- people
+                ^{personNodes person}
+|]
+
+personNodes :: Person -&gt; [Node]
+personNodes person = [xml|
+&lt;dt&gt;#{personName person}
+&lt;dd&gt;#{pack $ show $ personAge person}
+|]</pre>
+  <p id="x-20" class="hascomments">A few more notes:</p>
+  <ul id="ul_4f926e00-4348-4801-97a1-a9d95fb18a04">
+   <li id="x-21">The caret-interpolation (^{...}) takes a list of nodes, and so can easily embed
+                other xml-quotations.</li>
+   <li id="x-22">Unlike Hamlet, hash-interpolations (#{...}) are not polymorphic, and can only accept Text values.</li>
+  </ul>
+ 
+  <p id="x-3" class="hascomments">So far in this chapter, our examples have revolved around XHTML. I've done that so far
+   simply because it is likely to be the most familiar form of XML for most of our readers. But
+   there's an ugly side to all this that we must acknowledge: not all XHTML will be correct HTML.
+   The following discrepancies exist:</p>
+  <ul id="ul_5c05f060-0943-46e4-96f3-b7c06feaf381">
+   <li id="x-4">There are some void tags (e.g., img, br) in HTML
+    which do not need to have close tags, and in fact are not allowed to.</li>
+   <li id="x-5">HTML does not understand self-closing tags, so &lt;script&gt;&lt;/script&gt; and
+     &lt;script/&gt; mean very different things.</li>
+   <li id="x-8">Combining the previous two points: you are free to self-close void tags, though to a browser
+    it won't mean anything.</li>
+   <li id="x-9">In order to avoid quirks mode, you should start your HTML documents with a
+     DOCTYPE statement.</li>
+   <li id="x-10">We do not want the XML declaration &lt;?xml ...?&gt; at the top of an HTML
+    page</li>
+   <li id="x-12">We do not want any namespaces used in HTML, while XHTML is fully namespaced.</li>
+   <li id="x-13">The contents of &lt;style&gt; and &lt;script&gt;
+    tags should not be escaped.</li>
+  </ul>
+  <p id="x-14" class="hascomments">That's where the xml2html package comes into play. It provides a
+    blaze-html:Text.Blaze:ToHtml instance for Nodes,
+    Documents and Elements. In order to use it, just import the
+    xml2html:Text.XML.Xml2Html module.</p>
+  <pre id="x-21">{-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
+import Text.Blaze (toHtml)
+import Text.Blaze.Renderer.String (renderHtml)
+import Text.XML
+import Text.Hamlet.XML
+import Text.XML.Xml2Html ()
+
+main :: IO ()
+main = putStr $ renderHtml $ toHtml $ Document (Prologue [] Nothing []) root []
+
+root :: Element
+root = Element "html" [] [xml|
+&lt;head&gt;
+    &lt;title&gt;Test
+    &lt;script&gt;if (5 &lt; 6 || 8 &gt; 9) alert("Hello World!");
+    &lt;style&gt;body &gt; h1 { color: red }
+&lt;body&gt;
+    &lt;h1&gt;Hello World!
+|]</pre>
+  <p id="x-22" class="hascomments">Outputs: (whitespace added)</p>
+  <pre id="x-23">&lt;!DOCTYPE HTML&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;Test&lt;/title&gt;
+        &lt;script&gt;if (5 &lt; 6 || 8 &gt; 9) alert("Hello World!");&lt;/script&gt;
+        &lt;style&gt;body &gt; h1 { color: red }&lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;h1&gt;Hello World!&lt;/h1&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</pre>
+ </html>
