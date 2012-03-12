@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>Authentication and Authorization</h1>
         <p id="x-3" class="hascomments">Authentication and authorization are two very related, and yet separate, concepts. While
             the former deals with identifying a user, the latter determines what a user is allowed
             to do. Unfortunately, since both terms are often abbreviated as "auth," the concepts are
@@ -16,7 +16,7 @@
             is written in Haskell, you have the full flexibility of the language at your
             disposal.</p>
         <p id="x-6" class="hascomments">This chapter will cover how to set up an "auth" solution in Yesod and discuss some
-            trade-offs in the different authentication options.</p><p id="outline" class="hascomments">This chapter is just an outline. It will contain the sections:</p>
+            trade-offs in the different authentication options.</p><h2>Overview</h2>
   <p id="x-3" class="hascomments">The yesod-auth package provides a unified interface for a
    number of different authentication plugins. The only real requirement for these backends is that
    they identify a user based on some unique string. In OpenID, for instance, this would be the
@@ -46,7 +46,7 @@
    methods allow access for every request. Alternatively, you can implement authorization in a more
    ad-hoc way by adding calls to requireAuth and the like within individual handler
    functions, though this undermines many of the benefits of a declarative authorization system.</p>
- 
+ <h2>Authenticate Me</h2>
   <p id="x-3" class="hascomments">Let's jump right in with an example of authentication.</p>
   <pre id="x-4">{-# LANGUAGE OverloadedStrings, TemplateHaskell, TypeFamilies,
              MultiParamTypeClasses, QuasiQuotes #-}
@@ -168,7 +168,7 @@ main = do
    
    <img src="../../images/after-login.png" id="image_gz2_v3f_p2" placement="inline"/>
   </figure>
- 
+ <h2>Email</h2>
   <p id="x-3" class="hascomments">For many use cases, third-party authentication of email will be sufficient. Occassionally,
    you'll want users to actual create passwords on your site. The scaffolded site does not include
    this setup, because:</p>
@@ -337,7 +337,7 @@ main :: IO ()
 main = withSqliteConn "email.db3" $ \conn -&gt; do
     runSqlConn (runMigration migrateAll) conn
     warpDebug 3000 $ MyEmailApp conn</pre>
- 
+ <h2>Authorization</h2>
   <p id="x-3" class="hascomments">Once you can authenticate your users, you can use their credentials to authorize requests. Authorization in Yesod is simple and declarative: most of
             the time, you just need to add the authRoute and
                 isAuthorized methods to your Yesod typeclass instance. Let's see an
@@ -441,7 +441,7 @@ main = do
   </ul>
   <p id="x-11" class="hascomments">Using these techniques, you can develop as sophisticated an authorization system as you like,
    or even tie into existing systems used by your organization.</p>
- 
+ <h2>Conclusion</h2>
   <p id="x-3" class="hascomments">This chapter covered the basics of setting up user authentication, as well as how the built-in
    authorization functions provide a simple, declarative approach for users. While these are
    complicated concepts, with many approaches, Yesod should provide you with the building blocks you

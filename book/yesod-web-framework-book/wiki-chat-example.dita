@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>Wiki: markdown, chat subsite, event source</h1>
   <p id="x-3" class="hascomments">This example will tie together a few different ideas. We'll start with a chat subsite, which
    allows us to embed a chat widget on any page. We'll use the HTML 5 event source API to handle
    sending events from the server to the client.</p>
@@ -16,7 +16,7 @@ module Chat where
 import Yesod
 import Control.Concurrent.Chan (Chan, dupChan, writeChan)
 import Data.Text (Text)
-import Network.Wai.EventSource (ServerEvent (..), eventSourceApp)
+import Network.Wai.EventSource (ServerEvent (..), eventSourceAppChan)
 import Language.Haskell.TH.Syntax (Type (VarT), Pred (ClassP), mkName)
 import Blaze.ByteString.Builder.Char.Utf8 (fromText)
 import Data.Monoid (mappend)
@@ -75,11 +75,11 @@ getReceiveR = do
     -- channels.
     chan &lt;- liftIO $ dupChan chan0
 
-    -- Now we use the event source API. eventSourceApp takes two parameters:
+    -- Now we use the event source API. eventSourceAppChan takes two parameters:
     -- the channel of events to read from, and the WAI request. It returns a
     -- WAI response, which we can return with sendWaiResponse.
     req &lt;- waiRequest
-    res &lt;- lift $ eventSourceApp chan req
+    res &lt;- lift $ eventSourceAppChan chan req
     sendWaiResponse res
 
 -- | Provide a widget that the master site can embed on any page.

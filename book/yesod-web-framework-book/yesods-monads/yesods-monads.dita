@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>Yesod's Monads</h1>
   <p id="x-3" class="hascomments">As you've read through this book, there have been a number of monads which have
-   appeared: Handler, Widget and something to do with Persistent
-   (let's call it YesodDB for now). As with most monads, each one provides some
-   specific functionality: Handler gives access to the request and allows you to
+   appeared: Handler, Widget and
+    YesodDB (for Persistent). As with most monads, each one provides some specific
+   functionality: Handler gives access to the request and allows you to
    send responses, a Widget contains HTML, CSS, and Javascript, and
-    YesodDB let's you make database queries.</p>
+    YesodDB let's you make database queries. In Model-View-Controller
+   (MVC) terms, we could consider YesodDB to be the model, Widget
+   to be the view, and Handler to be the controller.</p>
   <p id="x-4" class="hascomments">So far, we've presented some very straight-forward ways to use these monads: your main
    handler will run in Handler, using runDB to execute a
     YesodDB query, and defaultLayout to return a
    Widget, which in turn was created by calls to toWidget.</p>
   <p id="x-5" class="hascomments">However, if we have a deeper understanding of these types, we can achieve some fancier
    results.</p>
- 
+ <h2>Monad Transformers</h2>
   <blockquote id="x-3">Monads are like onions. Monads are not like cakes.<cite id="x-5">Shrek, more or less</cite></blockquote>
   <p id="x-6" class="hascomments">Before we get into the heart of Yesod's monads, we need to understand a bit about
    monad transformers. (If you already know all about monad transformers, you can likely skip this
@@ -43,7 +45,7 @@ lift . throwError :: errValue -&gt; ReaderT Error</pre>
    many layers of transformers you have around an IO, there's still an
     IO at the core, meaning you can perform I/O in any of these <dfn id="x-19">monad transformer stacks</dfn>. You'll often see code that looks like liftIO
     $ putStrLn "Hello There!".</p>
- 
+ <h2>The Three Transformers</h2>
   <p id="x-6" class="hascomments">We've already discussed two of our transformers previously: Handler and
     Widget. Just to recap, there are two special things about these
    transformers:</p>
@@ -89,7 +91,7 @@ lift . throwError :: errValue -&gt; ReaderT Error</pre>
    if you look at that last paragraph again, you'll realize that's not the way things have to be.
    Since a widget is a transformer on top of a handler, anything you do in a handler can be done in
    a widget, including database actions. All you have to do is lift.</p>
- 
+ <h2>Example: Database-driven navbar</h2>
   <p id="x-3" class="hascomments">Let's put some of this new knowledge into action. We want to create a
                 Widget that generates its output based on the contents of the
             database. Previously, our approach would have been to load up the data in a
@@ -112,22 +114,22 @@ Link
     added UTCTime
 |]
 
-data Links = Links ConnectionPool
+data LinksExample = LinksExample ConnectionPool
 
-mkYesod "Links" [parseRoutes|
+mkYesod "LinksExample" [parseRoutes|
 / RootR GET
 /add-link AddLinkR POST
 |]
 
-instance Yesod Links
+instance Yesod LinksExample
 
-instance RenderMessage Links FormMessage where
+instance RenderMessage LinksExample FormMessage where
     renderMessage _ _ = defaultFormMessage
 
-instance YesodPersist Links where
-    type YesodPersistBackend Links = SqlPersist
+instance YesodPersist LinksExample where
+    type YesodPersistBackend LinksExample = SqlPersist
     runDB db = do
-        Links pool &lt;- getYesod
+        LinksExample pool &lt;- getYesod
         runSqlPool db pool
 
 getRootR :: Handler RepHtml
@@ -166,7 +168,7 @@ postAddLinkR = do
 main :: IO ()
 main = withSqlitePool "links.db3" 10 $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
-    warpDebug 3000 $ Links pool</pre>
+    warpDebug 3000 $ LinksExample pool</pre>
   <p id="x-5" class="hascomments">Pay attention in particular to the existingLinks function.
             Notice how all we needed to do was apply lift to a normal
             database action. And from within getRootR, we treated existingLinks like any ordinary Widget,
@@ -175,7 +177,7 @@ main = withSqlitePool "links.db3" 10 $ \pool -&gt; do
       
    <img src="../../images/navbar.png" id="image_xpd_yzj_zd" placement="inline"/>
   </figure>
- 
+ <h2>Example: Request information</h2>
   <p id="x-3" class="hascomments">Likewise, you can get request information inside a Widget. Here we
             can determine the sort order of a list based on a GET parameter.</p>
   <pre id="x-4">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
@@ -241,7 +243,7 @@ main = warpDebug 3000 People</pre>
   <p id="x-5" class="hascomments">Once again, all we need to do is lift our normal
                 Handler code (in this case, runInputGet) to have
             it run in our Widget.</p>
- 
+ <h2>Summary</h2>
   <p id="x-3" class="hascomments">If you completely ignore this chapter, you'll still be able to use Yesod to great benefit. The
    advantage of understanding how Yesod's monads interact is to be able to produce cleaner, more
    modular code. Being able to perform arbitrary actions in a Widget can be a

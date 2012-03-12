@@ -1,39 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
-  <p id="x-3" class="hascomments">Conduits are a solution to the streaming data problem. They fit the same solution space as
-   enumerators, in that we want to have deterministic resource handling, constant memory usage, and
-   composability. However, conduits have been designed based on a huge amount of experience using
-   enumerators in real life projects. They intend to solve the same problems in a simpler, more
-   robust way.</p>
- 
-  <p class="hascomments">We often talk vaguely about having streaming, composable data. Let's give some concrete ideas
-   of what we want out of this library:</p>
-  <ul id="ul_lwt_nqx_re">
-   <li>A unified interface for streaming data from and piping data into various places, whether they
-    be files, sockets, or memory-based.</li>
-   <li>Some technique for modifying this stream of data in some way, such as applying HTTP chunking
-    to a stream of bytes of decoding a stream of bytes into a stream of characters.</li>
-   <li>Deterministic resource management. If we read data from a file, we want the file to be closed
-    immediately after an EOF is reached. We should not need to wait for any finalizer to be called.
-    (This is a common complaint against lazy I/O.)</li>
-   <li>Exception safety. All resources should be freed, even in the presence of exceptions, and even
-    if those exceptions are asynchronous.</li>
-   <li>Any part of the conduit pipeline- including the data consumer- should be able to safely
-    acquire scarce resources and know that they will be released. (This is a downside of the
-    enumerator approach, and one of our main design goals.)</li>
-   <li>Conduits should interoperate well with monad transformer stacks. Almost all frameworks today
-    use a monad stack in some way, and we want easy interoperability.</li>
-   <li>The developer should be free to choose the control flow of the program. (This is another
-    complaint against enumerator, which creates a form of "inversion of control.")</li>
-   <li>Finally, conduits should be simple. The majority of this article should be
-    understandable by almost any Haskell developer. If not, I've failed in either my writing or my
-    coding.</li>
-  </ul>
- 
+<html><h1>Conduit</h1>
+  <p id="x-3" class="hascomments">Conduits are a solution to the streaming data problem. Often times, laziness allows us
+   to process large amounts of data without pulling all values into memory. However, doing so in the
+   presence of I/O requires us to use <dfn>lazy I/O</dfn>. The main downside to lazy I/O is
+   non-determinism: we have no guarantees of when our resource finalizers will be run. For small
+   application, this may be acceptable, but for a high-load server, we could quickly run out of
+   scarce resources, such as file handles.</p>
+  <p class="hascomments">Conduits allow us to process large streams of data while still retaining deterministic resource
+   handling. They provide a unified interface for data streams, whether they come from files,
+   sockets, or memory. And when combined with ResourceT, we can safely allocate
+   resources, knowing that they will always be reclaimed- even in the presence of exceptions.</p>
+  <p class="hascomments">This appendix covers version 0.2 of the conduit package.</p>
+ <h2>Conduits in Five Minutes</h2>
   <p class="hascomments">While a good understanding of the lower-level mechanics of conduits is advisable, you can get
    very far without it. Let's start off with some high-level examples. Don't worry if some of the
-   details seem a bit magical right now. We'll cover everything in the course of this series. Let's
-   start with the terminology, and then some sample code.</p>
+   details seem a bit magical right now. We'll cover everything in the course of this appendix.
+   Let's start with the terminology, and then some sample code.</p>
   <dl>
    
     <dt>Source</dt>
@@ -127,9 +109,9 @@ fibs = sourceState
 -- the isolate conduit to make sure the sum sink only consumes 10 values.
 sumTenFibs :: Int
 sumTenFibs =
-        runST -- runs fine in pure code
-      $ runResourceT
-      $ fibs
+       runST -- runs fine in pure code
+     $ runResourceT
+     $ fibs
     $= CL.isolate 10 -- fuse the source and conduit into a source
     $$ sumSink
 
@@ -137,9 +119,9 @@ sumTenFibs =
 -- operators.
 sumTenFibs2 :: Int
 sumTenFibs2 =
-        runST
-      $ runResourceT
-      $ fibs
+       runST
+     $ runResourceT
+     $ fibs
     $$ CL.isolate 10
     =$ sumSink
 
@@ -213,7 +195,7 @@ main = do
     putStrLn $ "First ten fibs: " ++ show sumTenFibs
     writeFibs 20 "fibs.txt"
     copyFile "fibs.txt" "fibs2.txt"</pre>
- 
+ <h2>Structure of this Chapter</h2>
   <p id="x-3" class="hascomments">The remainder of this chapter covers five major topics in conduits:</p>
   <ul id="ul_rex_ckj_xe">
    <li id="x-4">ResourceT, the underlying technique that allows us to have guaranteed
@@ -223,13 +205,13 @@ main = do
    <li id="x-8">Conduits, our data transformers</li>
    <li id="x-9">Buffering, which allows us to avoid Inversion of Control</li>
   </ul>
- 
+ <h2>The Resource monad transformer</h2>
   <p class="hascomments">The Resource transformer (ResourceT) plays a vital role in proper resource
    management in the conduit project. It is included within the conduit package
    itself. We'll explaining ResourceT as its own entity. While some of the design
    decisions clearly are biased towards conduits, ResourceT should remain a usable
    tool in its own right.</p>
- 
+ <h3>Goals</h3>
   <p class="hascomments">What's wrong with the following code?</p>
   <pre>import System.IO
 
@@ -280,7 +262,7 @@ import Data.Conduit
 import Data.Conduit.Binary
 
 main = runResourceT $ sourceFile "input.txt" $$ sinkFile "output.txt"</pre>
- 
+ <h3>How it Works</h3>
   <p class="hascomments">There are essentially three base functions on ResourceT, and then a bunch of
    conveniences thrown on top. The first function is:</p>
   <pre>register :: IO () -&gt; ResourceT IO ReleaseKey</pre>
@@ -324,7 +306,7 @@ main = runResourceT $ do
    any difference. But for larger applications, where we want processing to continue, this ensures
    that the Handles are freed as early as possible, keeping our scarce resource
    usage to a minimum.</p>
- 
+ <h3>Some Type Magic</h3>
   <p class="hascomments">As alluded to, there's a bit more to ResourceT than simply running in
     IO. Let's cover some of the things we need from this underlying
     Monad.</p>
@@ -410,7 +392,7 @@ main = runResourceT $ do
    lifting to the inner monad and then lifting to the base from there. The tricky part is the
    implemetnation of resourceBracket_. I will not go into a detailed explanation,
    as I would simply make a fool of myself.</p>
- 
+ <h3>Definition of ResourceT</h3>
   <p class="hascomments">We now have enough information to understand the definition of ResourceT:</p>
   <pre>newtype ReleaseKey = ReleaseKey Int
 
@@ -438,7 +420,7 @@ newtype ResourceT m a =
    types.</p>
   <p class="hascomments">The majority of the rest of the code in the Control.Monad.Trans.Resource
    module is just providing instances for the ResourceT type.</p>
- 
+ <h3>Other Typeclasses</h3>
   <p class="hascomments">There are three other typeclasses provided by the module:</p>
   <dl>
    
@@ -462,7 +444,7 @@ newtype ResourceT m a =
      class, you'd just have to do a lot more typing.</dd>
    
   </dl>
- 
+ <h3>Forking</h3>
   <p class="hascomments">It would seem that forking a thread would be inherently unsafe with ResourceT,
    since the parent thread may call runResourceT while the child thread is still
    accessing some of the allocated resources. This is indeed true, if you use the normal
@@ -478,7 +460,7 @@ newtype ResourceT m a =
    new thread via resourceForkIO, the RefCount value of the
     ReleaseMap is incremented. Every time runResourceT is called,
    the value is decremented. Only when the value hits 0 are all the release actions called.</p>
- 
+ <h3>Convenience Exports</h3>
   <p class="hascomments">In addition to what's been listed so far, there are a few extra functions exported (mostly) for
    convenience.</p>
   <ul id="ul_hsd_yex_re">
@@ -496,7 +478,7 @@ newtype ResourceT m a =
                -&gt; ResourceT n a
 transResourceT f (ResourceT mx) = ResourceT (\r -&gt; f (mx r))</pre></li>
   </ul>
- 
+ <h2>Source</h2>
   <p class="hascomments">I think it's simplest to understand sources by looking at the types:</p>
   <pre>data SourceResult m a = Open (Source m a) a | Closed
 data Source m a = Source
@@ -543,7 +525,7 @@ main = return ()</pre>
       even write them yourself either (that's what sourceState and
         sourceIO are for). The point is that we can make some assumptions when we
       implement our sources.</p>
- 
+ <h3>State</h3>
   <p class="hascomments">There is something similar about the two sources mentioned above: they never change. They
     always return the same value. In other words, they have no state. For almost all serious
    sources, we'll need some kind of state.</p>
@@ -575,7 +557,7 @@ main = return ()</pre>
    returns Closed, which makes sense. If the list is not empty, pulling returns
     Open with both the next value in the list, and a new Source
    value containing the rest of the input list.</p>
- 
+ <h3>sourceState and sourceIO</h3>
   <p class="hascomments">In addition to being able to manually create Sources, we also have a few
    convenience functions that allow us to create most sources in a more high-level fashion.
     sourceState let's you write code similar to how you would use the
@@ -633,7 +615,7 @@ main = return ()</pre>
    <li>It sets up the sourceClose record to release the resource immediately.</li>
    <li>As soon as you return IOClosed, it will release the resource.</li>
   </ul>
- 
+ <h2>Sinks</h2>
   <p class="hascomments">A sink consumes a stream of data, and produces a result. A sink must always produce a result,
    and must always produce a single result. This is encoded in the types themselves.</p>
   <p class="hascomments">There is a Monad instance for sink, making it simple to compose multiple sinks
@@ -703,7 +685,7 @@ Here's the second.</pre>
    you replace sinkLine with getLine, this would look like
    standard code to pull lines from standard input. This familiar interface should make it easy to
    get up and running quickly.</p>
- 
+ <h3>Types</h3>
   <p class="hascomments">The types for sinks are just a bit more involved than sources. Let's have a look:</p>
   <pre>type SinkPush input m output = input -&gt; ResourceT m (SinkResult input m output)
 type SinkClose m output = ResourceT m output
@@ -734,7 +716,7 @@ data Sink input m output =
    instead, we have an extra constructor to indicate that no input is required. Likewise,
     SinkLift is provided in order to implement an efficient
     MonadTrans instance.</p>
- 
+ <h3>Sinks: no helpers</h3>
   <p class="hascomments">Let's try to implement some sinks on the "bare metal", without any helper functions.</p>
   <pre>-- START
 import Data.Conduit
@@ -793,7 +775,7 @@ main = return ()</pre>
             using them twice: once for the initial SinkData, and once for the
                 Processing constructor. This can become a bit tedious; that's why
             we have helper functions.</p>
- 
+ <h3>Sinks: with helpers</h3>
   <p class="hascomments">Let's rewrite sinkFile and count to take advantage of the
    helper functions sinkIO and sinkState, respectively.</p>
   <pre>-- START
@@ -830,7 +812,7 @@ main :: IO ()
 main = return ()</pre>
   <p class="hascomments">Nothing dramatic, just slightly shorter, less error-prone code. Using these two helper
    functions is highly recommended, as it ensures proper resource management and state updating.</p>
- 
+ <h3>List functions</h3>
   <p class="hascomments">As easy as it is to write your own sinks, you'll likely want to take advantage of the built-in
    sinks available in the conduit:Data.Conduit.List module. These provide
    analogues to common list functions, like folding. (The module also has some
@@ -871,7 +853,7 @@ printSum = do
 -- STOP
 main :: IO ()
 main = return ()</pre>
- 
+ <h3>Connecting</h3>
   <p class="hascomments">At the end of the day, we're actually going to want to use our sinks. While we could manually
    call sinkPush and sinkClose, it's tedious. For example:</p>
   <pre>import Data.Conduit
@@ -925,10 +907,10 @@ main = runResourceT $ do
    sink to the next in a binding. And in fact, the real connect operator doesn't always throw
    away the leftovers. When we cover resumable sources later, we'll see that the leftover value is
    put back on the buffer to allow later sinks reusing an existing source to pull the value.</p>
- 
+ <h2>Conduit</h2>
   <p class="hascomments">This section covers the final major datatype in our package, conduits. While sources produce a
    stream of data and sinks consume a stream, conduits transform a stream.</p>
- 
+ <h3>Types</h3>
   <p class="hascomments">As we did previously, let's start off by looking at the types involved.</p>
   <pre>data ConduitResult input m output =
     Producing (Conduit input m output) [output]
@@ -956,7 +938,7 @@ data Conduit input m output = Conduit
     Monadic approach to creating conduits.</li>
   </ul>
   <p class="hascomments">Overall conduits should seem very similar to what we've covered so far.</p>
- 
+ <h3>Simple conduits</h3>
   <p class="hascomments">We'll start off by defining some simple conduits that don't have any state.</p>
   <pre>-- START
 import Prelude hiding (map, concatMap)
@@ -985,7 +967,7 @@ concatMap f = Conduit
 -- STOP
 main :: IO ()
 main = return ()</pre>
- 
+ <h3>Stateful conduits</h3>
   <p class="hascomments">Of course, not all conduits can be declared without state. Doing so on the bare metal is not
    too difficult.</p>
   <pre>-- START
@@ -1043,7 +1025,7 @@ sort =
 -- STOP
 main :: IO ()
 main = return ()</pre>
- 
+ <h3>Using conduits</h3>
   <p class="hascomments">The way Conduits interact with the rest of the package is via
     <dfn>fusing</dfn>. A conduit can be fused into a source, producing a new source, fused into a
    sink to produce a new sink, or fused with another conduit to produce a new conduit. It's best to
@@ -1090,7 +1072,7 @@ main = return ()</pre>
    <li>If you want to create reusable conduits that combine together individual, smaller conduits,
     you'll use middle fusion.</li>
   </ul>
- 
+ <h3>Data loss</h3>
   <p class="hascomments">Let's forget about conduits for a moment. Instead, suppose we want to write a program- using
    plain old lists- that will take a list of numbers, apply some kind of transformation to them,
    take the first five transformed values and do something with them, and then do something else
@@ -1167,7 +1149,7 @@ three
    issue unique to conduits. If you look in the implementation of concatMapM for
     enumerator, you'll see that it forces elements to be handled one at a time.
    In conduits, we opted to force the issue at the type level.</p>
- 
+ <h3>SequencedSink</h3>
   <p class="hascomments">Suppose we want to be able to combine up existing conduits and sinks to produce a new, more
    powerful conduit. For example, we want to write a conduit that takes a stream of numbers and sums
    up every five. In other words, for the input [1..50], it should result in the
@@ -1233,10 +1215,10 @@ sum5Pass = sequenceSink 0 $ \count -&gt; do
 main = return ()</pre>
   <p class="hascomments">These are obviously very contrived examples, but I hope it makes clear the power and simplicity
    available from this approach.</p>
- 
+ <h2>Buffering</h2>
   <p class="hascomments">Buffering is one of the unique features of conduits. With buffering, conduits no longer need to
    control the flow of your application. In some cases, this can lead to simpler code.</p>
- 
+ <h3>Inversion of Control</h3>
   <p class="hascomments">Buffering was actually one of the main motivations in the creation of the
     conduit package. To see its importance, we need to consider the approach we've
    seen so far, which we'll call inversion of control, or IoC.</p>
@@ -1279,7 +1261,7 @@ main = return ()</pre>
    out just fine, but we need to recognize that this is a change in how we structure our
    programs. Often times, with simple examples, this is a minor change. However, in larger settings
    this can become very difficult to manage, bordering on impossible at times.</p>
- 
+ <h4>A web server</h4>
   <p class="hascomments">Let's say we're going to write a web server. We're going to use the following low-level
    operations:</p>
   <pre>data Socket
@@ -1373,7 +1355,7 @@ handleConn app socket = do
     liftIO $ sendResponse socket res
 -- STOP
 main = return ()</pre>
- 
+ <h4>Whither the request body?</h4>
   <p class="hascomments">This is all great, until we realize we can't read the request body. The
     Application is simply given the Request, and lives in the
     IO monad. It has no access whatsoever to the incoming stream of data.</p>
@@ -1401,7 +1383,7 @@ main = return ()</pre>
    the headers. It likely consumed a bit of the request body as well.</p>
   <p class="hascomments">If we just create a new source and pass that to the request, it will be missing the beginning
    of the request body. We need some way to pass that buffered data along.</p>
- 
+ <h3>BufferedSource</h3>
   <p class="hascomments">And so we finally get to introduce the last data type in conduits:
     BufferedSource. This is an abstract data type, but all it really does is keep a
    mutable reference to a buffer and an underlying Source. In order to create one
@@ -1413,7 +1395,7 @@ main = return ()</pre>
    the buffer. For our web server case, we can now create a BufferedSource, use
    that to read the request line and headers, and then pass that same
     BufferedSource to the application for reading the request body.</p>
- 
+ <h3>Typeclass</h3>
   <p class="hascomments">We want to be able to connect a buffered source to a sink, just like we would a regular source.
    We would also like to be able to fuse it to a conduit. In order to make this convenient, conduit
    has a typeclass, IsSource. There are instances provided for both
@@ -1442,7 +1424,7 @@ bsrc $$ sinkFile output2</pre>
   <p class="hascomments">This presents one caveat: when you're finished with a buffered source, you should manually call
     bsourceClose on it. However, as usual, this is merely an optimization, as the
    source will automatically be closed when runResourceT is called.</p>
- 
+ <h3>Recapping the web server</h3>
   <p class="hascomments">So what exactly does our web server look like now?</p>
   <pre>-- START
 import Data.ByteString (ByteString)

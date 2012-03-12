@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>Scaffolding and the Site Template</h1>
         <p id="x-3" class="hascomments">So you're tired of running small examples, and ready to write a real site? Then you're at
             the right chapter. Even with the entire Yesod library at your fingertips, there are
             still a lot of steps you need to go through to get a production-quality site setup:</p>
@@ -13,9 +13,11 @@
             into a ready-to-use skeleton for your sites. It is highly recommended for all sites.
             This chapter will explain the overall structure of the scaffolding, how to use it, and
             some of its less-than-obvious features.</p>
+        <p class="hascomments">For the most part, this chapter will not contain code samples. It is recommended that you
+            follow along with an actual scaffolded site.</p>
         <aside id="x-9" class="note">Due to the nature of the scaffolded site, it is the most fluid component of Yesod, and
             can change from version to version. It is possible that the information in this chapter
-            is slightly outdated.</aside>
+            is slightly outdated.</aside><h2>How to Scaffold</h2>
   <p id="x-3" class="hascomments">The yesod package installs both a library and an
    executable (conveniently named yesod as well). This executable
    provides a few commands (run yesod by itself to get a list). In order to
@@ -36,17 +38,17 @@
    don't have cabal-dev, you can install it by running cabal
     install cabal-dev.</p>
   <p id="x-10" class="hascomments">Note that you really do need to use the cabal install
-   (or cabal-dev install) command. Most likely, you do not yet have all
-   the dependencies in place needed by your site. For example, none of the database backends, nor
-   the Javascript minifier (hjsmin) are installed when installing the
-    yesod package.</p>
-  <p id="x-14" class="hascomments">Finally, to launch your development site, you would use yesod devel (or
-    yesod --dev devel). This site will automatically reload whenever you change
-   your code.</p>
- 
+    --only-dependencies (or cabal-dev install
+    --only-dependencies) command. Most likely, you do not yet have all the dependencies in
+   place needed by your site. For example, none of the database backends, nor the Javascript
+   minifier (hjsmin) are installed when installing the yesod package.</p>
+  <p id="x-14" class="hascomments">Finally, to launch your development site, you would use yesod
+    devel (or yesod --dev devel). This site will
+   automatically rebuild and reload whenever you change your code.</p>
+ <h2>File Structure</h2>
   <p id="x-3" class="hascomments">The scaffolded site is built as a fully cabalized Haskell package. In addition to
    source files, config files, templates, and static files are produced as well.</p>
- 
+ <h3>Cabal file</h3>
   <p id="x-3" class="hascomments">Whether directly using cabal, or indirectly using yesod devel, building your code will always go through the cabal file. If
       you open the file, you'll see that there are both library and executable blocks. Only one of
       these is built at a time, depending on the value of the library-only
@@ -79,7 +81,7 @@
       Unfortunately, neither Cabal nor GHC will give you a warning if you forgot to make this
       update, and instead you'll get a very scary-looking error message from yesod devel.<aside id="x-24" class="note">One of our planned improvements to yesod devel is to check if
         there are any missing modules.</aside></p>
- 
+ <h3>Routes and entities</h3>
   <p id="x-3" class="hascomments">Multiple times in this book, you've seen a comment like "We're declaring our routes/entities
    with quasiquotes for convenience. In a production site, you should use an external file." The
    scaffolding uses such an external file.</p>
@@ -96,7 +98,7 @@
     or, if very model-centric, in a file within the Model folder and
     imported into Import.hs.</li>
   </ul>
- 
+ <h3>Foundation and Application modules</h3>
   <p id="x-3" class="hascomments">The mkYesod function which we have used throughout the book declares a few
    things:</p>
   <ul id="ul_ajc_dzg_oe">
@@ -136,7 +138,7 @@
     YesodAuthEmail or YesodBreadcrumbs.</p>
   <p id="x-31" class="hascomments">We'll be referring back to this file later, as we discussed some of the special
    implementations of Yesod typeclass methods.</p>
- 
+ <h3>Import</h3>
   <p id="x-3" class="hascomments">The Import module was born out of a few commonly recurring
    patterns.</p>
   <ul id="ul_skn_hbh_oe">
@@ -153,7 +155,7 @@
   <p id="x-11" class="hascomments">The solution is to turn on the NoImplicitPrelude language extension,
    re-export the parts of Prelude we want, add in all the other stuff we want,
    define our own functions as well, and then import this file in all handlers.</p>
- 
+ <h3>Handler modules</h3>
   <p id="x-3" class="hascomments">Handler modules should go inside the Handler folder. The site
    template includes one module: Handler/Root.hs. How you split up your handler
    functions into individual modules is your decision, but a good rule of thumb is:</p>
@@ -173,7 +175,7 @@
   </ul>
   <aside id="x-20" class="note">One of the planned improvements to the yesod executable is to automate
    these four steps.</aside>
- 
+ <h2>widgetFile</h2>
   <p id="x-3" class="hascomments">It's very common to want to include CSS and Javascript specific to a page. You don't want to
    have to remember to include those Lucius and Julius files manually every time you refer to a
    Hamlet file. For this, the site template provides the widgetFile function.</p>
@@ -192,7 +194,7 @@
     templates/homepage.julius), the contents will not be
    included until the file calling widgetFile is recompiled. In such a case, you
    may need to force a save of that file to get yesod devel to recompile.</aside>
- 
+ <h2>defaultLayout</h2>
   <p id="x-3" class="hascomments">One of the first things you're going to want to customize is the look of your site. The layout
    is actually broken up into two files:</p>
   <ul id="ul_jjz_kch_oe">
@@ -206,7 +208,7 @@
   <p id="x-10" class="hascomments">Also, since default-layout is included via the widgetFile function,
    any Lucius, Cassius, or Julius files named default-layout.* will
    automatically be included as well.</p>
- 
+ <h2>Static files</h2>
   <p id="x-3" class="hascomments">The scaffolded site automatically includes the static file subsite, optimized for
    serving files that will not change over the lifetime of the current build. What this means is
    that:</p>
@@ -236,7 +238,7 @@
     the same hash already exists.</li>
   </ol>
   <p id="x-11" class="hascomments">Finally, all of your Javascript is automatically minified via hjsmin.</p>
- 
+ <h2>Conclusion</h2>
   <p id="x-3" class="hascomments">The purpose of this chapter was not to explain every line that exists in the scaffolded site,
    but instead to give a general overview to how it works. The best way to become more familiar with
    it is to jump right in and start writing a Yesod site with it.</p>

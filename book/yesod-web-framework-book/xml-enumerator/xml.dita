@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>xml-conduit</h1>
   <p id="x-3" class="hascomments">Many developers cringe at the thought of dealing with XML files. XML has the reputation of
    having a complicated data model, with obfuscated libraries and huge layers of complexity sitting
    between you and your goal. I'd like to posit that a lot of that pain is actually a language and
@@ -19,7 +19,7 @@
   <p id="x-12" class="hascomments">In addition to xml-conduit, there are a few related packages that
    come into play, like xml-hamlet and xml2html. We'll cover both how to use all these packages, and when they should be
    used.</p>
- 
+ <h2>Synopsis</h2>
   <figure id="x-3"><figcaption>Input XML file</figcaption>
    
    <pre id="x-5">&lt;document title="My Title"&gt;
@@ -111,7 +111,7 @@ goElem (Element name attrs children) =
     &lt;/body&gt;
 &lt;/html&gt;</pre>
   </figure>
- 
+ <h2>Types</h2>
   <p id="x-3" class="hascomments">Let's take a bottom-up approach to analyzing types. This section will also serve as a primer on
    the XML data model itself, so don't worry if you're not completely familiar with it.</p>
   <p id="x-4" class="hascomments">I think the first place where Haskell really shows its strength is with the
@@ -151,17 +151,19 @@ goElem (Element name attrs children) =
    to prefix the namespace surrounded in curly brackets. In other words:</p>
   <pre id="x-23">"{namespace}element" == Name "element" (Just "namespace") Nothing
 "element" == Name "element" Nothing Nothing</pre>
- 
+ <h3>The Four Types of Nodes</h3>
   <p id="x-3" class="hascomments">XML documents are a tree of nested nodes. There are in fact four different types of nodes
    allowed: elements, content (i.e., text), comments, and processing instructions.</p>
-  <aside id="x-4" class="note">You may not be familiar with that last one, it's less commonly used. It is marked up
-   as:<pre id="x-5">&lt;?target data?&gt;</pre>There are two commonly held
-   misconceptions about processing instructions. Let's set them to rest now:<ul id="ul_zfo_vsx_md">
-    <li id="x-6">PIs don't have attributes. While often times you'll see processing instructions that appear
-     to have attributes, there are in fact no rules about that data of an instruction.</li>
-    <li id="x-7">The &lt;?xml ...?&gt; stuff at the beginning of a document is not a processing instruction. It
-     is simply the beginning of the document, and happens to look an awful lot like a PI. The
-     difference though is that the &lt;?xml ...?&gt; line will not appear in your parsed content.</li>
+  <aside id="x-4" class="note">You may not be familiar with that last one, it's less commonly used. It is marked
+   up as:<pre id="x-5">&lt;?target data?&gt;</pre>There are two
+   surprising facts about processing instructions (PIs):<ul id="ul_zfo_vsx_md">
+    <li id="x-6">PIs don't have attributes. While often times you'll see processing instructions
+     that appear to have attributes, there are in fact no rules about that data of an
+     instruction.</li>
+    <li id="x-7">The &lt;?xml ...?&gt; stuff at the beginning of a document is not
+     a processing instruction. It is simply the beginning of the document (known as the XML
+     declaration), and happens to look an awful lot like a PI. The difference though is that the
+      &lt;?xml ...?&gt; line will not appear in your parsed content.</li>
    </ul></aside>
   <p id="x-8" class="hascomments">Since processing instructions have two pieces of text associated with them (the target and the
    data), we have a simple data type:</p>
@@ -197,7 +199,7 @@ goElem (Element name attrs children) =
     | NodeInstruction Instruction
     | NodeContent Text
     | NodeComment Text</pre>
- 
+ <h3>Documents</h3>
   <p id="x-3" class="hascomments">So now we have elements and nodes, but what about an entire document? Let's just lay out the
    datatypes:</p>
   <pre id="x-4">data Document = Document
@@ -238,14 +240,14 @@ data ExternalID
   <p id="x-8" class="hascomments">And that, my friends, is the entire XML data model. For many parsing purposes, you'll
    be able to simply ignore the entire Document datatype and go immediately to the
     documentRoot.</p>
- 
+ <h3>Events</h3>
   <p id="x-3" class="hascomments">In addition to the document API, xml-types defines an xml-types:Data.XML.Types:Event datatype. This can be used for constructing
    streaming tools, which can be much more memory efficient for certain kinds of processing (eg,
    adding an extra attribute to all elements). We will not be covering the streaming API currently,
    though it should look very familiar after analyzing the document API.</p>
-  <aside id="x-6" class="note">You can see an example of the streaming API in the <a href="../../yesod-web-framework-book/case-study-sphinx/case-study-sphinx.dita#file199-conceptIdsphinx" id="x-7">Sphinx case
+  <aside id="x-6" class="note">You can see an example of the streaming API in the <a href="../../yesod-web-framework-book/case-study-sphinx/case-study-sphinx.dita#file198-conceptIdsphinx" id="x-7">Sphinx case
     study</a>.</aside>
- 
+ <h2>Text.XML</h2>
   <p id="x-3" class="hascomments">The recommended entry point to xml-conduit is the xml-conduit:Text.XML module. This module exports all of the datatypes you'll need to
    manipulate XML in a DOM fashion, as well as a number of different approaches for parsing and
    rendering XML content. Let's start with the simple
@@ -265,7 +267,7 @@ writeFile :: RenderSettings -&gt; FilePath -&gt; Document -&gt; IO ()</pre>This
    standard Text.XML API not only forms the basis for that higher level, but is
    also a great API for simple XML transformations and for XML generation. See the synopsis for an
    example.</p>
- 
+ <h3>A note about file paths</h3>
   <p id="x-3" class="hascomments">In the type signature above, we have a type FilePath. However, this isn't
      Prelude.FilePath. The standard Prelude defines a type
    synonym type FilePath = [Char]. Unfortunately, there are many limitations to
@@ -289,7 +291,7 @@ writeFile :: RenderSettings -&gt; FilePath -&gt; Document -&gt; IO ()</pre>This
     operators in the Filesystem.Path.CurrentOS module, e.g. myfolder &lt;/&gt;
      filename &lt;.&gt; extension.</li>
   </ul>
- 
+ <h2>Cursor</h2>
   <p id="x-3" class="hascomments">Suppose you want to pull the title out of an XHTML document. You could do so with the
     Text.XML interface we just described, using standard pattern matching on the
    children of elements. But that would get very tedious, very quickly. Probably the gold standard
@@ -359,10 +361,11 @@ main = do
     let cursor = fromDocument doc
     print $ T.concat $
         cursor $/ element "head" &amp;/ element "title" &amp;// content</pre>
-  <p id="x-30" class="hascomments">$/ says to apply the axis on the right to the cursor on
-   the left. &amp;/ is almost identical, but is instead used to combine
-   two axes together. This is a general rule in Text.XML.Cursor: operators
-   beginning with $ directly apply an axis, while &amp; will combine two together. &amp;// is used for applying an axis to all descendants.</p>
+  <p id="x-30" class="hascomments">$/ says to apply the axis on the right to the children of
+   the cursor on the left. &amp;/ is almost identical, but is instead
+   used to combine two axes together. This is a general rule in Text.XML.Cursor: operators beginning with $ directly apply an axis, while &amp; will
+   combine two together. &amp;// is used for applying an axis to all
+   descendants.</p>
   <p id="x-34" class="hascomments">Let's go for a more complex, if more contrived, example. We have a document that looks
    like:</p>
   <pre id="x-35">&lt;html&gt;
@@ -410,7 +413,7 @@ main = do
     'bar']/preceding-sibling::h1//text().</aside>
   <p id="x-48" class="hascomments">While the cursor API isn't quite as succinct as XPath, it has the advantages of being standard
    Haskell code, and of type safety.</p>
- 
+ <h2>xml-hamlet</h2>
   <p id="x-3" class="hascomments">Thanks to the simplicity of Haskell's data type system, creating
             XML content with the Text.XML API is easy, if a bit verbose. The
             following code:</p>
@@ -527,7 +530,7 @@ personNodes person = [xml|
                 other xml-quotations.</li>
    <li id="x-22">Unlike Hamlet, hash-interpolations (#{...}) are not polymorphic, and can only accept Text values.</li>
   </ul>
- 
+ <h2>xml2html</h2>
   <p id="x-3" class="hascomments">So far in this chapter, our examples have revolved around XHTML. I've done that so far
    simply because it is likely to be the most familiar form of XML for most of our readers. But
    there's an ugly side to all this that we must acknowledge: not all XHTML will be correct HTML.

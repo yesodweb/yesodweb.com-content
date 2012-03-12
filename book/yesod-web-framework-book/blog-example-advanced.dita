@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>Blog: i18n, authentication, authorization, and database</h1>
   <pre id="x-3">This is a simple blog app. It allows an admin to add blog posts via a rich text
 editor (nicedit), allows logged-in users to comment, and has full i18n support.
 It is also a good example of using a Persistent database, leveraging Yesod's
@@ -367,7 +367,10 @@ to try again.
 &gt;         &lt;input type=submit value=_{MsgNewEntry}&gt;
 &gt; |]
 
-A form for comments, very similar to our entryForm above.
+A form for comments, very similar to our entryForm above. It takes the
+EntryId of the entry the comment is attached to. By using pure, we embed
+this value in the resulting Comment output, without having it appear in the
+generated HTML.
 
 &gt; commentForm :: EntryId -&gt; Form Comment
 &gt; commentForm entryId = renderDivs $ Comment

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html><p id="x1" class="hascomments">monad-control is used in a few places within Yesod, most notably to ensure proper exception handling within Persistent. It is a general purpose package to extend standard functionality in monad transformers.</p>
+<html><h1>monad-control</h1><p id="x1" class="hascomments">monad-control is used in a few places within Yesod, most notably to ensure proper exception handling within Persistent. It is a general purpose package to extend standard functionality in monad transformers.</p><h2>Overview</h2>
   <p id="x1" class="hascomments">One of the powerful, and sometimes confusing, features in Haskell is monad transformers. They
    allow you to take different pieces of functionality- such as mutable state, error handling, or
    logging- and compose them together easily. Though I swore I'd never write a monad tutorial, I'm
    going to employ a painful analogy here: monads are like onions. (Monads are not like cakes.) By
    that, I mean layers.</p>
-  <p id="x3" class="hascomments">We have the core monad- also known as the innermost or bottom monad. I'll likely use all forms
-   of terminology here. On top of this core, we add layers, each adding a new feature and spreading
-   outward/upward. As a motivating example, let's consider an Error monad stacked on top of the IO
+  <p id="x3" class="hascomments">We have the core monad- also known as the innermost or bottom monad. On top of this
+   core, we add layers, each adding a new feature and spreading outward/upward. As a motivating
+   example, let's consider an Error monad stacked on top of the IO
    monad:<pre id="x4">newtype ErrorT e m a = ErrorT { runErrorT :: m (Either e a) }
 type MyStack = ErrorT MyError IO</pre>Now
    pay close attention here: ErrorT is just a simple newtype around an Either wrapped in a monad.
@@ -58,7 +58,7 @@ useMyFileErrorBad = withMyFile sayHiError
     Couldn't match expected type `ErrorT MyError IO ()'
                 with actual type `IO ()'</pre>Why
    does this happen, and how can we work around it?</p>
- 
+ <h2>Intuition</h2>
   <p id="x1" class="hascomments">Let's try and develop an external intuition of what's happening here. The ErrorT monad
    transformer adds extra functionality to the IO monad. We've defined a way to "tack on" that extra
    functionality to normal IO actions: we add that Right constructor and wrap it all in ErrorT.
@@ -103,9 +103,9 @@ useMyFileError1 =
    unchanged. Finally, we wrap everything back up into our original ErrorT.</p>
   <p id="x18" class="hascomments">This is the entire pattern of monad-control: we embed the extra features of our monad
    transformer inside the value. Once in the value, the type system ignores it and focuses on the
-   new outermost monad. When we're done playing around with that inner monad, we can pull our state
-   back out and reconstruct our original monad stack.</p>
- 
+   inner monad. When we're done playing around with that inner monad, we can pull our state back out
+   and reconstruct our original monad stack.</p>
+ <h2>Types</h2>
   <p id="x1" class="hascomments">I purposely started with the ErrorT transformer, as it is one of the simplest for this
    inversion mechanism. Unfortunately, others are a bit more complicated. Take for instance ReaderT.
    It is defined as newtype ReaderT r m a = ReaderT { runReaderT :: r -&gt; m a }. If
@@ -156,7 +156,7 @@ useMyFileError2 =
    identically to runErrorT. However, we're still left with two problems: we don't know where to get
    that errorRun value from, and we still need to restructure the original ErrorT after we're
    done.</p>
- 
+ <h3>MonadTransControl</h3>
   <p id="x1" class="hascomments">Obviously in the specific case we have before us, we could use our knowledge of the ErrorT
    transformer to beat the types into submission and create our Run function manually. But what we
     really want is a general solution for many transformers. At this point, you know we need
@@ -214,7 +214,7 @@ useMyFileError5 =
   <p id="x20" class="hascomments">And just to make it a little
    shorter:<pre id="x21">useMyFileError6 :: ErrorT MyError IO ()
 useMyFileError6 = control $ \run -&gt; withMyFile $ run . sayHiError</pre></p>
- 
+ <h3>MonadControlIO</h3>
   <p id="x1" class="hascomments">The MonadTrans class provides the lift method, which allows you to lift an action one level in
    the stack. There is also the MonadIO class that provides liftIO, which lifts an IO action as far
    in the stack as desired. We have the same breakdown in monad-control. But first, we need a
@@ -244,7 +244,7 @@ sayHiCrazy handle = liftIO $ hPutStrLn handle "Madness!"
 
 useMyFileCrazy :: ReaderT Int (StateT Double (ErrorT MyError IO)) ()
 useMyFileCrazy = controlIO $ \run -&gt; withMyFile $ run . sayHiCrazy</pre></p>
- 
+ <h2>Real Life Examples</h2>
   <p id="x1" class="hascomments">Let's solve some real-life problems with this code. Probably the biggest motivating use case is
    exception handling in a transformer stack. For example, let's say that we want to automatically
    run some cleanup code when an exception is thrown. If this were normal IO code, we'd
@@ -260,19 +260,20 @@ onExceptionError action after = controlIO $ \run -&gt;
    simple:<pre id="x5">allocaError :: (Ptr Double -&gt; ErrorT MyError IO b)
             -&gt; ErrorT MyError IO b
 allocaError f = controlIO $ \run -&gt; alloca $ run . f</pre></p>
- 
-  <p id="x1" class="hascomments">Let's rewind a bit to our onExceptionError. It uses onException under the surface, which has a
-   type signature: IO a -&gt; IO b -&gt; IO a. Let me ask you something: what happened to
-   the b in the output? Well, it was thoroughly ignored. But that seems to cause us a bit of a
-   problem. After all, we store on transformer state information in the value of the inner monad. If
-   we ignore it, we're essentially ignoring the monadic side effects as well!</p>
-  <p id="x3" class="hascomments">And the answer is that, yes, this does happen with monad-control. Certain functions will drop
-   some of the monadic side effects. This is put best by Bas, in the comments on the relevant
-    functions:<blockquote id="x4">Note, any monadic side effects in m of the "release" computation will be
-    discarded; it is run only for its side effects in IO.</blockquote>In practice, monad-control will
-   usually be doing the right thing for you, but you need to be aware that some side effects may be
-   disappearing.</p>
- 
+ <h2>Lost State</h2>
+  <p id="x1" class="hascomments">Let's rewind a bit to our onExceptionError. It uses onException under the surface,
+   which has a type signature: IO a -&gt; IO b -&gt; IO a. Let me ask you
+   something: what happened to the b in the output? Well, it was thoroughly ignored. But that seems
+   to cause us a bit of a problem. After all, we store our transformer state information in the
+   value of the inner monad. If we ignore it, we're essentially ignoring the monadic side effects as
+   well!</p>
+  <p id="x3" class="hascomments">And the answer is that, yes, this does happen with monad-control. Certain functions
+   will drop some of the monadic side effects. This is put best by Bas, in the comments on the
+   relevant functions:<blockquote id="x4">Note, any monadic side effects in m of the "release" computation
+    will be discarded; it is run only for its side effects in IO.</blockquote>In practice, monad-control
+   will usually be doing the right thing for you, but you need to be aware that some side effects
+   may disappear.</p>
+ <h2>More Complicated Cases</h2>
   <p id="x1" class="hascomments">In order to make our tricks work so far, we've needed to have functions that give us full
    access to play around with their values. Sometimes, this isn't the case. Take, for instance:</p>
   <pre id="x2">addMVarFinalizer :: MVar a -&gt; IO () -&gt; IO ()</pre>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>Internationalization</h1>
         <p id="x-3" class="hascomments">Users expect our software to speak their language. Unfortunately for us, there
             will likely be more than one language involved. While doing simple string replacement
             isn't too involved, correctly dealing with all the grammar issues can be tricky. After
@@ -17,7 +17,7 @@
                 needs.</li>
             <li id="x-8">Absolutely no issues at all with word order.</li>
         </ul>
-    
+    <h2>Synopsis</h2>
   <pre id="x-3">-- @messages/en.msg
 Hello: Hello
 EnterItemCount: I would like to buy: 
@@ -32,7 +32,8 @@ Purchase: קנה
 ItemCount count: קנית #{showInt count} #{plural count "דבר" "דברים"}.
 SwitchLanguage: החלף שפה ל:
 Switch: החלף</pre>
-  <pre id="x-5">{-# LANGUAGE OverloadedStrings, QuasiQuotes, TemplateHaskell, TypeFamilies,
+  <pre id="x-5">-- @i18n-synopsis.hs
+{-# LANGUAGE OverloadedStrings, QuasiQuotes, TemplateHaskell, TypeFamilies,
     MultiParamTypeClasses #-}
 import Yesod
 
@@ -88,7 +89,7 @@ postLangR = do
 
 main :: IO ()
 main = warpDebug 3000 I18N</pre>
- 
+ <h2>Overview</h2>
   <p id="x-3" class="hascomments">Most existing i18n solutions out there, like gettext or Java message bundles, work on the
    principle of string lookups. Usually some form of printf-interpolation is used to interpolate
    variables into the strings. In Yesod, as you might guess, we instead rely on types. This gives us
@@ -121,7 +122,7 @@ toEnglish (MsgUsersLoggedIn i) = "There are " ++ show i ++ " users logged in."</
     _{...}, which handles all the calls to the render functions. And in order to
    associate a render function with your application, you use the YesodMessage
    typeclass.</p>
- 
+ <h2>Message files</h2>
   <p id="x-3" class="hascomments">The simplest approach to creating translations is via <dfn id="x-4">message
     files</dfn>. The setup is simple: there is a single folder containing all of your translation
    files, with a single file for each language. Each file is named based on its language code, e.g.
@@ -150,7 +151,7 @@ toEnglish (MsgUsersLoggedIn i) = "There are " ++ show i ++ " users logged in."</
    allows usage of our typical variable interpolation syntax #{myVar}. By referring
    to the parameters defined before the colon, and using translation helper functions to deal with
    issues like pluralization, you can create all the translated messages you need.</p>
- 
+ <h3>Specifying types</h3>
   <p id="x-3" class="hascomments">Since we will be creating a datatype out of our message specifications, each parameter
    to a data constructor must be given a data type. We use a @-syntax for this. For example, to
    create the datatype data MyMessage = MsgHello | MsgSayAge Int, we would
@@ -167,7 +168,7 @@ SayAge age@Int: Your age is: #{show age}</pre>
    specified as the third argument in the mkMessage function. This also specifies
    what the backup language will be, to be used when none of the languages provided by your
    application match the user's language list.</p>
- 
+ <h2>RenderMessage typeclass</h2>
   <p id="x-3" class="hascomments">Your call to mkMessage creates an instance of the
     RenderMessage typeclass, which is the core of Yesod's i18n. It is defined
    as:</p>
@@ -209,7 +210,7 @@ instance RenderMessage MyApp MyMessage where
   <p id="x-13" class="hascomments">But odds are that you will never need to worry about writing this stuff manually, as the
    message file interface does all this for you. But it's always a good idea to have an
    understanding of what's going on under the surface.</p>
- 
+ <h2>Interpolation</h2>
   <p id="x-3" class="hascomments">One way to use your new RenderMessage instance would be to directly
    call the renderMessage function. This would work, but it's a bit
    tedious: you need to pass in the foundation value and the language list manually. Instead, Hamlet
@@ -219,7 +220,7 @@ instance RenderMessage MyApp MyMessage where
   <p id="x-7" class="hascomments">Hamlet will then automatically translate that to a call to renderMessage. Once Hamlet gets the output Text value, it uses the
     toHtml function to produce an Html value,
    meaning that any special characters (&lt;, &amp;, &gt;) will be automatically escaped.</p>
- 
+ <h2>Phrases, not words</h2>
   <p id="x-3" class="hascomments">As a final note, I'd just like to give some general i18n advice. Let's say you have an
    application for selling turtles. You're going to use the word "turtle" in multiple places, like
    "You have added 4 turtles to your cart." and "You have purchased 4 turtles, congratulations!" As
@@ -229,7 +230,7 @@ instance RenderMessage MyApp MyMessage where
 AddEnd: to your cart.
 PurchaseStart: You have purchased
 PurchaseEnd: , congratulations!
-Turtles count@Int: #{show count} #{plural "turtle" "turtles"}</pre>
+Turtles count@Int: #{show count} #{plural count "turtle" "turtles"}</pre>
   <p id="x-5" class="hascomments">STOP RIGHT THERE! This is all well and good from a programming perspective, but
    translations are not programming. There are a many things that could go wrong
    with this, such as:</p>

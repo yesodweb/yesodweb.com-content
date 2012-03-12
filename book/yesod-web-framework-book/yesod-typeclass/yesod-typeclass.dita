@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html><p id="i1" class="hascomments">Every one of our Yesod applications requires an instance of the Yesod
-            typeclass. FIXME this text is now out-of-date. So far, we've only seen the approot method, with the cryptic definition
-                approot _ = "", and defaultLayout. In this
-            chapter, we'll explore the meaning of the approot method, along with
-            many other methods in the Yesod typeclass.</p><p id="i2" class="hascomments">The Yesod typeclass gives us a central place for defining settings for
-            our application. Excluding the approot method, everything else has a
-            default definition which is usually the right thing. But in order to build a powerful,
-            customized application, you'll usually end up wanting to override at least a few of
-            these methods.</p><p id="rpu1" class="hascomments">We've already mentioned how Yesod is able to automatically render type-safe URLs into a textual URL that can be inserted into an HTML page. Let's say we have a route definition that looks like:</p><pre id="x1">mkYesod "MyApp" [parseRoutes|
+<html><h1>Yesod Typeclass</h1><p id="i1" class="hascomments">Every one of our Yesod applications requires an instance of the Yesod typeclass. So far, we've only seen defaultLayout. In this chapter, we'll explore the meaning of many of the
+            methods of the Yesod typeclass.</p><p id="i2" class="hascomments">The Yesod typeclass gives us a central place for defining
+            settings for our application. Eeverything else has a default definition which is usually
+            the right thing. But in order to build a powerful, customized application, you'll
+            usually end up wanting to override at least a few of these methods.</p><h2>Rendering and Parsing URLs</h2><p id="rpu1" class="hascomments">We've already mentioned how Yesod is able to automatically render type-safe URLs into a textual URL that can be inserted into an HTML page. Let's say we have a route definition that looks like:</p><pre id="x1">mkYesod "MyApp" [parseRoutes|
 /some/path SomePathR GET
 ]</pre><p id="rpu2" class="hascomments">If we place SomePathR into a hamlet template, how does Yesod render
             it? Yesod always tries to construct absolute URLs. This is especially
@@ -16,9 +12,10 @@
             application.</p><p id="rpu3" class="hascomments">You might think we could get that information from the user's request, but we still
             need to deal with ports. And even if we get the port number from the request, are we
             using HTTP or HTTPS? And even if you know that, such an approach would
-            break one of our RESTful principles: depending on how the user submitted a request would
-            generate different URLs. For example, we would generate different URLs depending if the
-            user connected to "example.com" or "www.example.com".</p><p id="rpu4" class="hascomments">And finally, Yesod doesn't make any assumption about where you host your application. For example, I may have a mostly static site (http://static.example.com/), but I'd like to stick a Yesod-powered Wiki at /wiki/. There is no reliable way for an application to determine what subpath it is being hosted from. So instead of doing all of this guesswork, Yesod needs you to tell it the <dfn id="x5">application root</dfn>.</p><p id="rpu5" class="hascomments">Using the wiki example, you would write your Yesod instance as:</p><pre id="x6">instance Yesod MyWiki where
+            mean that, depending on how the user submitted a request would generate different URLs.
+            For example, we would generate different URLs depending if the user connected to
+            "example.com" or "www.example.com". For Search Engine Optimization, we want to be able
+            to consolidate on a single canonical URL.</p><p id="rpu4" class="hascomments">And finally, Yesod doesn't make any assumption about where you host your application. For example, I may have a mostly static site (http://static.example.com/), but I'd like to stick a Yesod-powered Wiki at /wiki/. There is no reliable way for an application to determine what subpath it is being hosted from. So instead of doing all of this guesswork, Yesod needs you to tell it the <dfn id="x5">application root</dfn>.</p><p id="rpu5" class="hascomments">Using the wiki example, you would write your Yesod instance as:</p><pre id="x6">instance Yesod MyWiki where
     approot _ = "http://static.example.com/wiki" -- FIXME this is out-of-date</pre><p id="rpu6" class="hascomments">Notice that there is no trailing slash there. Next, when Yesod wants to construct a URL
             for SomePathR, it determines that the relative path for
                 SomePathR is /some/path, appends that to your
@@ -31,13 +28,13 @@
             that you could load your approot at program initialization, store it in the foundation,
             and then retrieve it. This is in fact what the scaffolded site does, using a YAML config
             file.</aside>
-<p id="rpu8" class="hascomments">And by the way, the site template generated by the scaffolding tool can load different
-            settings for developing, testing, staging, and production builds, so you can easily test
-            on one domain- like localhost- and serve from a different domain.</p><aside id="x8" class="note"><p id="rpu9" class="hascomments">To reiterate: even though for the simple cases in this book, the first argument to
+<p id="rpu8" class="hascomments">And by the way, the scaffolded site can load different settings for developing,
+            testing, staging, and production builds, so you can easily test on one domain- like
+            localhost- and serve from a different domain.</p><aside id="x8" class="note"><p id="rpu9" class="hascomments">To reiterate: even though for the simple cases in this book, the first argument to
                     approot is usually ignored, in real life code it usually isn't.
                 We also need to keep that argument so that Haskell's type system can determine which
                 instance of Yesod to use in grabbing the
-                approot.</p></aside><p id="jp1" class="hascomments">In order to convert a type-safe URL into a text value, Yesod uses two helper functions.
+                approot.</p></aside><h3>joinPath</h3><p id="jp1" class="hascomments">In order to convert a type-safe URL into a text value, Yesod uses two helper functions.
             The first is the renderRoute method of the RenderRoute typeclass. Every type-safe URL is an instance of this
             typeclass. renderRoute converts a value into a list of path
             pieces. For example, our SomePathR from above would be
@@ -50,7 +47,7 @@
             root, a list of path segments and a list of query string parameters, and returns a
             textual URL. The default implementation does the "right thing": it separates the path
             pieces by forward slashes, prepends the application root and appends the query
-            string.</p><p id="jp4" class="hascomments">If you are happy with default URL rendering, you should not need to modify it. However, if you want to modify URL rendering to do things like append a trailing slash, this would be the place to do it.</p><p id="cp1" class="hascomments">The flip side to joinPath is cleanPath. Let's look at how it gets used in the dispatch process:</p><ol id="x3"><li id="x4">The path info requested by the user is split into a series of path pieces.</li><li id="x6">We pass the path pieces to the cleanPath function.</li><li id="x7">If cleanPath indicates a redirect (a Left response),
+            string.</p><p id="jp4" class="hascomments">If you are happy with default URL rendering, you should not need to modify it. However, if you want to modify URL rendering to do things like append a trailing slash, this would be the place to do it.</p><h3>cleanPath</h3><p id="cp1" class="hascomments">The flip side to joinPath is cleanPath. Let's look at how it gets used in the dispatch process:</p><ol id="x3"><li id="x4">The path info requested by the user is split into a series of path pieces.</li><li id="x6">We pass the path pieces to the cleanPath function.</li><li id="x7">If cleanPath indicates a redirect (a Left response),
                 then a 301 response is sent to the client. This is used to force canonical URLs (eg,
                 remove extra slashes).</li><li id="x8">Otherwise, we try to dispatch using the response from cleanPath (a
                     Right). If this works, we return a response. Otherwise, we
@@ -110,7 +107,7 @@ main = warpDebug 3000 Slash</pre><p id="cp3" class="hascomments">First, let's lo
             should dispatch based on all but the last piece. However, if this is not the case, we
             want to redirect to a canonical URL. In this case, we strip out all empty pieces and do
             not bother appending a trailing slash, since joinPath will do that for
-            us.</p><p id="dl1" class="hascomments">Most websites like to apply some general template to all of their pages.
+            us.</p><h2>defaultLayout</h2><p id="dl1" class="hascomments">Most websites like to apply some general template to all of their pages.
                 defaultLayout is the recommended approach for this. While you could
             just as easily define your own function and call that instead, when you override
                 defaultLayout all of the Yesod-generated pages (error pages,
@@ -155,7 +152,7 @@ getRootR = defaultLayout $ do
     color: red
 |]
     addHamlet [hamlet|&lt;h1&gt;Hello|]
-main = warpDebug 4000 Layout</pre><p id="gm1" class="hascomments">Even though we haven't covered sessions yet, I'd like to mention
+main = warpDebug 4000 Layout</pre><h3>getMessage</h3><p id="gm1" class="hascomments">Even though we haven't covered sessions yet, I'd like to mention
                 getMessage here. A common pattern in web development is setting a
             message in one handler and displaying it in another. For example, if a user
                 POSTs a form, you may want to redirect him/her to another page
@@ -196,7 +193,7 @@ getRootR = defaultLayout [whamlet|&lt;a href="@{MsgR}"&gt;message|]
 getMsgR = setMessage "foo" &gt;&gt; redirect RootR &gt;&gt; return ()
 main = warpDebug 4000 Layout
 </pre><p id="gm3" class="hascomments">We'll cover getMessage/setMessage in more detail when
-            we <a href="../../yesod-web-framework-book/sessions/sessions.dita" id="x2">discuss sessions</a>.</p><p id="cep1" class="hascomments">One of the marks of a professional web site is a properly designed error page. Yesod
+            we <a href="../../yesod-web-framework-book/sessions/sessions.dita" id="x2">discuss sessions</a>.</p><h2>Custom error pages</h2><p id="cep1" class="hascomments">One of the marks of a professional web site is a properly designed error page. Yesod
             gets you a long way there by automatically using your defaultLayout for
             displaying error pages. But sometimes, you'll want to go even further. For this, you'll
             want to override the errorHandler method:</p><pre id="x1">{-# LANGUAGE TypeFamilies, QuasiQuotes, OverloadedStrings #-}
@@ -231,7 +228,7 @@ instance Yesod Layout where
 -- STOP
 getRootR = defaultLayout [whamlet|Hello World|]
 main = warpDebug 4000 Layout
-</pre><aside id="x3" class="note">Even though you can do this, I don't actually recommend such practices. A 404 should be a 404.</aside>
+</pre><aside id="x3" class="note">Even though you can do this, I don't actually recommend such practices. A 404 should be a 404.</aside><h2>External CSS and Javascript</h2>
   <aside id="in-scaffolding" class="note">The functionality described here is automatically included in the
    scaffolded site, so you don't need to worry about implementing this yourself.</aside>
   <p id="x-3" class="hascomments">One of the most powerful, and most intimidating, methods in the Yesod typeclass is
@@ -280,7 +277,7 @@ main = warpDebug 4000 Layout
     for the existence of that file, and avoids the costly disk I/O of a write if it's not
     necessary.</li>
   </ul>
- 
+ <h2>Smarter Static Files</h2>
   <p id="x-3" class="hascomments">Google recommends an important optimization: <a href="http://code.google.com/speed/page-speed/docs/request.html#ServeFromCookielessDomain" id="x-4">serve static files from a separate domain</a>. The advantage
    to this approach is that cookies set on your main domain are not sent when retrieving static
    files, thus saving on a bit of bandwidth.</p>
@@ -294,7 +291,7 @@ main = warpDebug 4000 Layout
    be a different domain. This is a great example of the power and flexibility of type-safe URLs:
    with a single line of code you're able to change the rendering of static routes throughout all of
    your handlers.</p>
- 
+ <h2>Authentication/Authorization</h2>
   <p id="x-4" class="hascomments">For simple applications, checking permissions inside each handler function can be a
    simple, convenient approach. However, it doesn't scale well. Eventually, you're going to want to
    have a more declarative approach. Many systems out there define ACLs, special config files, and a
@@ -327,17 +324,21 @@ main = warpDebug 4000 Layout
   </dl>
   <p id="x-18" class="hascomments">These methods tie in nicely with the yesod-auth package,
    which is used by the scaffolded site to provide a number of authentication options, such as
-   OpenID, BrowserID, email, username and Twitter. We'll cover more concrete examples in the <a href="../../yesod-web-framework-book/authentication-and-authorization/authentication-and-authorization.dita#file166-authentication-and-authorizationauthentication-and-authorization" id="x-20">auth chapter</a>.</p>
- 
+   OpenID, BrowserID, email, username and Twitter. We'll cover more concrete examples in the <a href="../../yesod-web-framework-book/authentication-and-authorization/authentication-and-authorization.dita#file165-authentication-and-authorizationauthentication-and-authorization" id="x-20">auth chapter</a>.</p>
+ <h2>Some Simple Settings</h2>
   <p id="x-3" class="hascomments">Not everything in the Yesod typeclass is complicated. Some methods are simple
    functions. Let's just go through the list:</p>
   <dl id="x-4">
    
     <dt id="x-6">encryptKey</dt>
-    <dd id="x-7">Yesod uses client-side sessions, which are stored in encrypted, cryptographically-hashed
-     cookies. Well, as long as you provide an encryption key. If this function returns Nothing, then
-     sessions are disabled. This can be a useful optimization on sites that don't need session
-     facilities, as it avoids an encrypt/decrypt pair on each request.</dd>
+    <dd id="x-7">Yesod uses client-side sessions, which are stored in encrypted,
+     cryptographically-hashed cookies. Well, as long as you provide an encryption key. If this
+     function returns Nothing, then sessions are disabled. This can be a useful optimization on
+     sites that don't need session facilities, as it avoids an encrypt/decrypt pair on each
+      request.<aside class="note">The combination of encryption and hashing guarantees two properties: the session
+      payload is tamper-proof, and is opaque. Encryption without hashing would allow a user to
+      randomly change the cookie data and still have it accepted by the server, while hashing
+      without encryption would allow inspection of the data.</aside></dd>
    
    
     <dt id="x-9">clientSessionDuration</dt>
@@ -353,7 +354,7 @@ main = warpDebug 4000 Layout
     <dt id="x-15">cookiePath</dt>
     <dd id="x-16">What paths within your current domain to set cookies for. The default is "/", and will
      almost always be correct. One exception might be when you're serving from a subpath within a
-     domain (like our <a href="../../yesod-web-framework-book/yesod-typeclass/yesod-typeclass.dita#file66-rendering-and-parsing-urlstypeclass/rpu4" id="x-17">wiki example above</a>).</dd>
+     domain (like our <a href="../../yesod-web-framework-book/yesod-typeclass/yesod-typeclass.dita#file65-rendering-and-parsing-urlstypeclass/rpu4" id="x-17">wiki example above</a>).</dd>
    
    
     <dt id="x-19">maximumContentLength</dt>
@@ -367,7 +368,7 @@ main = warpDebug 4000 Layout
      used to asynchronously load all of the Javascript on your page.</dd>
    
   </dl>
- <p id="s1" class="hascomments">The Yesod typeclass has a number of overrideable methods that allow you to configure your
+ <h2>Summary</h2><p id="s1" class="hascomments">The Yesod typeclass has a number of overrideable methods that allow you to configure your
             application. They are all optional, and provide
             sensible defaults. By using built-in Yesod constructs like
                 defaultLayout and getMessage, you'll get a

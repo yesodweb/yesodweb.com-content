@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>Forms</h1>
   <p id="x1" class="hascomments">I've mentioned the boundary issue already: whenever data enters or leaves an
    application, we need to validate it. Probably the most difficult place this occurs is forms.
    Coding forms is complex; in an ideal world, we'd like a solution that addresses the following
@@ -17,7 +17,7 @@
    API. It builds on top of Yesod's widgets to simplify styling of forms and applying Javascript
    appropriately. And like the rest of Yesod, it uses Haskell's type system to make sure everything
    is working correctly.</p>
-   <pre id="x1">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+ <h2>Synopsis</h2>  <pre id="x1">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -113,7 +113,7 @@ postPersonR = do
 
 main :: IO ()
 main = warpDebug 3000 Synopsis</pre>
- 
+ <h2>Kinds of Forms</h2>
   <p id="x1" class="hascomments">Before jumping into the types themselves, we should begin with an overview of the different
    kinds of forms. There are three categories:</p>
   <dl id="x2">
@@ -153,7 +153,7 @@ main = warpDebug 3000 Synopsis</pre>
    is used in a few places, such as saying MForm. We also use req and opt to mean required and
    optional. Combining these, we create a required applicative field with areq, or
    an optional input field with iopt.</p>
- 
+ <h2>Types</h2>
   <p id="x1" class="hascomments">The yesod-form:Yesod.Form.Types module declares a few types. Let's start off
    with some simple helpers:</p>
   <dl id="x3">
@@ -237,7 +237,7 @@ main = warpDebug 3000 Synopsis</pre>
   </ul>
   <p id="x41" class="hascomments">An IForm is even simpler: it returns either a list of error messages
    or a result.</p>
- 
+ <h2>Converting</h2>
   <p id="x1" class="hascomments">"But wait a minute," you say. "You said the synopsis uses applicative forms, but I'm
    sure the type signature said MForm. Shouldn't it be Monadic?" That's true, the
    final form we produced was monadic. But what really happened is that we converted an applicative
@@ -251,7 +251,7 @@ main = warpDebug 3000 Synopsis</pre>
   <p id="x3" class="hascomments">"But wait another minute," you insist. "I didn't see any
     aformToForm!" Also true. The renderDivs function takes care of
    that for us.</p>
- 
+ <h2>Create AForms</h2>
   <p id="x1" class="hascomments">Now that I've (hopefully) convinced you that in our synopsis we were really dealing with
    applicative forms, let's have a look and try to understand how these things get created. Let's
    take a simple example:</p>
@@ -375,7 +375,7 @@ getCarR = do
     &lt;input type=submit&gt;
 |]</pre>
   </figure>
-   <p id="x1" class="hascomments">Suppose we wanted to have an optional field (like the car color). All we do instead is
+ <h3>Optional fields</h3>  <p id="x1" class="hascomments">Suppose we wanted to have an optional field (like the car color). All we do instead is
             use the aopt function.</p>
   <figure id="x2"><figcaption>Optional fields</figcaption>
    
@@ -491,7 +491,7 @@ getCarR = do
     &lt;input type=submit&gt;
 |]</pre>
   </figure>
- 
+ <h2>Validation</h2>
   <p id="x1" class="hascomments">How would we make our form only accept cars created after 1990? If you remember, we
             said above that the Field itself contained the information on what is a
             valid entry. So all we need to do is write a new Field, right? Well,
@@ -704,11 +704,11 @@ getCarR = do
             the user-supplied year. Also, notice how we can chain together multiple validators.</p>
   <aside id="x11" class="note">Since the checkM validator runs in the Handler
             monad, it has access to a lot of the stuff you can normally do in Yesod. This is
-            especially useful for running database actions, which we'll cover in the <a href="../../yesod-web-framework-book/persistent-060/persistent.dita#file136-persistentpersistent" id="x-19">Persistent
+            especially useful for running database actions, which we'll cover in the <a href="../../yesod-web-framework-book/persistent-060/persistent.dita#file135-persistentpersistent" id="x-19">Persistent
                 chapter</a>.</aside>
- 
-  <p id="x1" class="hascomments">Our color entry field is nice, but it's not exactly user-friendly. What we really want is a
-   dropdown list.</p>
+ <h2>More sophisticated fields</h2>
+  <p id="x1" class="hascomments">Our color entry field is nice, but it's not exactly user-friendly. What we really want
+            is a drop-down list.</p>
   <figure id="x2"><figcaption>Drop-down lists</figcaption>
    
    <pre id="x4">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
@@ -874,10 +874,10 @@ getCarR = do
                 &amp;&amp;&amp; (a.k.a, the fan-out operator) to turn that into a
             list of pairs.</p>
   <p id="x10" class="hascomments">Some people prefer radio buttons to drop-down lists. Fortunately, this is just a
-            one-word change.</p>
-  <figure id="x11"><figcaption>Radio buttons</figcaption>
-   
-   <pre id="x13">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+            one-word change. For example, see <a href="../../yesod-web-framework-book/forms-09/forms.dita#file97-more-sophiticated-fieldsforms/radio-buttons">Radio buttons</a></p>
+  <figure id="radio-buttons"><figcaption>Radio buttons</figcaption>
+            
+            <pre id="x13">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -952,23 +952,24 @@ getCarR = do
         ^{widget}
     &lt;input type=submit&gt;
 |]</pre>
-  </figure>
- 
+        </figure>
+ <h2>Running forms</h2>
   <p id="x1" class="hascomments">At some point, we're going to need to take our beautiful forms and produce some results. There
    are a number of different functions available for this, each with its own purpose. I'll go
    through them, starting with the most common.</p>
   <dl id="x2">
    
     <dt id="x4">runFormPost</dt>
-    <dd id="x5">This will run your form against any submitted POST parameter. If
-     this is not a POST submission, it will return a FormMissing.
-     This automatically inserts a security token as a hidden form field to avoid <a href="http://en.wikipedia.org/wiki/Cross-site_request_forgery" id="x6">CSRF</a> attacks.</dd>
+    <dd id="x5">This will run your form against any submitted POST
+     parameters. If this is not a POST submission, it will return a
+      FormMissing. This automatically inserts a security token as a hidden
+     form field to avoid <a href="http://en.wikipedia.org/wiki/Cross-site_request_forgery" id="x6">CSRF</a> attacks.</dd>
    
    
     <dt id="x8">runFormGet</dt>
-    <dd id="x9">Same as runFormPost, for GET submissions. In order to distinguish a
-     normal GET page load from a GET submission, it includes an
-     extra _hasdata hidden field in the form.</dd>
+    <dd id="x9">Same as runFormPost, for GET parameters. In order to
+     distinguish a normal GET page load from a GET submission, it includes an extra _hasdata hidden field
+     in the form.</dd>
    
    
     <dt id="x11">runFormPostNoNonce</dt>
@@ -989,9 +990,9 @@ getCarR = do
   <p id="x19" class="hascomments">The return type from the first three is ((FormResult a, Widget),
     Enctype). The Widget will already have any validation errors and
    previously submitted values.</p>
- 
+ <h2>i18n</h2>
   <p id="x1" class="hascomments">There have been a few references to i18n in this chapter. The topic will get more
-   thorough coverage in <a href="../../yesod-web-framework-book/internationalization/internationalization.dita#file186-internationalizationinternationalization" id="x-3">its
+   thorough coverage in <a href="../../yesod-web-framework-book/internationalization/internationalization.dita#file185-internationalizationinternationalization" id="x-3">its
     own chapter</a>, but since it has such a profound effect on yesod-form, I
    wanted to give a brief overview. The idea behind i18n in Yesod is to have data types represent
    messages. Each site can have an instance of RenderMessage for a given datatype
@@ -1008,11 +1009,9 @@ getCarR = do
     be:<pre id="x4">instance RenderMessage MyApp FormMessage where
     renderMessage _ _ = defaultFormMessage</pre>This
     is provided automatically by the scaffolded site.</li>
-   <li id="x5">In order to allow multiple different message types to co-exist, we use an existential
-    type called SomeMessage. You will occassionally need to wrap your values inside
-    of it, though this is not common in normal library use.</li>
+   
   </ul>
- 
+ <h2>Monadic Forms</h2>
         <p id="x-3" class="hascomments">Often times, a simple form layout is adequate, and applicative forms excel at
             this approach. Sometimes, however, you'll want to have a more customized look to your
             form.</p>
@@ -1030,21 +1029,21 @@ import Yesod
 import Control.Applicative
 import Data.Text (Text)
 
-data Monadic = Monadic
+data MFormExample = MFormExample
 
-mkYesod "Monadic" [parseRoutes|
+mkYesod "MFormExample" [parseRoutes|
 / RootR GET
 |]
 
-instance Yesod Monadic
+instance Yesod MFormExample
 
-instance RenderMessage Monadic FormMessage where
+instance RenderMessage MFormExample FormMessage where
     renderMessage _ _ = defaultFormMessage
 
 data Person = Person { personName :: Text, personAge :: Int }
     deriving Show
 
-personForm :: Html -&gt; MForm Monadic Monadic (FormResult Person, Widget)
+personForm :: Html -&gt; MForm MFormExample MFormExample (FormResult Person, Widget)
 personForm extra = do
     (nameRes, nameView) &lt;- mreq textField "this is not used" Nothing
     (ageRes, ageView) &lt;- mreq intField "neither is this" Nothing
@@ -1077,7 +1076,7 @@ getRootR = do
 |]
 
 main :: IO ()
-main = warpDebug 3000 Monadic</pre>
+main = warpDebug 3000 MFormExample</pre>
         <p id="x-8" class="hascomments">Similar to the applicative areq, we use mreq for monadic forms. (And yes, there's also
                 mopt for optional fields.) But there's a big difference:
                 mreq gives us back a pair of values. Instead of hiding away the
@@ -1103,21 +1102,22 @@ main = warpDebug 3000 Monadic</pre>
             the case of applicative forms, the fsLabel and
                 fsTooltip values are used when constructing your HTML. In the case
             of monadic forms, Yesod does not generate any of the "wrapper" HTML for you, and
-            therefore these values are ignored.</p>
+            therefore these values are ignored. However, we still keep the
+                FieldSettings parameter to allow you to override the
+                id and name attributes of your fields if
+            desired.</p>
         <p id="x-14" class="hascomments">The other interesting bit is the extra value.
-                GET forms include an extra field to indicate that they have been
-            submitted, and POST forms include a security tokens to prevent CSRF
-            attacks. If you don't include this extra hidden field in your form, Yesod will not
-            accept it.</p>
+                GET forms include an extra field to indicate that they
+            have been submitted, and POST forms include a security tokens
+            to prevent CSRF attacks. If you don't include this extra hidden field in your form,
+            Yesod will not accept it.</p>
         <p id="x-16" class="hascomments">Other than that, things are pretty straight-forward. We create our
                 personRes value by combining together the nameRes
             and ageRes values, and then return a tuple of the person and the
             widget. And in the getRootR function, everything looks just like an
             applicative form. In fact, you could swap out our monadic form with an applicative one
             and the code would still work.</p>
-        <aside id="x-17" class="note">Well, that's not exactly true. It would compile and build,
-            but you wouldn't have a submit button.</aside>
-    
+    <h2>Input forms</h2>
   <p id="x-3" class="hascomments">Applicative and monadic forms handle both the generation of your HTML code and the parsing of
    user input. Sometimes, you only want to do the latter, such as when there's an already-existing
    form in HTML somewhere, or if you want to generate a form dynamically using Javascript. In such a
@@ -1179,7 +1179,7 @@ getInputR = do
 
 main :: IO ()
 main = warpDebug 3000 Input</pre>
- 
+ <h2>Custom fields</h2>
   <p id="x-3" class="hascomments">The fields that come built-in with Yesod will likely cover the vast majority of your
    form needs. But occassionally, you'll need something more specialized. Fortunately, you can
    create new forms in Yesod yourself. The Field datatype has two records:
@@ -1256,7 +1256,7 @@ getRootR = do
 -- STOP
 main :: IO ()
 main = warpDebug 3000 Password</pre>
- 
+ <h2>Summary</h2>
   <p id="x-3" class="hascomments">Forms in Yesod are broken up into three groups. Applicative is the most common, as it provides
    a nice user interface with an easy-to-use API. Monadic forms give you more power, but are harder
    to use. Input forms are intended when you just want to read data from the user, not generate the

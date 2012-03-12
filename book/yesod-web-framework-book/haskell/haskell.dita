@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>Haskell</h1>
   <p id="x-3" class="hascomments">In order to use Yesod, you're going to have to know at least the basics of Haskell.
    Additionally, Yesod uses some features of Haskell that aren't covered in most introductory texts.
    While this book assumes the reader has a basic familiarity with Haskell, this chapter is intended
@@ -9,9 +9,10 @@
    chapter later as a reference.</p>
   <p id="x-5" class="hascomments">If you are looking for a more thorough introduction to Haskell, I would recommend either Real
    World Haskell or Learn You a Haskell.</p>
- 
-  <p id="x-3" class="hascomments">Even for those familiar with Haskell as a language, there can sometimes be some confusion about
-   terminology. Let's establish some base terms that we can use throughout this book. FIXME</p>
+ <h2>Terminology</h2>
+  <p id="x-3" class="hascomments">Even for those familiar with Haskell as a language, there can sometimes be some
+   confusion about terminology. Let's establish some base terms that we can use throughout this
+   book.</p>
   <dl id="x-4">
    
     <dt id="x-6">Data type</dt>
@@ -52,32 +53,33 @@
       a is a type variable.</dd>
    
   </dl>
- 
+ <h2>Tools</h2>
   <p id="x-3" class="hascomments">There are two main tools you'll need to Haskell development. The Glasgow Haskell Compiler (GHC)
    is the standard Haskell compiler, and the only one officially supported by Yesod. You'll also
    need Cabal, which is the standard Haskell build tool. Not only do we use Cabal for building our
    local code, but it can automatically download and install dependencies from Hackage, the Haskell
    package repository.</p>
   <p id="x-4" class="hascomments">If you're on Windows or Mac, it is strongly recommended to download the <a href="http://hackage.haskell.org/platform/" id="x-5">Haskell
-    Platform</a>. On Linux, many distributions include GHC and Cabal in their package
-   repositories. On Debian-based systems, you can get a good start by running sudo apt-get
-    install cabal-install. There are, however, a few caveats with this approach:</p>
-  <ul id="ul_dst_upw_ff">
-   <li id="x-7">There are some additional build tools (alex and happy in particular) that are needed by some packages. This are installed
-    automatically by the Haskell Platform, but won't necessarily be installed by using your package
-    manager.</li>
-   <li id="x-10">The version of GHC available in your repositories may be significantly dated, meaning some
-    newer features will not be available to you. In the most extreme case, you may have a version of
-    GHC too old for Yesod.</li>
-  </ul>
-  <p id="x-11" class="hascomments">For now, my recommendation is to stick with a Haskell Platform install on Linux. Before
-   installing the package from the Haskell Platform website, make sure you have installed the <a href="http://www.vex.net/%7Etrebla/haskell/haskell-platform.xhtml" id="x-12">required C libraries</a>. On Debian-based systems, you would need to
-   run:</p>
-  <pre id="x-13">sudo apt-get install libedit-dev libbsd-dev libgmp3-dev zlib1g-dev freeglut3-dev</pre>
-  <aside class="note">Some distributions actually include the Haskell Platform already. On Debian, you can run
-    sudo apt-get install haskell-platform. The same caveats of outdated versions
-   apply, but if you're using a distribution that provides the Haskell Platform, this is likely the
-   easiest approach to getting up-and-running quickly.</aside>
+    Platform</a>. On Linux, many distributions include the Haskell Platform in their
+   repositories. On Debian-based systems, for example, you can get started by running sudo
+    apt-get install haskell-platform. If your distribution does not include the Haskell
+   Platform, you can install it manually by following the instructions on the Haskell Platform's
+   page.</p>
+  <p class="hascomments">One important tool you'll need to update is alex. The Haskell Platform
+   includes version 2, while the Javascript minifier Yesod uses, hjsmin, requires
+   version three. Be sure to cabal install alex after getting set up with the
+   Haskell Platform, or you'll run into error messages about the
+    language-javascript package.</p>
+  <aside class="note">Some people like to live in the bleeding edge and install the latest version of GHC before
+   it is available in the Haskell Platform. We try to keep Yesod up-to-date with all current
+   versions of GHC, but we only officially support the Haskell Platform. If you do go the route of
+   manually install GHC, here are a few notes:<ul id="ul_da4256c1-39b0-4276-8c64-d88825acb6d8">
+    <li>You'll need to install some additional build tools, alex and
+      happy in particular.</li>
+    <li>Make sure to install all of the <a href="http://www.vex.net/%7Etrebla/haskell/haskell-platform.xhtml" id="x-12">required C libraries</a>. On Debian-based systems, you would need to
+     run:<pre id="x-13">sudo apt-get install libedit-dev libbsd-dev libgmp3-dev zlib1g-dev freeglut3-dev</pre>
+    </li>
+   </ul></aside>
   <p id="x-14" class="hascomments">Regardless of how you've installed your tools, you should sure to put cabal's
    bin folder in your PATH variable. On Mac and Linux, this will be
     $HOME/.cabal/bin and on Windows it will be
@@ -89,17 +91,18 @@
     Hackage.</li>
    <li id="x-23">cabal install yesod will install Yesod and all its dependencies.</li>
   </ul>
-  <aside id="x-25" class="note">Many people in the community prefer to perform sandboxed builds of their Haskell packages. I
-   won't go into details on how to use these in the book, but the two most commonly used tools are
-    <a href="http://hackage.haskell.org/package/cabal-dev" id="x-26">cabal-dev</a> and <a href="http://hackage.haskell.org/package/virthualenv" id="x-27">virthualenv</a>.</aside>
- 
+  <aside id="x-25" class="note">Many people in the community prefer to perform sandboxed builds of their Haskell
+   packages, which prevents your install Yesod from breaking existing packages, or packages you
+   install in the future from breaking your Yesod install. I won't go into details on how to use
+   these in the book, but the two most commonly used tools are <a href="http://hackage.haskell.org/package/cabal-dev" id="x-26">cabal-dev</a> and <a href="http://hackage.haskell.org/package/virthualenv" id="x-27">virthualenv</a>.</aside>
+ <h2>Language Pragmas</h2>
   <p id="x-3" class="hascomments">GHC will run by default in something very close to Haskell98 mode. It also ships with a large
    number of language extensions, allowing more powerful type classes, syntax changes, and more.
    There are multiple ways to tell GHC to turn on these extensions. For most of the code snippets in
    this book, you'll see <dfn id="x-4">language pragmas</dfn>, which look like this:</p>
   <pre id="x-5">{-# LANGUAGE MyLanguageExtension #-}</pre>
-  <p id="x-6" class="hascomments">These should always appear at the top of your source file. Additionally, there are two other
-   recommended approaches:</p>
+  <p id="x-6" class="hascomments">These should always appear at the top of your source file. Additionally, there are two
+   other common approaches:</p>
   <ul id="ul_ano_hnw_ff">
    <li id="x-7">On the GHC command line, pass an extra argument
     -XMyLanguageExtension.</li>
@@ -107,11 +110,11 @@
   </ul>
   <p id="x-12" class="hascomments">I personally never use the GHC command line argument approach. It's a personal preference, but
    I like to have my settings clearly stated in a file. In general it's recommended to avoid putting
-   extensions in your cabal file; however, in the <a href="../../yesod-web-framework-book/scaffolding-and-the-site-template/scaffolding-and-the-site-template.dita#file178-scaffolding-and-the-site-templatescaffolding" id="x-14">Yesod scaffolded site</a> we specifically use this approach to avoid the
+   extensions in your cabal file; however, in the <a href="../../yesod-web-framework-book/scaffolding-and-the-site-template/scaffolding-and-the-site-template.dita#file177-scaffolding-and-the-site-templatescaffolding" id="x-14">Yesod scaffolded site</a> we specifically use this approach to avoid the
    boilerplate of specifying the same language pragmas in every source file.</p>
   <p id="x-15" class="hascomments">We'll end up using quite a few language extensions in this book (the scaffolding uses 11). We
    will not cover the meaning of all of them. Instead, please see the <a href="http://www.haskell.org/ghc/docs/latest/html/users_guide/ghc-language-features.html" id="x-16">GHC documentation</a>.</p>
- 
+ <h2>Overloaded Strings</h2>
   <p id="x-3" class="hascomments">What's the type of "hello"? Traditionally, it's String, which
    is defined as type String = [Char]. Unfortunately, there are a number of
    limitations with this:</p>
@@ -151,7 +154,7 @@ myFunc = something "hello"</pre>
    instead, you'll need to give an explicit type annotation to specify whether
     "hello" should be treated as a String or
    Text.</p>
- 
+ <h2>Type Families</h2>
   <p id="x-3" class="hascomments">The basic idea of a type family is to state some association between two different types.
    Suppose we want to write a function that will safely take the first element of a list. But we
    don't want it to work just on lists; we'd like it to treat a ByteString like a
@@ -190,7 +193,7 @@ main = do
   <aside id="x-13" class="note">There are other ways to use associated types outside the context of a typeclass. However, in
    Yesod, all of our associated types are in fact part of a type class. For more information on type
    families, see <a href="http://www.haskell.org/haskellwiki/GHC/Type_families" id="x-14">the Haskell wiki page</a>.</aside>
- 
+ <h2>Template Haskell</h2>
   <p id="x-3" class="hascomments">Template Haskell (TH) is an approach to code generation. We use it in Yesod in a number
    of places to reduce boilerplate, and to ensure that the generated code is correct. Template
    Haskell is essentially Haskell which generates a Haskell Abstract Syntax Tree (AST).</p>
@@ -203,7 +206,7 @@ main = do
    already existing functions. For example, to include an externally defined Hamlet template, you
    can write:</p>
   <pre id="x-7">$(hamletFile "myfile.hamlet")</pre>
-  <p id="x-8" class="hascomments">(Hamlet is discussed in the <a href="../../yesod-web-framework-book/shakespearean-templates/shakespearean-templates.dita#file53-shakespearean-templatestemplates" id="x-9">Shakespeare chapter</a>.) The dollar sign immediately followed by parantheses
+  <p id="x-8" class="hascomments">(Hamlet is discussed in the <a href="../../yesod-web-framework-book/shakespearean-templates/shakespearean-templates.dita#file52-shakespearean-templatestemplates" id="x-9">Shakespeare chapter</a>.) The dollar sign immediately followed by parantheses
    tell GHC that what follows is a Template Haskell function. The code inside is then run by the
    compiler and generates a Haskell AST, which is then compiled. And yes, it's even possible to
     <a href="http://www.yesodweb.com/blog/2010/09/yo-dawg-template-haskell" id="x-10">go meta with this</a>.</p>
@@ -226,7 +229,7 @@ myThCode</pre>
    should use the -ddump-splices GHC option.</p>
   <aside id="x-17" class="note">There are many other features of Template Haskell not covered here. For more information,
    see the <a href="http://www.haskell.org/haskellwiki/Template_Haskell" id="x-18">Haskell wiki page</a>.</aside>
- 
+ <h2>QuasiQuotes</h2>
   <p id="x-3" class="hascomments">QuasiQuotes (QQ) are a minor extension of Template Haskell that let us embed arbitrary content
    within our Haskell source files. For example, we mentioned previously the
     hamletFile TH function, which reads the template contents from an external
@@ -241,7 +244,7 @@ myThCode</pre>
    since the former is simpler to copy-and-paste. However, in production, external files are
    recommended for all but the shortest of inputs as it gives a nice separation of the non-Haskell
    syntax from your Haskell code.</p>
- 
+ <h2>Summary</h2>
   <p id="x-3" class="hascomments">You don't need to be an expert in Haskell to use Yesod, a basic familiarity will suffice. This
    chapter hopefully gave you just enough extra information to feel more comfortable following the
    rest of the book.</p>

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>JSON Web Service</h1>
   <p id="x1" class="hascomments">Let's create a very simple web service: it takes a JSON request and returns a JSON
-            response. We're going to write the server in WAI/Warp, and the client in
-                http-conduit. We'll be using aeson for
-            JSON parsing and rendering.</p>
- 
+            response. We're going to write the server in WAI/Warp, and the client in http-conduit. We'll be using aeson for
+            JSON parsing and rendering. We could also write the server in Yesod itself, but for such
+            a simple example, the extra features of Yesod don't add much.</p>
+ <h2>Server</h2>
   <p id="x1" class="hascomments">WAI uses the conduit package to handle streaming request
             bodies, and efficiently generates responses using blaze-builder. aeson uses attoparsec for parsing; by using attoparsec-conduit we get easy interoperability with WAI. This plays out
             as:</p>
@@ -44,7 +44,7 @@ invalidJson ex = return $ responseLBS
 -- Application-specific logic would go here.
 modValue :: Value -&gt; IO Value
 modValue = return</pre>
- 
+ <h2>Client</h2>
   <p id="x1" class="hascomments">http-conduit was written as a companion to WAI. It too uses
     conduit and blaze-builder pervasively, meaning we once again
    get easy interop with aeson. A few extra comments for those not familiar with

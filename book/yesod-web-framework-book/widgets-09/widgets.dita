@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html><p id="i1" class="hascomments">One of the challenges in web development is that we have to coordinate three different client-side technologies: HTML, CSS and Javascript. Worse still, we have to place these components in different locations on the page: CSS in a style tag in the head, Javascript in a script tag in the head, and HTML in the body. And never mind if you want to put your CSS and Javascript in separate files!</p><p id="i2" class="hascomments">In practice, this works out fairly nicely when building a single page, because we can
+<html><h1>Widgets</h1><p id="i1" class="hascomments">One of the challenges in web development is that we have to coordinate three different client-side technologies: HTML, CSS and Javascript. Worse still, we have to place these components in different locations on the page: CSS in a style tag in the head, Javascript in a script tag in the head, and HTML in the body. And never mind if you want to put your CSS and Javascript in separate files!</p><p id="i2" class="hascomments">In practice, this works out fairly nicely when building a single page, because we can
             separate our structure (HTML), style (CSS) and logic (Javascript). But when we want to
             build modular pieces of code that can be easily composed, it can be a headache to
             coordinate all three pieces separately. Widgets are Yesod's solution to the problem.
-            They also help with the issue of including libraries, such as jQuery, one time only.</p><p id="i3" class="hascomments">Our four template languages- Hamlet, Cassius, Lucius and Julius- provide the raw tools for constructing your output. Widgets provide the glue that allows them to work together seamlessly.</p>
+            They also help with the issue of including libraries, such as jQuery, one time only.</p><p id="i3" class="hascomments">Our four template languages- Hamlet, Cassius, Lucius and Julius- provide the raw tools for constructing your output. Widgets provide the glue that allows them to work together seamlessly.</p><h2>Synopsis</h2>
   <pre id="x1">{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -56,7 +56,7 @@ $(function() {
         &lt;script&gt; alert("This is included in the body itself"); &lt;/script&gt;
     &lt;/body&gt;
 &lt;/html&gt;</pre>
- <p id="ww1" class="hascomments">At a very superficial level, an HTML document is just a
+ <h2>What's in a Widget?</h2><p id="ww1" class="hascomments">At a very superficial level, an HTML document is just a
             bunch of nested tags. This is the approach most HTML generation
             tools take: you simply define hierarchies of tags and are done with
             it. But let's imagine that I want to write a component of a page
@@ -77,7 +77,7 @@ $(function() {
             have five lorem ipsum blocks after all).</p><p id="ww5" class="hascomments">The job of a widget is to hold onto these disparate components and apply proper logic
             for combining different widgets together. This consists of things like taking the first
             title set and ignoring others, filtering duplicates from the list of external scripts
-            and stylesheets, and concatenating head and body content.</p>
+            and stylesheets, and concatenating head and body content.</p><h2>Constructing Widgets</h2>
   <p id="x1" class="hascomments">In order to use widgets, you'll obviously need to be able to get your hands on them.
    The most common way will be via the ToWidget typeclass, and its
     toWidget method. This allows you to convert your Shakespearean templates
@@ -86,14 +86,12 @@ $(function() {
     &lt;style&gt; tag.</p>
   <aside id="x2" class="note">You can actually override the default behavior and have the script and style code
    appear in a separate file. The scaffolded site provides this for you automatically. Additionally,
-   we'll see in the <a href="../../yesod-web-framework-book/yesod-typeclass/yesod-typeclass.dita#file75-yesod-typeclasstypeclass" id="x-8">Yesod typeclass chapter</a> how to turn on asynchronous script loading, which
+   we'll see in the <a href="../../yesod-web-framework-book/yesod-typeclass/yesod-typeclass.dita#file74-yesod-typeclasstypeclass" id="x-8">Yesod typeclass chapter</a> how to turn on asynchronous script loading, which
    will place your script content at the end of the body.</aside>
   <p id="x3" class="hascomments">But what if you want to add some &lt;meta&gt; tags, which need to
    appear in the head? Or if you want some Javascript to appear in the body instead of the head? For
    these purposes, Yesod provides two additional type classes: ToWidgetHead and
     ToWidgetBody. These work exactly as they seem they should.</p>
-  <aside id="x4" class="note">There is no ToWidgetBody instance for Lucius and Cassius, since you
-   can't put a style tag in the body.</aside>
   <p id="x5" class="hascomments">In addition, there are a number of other functions for creating specific kinds of Widgets:</p>
   <dl id="x6">
    
@@ -126,7 +124,7 @@ $(function() {
      files hosted on a CDN, like Google's jQuery.</dd>
    
   </dl>
- 
+ <h2>Combining Widgets</h2>
   <p id="x1" class="hascomments">The whole idea of widgets is to increase composability. You can take these individual
    pieces of HTML, CSS and Javascript, combine them together into something more complicated, and
    then combine these larger entities into complete pages. This all works naturally through the
@@ -153,7 +151,7 @@ myWidget' = myWidget1 &gt;&gt; myWidget2</pre>
     Widget, meaning you can use mconcat or a
     Writer monad to build things up. In my experience, it's easiest and most
    natural to just use do-notation.</aside>
- 
+ <h2>Generate IDs</h2>
   <p id="x1" class="hascomments">If we're really going for true code reuse here, we're eventually going to run into name
    conflicts. Let's say that there are two helper libraries that both use the class name "foo" to
    affect styling. We want to avoid such a possibility. Therefore, we have the
@@ -190,8 +188,8 @@ main = warpDebug 3000 W</pre>
    function of a Handler, so we need to "lift" the function from the
     Handler layer to the Widget layer to use it. We can actually
    use this same approach to perform complex actions, like database queries, from within a widget.
-   We'll cover that when we discuss <a href="../../yesod-web-framework-book/yesods-monads/yesods-monads.dita#file160-conceptIdyesods-monads" id="x-3">Yesod's monads</a>.</aside>
- 
+   We'll cover that when we discuss <a href="../../yesod-web-framework-book/yesods-monads/yesods-monads.dita#file159-conceptIdyesods-monads" id="x-3">Yesod's monads</a>.</aside>
+ <h2>whamlet</h2>
   <p id="x1" class="hascomments">Let's say you've got a fairly standard Hamlet template, that embeds another Hamlet template to
    represent the footer:</p>
   <pre id="x2">page = [hamlet|
@@ -224,8 +222,8 @@ footer = [hamlet|
       in a separate file.</p>
     <aside id="x-3" class="note">The scaffolded site has an even more convenient function, widgetFile,
       which will also include your Lucius, Cassius, and Julius files automatically. We'll cover that
-      in the <a href="../../yesod-web-framework-book/scaffolding-and-the-site-template/scaffolding-and-the-site-template.dita#file178-scaffolding-and-the-site-templatescaffolding" id="x-5">scaffolding chapter</a>.</aside>
- 
+      in the <a href="../../yesod-web-framework-book/scaffolding-and-the-site-template/scaffolding-and-the-site-template.dita#file177-scaffolding-and-the-site-templatescaffolding" id="x-5">scaffolding chapter</a>.</aside>
+ <h3>Types</h3>
   <p id="x1" class="hascomments">You may have noticed that I've been avoiding type signatures so far. That's because
    there's a little bit of a complication involved here. At the most basic level, all you need to
    know is that there's a type synonym called Widget which you will almost always
@@ -260,14 +258,11 @@ page = [whamlet|
 &lt;p&gt;This is my page. I hope you enjoyed it.
 ^{footer}
 |]</pre>
-  <p id="x11" class="hascomments">If you've been paying close attention, you might be confused. We used
-    lift before on Widget, but GWidget isn't
-   actually a monad transformer. What's going on here? Well, in older versions of Yesod, it
-    was a transformer around the Handler type. Unfortunately, this led to
-   difficult-to-parse error messages. As a result, GWidget is now a
-    newtype wrapper that hides away its monad-transformer essence. But we still
-   want to be able to lift functions from the inner Handler
-   monad.</p>
+  <p id="x11" class="hascomments">If you've been paying close attention, you might be confused. We used lift on Widget in the ID generation example above, but
+    GWidget isn't actually a monad transformer. What's going on here?
+   Well, in older versions of Yesod, it was a transformer around the Handler type. Unfortunately, this led to difficult-to-parse error messages.
+   As a result, GWidget is now a newtype
+   wrapper that hides away its monad-transformer essence. But we still want to be able to lift functions from the inner Handler monad.</p>
   <p id="x-17" class="hascomments">To solve this, Yesod provides an alternate, more general lift function that
    works for both standard MonadTrans instances, and special
     newtype wrappers like GWidget. As a result, you can pretend
@@ -276,7 +271,7 @@ page = [whamlet|
   <p id="x-23" class="hascomments">One last point: just like we have the breakdown between Widget and
     GWidget, we have a similar breakdown between Handler and
     GHandler.</p>
-   <p id="x1" class="hascomments">It's all well and good that we have these beautiful Widget datatypes, but how exactly
+ <h2>Using Widgets</h2>  <p id="x1" class="hascomments">It's all well and good that we have these beautiful Widget datatypes, but how exactly
             do we turn them into something the user can interact with? The most commonly used
             function is defaultLayout, which essentially has the type signature
                 Widget -&gt; Handler RepHtml. (I say "essentially" because
@@ -356,11 +351,11 @@ main = warpDebug 3000 MyApp</pre>
                     pageHead based on the styles set in the widget.</li>
   </ul>
   <p id="x14" class="hascomments">We have one more trick in our bag to address this: we apply some last-minute
-            adjustments to the widget itself before calling widgetToPageContent.
-            It's actually very easy to do, we just use do-notation again.</p>
-  <figure id="x15"><figcaption>Last-Minute Widget Adjustment</figcaption>
-   
-   <pre id="x17">{-# LANGUAGE OverloadedStrings #-}
+            adjustments to the widget itself before calling widgetToPageContent. It's actually very easy to do: we just use
+            do-notation again, as in <a href="../../yesod-web-framework-book/widgets-09/widgets.dita#file60-using-widgetswidgets/last-minute-widget-adjustment">Last-Minute Widget Adjustment</a>.</p>
+  <figure id="last-minute-widget-adjustment"><figcaption>Last-Minute Widget Adjustment</figcaption>
+            
+            <pre id="x17">{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -400,8 +395,8 @@ instance Yesod MyApp where
     defaultLayout = myLayout
 
 main = warpDebug 3000 MyApp</pre>
-  </figure>
- 
+        </figure>
+ <h2>Summary</h2>
   <p id="x-3" class="hascomments">The basic building block of each page is a widget. Individual snippets of HTML, CSS, and
    Javascript can be turned into widgets via the polymorphic toWidget function.
    Using do-notation, you can combine these individual widgets into larger widgets, eventually

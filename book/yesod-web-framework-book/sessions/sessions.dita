@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html><p id="i1" class="hascomments">HTTP is a stateless protocol. While some view this as a disadvantage, advocates of
+<html><h1>Sessions</h1><p id="i1" class="hascomments">HTTP is a stateless protocol. While some view this as a disadvantage, advocates of
             RESTful web development laud this as an plus. When state is removed from the picture, it
             is easier to scale applications, caching can happen automatically, and many other nice
             side effects occur. You can draw many parallels with the non-mutable nature of Haskell
@@ -9,7 +9,7 @@
             the classic example, but other more mundane interactions like proper login handling can
             be greatly enhanced by proper usage of sessions.</p><p id="i2" class="hascomments">This chapter will describe how Yesod stores session data,
             how you can access this data, and some special functions to help
-            you make the most of sessions.</p><p id="cs1" class="hascomments">One of the earliest packages spun off from Yesod was clientsession. This package uses encryption and signatures to store data
+            you make the most of sessions.</p><h2>Clientsession</h2><p id="cs1" class="hascomments">One of the earliest packages spun off from Yesod was clientsession. This package uses encryption and signatures to store data
             in a client-side cookie. The encryption prevents the user from inspecting the data, and
             the signature ensures that the session can be neither hijacked nor tampered with.</p><p id="cs2" class="hascomments">It might sound like a bad idea from an efficiency
             standpoint to store data in a cookie: after all, this means that
@@ -21,7 +21,7 @@
             massive storage for a user, it is best to store a lookup key in the session, and put the
             actual data in a database.</p>
         <p id="x-3" class="hascomments">All of the interaction with clientsession is handled by Yesod internally, but there are a
-            few spots where you can tweak the behavior just a bit.</p><p id="c1" class="hascomments">There are three functions in the Yesod typeclass that control how sessions work.
+            few spots where you can tweak the behavior just a bit.</p><h2>Controlling sessions</h2><p id="c1" class="hascomments">There are three functions in the Yesod typeclass that control how sessions work.
                 yesod-core:Yesod.Core:encryptKey returns the encryption key used.
             By default, it will take this from a local file, so that sessions can persist between
             database shutdowns. This file will be automatically created and filled with random data
@@ -48,15 +48,15 @@
             session. If this happens, and you have sessionIpAddress enabled, the
             user's session will be reset. Turning this setting to False will allow
             a session to continue under such circumstances, at the cost of exposing a user to
-            session hijacking.</p><p id="o1" class="hascomments">Like most frameworks, a session in Yesod is a key-value store. The base session API boils
-            down to three functions: lookupSession gets a value for a key
-            (if available), setSession sets a value for a key, and deleteSession clears a value for a key.</p><pre id="x4">{-# LANGUAGE TypeFamilies, QuasiQuotes, TemplateHaskell, MultiParamTypeClasses, OverloadedStrings #-}
+            session hijacking.</p><h2>Session Operations</h2><p id="o1" class="hascomments">Like most frameworks, a session in Yesod is a key-value store. The base session API boils
+            down to four functions: lookupSession gets a value for a key
+            (if available), getSession returns all of the key/value pairs, setSession sets a value for a key, and deleteSession clears a value for a key.</p><pre id="x4">{-# LANGUAGE TypeFamilies, QuasiQuotes, TemplateHaskell, MultiParamTypeClasses, OverloadedStrings #-}
 import Yesod
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 
-data Session = Session
+data SessionExample = SessionExample
 
-mkYesod "Session" [parseRoutes|
+mkYesod "SessionExample" [parseRoutes|
 / Root GET POST
 |]
 
@@ -80,14 +80,14 @@ postRoot = do
     liftIO $ print (key, mval)
     redirect Root
 
-instance Yesod Session where
+instance Yesod SessionExample where
     clientSessionDuration _ = 1
 
-instance RenderMessage Session FormMessage where
+instance RenderMessage SessionExample FormMessage where
     renderMessage _ _ = defaultFormMessage
 
 main :: IO ()
-main = warpDebug 3000 Session</pre><p id="m1" class="hascomments">One usage of sessions previously alluded to is messages. They come to solve a common
+main = warpDebug 3000 SessionExample</pre><h2>Messages</h2><p id="m1" class="hascomments">One usage of sessions previously alluded to is messages. They come to solve a common
             problem in web development: the user performs a POST request, the web
             app makes a change, and then the web app wants to simultaneously redirect
             the user to a new page and send the user a success message. (This is known as
@@ -159,7 +159,7 @@ main = warpDebug 3000 Messages</pre>
         <figure id="x-10"><figcaption>After refresh, the message is cleared</figcaption>
             
             <img src="../../images/messages-4.png" id="image_sjp_kxb_yd" placement="inline"/>
-        </figure><p id="u1" class="hascomments">Not to be confused with a horror film, this concept is used internally in yesod-auth. Suppose a user requests a page that requires
+        </figure><h2>Ultimate Destination</h2><p id="u1" class="hascomments">Not to be confused with a horror film, this concept is used internally in yesod-auth. Suppose a user requests a page that requires
             authentication. If the user is not yet logged in, you need to send him/her to the login
             page. A well-designed web app will then send them back to the first page they
                 requested. That's what we call the ultimate destination.</p><p id="u2" class="hascomments">redirectUltDest sends the user to the ultimate destination set
@@ -237,7 +237,7 @@ getSayHelloR = do
 |]
 
 main :: IO ()
-main = warpDebug 3000 UltDest</pre>
+main = warpDebug 3000 UltDest</pre><h2>Summary</h2>
         <p id="x-3" class="hascomments">Sessions are the number one way we bypass the statelessness imposed by HTTP. We
             shouldn't consider this an escape hatch to perform whatever actions we want:
             statelessness in web applications is a virtue, and we should respect it whenever

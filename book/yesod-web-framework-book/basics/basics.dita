@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>Basics</h1>
         <p id="x-3" class="hascomments">The first step with any new technology is getting it running. The goal of this chapter is
             to get you started with a simple Yesod application, and cover some of the basic concepts
             and terminology.</p>
-    <p id="hw1" class="hascomments">Let's get this book started properly: a simple web page that says Hello World:</p><pre id="x1">{-# LANGUAGE TypeFamilies, QuasiQuotes, MultiParamTypeClasses,
+    <h2>Hello World</h2><p id="hw1" class="hascomments">Let's get this book started properly: a simple web page that says Hello World:</p><pre id="x1">{-# LANGUAGE TypeFamilies, QuasiQuotes, MultiParamTypeClasses,
              TemplateHaskell, OverloadedStrings #-}
 import Yesod
 
@@ -21,7 +21,7 @@ getHomeR = defaultLayout [whamlet|Hello World!|]
 main :: IO ()
 main = warpDebug 3000 HelloWorld</pre><p id="hw2" class="hascomments">If you save that code in helloworld.hs and run it with runhaskell helloworld.hs, you'll get a web server running on port 3000. If you point your browser to <a href="http://localhost:3000" id="x6">http://localhost:3000</a>, you'll get the following HTML:</p><pre id="x7">&lt;!DOCTYPE html&gt;
 &lt;html&gt;&lt;head&gt;&lt;title&gt;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;Hello World!&lt;/body&gt;&lt;/html&gt;</pre>
-        <p id="x-3" class="hascomments">We'll refer back to this example through the rest of the chapter.</p><p id="routing1" class="hascomments">Like most modern web frameworks, Yesod follows a <a href="http://en.wikipedia.org/wiki/Front_Controller_pattern" id="x1">front controller pattern</a>. This means that every request to a
+        <p id="x-3" class="hascomments">We'll refer back to this example through the rest of the chapter.</p><h2>Routing</h2><p id="routing1" class="hascomments">Like most modern web frameworks, Yesod follows a <a href="http://en.wikipedia.org/wiki/Front_Controller_pattern" id="x1">front controller pattern</a>. This means that every request to a
             Yesod application enters at the same point and is routed from there. As a contrast, in
             systems like PHP and ASP you usually create a number of different files, and the web
             server automatically directs requests to the relevant file.</p>
@@ -40,11 +40,11 @@ main = warpDebug 3000 HelloWorld</pre><p id="hw2" class="hascomments">If you sav
                 code.</aside></p>
         <p id="x-16" class="hascomments">The mkYesod TH function generates quite a bit of code here: a route data
             type, a dispatch function, and a render function. We'll look at this in more detail in
-                <a href="../../yesod-web-framework-book/routing-and-handlers/routing-and-handlers.dita#file90-routing-and-handlersrouting-and-handlers" id="x-18">the routing chapter</a>. But by using the
+                <a href="../../yesod-web-framework-book/routing-and-handlers/routing-and-handlers.dita#file89-routing-and-handlersrouting-and-handlers" id="x-18">the routing chapter</a>. But by using the
                 -ddump-splices GHC option, we can get an immediate look at the
             generated code. A much cleaned up version of it is:</p>
         <pre id="x-20">{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, OverloadedStrings #-}
-import Yesod.Routes.Dispatch
+import qualified Yesod.Routes.Dispatch
 import Yesod.Routes.Class
 import Yesod.Core
 
@@ -90,32 +90,7 @@ main = return ()</pre>
                 yesodDispatch is a bit hairy to accomodate different dispatch
             approaches and fit the model necessary for our high-performance routing structures.
             However, the RenderRoute implementation with its associated data type
-            should already give you a good feel for what's going on under the surface.</p>
-  <p id="x-3" class="hascomments">As mentioned, most modern web frameworks have some kind of routing system. For contrast, let's
-   take a quick example from
-     Django:<blockquote id="x-4"><pre id="x-5">urlpatterns = patterns('',
-    (r'^articles/2003/$', 'news.views.special_case_2003'),
-    (r'^articles/(\d{4})/$', 'news.views.year_archive'),
-    (r'^articles/(\d{4})/(\d{2})/$', 'news.views.month_archive'),
-    (r'^articles/(\d{4})/(\d{2})/(\d+)/$', 'news.views.article_detail'),
-)</pre><cite id="x-6">https://docs.djangoproject.com/en/dev/topics/http/urls/</cite></blockquote>These
-   routes are specified via a regular expression. While this is declarative, the routes are really
-   being resolved by running some extra code. This has some practical ramifications. Firstly,
-   there's no great way to optimize the routing: the only way to determine which route matches is to
-   go through every single regular expression linearly. Yesod's routes are broken down into
-   individual pieces and routed to based on an efficient data structure.</p>
-  <p id="x-7" class="hascomments">But a more important issue is overlapping. Yesod will stop you from accidently writing two
-   routes that would match the same URL. This fits in with Yesod's overall philosophy of catching as
-   many errors as possible at compile time.</p>
-  <aside id="x-8" class="note">You're probably wondering what the Django example would look like in Yesod. It looks very
-   similar
-   actually:<pre id="x-9">/articles/!2003 News2003R GET
-/articles/#Year NewsYearR GET
-/articles/#Year/#Month NewsMonthR GET
-/articles/#Year/#Month/#ArticleId NewsArticleR GET</pre>But
-   if you notice, the first two routes overlap! By adding the exclamation point in front of the
-    2003, you can tell Yesod to ignore the overlapping for this route.</aside>
- 
+            should already give you a good feel for what's going on under the surface.</p><h2>Handler function</h2>
         <p id="x-3" class="hascomments">So we have a route named HomeR, and it responds to
                 GET requests. How do you define your response? You write a <dfn id="x-4">handler function</dfn>. Yesod follows a standard naming scheme for these
             functions: it's the lower case method name (e.g., GET becomes
@@ -132,13 +107,13 @@ main = return ()</pre>
             this case, it converts Hamlet syntax into a Widget. Hamlet is the default HTML
             templating engine in Yesod. Together with its siblings Cassius, Lucius and Julius, you
             can create HTML, CSS and Javascript in a fully type-safe and compile-time-checked
-            manner. We'll see much more about this in <a href="../../yesod-web-framework-book/shakespearean-templates/shakespearean-templates.dita#file53-shakespearean-templatestemplates" id="x-9">the Shakespeare chapter</a>.</p>
+            manner. We'll see much more about this in <a href="../../yesod-web-framework-book/shakespearean-templates/shakespearean-templates.dita#file52-shakespearean-templatestemplates" id="x-9">the Shakespeare chapter</a>.</p>
         <p id="x-10" class="hascomments">Widgets are another cornerstone of Yesod. They allow you to create modular
             components of a site consisting of HTML, CSS and Javascript and reuse them throughout
-            your site. We'll get into more detail on them in <a href="../../yesod-web-framework-book/widgets-09/widgets.dita#file63-widgetswidgets" id="x-11">the widgets
-            chapter</a>.</p><p id="foundation1" class="hascomments">The word "HelloWorld" shows up a number of times in our example. Every Yesod
+            your site. We'll get into more detail on them in <a href="../../yesod-web-framework-book/widgets-09/widgets.dita#file62-widgetswidgets" id="x-11">the widgets
+            chapter</a>.</p><h2>The Foundation</h2><p id="foundation1" class="hascomments">The word "HelloWorld" shows up a number of times in our example. Every Yesod
             application has a <dfn id="x-3">foundation</dfn> datatype. This datatype must be an instance of
-                <a href="../../yesod-web-framework-book/yesod-typeclass/yesod-typeclass.dita#file75-yesod-typeclasstypeclass" id="x-4">the Yesod typeclass</a>, which provides a central place for declaring a number
+                <a href="../../yesod-web-framework-book/yesod-typeclass/yesod-typeclass.dita#file74-yesod-typeclasstypeclass" id="x-4">the Yesod typeclass</a>, which provides a central place for declaring a number
             of different settings controlling the execution of our application.</p>
         <p id="x-5" class="hascomments">In our case, this datatype is pretty boring: it doesn't contain any information.
             Nonetheless, the foundation is central to how our example runs: it ties together the
@@ -154,7 +129,7 @@ main = return ()</pre>
         </ul><aside id="x4" class="note">
             <p id="foundation3" class="hascomments">By the way, the word Yesod (יסוד) means foundation in
                 Hebrew.</p>
-        </aside><p id="running1" class="hascomments">Once again we mention HelloWorld in our main function. Our
+        </aside><h2>Running</h2><p id="running1" class="hascomments">Once again we mention HelloWorld in our main function. Our
             foundation contains all the information we need to route and respond to requests in our
             application; now we just need to convert it into something that can run. A useful
             function for this in Yesod is warpDebug, which runs the Warp webserver
@@ -166,7 +141,7 @@ main = return ()</pre>
         <p id="x-3" class="hascomments">Warp is the premiere deployment option for Yesod. It is a lightweight, highly efficient
             web server developed specifically for hosting Yesod. It is also used outside of Yesod
             for other Haskell development (both framework and non-framework applications), as well
-            as a standard file server in a number of production environments.</p><p id="resources1" class="hascomments">In our hello world, we defined just a single resource (HomeR). A
+            as a standard file server in a number of production environments.</p><h2>Resources and type-safe URLs</h2><p id="resources1" class="hascomments">In our hello world, we defined just a single resource (HomeR). A
             web application is usually much more exciting with more than one page on it. Let's take
             a look:</p><pre id="x1">{-# LANGUAGE TypeFamilies, QuasiQuotes, MultiParamTypeClasses,
              TemplateHaskell, OverloadedStrings #-}
@@ -191,7 +166,7 @@ main = warpDebug 3000 Links</pre><p id="resources2" class="hascomments">Overall,
             the HomeR resource, we've added Page1R and
                 Page2R. As such, we've also added two more handler functions:
                 getPage1R and getPage2R.</p><p id="resources3" class="hascomments">The only truly new feature is inside the whamlet
-            quasi-quotation. We'll delve into syntax in the <a href="../../yesod-web-framework-book/shakespearean-templates/shakespearean-templates.dita#file53-shakespearean-templatestemplates" id="x-15">Shakespeare chapter</a>, but we can see that:</p><pre id="x2">&lt;a href=@{Page1R}&gt;Go to page 1!</pre><p id="resources4" class="hascomments">creates a link to the Page1R resource. The important thing to
+            quasi-quotation. We'll delve into syntax in the <a href="../../yesod-web-framework-book/shakespearean-templates/shakespearean-templates.dita#file52-shakespearean-templatestemplates" id="x-15">Shakespeare chapter</a>, but we can see that:</p><pre id="x2">&lt;a href=@{Page1R}&gt;Go to page 1!</pre><p id="resources4" class="hascomments">creates a link to the Page1R resource. The important thing to
             note here is that Page1R is a data constructor. By making each resource
             a data constructor, we have a feature called <dfn id="x3">type-safe URLs</dfn>.
             Instead of splicing together strings to create URLs, we simply create a plain old
@@ -224,25 +199,25 @@ main = return ()</pre>
             empty list.</p>
         <p id="x-3" class="hascomments">It's hard to over-estimate the value of type-safe URLs. They give you a huge
             amount of flexibility and robustness when developing your application. You can move URLs
-            around at will without ever breaking links. <a href="../../yesod-web-framework-book/routing-and-handlers/routing-and-handlers.dita#file90-routing-and-handlersrouting-and-handlers" id="x-4">In the routing chapter</a>, we'll see that routes can take
+            around at will without ever breaking links. <a href="../../yesod-web-framework-book/routing-and-handlers/routing-and-handlers.dita#file89-routing-and-handlersrouting-and-handlers" id="x-4">In the routing chapter</a>, we'll see that routes can take
             parameters, such as a blog entry URL taking the blog post ID.</p>
         <p id="x-5" class="hascomments">Let's say you want to switch from routing on the numerical post ID to a
             year/month/slug setup. In a traditional web framework, you would need to go through
             every single reference to your blog post route and update appropriately. If you miss
             one, you'll have 404s at runtime. In Yesod, all you do is update your route and compile:
-            GHC will automatically find every single line of code that needs to be corrected.</p>
+            GHC will pinpoint every single line of code that needs to be corrected.</p><h2>The scaffolded site</h2>
     <p id="x-3" class="hascomments">Installing Yesod will give you both the Yesod library, as well as a yesod executable. This executable accepts a few commands, but the first one you'll
       want to be acquainted with is yesod init. It will ask you some
       questions, and then generate a folder containing the default <dfn id="x-6">scaffolded
-        site</dfn>. Inside that folder, you can run cabal install to
-      build any extra dependency, and then <a href="../../yesod-web-framework-book/basics/basics.dita#file25-development-serverbasics" id="x-8">yesod
-          devel</a> to run your site.</p>
+        site</dfn>. Inside that folder, you can run cabal install
+        --only-dependencies to build any extra dependencies (such as your database
+      backends), and then <a href="../../yesod-web-framework-book/basics/basics.dita#file24-development-serverbasics" id="x-8">yesod devel</a> to run your site.</p>
     <p id="x-15" class="hascomments">The scaffolded site gives you a lot of best practices out of the box, setting up files and
       dependencies in a time-tested approach used by most production Yesod sites. However, all this
       convenience can get in the way of actually learning Yesod. Therefore, most of this book will
       avoid the scaffolding tool, and instead deal directly with Yesod as a library.</p>
-    <p id="x-16" class="hascomments">We will cover the structure of the scaffolded site in more detail <a href="../../yesod-web-framework-book/scaffolding-and-the-site-template/scaffolding-and-the-site-template.dita#file178-scaffolding-and-the-site-templatescaffolding" id="x-17">later</a>.</p>
-  <p id="wai-handler-devel1" class="hascomments">One of the advantages interpreted languages have over compiled languages
+    <p id="x-16" class="hascomments">We will cover the structure of the scaffolded site in more detail <a href="../../yesod-web-framework-book/scaffolding-and-the-site-template/scaffolding-and-the-site-template.dita#file177-scaffolding-and-the-site-templatescaffolding" id="x-17">later</a>.</p>
+  <h2>Development server</h2><p id="wai-handler-devel1" class="hascomments">One of the advantages interpreted languages have over compiled languages
             is fast prototyping: you save changes to a file and hit refresh. If we want to make any
             changes to our Yesod apps above, we'll need to call runhaskell from
             scratch, which can be a bit tedious.</p><p id="wai-handler-devel2" class="hascomments">Fortunately, there's a solution to this: yesod
@@ -253,7 +228,7 @@ main = return ()</pre>
             prototyping and fast production code.</p><p id="wai-handler-devel3" class="hascomments">It's a little bit more involved to set up your code to be used by
                 yesod devel, so our examples will just use
                 warpDebug. But when you're ready to make your real-world
-            applications, yesod devel will be waiting for you.</p><p id="summary1" class="hascomments">Every Yesod application is built around a foundation datatype. We associate some
+            applications, yesod devel will be waiting for you.</p><h2>Summary</h2><p id="summary1" class="hascomments">Every Yesod application is built around a foundation datatype. We associate some
             resources with that datatype and define some handler functions, and Yesod handles all of
             the routing. These resources are also data constructors, which lets us have type-safe
             URLs.</p><p id="summary2" class="hascomments">By being built on top of WAI, Yesod applications can run with a number of different

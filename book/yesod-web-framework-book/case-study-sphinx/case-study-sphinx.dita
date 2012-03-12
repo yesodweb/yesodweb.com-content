@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>Case Study: Sphinx-based Search</h1>
   <p id="x-3" class="hascomments"><a href="http://sphinxsearch.com/" id="x-4">Sphinx</a> is a search
    server, and powers the search feature on many sites, including Yesod's own site. While the actual
    code necessary to integrate Yesod with Sphinx is relatively short, it touches on a number of
@@ -15,7 +15,7 @@
     will show how to deal with streaming content from a database directly to XML, which gets sent
     directly over the wire to the client.</li>
   </ul>
- 
+ <h2>Sphinx Setup</h2>
   <p id="x-3" class="hascomments">Unlike many of our other examples, to start with here we'll need to actually configure
    and run our external Sphinx server. I'm not going to go into all the details of Sphinx, partly
    because it's not relevant to our point here, and mostly because I'm not an expert on Sphinx.</p>
@@ -51,7 +51,7 @@ index searcher
   <p id="x-12" class="hascomments">In order to build your search index, you would run indexer searcher. Obviously
    this won't work until you have your web app running. For a production site, it would make sense
    to run this command via a crontab script so the index is regularly updated.</p>
- 
+ <h2>Basic Yesod Setup</h2>
   <p id="x-3" class="hascomments">Let's get our basic Yesod setup going. We're going to have a single table in the database for
    holding documents, which consist of a title and content. We'll store this in a SQLite database,
    and provide routes for searching, adding documents, viewing documents and providing the xmlpipe
@@ -808,23 +808,23 @@ main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
     warpDebug 3000 $ Searcher pool</pre>
- 
-  <p id="x-3" class="hascomments">Now that we've got the boring stuff out of the way, let's jump into the actual searching. We're
-   going to need three pieces of information for displaying a result: the document ID it comes from,
-   the title of that document, and the <dfn id="x-4">excerpts</dfn>. Excerpts are the highlighted portions
-   of the document which contain the search term.</p>
-  <figure id="x-5"><figcaption>Search Result</figcaption>
-   
-   <img src="../../images/search-results.png" id="image_dba_loh_rd" placement="inline"/>
-  </figure>
-  <p id="x-7" class="hascomments">So let's start off by defining a Result datatype:</p>
-  <pre id="x-8">data Result = Result
+ <h2>Searching</h2>
+        <p id="x-3" class="hascomments">Now that we've got the boring stuff out of the way, let's jump into the actual
+            searching. We're going to need three pieces of information for displaying a result: the
+            document ID it comes from, the title of that document, and the <dfn id="x-4">excerpts</dfn>. Excerpts are the highlighted portions of the document which
+            contain the search term.</p>
+        <figure id="x-5"><figcaption>Search Result</figcaption>
+            
+            <img src="../../images/search-results.png" id="image_dba_loh_rd" placement="inline"/>
+        </figure>
+        <p id="x-7" class="hascomments">So let's start off by defining a Result datatype:</p>
+        <pre id="x-8">data Result = Result
     { resultId :: DocId
     , resultTitle :: Text
     , resultExcerpt :: Html
     }</pre>
-  <p id="x-9" class="hascomments">Next we'll look at the search handler:</p>
-  <pre id="x-10">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
+        <p id="x-9" class="hascomments">Next we'll look at the search handler:</p>
+        <pre id="x-10">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
@@ -951,7 +951,7 @@ getResult docid doc qstring = do
     let excerpt =
             case excerpt' of
                 ST.Ok bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ L.concat bss
-                _ -&gt; return ()
+                _ -&gt; ""
     return Result
         { resultId = docid
         , resultTitle = docTitle doc
@@ -1075,13 +1075,13 @@ main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
     warpDebug 3000 $ Searcher pool</pre>
-  <p id="x-11" class="hascomments">Nothing magical here, we're just relying on the searchForm defined
-            above, and the getResults function which hasn't been defined yet. This
-            function just takes a search string, and returns a list of results. This is where we
-            first interact with the Sphinx API. We'll be using two functions: query
-            will return a list of matches, and buildExcerpts will return the
-            highlighted excerpts. Let's first look at query:</p>
-  <pre id="x-12">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
+        <p id="x-11" class="hascomments">Nothing magical here, we're just relying on the searchForm defined above, and the getResults
+            function which hasn't been defined yet. This function just takes a search string, and
+            returns a list of results. This is where we first interact with the Sphinx API. We'll be
+            using two functions: query will return a list of matches, and
+                buildExcerpts will return the highlighted excerpts. Let's
+            first look at query:</p>
+        <pre id="x-12">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
@@ -1208,7 +1208,7 @@ getResult docid doc qstring = do
     let excerpt =
             case excerpt' of
                 ST.Ok bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ L.concat bss
-                _ -&gt; return ()
+                _ -&gt; ""
     return Result
         { resultId = docid
         , resultTitle = docTitle doc
@@ -1332,20 +1332,21 @@ main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
     warpDebug 3000 $ Searcher pool</pre>
-  <p id="x-13" class="hascomments">query takes three parameters: the configuration options, the index
-            to search against (searcher in this case) and the search string. It returns a list of
-            document IDs that contain the search string. The tricky bit here is that those documents
-            are returned as Int64 values, whereas we need DocIds. We're taking advantage of the fact that the SQL
-            Persistent backends use a PersistInt64 constructor for their IDs, and
-            simply wrap up the values appropriately.</p>
-  <aside id="x-16" class="note">If you're dealing with a backend that has non-numeric IDs, like MongoDB, you'll need to work
-   out something a bit more clever than this.</aside>
-  <p id="x-17" class="hascomments">We then loop over the resulting IDs to get a [Maybe Result] value, and use
-    catMaybes to turn it into a [Result]. In the where clause, we
-   define our local settings, which override the default port and set up the search to work when
-    any term matches the document.</p>
-  <p id="x-22" class="hascomments">Let's finally look at the getResult function:</p>
-  <pre id="x-23">getResult :: DocId -&gt; Doc -&gt; Text -&gt; IO Result
+        <p id="x-13" class="hascomments">query takes three parameters: the configuration
+            options, the index to search against (searcher in this case) and the search string. It
+            returns a list of document IDs that contain the search string. The tricky bit here is
+            that those documents are returned as Int64 values, whereas we
+            need DocIds. We're taking advantage of the fact that the SQL
+            Persistent backends use a PersistInt64 constructor for their
+            IDs, and simply wrap up the values appropriately.</p>
+        <aside id="x-16" class="note">If you're dealing with a backend that has non-numeric IDs, like MongoDB,
+            you'll need to work out something a bit more clever than this.</aside>
+        <p id="x-17" class="hascomments">We then loop over the resulting IDs to get a [Maybe
+                Result] value, and use catMaybes to turn it into
+            a [Result]. In the where clause, we define our local
+            settings, which override the default port and set up the search to work when any term matches the document.</p>
+        <p id="x-22" class="hascomments">Let's finally look at the getResult function:</p>
+        <pre id="x-23">getResult :: DocId -&gt; Doc -&gt; Text -&gt; IO Result
 getResult docid doc qstring = do
     excerpt' &lt;- S.buildExcerpts
         excerptConfig
@@ -1355,7 +1356,7 @@ getResult docid doc qstring = do
     let excerpt =
             case excerpt' of
                 ST.Ok bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ L.concat bss
-                _ -&gt; return ()
+                _ -&gt; ""
     return Result
         { resultId = docid
         , resultTitle = docTitle doc
@@ -1372,20 +1373,21 @@ escape =
     escapeChar '&gt;' = "&amp;gt;"
     escapeChar '&amp;' = "&amp;amp;"
     escapeChar c   = T.singleton c</pre>
-  <p id="x-24" class="hascomments">buildExcerpts takes four parameters: the configuration options, the
-            textual contents of the document, the search index and the search term. The interesting
-            bit is that we entity escape the text content. Sphinx won't automatically escape these
-            for us, so we must do it explicitly.</p>
-  <p id="x-25" class="hascomments">Similarly, the result from Sphinx is a list of lazy ByteStrings. But of course, we'd rather
-   have Html. So we concat that list into a single lazy ByteString, decode it to a lazy text
-   (ignoring invalid UTF-8 character sequences), and use preEscapedLazyText to make sure that the
-   tags inserted for matches are not escaped. A sample of this HTML is:</p>
-  <pre id="x-26">&amp;#8230; Departments.  The President shall have &lt;span class='match'&gt;Power&lt;/span&gt; to fill up all Vacancies
+        <p id="x-24" class="hascomments">buildExcerpts takes four parameters: the
+            configuration options, the textual contents of the document, the search index and the
+            search term. The interesting bit is that we entity escape the text content. Sphinx won't
+            automatically escape these for us, so we must do it explicitly.</p>
+        <p id="x-25" class="hascomments">Similarly, the result from Sphinx is a list of lazy ByteStrings. But of course,
+            we'd rather have Html. So we concat that list into a single lazy ByteString, decode it
+            to a lazy text (ignoring invalid UTF-8 character sequences), and use preEscapedLazyText
+            to make sure that the tags inserted for matches are not escaped. A sample of this HTML
+            is:</p>
+        <pre id="x-26">&amp;#8230; Departments.  The President shall have &lt;span class='match'&gt;Power&lt;/span&gt; to fill up all Vacancies
 &amp;#8230;  people. Amendment 11 The Judicial &lt;span class='match'&gt;power&lt;/span&gt; of the United States shall
 &amp;#8230; jurisdiction. 2. Congress shall have &lt;span class='match'&gt;power&lt;/span&gt; to enforce this article by
 &amp;#8230; 5. The Congress shall have &lt;span class='match'&gt;power&lt;/span&gt; to enforce, by appropriate legislation
 &amp;#8230;</pre>
- 
+    <h2>Streaming xmlpipe output</h2>
   <p id="x-3" class="hascomments">We've saved the best for last. For the majority of Yesod handlers, the recommended approach is
    to load up the database results into memory and then produce the output document based on that.
    It's simpler to work with, but more importantly it's more resilient to exceptions. If there's a
@@ -1398,7 +1400,7 @@ escape =
    potentially a huge number of documents (the yesodweb.com code handles tens of thousands of
    these), and documents could easily be several hundred kilobytes. If we take a non-streaming
    approach, this can lead to huge memory usage and slow response times.</p>
-  <p id="x-6" class="hascomments">So how exactly do we create a streaming response? As we cover in <a href="../../yesod-web-framework-book/web-application-interface/web-application-interface.dita#file249-web-application-interfacewai" id="x-7">the WAI chapter</a>, we have a ResponseSource constructor that
+  <p id="x-6" class="hascomments">So how exactly do we create a streaming response? As we cover in <a href="../../yesod-web-framework-book/web-application-interface/web-application-interface.dita#file247-web-application-interfacewai" id="x-7">the WAI chapter</a>, we have a ResponseSource constructor that
    uses a stream of blaze-builder Builders. From the Yesod side, we can
    avoid the normal Yesod response procedure and send a WAI response directly using the sendWaiResponse function. So there are at least two of the pieces of this
    puzzle.</p>
@@ -1408,7 +1410,7 @@ escape =
    with documents as a whole, but in our case, we're going to need to use the low-level Event
    interface to ensure minimal memory impact. So the function we're interested in is:</p>
   <pre id="x-12">renderBuilder :: Resource m =&gt; RenderSettings -&gt; Conduit Event m Builder b</pre>
-  <p id="x-13" class="hascomments">In plain English, that means renderBytes takes some settings (we'll just use the
+  <p id="x-13" class="hascomments">In plain English, that means renderBuilder takes some settings (we'll just use the
    defaults), and will then convert a stream of Events to a stream of
     Builders. This is looking pretty good, all we need now is a stream of
     Events.</p>
@@ -1494,7 +1496,7 @@ fullDocSource conn = mconcat
    body is completely sent. To do this, we use the takeResource function, which
    registers a cleanup action with the ResourceT monad.</p>
   <aside id="x-61" class="note">All WAI applications live in a ResourceT transformer. You can get more
-   information on ResourceT in the <a href="../../yesod-web-framework-book/conduit/conduits.dita#file243-conceptIdconduit" id="x-64">conduit appendix</a>.</aside>
+   information on ResourceT in the <a href="../../yesod-web-framework-book/conduit/conduits.dita#file241-conceptIdconduit" id="x-64">conduit appendix</a>.</aside>
   <p id="x-36" class="hascomments">By default, a resource will not be returned to the pool. This has to do with proper
    exception handling, but is not relevant for our use case. Therefore, we need to force the
    connection to be returned to the pool.</p>
@@ -1509,7 +1511,7 @@ getXmlpipeR = do
   <p id="x-38" class="hascomments">We get our connection pool from the foundation variable, then send a WAI response. We
    use the ResponseSource constructor, and provide it the status code, response
    headers, and body.</p>
- 
+ <h2>Full code</h2>
   <pre id="x-3">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
@@ -1637,7 +1639,7 @@ getResult docid doc qstring = do
     let excerpt =
             case excerpt' of
                 ST.Ok bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ L.concat bss
-                _ -&gt; return ()
+                _ -&gt; ""
     return Result
         { resultId = docid
         , resultTitle = docTitle doc

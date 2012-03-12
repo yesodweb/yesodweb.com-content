@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html>
+<html><h1>Shakespearean Templates</h1>
   <p id="x1" class="hascomments">Yesod uses the Shakespearean family of template languages as its standard approach to HTML, CSS
    and Javascript creation. This language family shares some common syntax, as well as overarching
     principles:<ul id="ul_49ef34dd-2fd1-41b2-9c21-eb1bf09ac57a">
     <li id="x2">As little interference to the underlying language as possible, while providing
      conveniences where unobtrusive.</li>
     <li id="x3">Compile-time guarantees on well-formed content.</li>
-    <li id="x4">Strict type safety, extending to the prevention of XSS (cross-site scripting) attacks.</li>
+    <li id="x4">Static type safety, greatly helping the prevention of <a href="http://en.wikipedia.org/wiki/Cross-site_scripting">XSS
+      (cross-site scripting)</a> attacks.</li>
     <li id="x5">Automated checking of valid URLs, whenever possible, through <dfn id="x6">type-safe
      URLs</dfn>.</li>
    </ul></p>
@@ -14,14 +15,14 @@
    each can be used independently of the other. This chapter will address these template languages
    on their own, while the remainder of the book will use them to enhance Yesod application
    development.</p>
- 
+ <h2>Synopsis</h2>
         <p class="hascomments">There are four main languages at play: Hamlet is an HTML templating language, Julius is
             for Javascript, and Cassius and Lucius are both for CSS. Hamlet and Cassius are both
             whitespace-sensitive formats, using indentation to denote nesting. By contrast, Lucius
             is a superset of CSS, keeping CSS's braces for denoting nesting. Julius is a simple
             passthrough language for producing Javascript; the only added feature is variable
             interpolation.</p>
-    
+    <h3>Hamlet (HTML)</h3>
   <pre id="x1">$doctype 5
 &lt;html&gt;
     &lt;head&gt;
@@ -37,13 +38,13 @@
                 $forall Friend name age &lt;- friends
                     &lt;li&gt;#{name} (#{age} years old)
         &lt;footer&gt;^{copyright}</pre>
- 
+ <h3>Cassius (CSS)</h3>
   <pre id="x1">#myid
     color: #{red}
     font-size: #{bodyFontSize}
 foo bar baz
     background-image: url(@{MyBackgroundR})</pre>
- 
+ <h3>Lucius (CSS)</h3>
   <pre id="x1">section.blog {
     padding: 1em;
     border: 1px solid #000;
@@ -51,17 +52,17 @@ foo bar baz
         color: #{headingColor};
     }
 }</pre>
- 
+ <h3>Julius (Javascript)</h3>
   <pre id="x1">$(function(){
     $("section.#{sectionClass}").hide();
     $("#mybutton").click(function(){document.location = "@{SomeRouteR}";});
     ^{addBling}
 });</pre>
-   <p id="x1" class="hascomments">Before we jump into syntax, let's take a look at the various types involved. We
+ <h2>Types</h2>  <p id="x1" class="hascomments">Before we jump into syntax, let's take a look at the various types involved. We
    mentioned in the introduction that types help protect us from XSS attacks. For example, let's say
    that we have an HTML template that should display someone's name; it might look like
-    this:<pre id="x2">&lt;p&gt;Hello, my name is #{name}</pre><aside id="x3" class="note">Yes, #{...} is how we do variable interpolation in
-   Shakespeare.</aside></p>
+    this:<pre id="x2">&lt;p&gt;Hello, my name is #{name}</pre><aside id="x3" class="note">#{...} is how we do variable interpolation in
+    Shakespeare.</aside></p>
   <p id="x4" class="hascomments">What should happen to name, and what should its datatype be?
    A naive approach would be to use a Text value, and insert it verbatim. But that
    would give us quite a problem when name="&lt;script
@@ -69,9 +70,9 @@ foo bar baz
    entity-encode the name, so that &lt; becomes &amp;lt;.</p>
   <p id="x7" class="hascomments">An equally naive approach is to simply entity-encode every piece of text
    that gets embedded. What happens when you have some preexisting HTML generated from another
-   process? For example, in this book, all Haskell code snippets are run through a colorizing
-   function that wraps up words in appropriate span tags. If we entity
-   escaped everything, code snippets would be completely unreadable!</p>
+   process? For example, on the Yesod website, all Haskell code snippets are run through a
+   colorizing function that wraps up words in appropriate span tags. If we
+   entity escaped everything, code snippets would be completely unreadable!</p>
   <p id="x10" class="hascomments">Instead, we have an Html datatype. In order to generate an
     Html value, we have two options for APIs: the ToHtml typeclass
    provides a way to convert String and Text values into
@@ -87,15 +88,14 @@ foo bar baz
    provided by the blaze-html package. This allows Hamlet to interact
    with all other blaze-html packages, and lets Hamlet provide a general solution for producing
    blaze-html values. Also, we get to take advantage of blaze-html's amazing performance.</aside>
-  <p id="x15" class="hascomments">Similarly, we have Css/ToCss, as well as
-    Javascript/ToJavascript. In those cases, the goal is not
-   really security, as it is very uncommon to be interpolating user input to CSS and Javascript.
-   Instead, it provides some compile-time sanity checks that we haven't accidently stuck some HTML
-   in our CSS.</p>
-  <aside id="x16" class="note">One other advantage on the CSS side is some helper datatypes for colors and units. While this
-   feature is not covered in this chapter, I encourage you to look at the API documentation and try
-   it out yourself.</aside>
- 
+  <p id="x15" class="hascomments">Similarly, we have Css/ToCss, as
+   well as Javascript/ToJavascript. These
+   provide some compile-time sanity checks that we haven't accidently stuck some HTML in our
+   CSS.</p>
+  <aside id="x16" class="note">One other advantage on the CSS side is some helper datatypes for colors and units.
+   For example:<pre>.red { color: #{colorRed} }</pre>Please see the
+   Haddock documentation for more details.</aside>
+ <h3>Type-safe URLs</h3>
   <p id="x1" class="hascomments">Possibly the most unique feature in Yesod is type-safe URLs, and the ability to use
    them conveniently is provided directly by Shakespeare. Usage is nearly identical to variable
    interpolation, we just use the at-sign (@) instead of the hash (#). We'll cover the syntax later;
@@ -149,16 +149,15 @@ renderMyRoute Time _ = ...</pre></aside>
    template:<pre id="x21">&lt;a href=@{Time}&gt;The time</pre>this
    would translate roughly into the Haskell
    code:<pre id="x22">\render -&gt; mconcat ["&lt;a href='", render Time, "'&gt;The time&lt;/a&gt;"]</pre></p>
- 
+ <h2>Syntax</h2>
         <p id="x-3" class="hascomments">All Shakespearean languages share the same interpolation syntax, and are able to
             utilize type-safe URLs. They differ in the syntax specific for their target language
             (HTML, CSS, or Javascript).</p>
-    
+    <h3>Hamlet Syntax</h3>
         <p id="x-3" class="hascomments">Hamlet is the most sophisticated of the languages. Not only does it provide
             syntax for generating HTML, it also allows for basic control structures: conditionals,
-            looping, and maybes. While in general Shakespearean templates tend to be logic-less,
-            some control is given within HTML for practical purposes.</p>
-      <p id="x1" class="hascomments">Obviously tags will play an important part of any HTML template language. In Hamlet, we try to
+            looping, and maybes.</p>
+    <h4>Tags</h4>  <p id="x1" class="hascomments">Obviously tags will play an important part of any HTML template language. In Hamlet, we try to
    stick very close to existing HTML syntax to make the language more comfortable. However, instead
    of using closing tags to denote nesting, we use indentation. So something like this in
    HTML:<pre id="x2">&lt;body&gt;
@@ -195,7 +194,7 @@ renderMyRoute Time _ = ...</pre></aside>
    are free to use whichever approach you want, there is no penalty for either choice. Be aware,
    however, that the only time you use closing tags in Hamlet is for such inline tags; normal
    tags are not closed.</p>
-   <p id="x1" class="hascomments">What we have so far is a nice, simplified HTML, but it doesn't let us interact with our Haskell
+ <h4>Interpolation</h4>  <p id="x1" class="hascomments">What we have so far is a nice, simplified HTML, but it doesn't let us interact with our Haskell
    code at all. How do we pass in variables? Simple: with
    interpolation:<pre id="x2">&lt;head&gt;
     &lt;title&gt;#{title}</pre>The hash followed by a pair
@@ -203,13 +202,11 @@ renderMyRoute Time _ = ...</pre></aside>
    variable from the scope in which the template was called will be used. Let me state that again:
    Hamlet automatically has access to the variables in scope when it's called. There is no need to
    specifically pass variables in.</p>
-  <p id="x5" class="hascomments">But it gets better still. You can apply functions within an interpolation. You can use
-   string and numeric literals in an interpolation. You can use qualified modules. Both parentheses
-   and the dollar sign can be used to group statements together. And at the end, the
-    toHtml function is applied to the result, meaning any instance
-   of ToHtml can be interpolated. Take, for instance, the following code.</p>
-  <figure id="x7"><figcaption>Variable Interpolation</figcaption>
-   
+  <p id="x5" class="hascomments">You can apply functions within an interpolation. You can use string and numeric
+   literals in an interpolation. You can use qualified modules. Both parentheses and the dollar sign
+   can be used to group statements together. And at the end, the toHtml
+   function is applied to the result, meaning any instance of ToHtml can be interpolated. Take, for instance, the following code.</p>
+  
    <pre id="x9">-- Just ignore the quasiquote stuff for now, and that shamlet thing.
 -- It will be explained later.
 {-# LANGUAGE QuasiQuotes #-}
@@ -229,17 +226,15 @@ main = putStrLn $ renderHtml [shamlet|
 &lt;p&gt;
     Let's do some funny stuff with my name: #
     &lt;b&gt;#{sort $ map toLower (name person)}
-&lt;p&gt;Oh, and in 5 years I'll be #{show ((+) (age person) 5)} years old.
+&lt;p&gt;Oh, and in 5 years I'll be #{show (5 + (age person))} years old.
 |]
   where
     person = Person "Michael" 26</pre>
-  </figure>
+  
   <p id="x10" class="hascomments">What about our much-touted type-safe URLs? They are almost identical to variable
    interpolation in every way, except they start with an at-sign (@) instead. In addition, there is
    embedding via a caret (^) which allows you to embed another template of the same type. The next
    code sample demonstrates both of these.</p>
-  <figure id="x11"><figcaption>URL Interpolation and Embedding</figcaption>
-   
    <pre id="x13">{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 import Text.Hamlet (HtmlUrl, hamlet)
@@ -265,23 +260,22 @@ main = putStrLn $ renderHtml $ [hamlet|
     &lt;p&gt;This is my page.
     ^{footer}
 |] render</pre>
-  </figure>
- 
-  <p id="x1" class="hascomments">If you paid close attention there, you'll have noticed that we put an href attribute on the "a"
-   tag. That syntax is pretty straight-forward, but let's clarify some things:<ul id="ul_zmk_qnu_id">
-    <li id="x2">You can have interpolations on the right-hand-side of the equals sign.</li>
+ <h4>Attributes</h4>
+  <p id="x1" class="hascomments">In that last example, we put an href attribute on the "a" tag. Let's elaborate on the
+    syntax:<ul id="ul_zmk_qnu_id">
+    <li id="x2">You can have interpolations within the attribute value.</li>
     <li id="x3">The equals sign and value for an attribute are optional, just like in HTML. So
       &lt;input type=checkbox checked&gt; is perfectly valid.</li>
-    <li id="x5">There are two convenience attributes: for id, you can use the hash, and for classes, the
-     period. In other words, &lt;p #paragraphid .class1 .class2&gt;.</li>
-    <li id="x7">While quotes around the attribute value are optional, they are required if you want to embed
-     spaces.</li>
-    <li id="x8">You can add an attribute optionally by using colons. To make a checkbox only checked if the
-     variable isChecked is True, you would write &lt;input type=checkbox
-      :isChecked:checked&gt;. To have a paragraph be optionally red, you could use
-      &lt;p :isRed:style="color:red"&gt;.</li>
+    <li id="x5">There are two convenience attributes: for id, you can use the hash, and for classes,
+     the period. In other words, &lt;p #paragraphid .class1
+     .class2&gt;.</li>
+    <li id="x7">While quotes around the attribute value are optional, they are required if you want
+     to embed spaces.</li>
+    <li id="x8">You can add an attribute optionally by using colons. To make a checkbox only checked
+     if the variable isChecked is True, you would write &lt;input type=checkbox
+      :isChecked:checked&gt;. To have a paragraph be optionally red, you could use &lt;p :isRed:style="color:red"&gt;.</li>
    </ul></p>
- 
+ <h4>Conditionals</h4>
   <p id="x1" class="hascomments">Eventually, you'll want to put in some logic in your page. The goal of Hamlet is to
             make the logic as minimalistic as possible, pushing the heavy lifting into Haskell. As
             such, our logical statements are very basic... so basic, that it's if,
@@ -293,7 +287,7 @@ $elseif isLoggedIn
 $else
     &lt;p&gt;I don't know who you are. Please log in so I can decide if you get access.</pre>All
             the same rules of normal interpolation apply to the content of the conditionals.</p>
- 
+ <h4>Maybe</h4>
   <p id="x1" class="hascomments">Similarly, we have a special construct for dealing with Maybe values. This could
    technically be dealt with using if, isJust and
     fromJust, but this is more convenient and avoids partial
@@ -307,7 +301,7 @@ $nothing
     &lt;p&gt;Your name is #{firstName} #{lastName}</pre>
   <p id="x-7" class="hascomments">The right-hand-side follows the same rules as interpolations, allow variables, function
    application, and so on.</p>
- 
+ <h4>Forall</h4>
   <p id="x1" class="hascomments">And what about looping over lists? We have you covered there
    too:<pre id="x2">$if null people
     &lt;p&gt;No people.
@@ -315,7 +309,7 @@ $else
     &lt;ul&gt;
         $forall person &lt;- people
             &lt;li&gt;#{person}</pre></p>
- 
+ <h4>Case</h4>
   <p id="x-3" class="hascomments">Pattern matching is one of the great strengths of Haskell. Sum types let you cleanly model many
    real-world types, and case statements let you safely match, letting the compiler
    warn you if you missed a case. Hamlet gives you the same power.</p>
@@ -324,11 +318,11 @@ $else
         &lt;p&gt;It was left: #{bar}
     $of Right baz
         &lt;p&gt;It was right: #{baz}</pre>
-   <p id="x1" class="hascomments">Rounding out our statements, we have with. It's basically just a
+ <h4>With</h4>  <p id="x1" class="hascomments">Rounding out our statements, we have with. It's basically just a
             convenience for declaring a synonym for a long
             expression.<pre id="x2">$with foo &lt;- some very (long ugly) expression that $ should only $ happen once
     &lt;p&gt;But I'm going to use #{foo} multiple times. #{foo}</pre></p>
- 
+ <h4>Doctype</h4>
   <p id="x1" class="hascomments">Last bit of syntactic sugar: the doctype statement. We have support for a number of
             different versions of a doctype, though we recommend $doctype
                 5 for modern web applications, which generates &lt;!DOCTYPE
@@ -342,14 +336,14 @@ $else
                     (!!!). You may still see this in code out there. We have no
                 plans to remove support for this, but in general find the $doctype
                 approach easier to read.</aside></p>
- 
+ <h3>Cassius Syntax</h3>
   <p id="x1" class="hascomments">Cassius is the original CSS template language. It uses simple whitespace rules to delimit
    blocks, making braces and semicolons unnecessary. It supports both variable and URL
    interpolation, but not embedding. The syntax is very
    straight-forward:<pre id="x2">#banner
     border: 1px solid #{bannerColor}
     background-image: url(@{BannerImageR})</pre></p>
- 
+ <h3>Lucius Syntax</h3>
   <p id="x1" class="hascomments">While Cassius uses a modified, whitespace-sensitive syntax for CSS, Lucius is true to
    the original. You can take any CSS file out there and it will be a valid Lucius file. There are,
    however, a few additions to Lucius:<ul id="ul_a847e33f-f3af-4fe1-9a3b-d7b2353921f7">
@@ -376,14 +370,14 @@ article a { text-decoration: none; }</pre>In
 body { color: #{textcolor} }
 a:link, a:visited { color: #{textcolor} }</pre>
   <p id="x8" class="hascomments">Other than that, Lucius is identical to CSS.</p>
- 
-  <p id="x1" class="hascomments">Julius is the simplest of the languages discussed here. In fact, some might even say it's not
-   really its own language. Julius allows the three forms of interpolation we've mentioned so far,
-   and otherwise applies no transformations to your content.<aside id="x2" class="note">If you use Julius with the
-    scaffolded Yesod site, you may notice that your Javascript is automatically minified. This is
-    not a feature of Julius; instead, Yesod uses the hjsmin package to minify
-    Julius output.</aside></p>
-   <p id="x1" class="hascomments">The question of course arises at some point: how do I actually use this stuff? There are three
+ <h3>Julius Syntax</h3>
+  <p id="x1" class="hascomments">Julius is the simplest of the languages discussed here. In fact, some might even say
+   it's really just Javascript. Julius allows the three forms of interpolation we've mentioned so
+   far, and otherwise applies no transformations to your content.<aside id="x2" class="note">If you use Julius
+    with the scaffolded Yesod site, you may notice that your Javascript is automatically minified.
+    This is not a feature of Julius; instead, Yesod uses the hjsmin
+    package to minify Julius output.</aside></p>
+ <h2>Calling Shakespeare</h2>  <p id="x1" class="hascomments">The question of course arises at some point: how do I actually use this stuff? There are three
    different ways to call out to Shakespeare from your Haskell code:</p>
   <dl id="x2">
    
@@ -508,7 +502,7 @@ foo { bar: baz }</pre>
     <td id="x49">juliusFileReload</td>
    </tr>
   </table>
- 
+ <h3>Alternate Hamlet Types</h3>
   <p id="x1" class="hascomments">So far, we've seen how to generate an HtmlUrl value from Hamlet, which is a
    piece of HTML with embedded type-safe URLs. There are currently three other values we can
    generate using Hamlet: plain HTML, HTML with URLs and internationalized messages, and
@@ -524,12 +518,12 @@ foo { bar: baz }</pre>
       shamlet, embedding can be completely replaced with normal variable
      interpolation (with a hash).</li>
    </ul></p>
-  <p id="x12" class="hascomments">Internationalized (from now on, i18n) is a bit more complicated than normal Hamlet. This is
-   based around the idea of a message datatype, very similar in concept and implementation to a
-   type-safe URL. As a motivating example, let's say we want to have an application that tells you
-   hello and how many apples you have eaten. We could represent those messages with a
-   datatype.<pre id="x13">data Msg = Hello | Apples Int</pre>Next, we would
-   want to be able to convert that into something human-readable, so we define some render
+  <p id="x12" class="hascomments">Dealing with internationalization (i18n) in Hamlet is a bit complicated. Hamlet
+   supports i18n via a message datatype, very similar in concept and implementation to a type-safe
+   URL. As a motivating example, let's say we want to have an application that tells you hello and
+   how many apples you have eaten. We could represent those messages with a
+   datatype.<pre id="x13">data Msg = Hello | Apples Int</pre>Next,
+   we would want to be able to convert that into something human-readable, so we define some render
    functions:<pre id="x14">renderEnglish :: Msg -&gt; Text
 renderEnglish Hello = "Hello"
 renderEnglish (Apples 0) = "You did not buy any apples."
@@ -548,12 +542,10 @@ renderEnglish (Apples i) = T.concat ["You bought ", T.pack $ show i, " apples."]
    synonym:<pre id="x17">type Render url = url -&gt; [(Text, Text)] -&gt; Text
 type Translate msg = msg -&gt; Html
 type HtmlUrlI18n msg url = Translate msg -&gt; Render url -&gt; Html</pre>At
-   this point, you can pass renderEnglish, renderSpanish, or
-    renderKlingon to this template, and it will generate nicely translated output
-   (depending, of course, on the quality of your translators). A full sample program follows.</p>
-  <figure id="x18"><figcaption>i18n Example</figcaption>
-   
-   <pre id="x20">{-# LANGUAGE QuasiQuotes #-}
+   this point, you can pass renderEnglish, renderSpanish, or renderKlingon to this template, and it
+   will generate nicely translated output (depending, of course, on the quality of your
+   translators). The complete program is:</p>
+  <pre id="x20">{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -590,8 +582,7 @@ $doctype 5
 main :: IO ()
 main = putStrLn $ renderHtml
      $ (template 5) (toHtml . renderEnglish) renderUrl</pre>
-  </figure>
- 
+ <h2>Other Shakespeare</h2>
   <p id="x-3" class="hascomments">In addition to HTML, CSS and Javascript helpers, there is also some more general-purpose
    Shakespeare available. shakespeare-text provides a simple way to create
    interpolated strings, much like people are accustomed to in scripting languages like Ruby and
@@ -623,8 +614,11 @@ main = forM_ items $ \item -&gt; TLIO.putStrLn
     all play together well.</li>
    <li id="x-8">We use a quasiquoter named lt, which generates lazy text. There is also
      st.</li>
+   <li>Also, there are longer names for these quasiquoters (ltext and
+     stext).</li>
   </ul>
- <p id="x1" class="hascomments">Here are some general hints from the Yesod community on how to get the most out of Shakespeare. (If you have more, please add them in a comment to this paragraph:</p>
+ <h2>General Recommendations</h2><p id="x1" class="hascomments">Here are some general hints from the Yesod community on how to get the most out of
+                                                  Shakespeare.</p>
 <ul id="x2">
 <li id="x3">For actual sites, use external files. For libraries, it's OK to use quasiquoters, assuming they aren't too long.</li>
 <li id="x4">Patrick Brisbin has put together a <a href="https://github.com/pbrisbin/html-template-syntax" id="x5">Vim code
