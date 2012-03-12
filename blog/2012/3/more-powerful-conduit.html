@@ -1,0 +1,36 @@
+<p>I've gotten a few emails recently (most recently from Nathan Howell) about a shortcoming of the <code>Conduit</code> datatype. The issue is that a <code>Conduit</code> can only produce output when it is pushed to. However, if you have a <code>Conduit</code> that could produce a large amount of output for a single input (e.g., a decompressor), this could become memory inefficient.</p>
+<p>I came up with a simple solution: allow a <code>Conduit</code> to return a stream of outputs for a single input. In code, this turns into just a single additional constructor for the <code>ConduitResult</code> type:</p>
+<pre><code>HaveMore (m (ConduitResult input m output)) (m ()) [output]
+</code></pre>
+<p>I'll go into more detail on the <code>m ()</code> bit below, but it says how to close the <code>Conduit</code> early.</p>
+<p>Any time you push to a conduit, it can now say &quot;here's some output, and more is on the way.&quot; I've implemented this, and I'm happy with this solution. However, I want to make it better.</p>
+<h2 id="theres-one-way-to-do-it">There's one way to do it</h2>
+<p>With the previous API, there was only one way to encode each operation. If you wanted to implement a <code>map</code>, you had to use the <code>Producing</code> constructor with a single element list for the <code>output</code>. A <code>concatMap</code> would look something like:</p>
+<pre><code>push input = return $ Producing (Conduit push close) (f input)
+</code></pre>
+<p>However, we now have at least two other ways to encode the same thing:</p>
+<ol style="list-style-type: decimal"><li><p>Return a <code>HaveMore</code> constructor which contains all of the output, which will then return then <code>Producing</code> constructor to allow the <code>Conduit</code> to continue.</p></li>
+<li><p>Return the elements one at a time via <code>HaveMore</code>.</p></li>
+</ol>
+<p>Having these multiple approaches makes the internals of the library a bit ugly, and since there are multiple codepaths, it increases the likelihood of bugs. I also think it's difficult for new users to see so many options.</p>
+<p>There are two separate issues at play, so let's deal with them separately.</p>
+<h3 id="all-constructors-can-return-output">All constructors can return output</h3>
+<p>In the current setup, all three constructors can return output. This was necessary previously, but no longer. If we removed the <code>[output]</code> field from both <code>Producing</code> and <code>Finished</code>, then a user would be forced to use <code>HaveMore</code> when they want to return output.</p>
+<p>My concern here is complicating library usage. A previously simple function like <code>map</code> would now require a few extra hoops to be jumped through. We could address this by leaving the same higher-level interface we have before in <code>conduitState</code> and <code>conduitIO</code>. That would give the downside of having a mismatch between the low-level and high-level API.</p>
+<h3 id="to-chunk-or-not-to-chunk">To chunk, or not to chunk</h3>
+<p>Another question is chunking. Previously, returning a list of <code>output</code>s was necessary, since we only had one chance to return output. Now, however, we could just return successive <code>HaveMore</code>s. This has the downside of- once again- complicating some implementations. It has an additional downside that it might hurt performance. On the flip side, it may improve performance in some cases, since it would be impossible to return empty lists in a <code>HaveMore</code>.</p>
+<h3 id="should-closing-give-a-source">Should closing give a <code>Source</code>?</h3>
+<p>And as long as we're on the subject of change, let's look at closing a <code>Conduit</code>. This applies in two circumstances: the feeding source closed, or the consuming sink closed. If the feeding source closes, we want to have an opportunity to produce a bit more output. This is necessary, for example, in the case of compression: we want to build up large chunks of compressed data and then generate output. But the last chunk of output has to be manually flushed once we know there's no more input.</p>
+<p>On the flip side, if the consuming sink closes, we don't need to produce any more output as it won't be used. If you look at the definition of <code>HaveMore</code> above, it has a field <code>m ()</code>, which is how it's closed. This doesn't allow for any new output to be produced, because a <code>HaveMore</code> would only ever be closed if the consuming <code>Sink</code> closed.</p>
+<p>At this point, I see two problems with the way <code>conduitClose</code> works:</p>
+<ul><li><p>When closing a <code>Conduit</code>, you can only return a single chunk of values, not a stream of values. I can't think of a use case where you would return a large quantity of output from closing, but this limitation <em>does</em> both me.</p></li>
+<li><p>In the case of a closed sink, the conduit will still try to produce some extra output which may never be used.</p></li>
+</ul>
+<p>There's an easy solution to both problems: closing a <code>Conduit</code> returns a <code>Source</code>, which provides the last set of data. In the case of a closed <code>Sink</code>, then the <code>conduit</code> functions would simply call <code>sourceClose</code> immediately. In the case of large output, we could take advantage of <code>Source</code>'s natural streaming abilities.</p>
+<h2 id="feedback-wanted">Feedback wanted</h2>
+<p>I'm writing this post in hope of getting some good feedback from people. Is my desire for one-way-to-do-things worthwhile, or is it better to complicate the internals of the library in exchange for potentially simpler user code? Does anyone have recommendations for better names for any of the constructors?</p>
+<h2 id="postscript-prior-art">Postscript: prior art</h2>
+<p>While working on this, I reviewed two alternate approaches: enumerator and pipes. Let me explain why I can't reuse their solutions:</p>
+<ul><li><p>The <code>Enumeratee</code> type from <code>enumerator</code> is very powerful, much more so than a <code>Conduit</code>. It is a general purpose <code>Iteratee</code>-transformer, capable of doing lots of crazy stuff. That's exactly what I want to avoid for <code>conduit</code>: implementing an <code>Enumeratee</code> is far more complicated than implementing a <code>Conduit</code>, since it requires thinking directly about the inner <code>Iteratee</code>. The simplicity of a <code>Conduit</code> comes from the fact that it is a standalone unit.</p></li>
+<li><p>As usual, pipes look like a simple, elegant solution. But the big thing it's lacking is proper resource management. Notice how much thought goes into <code>Conduit</code> to ensure that all resources are closed as early as possible, even in the case of early termination. It's true that by using <code>ResourceT</code>, <code>pipes</code> is able to avoid completely losing scarce resources, but holding onto a file handle for too long is not much better. I see no way to adapt any of pipes's approaches to <code>conduit</code> and still maintain our strict resource management.</p></li>
+</ul>

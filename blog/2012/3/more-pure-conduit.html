@@ -1,0 +1,31 @@
+<p>So following up on my previous post, I've run into a few other issues that are a bit of an annoyance in conduit:</p>
+<ul><li>It's annoying having both a Source and SourceResult type (same goes for Sink and Conduit).</li>
+<li>Worse yet, these types share a lot of very similar constructors. Compare SinkData with Processing: they're identical.</li>
+<li>Every call to the library goes through a monadic bind. Pure code is not only (arguably) cleaner, but it is generally faster.</li>
+</ul>
+<p>It turns out that solving all of these problems simultaneously is not only possible, but it also drastically cleaned up the codebase. I think I just netted out <a href="https://github.com/snoyberg/conduit/compare/no-result-type">200 less lines of code</a>. Let's look at the transformation applied to Source, the other changes are basically identical.</p>
+<p>Previously, we had two datatypes defined as:</p>
+<pre><code>data SourceResult m a = Open (Source m a) a | Closed
+data Source m a = Source (m (SourceResult m a)) (m ())
+</code></pre>
+<p>The first field in Source allowed you to pull more data, and the second allowed you to close a Source early. SourceResult would either signify that the source is now closed, or provide the next bit of output, along with the following Source. Compare that to the new definition:</p>
+<pre><code>data Source m a =
+    Open (Source m a) (m ()) a
+  | Closed
+  | SourceM (m (Source m a)) (m ())
+</code></pre>
+<p>This looks almost identical to SourceResult, except for two changes:</p>
+<ul><li>We've added the SourceM constructor, which has two fields: pulling the next monadic Source, and closing early.</li>
+<li>We've unpacked the previous Source fields into the Open constructor, and stripped away the monadic wrapping around the pull.</li>
+</ul>
+<p>The point is that, if you need to take a monadic action, you must do so explicitly now via SourceM. For pure code, you can just use Open. Under this new system, we can now declare completely pure higher-level functions, e.g.:</p>
+<pre><code>sourceListPure :: Monad m =&gt; [a] -&gt; Source m a
+sourceListPure [] = Closed
+sourceListPure (x:xs) = Open (sourceListPure xs) (return ()) x
+</code></pre>
+<p>And this isn't just a matter of convenience: avoiding all of the monadic binding produces a huge speedup. In the bigsum benchmark (which adds the numbers 1 to 1000), the average runtime went from 417us to 88us. I don't expect this kind of speedup for typical use cases (after all, most uses of conduit will in fact be using <code>IO</code> at some point), but this is very encouraging.</p>
+<h2 id="the-downside">The downside</h2>
+<p>There <em>is</em> a downside to this change: some of our invariants are no longer expressed in the typesystem. Previously, it was impossible to return leftover data from a Sink or Conduit without first having data pushed to it. That is no longer the case, since you can trivially define:</p>
+<pre><code>myEvilSink = Done (Just &quot;I inserted data&quot;) ()
+</code></pre>
+<p>As much as I like expressing all invariants in the type system, I think this is an acceptable trade-off.</p>

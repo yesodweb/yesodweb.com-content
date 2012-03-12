@@ -37,8 +37,7 @@
 <p>The final issue is the definition of Enumerator. There's lots of work in the iteratee package, and it seems to be blazing the trail for this domain. However:</p>
 <ol><li>WAI should be low-dependency, and introducing a dependency on the iteratee package would be too high a burden. (I realize this isn't a full argument, since I could just copy-paste the definitions from iteratee.)</li>
 <li>The iteratee approach is still evolving, now migrating to a continuations-based approach. It seems too early to try and jump on that band-wagon; let's let the dust settle first.</li>
-<li>
-<p>Much of the complexity introduced by iteratee is totally unnecessary in WAI. For example, we can't have an arbitrary monad, we need IO. We can't have arbitrary chunk data types, we use strict bytestrings.</p>
+<li><p>Much of the complexity introduced by iteratee is totally unnecessary in WAI. For example, we can't have an arbitrary monad, we need IO. We can't have arbitrary chunk data types, we use strict bytestrings.</p>
 <p>However, at a more fundamental level, iteratee is trying to solve problems WAI doesn't have. WAI just needs a way to allow efficient outputting of data with interleaved IO actions. It will always just send one chunk at a time, and either the entire chunk will succeed, or there will be a failure.  iteratee deals with complex problems like partial input consumption.</p>
 <p>In other words: I have not seen a single argument made why switching to iteratee is actually a <b>win</b> for WAI.</p>
 </li>

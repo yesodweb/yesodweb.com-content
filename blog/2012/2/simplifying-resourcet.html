@@ -1,0 +1,89 @@
+<p>This blog post discusses the <a href="http://hackage.haskell.org/package/conduit">conduit package</a>. If you are not familiar with it, you can read up on it in the <a href="http://www.yesodweb.com/book/conduit">Yesod book chapter on conduits</a>.</p>
+<p>Earlier today, <a href="http://www.haskell.org/pipermail/haskell-cafe/2012-February/099689.html">Oleg sent an email</a> to the Haskell cafe about regions. Yves Parès sent a response that linked to <a href="http://hackage.haskell.org/package/resource-simple-0.1">resource-simple</a>, a package I had not heard of until then. Reading the description on the page reminded me of one of the earlier decisions I made in designing conduits. I'd like to explain that decision, and then explain how we can work around it.</p>
+<p>Originally, I had intended that all conduits would live in the <code>IO</code> monad. This is a fair assumption: the majority of the time, we want to use conduits to perform some kind of I/O (otherwise, why not just use lazy lists?). So for my first stab at the problem, I designed a <code>ResourceT</code> transformer that always assumed an <code>IO</code> monad for its base. Then, all three data types in conduit (<code>Source</code>, <code>Sink</code>, and <code>Conduit</code>) assumed that their actions lived in the <code>ResourceT</code> transformer so that they could safely acquire resources.</p>
+<p>However, this <code>IO</code> assumption can be limiting. Thre are plenty of sources, sinks, and conduits which perform no resource allocation at all, and we would like to be able to access from pure code. For example, <a href="http://hackage.haskell.org/package/xml-conduit">xml-conduit</a> provides a greater parser and renderer for XML documents; it would be a shame to only be able to access it from <code>IO</code>. We could of course use <code>unsafePerformIO</code>, but we don't mention that in polite company.</p>
+<p>I created an elaborate typeclass system around ResourceT, which would allow us to build monad stacks around both <code>IO</code> and <code>ST</code>. Then we could call <code>ST</code> from pure code, and no need to touch that unsafe stuff!</p>
+<p>Unfortunately, there are a few downsides to this approach:</p>
+<ul><li><p>ResourceT doesn't really make sense for <code>ST</code>. You can't safely allocate scarce resources in the <code>ST</code> monad, so we're just pretending for the sake of uniformity. Just have a look at how <code>resourceBracket</code> is implemented for <code>ST</code>.</p></li>
+<li><p>The type complexity really gets in the way. Look at the presence of both <code>with</code> and <code>withIO</code> for an example.</p></li>
+<li><p>We are still limited in our monad choices, since we need monads that provide mutable references for <code>ResourceT</code> to work. This turns into a performance penalty, as we'll see later.</p></li>
+</ul>
+<p>It turns out there's a simple solution here: don't bake <code>ResourceT</code> into <code>Source</code>, <code>Sink</code>, and <code>Conduit</code>. Instead, only use it for functions that actually allocate scarce resources, such as <code>sourceFile</code>. There is a downside to this approach: type signatures get a little longer:</p>
+<pre><code>-- conduit 0.2
+sourceFile :: ResourceIO m =&gt; FilePath -&gt; Source m ByteString
+
+-- conduit 0.3
+sourceFile :: ResourceIO m =&gt; FilePath -&gt; Source (ResourceT m) ByteString
+</code></pre>
+<p>However, you can make the argument that this is in fact a Good Thing: we're now explicit in our types as to whether we're performing allocation of scarce resources.</p>
+<p>I've put together a <a href="https://github.com/snoyberg/conduit/tree/simpler-resourcet">separate branch on Github</a> for this approach, and have <a href="http://www.snoyman.com/haddocks/conduit-0.3.0/index.html">generated some Haddocks</a>. I'm not yet ready to release this code to Hackage, but I wanted to get people's feedback.</p>
+<p>Beyond the theoretical issues above, I'm sure there are two big questions people want to ask.</p>
+<h2 id="how-bad-is-the-breakage">How bad is the breakage?</h2>
+<p>Not bad at all. The <code>Resource</code> typeclass is completely gone now. You can replace it with <code>Monad</code>. In other words:</p>
+<pre><code>-- old
+nums :: Resource m =&gt; Source m Int
+nums = fromList [1..10]
+
+-- new
+nums :: Monad m =&gt; Source m Int
+nums = fromList [1..10]
+</code></pre>
+<p>Additionally, the lesser-used <code>ResourceThrow</code> and <code>ResourceUnsafeIO</code> classes have been renamed to <code>MonadThrow</code> and <code>MonadUnsafeIO</code>. These classes are not in any way <code>ResourceT</code>-specific, thus the name change. <code>ResourceIO</code> remains as-is.</p>
+<p>You might have to add a few explicit <code>lift</code> calls now, and in some cases will have to change your type signature to include <code>ResourceT</code>. But overall, this is a minor change.</p>
+<h2 id="how-does-this-affect-performance">How does this affect performance?</h2>
+<p>For code that will still live in the <code>ResourceT</code> transformer, this will have no performance affect. (I made a separate change to optimize the monadic bind implementation of <code>ResourceT</code>, which <em>does</em> improve performance significantly.) However, if you don't need scarce resource allocations, you can now skip out on the <code>ResourceT</code> overhead entirely. In fact, you can skip out on the overhead of <code>IO</code> and <code>ST</code> as well if you just need to perform pure actions.</p>
+<p>I implemented a simple Criterion benchmark comparing six different ways of summing up the numbers 1 to 1000:</p>
+<pre><code>main :: IO ()
+main = defaultMain
+    [ bench &quot;bigsum-resourcet-io&quot; (whnfIO $ C.runResourceT $ CL.sourceList [1..1000 :: Int] C.$$ CL.fold (+) 0)
+    , bench &quot;bigsum-io&quot; (whnfIO $ CL.sourceList [1..1000 :: Int] C.$$ CL.fold (+) 0)
+    , bench &quot;bigsum-st&quot; $ whnf (\i -&gt; (runST $ CL.sourceList [1..1000 :: Int] C.$$ CL.fold (+) i)) 0
+    , bench &quot;bigsum-identity&quot; $ whnf (\i -&gt; (runIdentity $ CL.sourceList [1..1000 :: Int] C.$$ CL.fold (+) i)) 0
+    , bench &quot;bigsum-foldM&quot; $ whnf (\i -&gt; (runIdentity $ foldM (\a b -&gt; return $! a + b) i [1..1000 :: Int])) 0
+    , bench &quot;bigsum-pure&quot; $ whnf (\i -&gt; foldl' (+) i [1..1000 :: Int]) 0
+    ]
+</code></pre>
+<p>The results are very promising: moving from <code>ResourceT</code> to the <code>Identity</code> monad brings runtime from 1541us to 409us. Unsurprisingly, a straight foldM is still faster (no conduit overhead at all), and a pure <code>foldl'</code> faster yet, but we're definitely closing the gap.</p>
+<pre><code>benchmarking bigsum-resourcet-io
+mean: 1.541109 ms, lb 1.536687 ms, ub 1.546054 ms, ci 0.950
+std dev: 23.92658 us, lb 20.27472 us, ub 30.16423 us, ci 0.950
+found 3 outliers among 100 samples (3.0%)
+  2 (2.0%) high mild
+  1 (1.0%) high severe
+variance introduced by outliers: 8.475%
+variance is slightly inflated by outliers
+
+benchmarking bigsum-io
+mean: 705.3596 us, lb 703.8689 us, ub 706.8185 us, ci 0.950
+std dev: 7.554517 us, lb 6.639072 us, ub 8.699024 us, ci 0.950
+
+benchmarking bigsum-st
+mean: 737.1096 us, lb 734.7698 us, ub 739.0198 us, ci 0.950
+std dev: 10.77292 us, lb 8.970027 us, ub 13.39969 us, ci 0.950
+found 4 outliers among 100 samples (4.0%)
+  4 (4.0%) low mild
+variance introduced by outliers: 7.532%
+variance is slightly inflated by outliers
+
+benchmarking bigsum-identity
+mean: 409.2451 us, lb 407.7206 us, ub 411.1361 us, ci 0.950
+std dev: 8.671930 us, lb 6.924580 us, ub 12.59325 us, ci 0.950
+found 2 outliers among 100 samples (2.0%)
+  1 (1.0%) high severe
+variance introduced by outliers: 14.217%
+variance is moderately inflated by outliers
+
+benchmarking bigsum-foldM
+mean: 147.9192 us, lb 146.5067 us, ub 149.2992 us, ci 0.950
+std dev: 7.126892 us, lb 6.556864 us, ub 7.773273 us, ci 0.950
+variance introduced by outliers: 46.449%
+variance is moderately inflated by outliers
+
+benchmarking bigsum-pure
+mean: 36.21976 us, lb 36.01451 us, ub 36.39617 us, ci 0.950
+std dev: 970.5240 ns, lb 832.2271 ns, ub 1.192476 us, ci 0.950
+found 2 outliers among 100 samples (2.0%)
+  2 (2.0%) low mild
+variance introduced by outliers: 20.947%
+variance is moderately inflated by outliers
+</code></pre>
