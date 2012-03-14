@@ -47,7 +47,8 @@ myTypeField = MyType &lt;$&gt; intField &lt;*&gt; intField
 <p>The originally IsForm-polymorphic approach of yesod-form tried to get around this verbosity by allowing the same intField to simultaneously work as an Applicative and Monadic form. But as I said, we're getting rid of that.</p>
 <h3 id="possible-solution">Possible solution</h3>
 <p>So here's the system I've been playing around with: we need to except the fact that our code will end up with a few extra keystrokes. We'll have a single function for each datatype, which will give the field profile itself. We'll then have four helper functions:</p>
-<ul><li>areq (applicative required)</li>
+<ul>
+<li>areq (applicative required)</li>
 <li>aopt (applicative optional)</li>
 <li>mreq (monadic required)</li>
 <li>mopt (monadic optional)</li>
