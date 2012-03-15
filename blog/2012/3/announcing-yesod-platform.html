@@ -1,0 +1,36 @@
+<p>There have been lots of emails, blog posts, Reddit threads and Google+
+discussions recently about Cabal dependency hell. I'm certain that the
+community as a whole, and Andres Loeh and Duncan Coutts in particular, will be
+able to solve these problems thoroughly in the long run. But in the short term,
+we still have a problem.</p>
+
+<p>I posted last week about cabal-nirvana. While it certainly would seem to
+solve many of our problems, it's a <i>bit</i> like using a tactical nuke to
+kill a mosquito. But, based on the same approach and code, I'd like to announce
+a new solution: yesod-platform. This approach- championed very successfully by
+Felipe Lessa- involves releasing a meta-package to Hackage which contains
+strict version bounds for each dependency of Yesod (excluding bootlibs).</p>
+
+<p>There's actually not much more to the story than that. Instead of running
+<code>cabal install yesod</code>, just run <code>cabal install yesod-platform</code>.
+You can also put the dependency in your cabal file.
+We have no actual proof yet, but <i>if</i> you put it in your cabal file, you
+likely want to make it the first entry, to make sure that the top-down
+dependency solver doesn't get confused.</p>
+
+<p>This is obviously a new, untested technique, and there may be some hurdles
+yet to come. But I encourage everyone to give this new approach a shot and see
+if it solves your problems.</p>
+
+<h2>What about cabal-dev?</h2>
+
+<p>This is an orthogonal issue. You can use <code>yesod-platform</code> with
+cabal-dev if you want. cabal-dev solves the sandboxing issue, while
+yesod-platform ensures that you have comatible versions of packages.</p>
+
+<h2>Future improvements</h2>
+
+<p>The only improvement I know of right now is to include some serious
+benchmarks with the yesod-platform. This will allow us to make sure that we're
+not accidently adopting newer dependencies that have major performance
+regressions. But if anyone else has some ideas, I'd love to hear them.</p>
