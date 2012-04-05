@@ -16,6 +16,7 @@ Neither of these truly fix an install problem, they just make the problems less 
 ## Yesod solutions
 
 Besides making April Fools jokes about Cabal, we:
+
 * support cabal-dev (an isolation tool) in our tools, such as the development mode server. We also encourage the usage of virthualenv/hsenv which requires no special support on our side
 * released yackage, a local hackage server that helps make the right dependencies visible
 * released cabal-src, a tool for making cabal remember locally installed packages. Note this functionality is already in cabal-dev.
