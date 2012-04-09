@@ -7,7 +7,7 @@
   <p id="x-5" class="hascomments">This chapter is not directly connected to Yesod, and will be generally useful for anyone
    wanting to make HTTP requests.</p>
  <h2>Synopsis</h2>
-  <pre id="x-3">{-# LANGUAGE OverloadedStrings #-}
+  <pre id="x-3"><code>{-# LANGUAGE OverloadedStrings #-}
 import Network.HTTP.Conduit -- the main module
 
 -- The streaming interface uses conduits
@@ -50,7 +50,7 @@ main = do
                 , checkStatus = \_ _ -&gt; Nothing
                 }
         res2 &lt;- http req2 manager
-        responseBody res2 $$ sinkFile "post-foo.txt"</pre>
+        responseBody res2 $$ sinkFile "post-foo.txt"</code></pre>
  <h2>Concepts</h2>
   <p id="x-3" class="hascomments">The simplest way to make a request in http-conduit is with the
     simpleHttp function. This function takes a String giving a URL
@@ -76,7 +76,7 @@ main = do
     Maybe or IO. The last of those is the most commonly used, and
    results in a runtime exception whenever an invalid URL is provided. However, you can use a
    different monad if, for example, you want to validate user input.</p>
-  <pre id="x-9">import Network.HTTP.Conduit
+  <pre id="x-9"><code>import Network.HTTP.Conduit
 import System.Environment (getArgs)
 import qualified Data.ByteString.Lazy as L
 import Control.Monad.IO.Class (liftIO)
@@ -91,13 +91,13 @@ main = do
                 Just req -&gt; withManager $ \manager -&gt; do
                     Response _ _ lbs &lt;- httpLbs req manager
                     liftIO $ L.putStr lbs
-        _ -&gt; putStrLn "Sorry, please provide exactly one URL"</pre>
+        _ -&gt; putStrLn "Sorry, please provide exactly one URL"</code></pre>
   <p id="x-10" class="hascomments">The Request type is abstract so that http-conduit can add new
    settings in the future without breaking the API (see the <a href="../../settings-types.dita#file248-conceptIdx-20" id="x-13">Settings Type</a>
    chapter for more information). In order to make changes to individual records, you use record
    notation. For example, a modification to our program that issues HEAD requests
    and prints the response headers would be:</p>
-  <pre id="x-15">{-# LANGUAGE OverloadedStrings #-}
+  <pre id="x-15"><code>{-# LANGUAGE OverloadedStrings #-}
 import Network.HTTP.Conduit
 import System.Environment (getArgs)
 import qualified Data.ByteString.Lazy as L
@@ -116,7 +116,7 @@ main = do
                     liftIO $ do
                         print status
                         mapM_ print headers
-        _ -&gt; putStrLn "Sorry, please provide example one URL"</pre>
+        _ -&gt; putStrLn "Sorry, please provide example one URL"</code></pre>
   <p id="x-16" class="hascomments">There are a number of different configuration settings in the API, some noteworthy ones
    are:</p>
   <dl id="x-17">

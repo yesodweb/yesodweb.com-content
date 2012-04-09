@@ -52,7 +52,7 @@
    
   </dl>
   <p class="hascomments">Let's see some examples of conduit code.</p>
-  <pre>{-# LANGUAGE OverloadedStrings #-}
+  <pre><code>{-# LANGUAGE OverloadedStrings #-}
 import Data.Conduit -- the core library
 import qualified Data.Conduit.List as CL -- some list-like functions
 import qualified Data.Conduit.Binary as CB -- bytes
@@ -194,7 +194,7 @@ main :: IO ()
 main = do
     putStrLn $ "First ten fibs: " ++ show sumTenFibs
     writeFibs 20 "fibs.txt"
-    copyFile "fibs.txt" "fibs2.txt"</pre>
+    copyFile "fibs.txt" "fibs2.txt"</code></pre>
  <h2>Structure of this Chapter</h2>
   <p id="x-3" class="hascomments">The remainder of this chapter covers five major topics in conduits:</p>
   <ul id="ul_rex_ckj_xe">
@@ -213,25 +213,25 @@ main = do
    tool in its own right.</p>
  <h3>Goals</h3>
   <p class="hascomments">What's wrong with the following code?</p>
-  <pre>import System.IO
+  <pre><code>import System.IO
 
 main = do
     output &lt;- openFile "output.txt" WriteMode
     input  &lt;- openFile "input.txt"  ReadMode
     hGetContents input &gt;&gt;= hPutStr output
     hClose input
-    hClose output</pre>
+    hClose output</code></pre>
   <p class="hascomments">If the file input.txt does not exist, then an exception will be thrown
    when trying to open it. As a result, hClose output will never be called, and
    we'll have leaked a scarce resource (a file descriptor). In our tiny program, this isn't a big
    deal, but clearly we can't afford such waste in a long running, highly active server process.</p>
   <p class="hascomments">Fortunately, solving the problem is easy:</p>
-  <pre>import System.IO
+  <pre><code>import System.IO
 
 main =
     withFile "output.txt" WriteMode $ \output -&gt;
     withFile "input.txt" ReadMode $ \input -&gt;
-    hGetContents input &gt;&gt;= hPutStr output</pre>
+    hGetContents input &gt;&gt;= hPutStr output</code></pre>
   <p class="hascomments">withFile makes sure that the Handle is always closed, even in
    the presence of exceptions. It also handles asynchronous exceptions. Overall, it's a great
    approach to use... when you can use it. While often withFile is easy to use,
@@ -242,13 +242,13 @@ main =
     iterFile (for writing contents to a file). That's because the flow of control
    in an iteratee doesn't allow proper allocation of the Handle. Instead, in order to write to a
    file, you need to allocate the Handle before entering the Iteratee, e.g.:</p>
-  <pre>import System.IO
+  <pre><code>import System.IO
 import Data.Enumerator
 import Data.Enumerator.Binary
 
 main =
     withFile "output.txt" WriteMode $ \output -&gt;
-    run_ $ enumFile "input.txt" $$ iterHandle output</pre>
+    run_ $ enumFile "input.txt" $$ iterHandle output</code></pre>
   <p class="hascomments">This code works fine, but imagine that, instead of simply piping data directly to the file,
    there was a huge amount of computation that occurred before we need to use the output handle. We
    will have allocated a file descriptor long before we needed it, and thereby locked up a scarce
@@ -257,29 +257,29 @@ main =
    file.</p>
   <p class="hascomments">One of the stated goals of conduits is to solve this problem, and it does so via
     ResourceT. As a result, the above program can be written in conduit as:</p>
-  <pre>{-# LANGUAGE OverloadedStrings #-}
+  <pre><code>{-# LANGUAGE OverloadedStrings #-}
 import Data.Conduit
 import Data.Conduit.Binary
 
-main = runResourceT $ sourceFile "input.txt" $$ sinkFile "output.txt"</pre>
+main = runResourceT $ sourceFile "input.txt" $$ sinkFile "output.txt"</code></pre>
  <h3>How it Works</h3>
   <p class="hascomments">There are essentially three base functions on ResourceT, and then a bunch of
    conveniences thrown on top. The first function is:</p>
-  <pre>register :: IO () -&gt; ResourceT IO ReleaseKey</pre>
+  <pre><code>register :: IO () -&gt; ResourceT IO ReleaseKey</code></pre>
   <aside class="note">This function, and the others below, are actually more polymorphic than implied here,
    allowing other monads besides IO. In fact, almost any transformer on top of
     IO, as well as any ST stacks, work. We'll cover the details of
    that later.</aside>
   <p class="hascomments">This function registers a piece of code that it asserts must be run. It gives back a
     ReleaseKey, which is used by the next function:</p>
-  <pre>release :: ReleaseKey -&gt; ResourceT IO ()</pre>
+  <pre><code>release :: ReleaseKey -&gt; ResourceT IO ()</code></pre>
   <p class="hascomments">Calling release on a ReleaseKey immediately performs the
    action you previously registered. You may call release on the same
     ReleaseKey as many times as you like; the first time it is called, it
     <dfn>unregisters</dfn> the action. This means you can safely register an action like a memory
    free, and have no concerns that it will be called twice.</p>
   <p class="hascomments">Eventually, we'll want to exit our special ResourceT. To do so, we use:</p>
-  <pre>runResourceT :: ResourceT IO a -&gt; IO a</pre>
+  <pre><code>runResourceT :: ResourceT IO a -&gt; IO a</code></pre>
   <p class="hascomments">This seemingly innocuous function is where all the magic happens. It runs through all of the
    registered cleanup actions and performs them. It is fully exception safe, meaning the cleanups
    will be performed in the presence of both synchronous and asynchronous exceptions. And as
@@ -287,11 +287,11 @@ main = runResourceT $ sourceFile "input.txt" $$ sinkFile "output.txt"</pre>
    concern of double-freeing.</p>
   <p class="hascomments">Finally, as a convenience, we provide one more function for the common case of allocating a
    resource and registering a release action:</p>
-  <pre>with :: IO a -- ^ allocate
+  <pre><code>with :: IO a -- ^ allocate
      -&gt; (a -&gt; IO ()) -- ^ free resource
-     -&gt; ResourceT IO (ReleaseKey, a)</pre>
+     -&gt; ResourceT IO (ReleaseKey, a)</code></pre>
   <p class="hascomments">So, to rework our first buggy example to use ResourceT, we would write:</p>
-  <pre>import System.IO
+  <pre><code>import System.IO
 import Control.Monad.Trans.Resource
 import Control.Monad.Trans.Class (lift)
 
@@ -300,7 +300,7 @@ main = runResourceT $ do
     (releaseI, input)  &lt;- with (openFile "input.txt"  ReadMode)  hClose
     lift $ hGetContents input &gt;&gt;= hPutStr output
     release releaseI
-    release releaseO</pre>
+    release releaseO</code></pre>
   <p class="hascomments">Now there is no concern of any exceptions preventing the releasing of resources. We could skip
    the release calls if we want to, and in an example this small, it would not make
    any difference. But for larger applications, where we want processing to continue, this ensures
@@ -324,7 +324,7 @@ main = runResourceT $ do
   </ul>
   <p class="hascomments">For the first point, we define a new typeclass to represent monads that have mutable
    references:</p>
-  <pre>class Monad m =&gt; HasRef m where
+  <pre><code>class Monad m =&gt; HasRef m where
     type Ref m :: * -&gt; *
     newRef' :: a -&gt; m (Ref m a)
     readRef' :: Ref m a -&gt; m a
@@ -332,13 +332,13 @@ main = runResourceT $ do
     modifyRef' :: Ref m a -&gt; (a -&gt; (a, b)) -&gt; m b
     mask :: ((forall a. m a -&gt; m a) -&gt; m b) -&gt; m b
     mask_ :: m a -&gt; m a
-    try :: m a -&gt; m (Either SomeException a)</pre>
+    try :: m a -&gt; m (Either SomeException a)</code></pre>
   <p class="hascomments">We have an associated type to signify what the reference type should be. (For fans of fundeps,
    you'll see in the next section that this has to be an associated type.) Then we provide a
    number of basic reference operations. Finally, there are some functions to help with exceptions,
    which are needed to safely implement the functions described in the last section. The instance
    for IO is very straight-forward:</p>
-  <pre>instance HasRef IO where
+  <pre><code>instance HasRef IO where
     type Ref IO = I.IORef
     newRef' = I.newIORef
     modifyRef' = I.atomicModifyIORef
@@ -346,7 +346,7 @@ main = runResourceT $ do
     writeRef' = I.writeIORef
     mask = E.mask
     mask_ = E.mask_
-    try = E.try</pre>
+    try = E.try</code></pre>
   <p class="hascomments">However, we have a problem when it comes to implementing the ST instance:
    there is no way to deal with exceptions in the ST monad. As a result,
     mask, mask_ and try are given default
@@ -358,28 +358,28 @@ main = runResourceT $ do
    great way to do this in a pure way. But more on this later.</p>
   <p class="hascomments">Now onto point 2: we need some way to deal with this base monad concept. Again, we use an
    associated type (again explained in the next section). Our solution looks something like:</p>
-  <pre>class (HasRef (Base m), Monad m) =&gt; Resource m where
+  <pre><code>class (HasRef (Base m), Monad m) =&gt; Resource m where
     type Base m :: * -&gt; *
 
-    resourceLiftBase :: Base m a -&gt; m a</pre>
+    resourceLiftBase :: Base m a -&gt; m a</code></pre>
   <p class="hascomments">But we forgot about point 3: some bracket-like function. So we need one more
    method in this typeclass:</p>
-  <pre>    resourceBracket_ :: Base m a -&gt; Base m b -&gt; m c -&gt; m c</pre>
+  <pre><code>    resourceBracket_ :: Base m a -&gt; Base m b -&gt; m c -&gt; m c</code></pre>
   <p class="hascomments">The reason the first two arguments to resourceBracket_ (allocation and
    cleanup) live in Base m instead of m is that, in
     ResourceT, all allocation and cleanup lives in the base monad.</p>
   <p class="hascomments">So on top of our HasRef instance for IO, we now need a
     Resource instance as well. This is similarly straight-forward:</p>
-  <pre>instance Resource IO where
+  <pre><code>instance Resource IO where
     type Base IO = IO
     resourceLiftBase = id
-    resourceBracket_ = E.bracket_</pre>
+    resourceBracket_ = E.bracket_</code></pre>
   <p class="hascomments">We have similar ST instances, with resourceBracket_ having no
    exception safety. The final step is dealing with monad transformers. We don't need to provide a
     HasRef instance, but we do need a Resource instance. The
    tricky part is providing a valid implementation of resourceBracket_. For this,
    we use some functions from monad-control:</p>
-  <pre>instance (MonadTransControl t, Resource m, Monad (t m))
+  <pre><code>instance (MonadTransControl t, Resource m, Monad (t m))
         =&gt; Resource (t m) where
     type Base (t m) = Base m
 
@@ -387,14 +387,14 @@ main = runResourceT $ do
     resourceBracket_ a b c =
         control' $ \run -&gt; resourceBracket_ a b (run c)
       where
-        control' f = liftWith f &gt;&gt;= restoreT . return</pre>
+        control' f = liftWith f &gt;&gt;= restoreT . return</code></pre>
   <p class="hascomments">For any transformer, its base is the base of its inner monad. Similarly, we lift to the base by
    lifting to the inner monad and then lifting to the base from there. The tricky part is the
    implemetnation of resourceBracket_. I will not go into a detailed explanation,
    as I would simply make a fool of myself.</p>
  <h3>Definition of ResourceT</h3>
   <p class="hascomments">We now have enough information to understand the definition of ResourceT:</p>
-  <pre>newtype ReleaseKey = ReleaseKey Int
+  <pre><code>newtype ReleaseKey = ReleaseKey Int
 
 type RefCount = Int
 type NextKey = Int
@@ -403,7 +403,7 @@ data ReleaseMap base =
     ReleaseMap !NextKey !RefCount !(IntMap (base ()))
 
 newtype ResourceT m a =
-    ResourceT (Ref (Base m) (ReleaseMap (Base m)) -&gt; m a)</pre>
+    ResourceT (Ref (Base m) (ReleaseMap (Base m)) -&gt; m a)</code></pre>
   <p class="hascomments">We see that ReleaseKey is simply an Int. If you skip a few
    lines down, this will make sense, since we're using an IntMap to keep track of
    the registered actions. We also define two type synonyms: RefCount and
@@ -472,24 +472,24 @@ newtype ResourceT m a =
     you'll want to use withIO when writing IO code.</li>
    <li>transResourceT let's you modify which monad your ResourceT is running in,
     assuming it keeps the same
-    base.<pre>transResourceT :: (Base m ~ Base n)
+    base.<pre><code>transResourceT :: (Base m ~ Base n)
                =&gt; (m a -&gt; n a)
                -&gt; ResourceT m a
                -&gt; ResourceT n a
-transResourceT f (ResourceT mx) = ResourceT (\r -&gt; f (mx r))</pre></li>
+transResourceT f (ResourceT mx) = ResourceT (\r -&gt; f (mx r))</code></pre></li>
   </ul>
  <h2>Source</h2>
   <p class="hascomments">I think it's simplest to understand sources by looking at the types:</p>
-  <pre>data SourceResult m a = Open (Source m a) a | Closed
+  <pre><code>data SourceResult m a = Open (Source m a) a | Closed
 data Source m a = Source
     { sourcePull :: ResourceT m (SourceResult m a)
     , sourceClose :: ResourceT m ()
-    }</pre>
+    }</code></pre>
   <p class="hascomments">A source has just two operations on it: you can pull data from it, and you can close it (think
       of closing a file handle). When you pull, you either get some data and the a new
         Source (the source is still open), or nothing (the source is closed). Let's
       look at some of the simplest sources:</p>
-  <pre>-- START
+  <pre><code>-- START
 import Prelude hiding (repeat)
 import Data.Conduit
 
@@ -508,7 +508,7 @@ repeat a = Source
     }
 -- STOP
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
   <p class="hascomments">These sources are very straight-forward, since they always return the same results.
       Additionally, their close records don't do anything. You might think that this is a bug:
       shouldn't a call to sourcePull return Closed after it's been
@@ -534,7 +534,7 @@ main = return ()</pre>
    state, since the Handle itself already has.</aside>
   <p class="hascomments">The way we store state in a source is by updating the returned Source value in
    the Open constructor. This is best seen with an example.</p>
-  <pre>-- START
+  <pre><code>-- START
 import Data.Conduit
 import Control.Monad.Trans.Resource
 
@@ -552,7 +552,7 @@ sourceList list = Source
         }
 -- STOP
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
   <p class="hascomments">Each time we pull from the source, it checks the input list. If the list is empty, pulling
    returns Closed, which makes sense. If the list is not empty, pulling returns
     Open with both the next value in the list, and a new Source
@@ -564,7 +564,7 @@ main = return ()</pre>
     State monad. You provide an initial state, your pull function is provided with
    the current state, and it returns a new state and a return value. Let's use this to reimplement
    sourceList.</p>
-  <pre>-- START
+  <pre><code>-- START
 import Data.Conduit
 import Control.Monad.Trans.Resource
 
@@ -578,7 +578,7 @@ sourceList state0 = sourceState
     pull (x:xs) = return $ StateOpen xs x
 -- STOP
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
   <p class="hascomments">Notice the usage of the StateClosed and StateOpen
    constructors. These are very similar to Closed and Open, except
    that instead of specifying the next Source to be used, you provide the next
@@ -588,7 +588,7 @@ main = return ()</pre>
    resource. conduit comes built-in with a sourceFile function
    that gives a stream of ByteStrings. Let's write a wildly inefficient alternative
    that returns a stream of characters.</p>
-  <pre>-- START
+  <pre><code>-- START
 import Data.Conduit
 import Control.Monad.Trans.Resource
 import System.IO
@@ -605,7 +605,7 @@ sourceFile fp = sourceIO
             else fmap IOOpen $ hGetChar h)
 -- STOP
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
   <p class="hascomments">Like sourceState, it uses a variant on the Open and
     Closed constructors. sourceIO does a number of things for
    us:</p>
@@ -623,7 +623,7 @@ main = return ()</pre>
    work. Like sources, you'll rarely need to dive into the inner workings. Let's start off with an
    example: getting lines from a stream of Chars (we'll assume Unix line endings
    for simplicity).</p>
-  <pre>import Data.Conduit
+  <pre><code>import Data.Conduit
 import qualified Data.Conduit.List as CL
 
 -- Get a single line from the stream.
@@ -665,10 +665,10 @@ content = unlines
 main :: IO ()
 main = do
     lines &lt;- runResourceT $ CL.sourceList content $$ sinkLines
-    mapM_ putStrLn lines</pre>
+    mapM_ putStrLn lines</code></pre>
   <p class="hascomments">Running this sample produces the expected output:</p>
-  <pre>This is the first line.
-Here's the second.</pre>
+  <pre><code>This is the first line.
+Here's the second.</code></pre>
   <p class="hascomments">sinkLine demonstrates usage of the sinkState function, which
    is very similar to the sourceState function we just saw. It takes three
    arguments: an initial state, a push function (takes the current state and next input, and returns
@@ -687,7 +687,7 @@ Here's the second.</pre>
    get up and running quickly.</p>
  <h3>Types</h3>
   <p class="hascomments">The types for sinks are just a bit more involved than sources. Let's have a look:</p>
-  <pre>type SinkPush input m output = input -&gt; ResourceT m (SinkResult input m output)
+  <pre><code>type SinkPush input m output = input -&gt; ResourceT m (SinkResult input m output)
 type SinkClose m output = ResourceT m output
 
 data SinkResult input m output =
@@ -700,7 +700,7 @@ data Sink input m output =
         { sinkPush :: SinkPush input m output
         , sinkClose :: SinkClose m output
         }
-  | SinkLift (ResourceT m (Sink input m output))</pre>
+  | SinkLift (ResourceT m (Sink input m output))</code></pre>
   <p class="hascomments">Whenever a sink is pushed to, it can either say it needs more data
    (Processing) or say it's all done. When still processing, it must provided
    updated push and close function; when done, it returns any leftover inut and the output. Fairly
@@ -710,7 +710,7 @@ data Sink input m output =
    it to efficiently implement our Monad instance. When we use
     return, we're giving back a value that requires no data in order to compute it.
    We could model this with the SinkData constructor, with something like:</p>
-  <pre>myReturn a = SinkData (\input -&gt; return (Done (Just input) a)) (return a)</pre>
+  <pre><code>myReturn a = SinkData (\input -&gt; return (Done (Just input) a)) (return a)</code></pre>
   <p class="hascomments">But doing so would force reading in an extra bit of input that we don't need right now, and
    possibly will never need. (Have a look again at the sinkLines example.) So
    instead, we have an extra constructor to indicate that no input is required. Likewise,
@@ -718,7 +718,7 @@ data Sink input m output =
     MonadTrans instance.</p>
  <h3>Sinks: no helpers</h3>
   <p class="hascomments">Let's try to implement some sinks on the "bare metal", without any helper functions.</p>
-  <pre>-- START
+  <pre><code>-- START
 import Data.Conduit
 import System.IO
 import Control.Monad.Trans.Resource
@@ -769,7 +769,7 @@ count =
     close count = return count
 -- STOP
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
   <p class="hascomments">Nothing is particularly complicated to implement. You should notice a common pattern here:
             declaring your push and close functions in a where clause, and then
             using them twice: once for the initial SinkData, and once for the
@@ -778,7 +778,7 @@ main = return ()</pre>
  <h3>Sinks: with helpers</h3>
   <p class="hascomments">Let's rewrite sinkFile and count to take advantage of the
    helper functions sinkIO and sinkState, respectively.</p>
-  <pre>-- START
+  <pre><code>-- START
 import Data.Conduit
 import System.IO
 import Control.Monad.IO.Class (liftIO)
@@ -809,7 +809,7 @@ count = sinkState
     (\state -&gt; return state)
 -- STOP
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
   <p class="hascomments">Nothing dramatic, just slightly shorter, less error-prone code. Using these two helper
    functions is highly recommended, as it ensures proper resource management and state updating.</p>
  <h3>List functions</h3>
@@ -821,7 +821,7 @@ main = return ()</pre>
     List module- both with and without the helper functions- would be a good
    start.</p>
   <p class="hascomments">Let's look at some simple things we can make out of the built-in sinks.</p>
-  <pre>-- START
+  <pre><code>-- START
 import Data.Conduit
 import qualified Data.Conduit.List as CL
 import Control.Monad.IO.Class (liftIO)
@@ -852,11 +852,11 @@ printSum = do
         return $ accum + int
 -- STOP
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
  <h3>Connecting</h3>
   <p class="hascomments">At the end of the day, we're actually going to want to use our sinks. While we could manually
    call sinkPush and sinkClose, it's tedious. For example:</p>
-  <pre>import Data.Conduit
+  <pre><code>import Data.Conduit
 import Control.Monad.IO.Class (liftIO)
 
 printSum :: Sink Int m Int
@@ -879,11 +879,11 @@ main = runResourceT $ do
         mres &lt;- push x
         case mres of
             Done _leftover res -&gt; return res
-            Processing push' close' -&gt; loop xs push' close'</pre>
+            Processing push' close' -&gt; loop xs push' close'</code></pre>
   <p class="hascomments">Instead, the recommended approach is to connect your sink to a source. Not only is this
    simpler, it's less error prone, and means you have a lot of flexibility in where your data is
    coming from. To rewrite the example above:</p>
-  <pre>import Data.Conduit
+  <pre><code>import Data.Conduit
 import qualified Data.Conduit.List as CL
 import Control.Monad.IO.Class (liftIO)
 
@@ -893,7 +893,7 @@ printSum = undefined
 main :: IO ()
 main = runResourceT $ do
     res &lt;- CL.sourceList [1..10] $$ printSum
-    liftIO $ putStrLn $ "Got a result: " ++ show res</pre>
+    liftIO $ putStrLn $ "Got a result: " ++ show res</code></pre>
   <p class="hascomments">Connecting takes care of testing for the sink constructor (SinkData versus
     SinkNoData versus SinkLift), pulling from the source, and
    pushing to/closing the sink.</p>
@@ -912,14 +912,14 @@ main = runResourceT $ do
    stream of data and sinks consume a stream, conduits transform a stream.</p>
  <h3>Types</h3>
   <p class="hascomments">As we did previously, let's start off by looking at the types involved.</p>
-  <pre>data ConduitResult input m output =
+  <pre><code>data ConduitResult input m output =
     Producing (Conduit input m output) [output]
   | Finished (Maybe input) [output]
 
 data Conduit input m output = Conduit
     { conduitPush :: input -&gt; ResourceT m (ConduitResult input m output)
     , conduitClose :: ResourceT m [output]
-    }</pre>
+    }</code></pre>
   <p class="hascomments">This should look very similar to what we've seen with sinks. A conduit can be pushed to, in
    which case it returns a result. A result either indicates that it is still producing data, or
    that it is finished. When a conduit is closed, it returns some more output.</p>
@@ -940,7 +940,7 @@ data Conduit input m output = Conduit
   <p class="hascomments">Overall conduits should seem very similar to what we've covered so far.</p>
  <h3>Simple conduits</h3>
   <p class="hascomments">We'll start off by defining some simple conduits that don't have any state.</p>
-  <pre>-- START
+  <pre><code>-- START
 import Prelude hiding (map, concatMap)
 import Data.Conduit
 
@@ -966,11 +966,11 @@ concatMap f = Conduit
     }
 -- STOP
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
  <h3>Stateful conduits</h3>
   <p class="hascomments">Of course, not all conduits can be declared without state. Doing so on the bare metal is not
    too difficult.</p>
-  <pre>-- START
+  <pre><code>-- START
 import Prelude hiding (reverse)
 import qualified Data.List
 import Data.Conduit
@@ -997,10 +997,10 @@ sort =
     close state = return $ Data.List.sort state
 -- STOP
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
   <p class="hascomments">But we can do better. Just like sourceState and sinkState, we
             have conduitState to simplify things.</p>
-  <pre>-- START
+  <pre><code>-- START
 import Prelude hiding (reverse)
 import qualified Data.List
 import Data.Conduit
@@ -1024,22 +1024,22 @@ sort =
     close state = return $ Data.List.sort state
 -- STOP
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
  <h3>Using conduits</h3>
   <p class="hascomments">The way Conduits interact with the rest of the package is via
     <dfn>fusing</dfn>. A conduit can be fused into a source, producing a new source, fused into a
    sink to produce a new sink, or fused with another conduit to produce a new conduit. It's best to
    just look at the fusion operators.</p>
-  <pre>-- Left fusion: source + conduit = source
+  <pre><code>-- Left fusion: source + conduit = source
 ($=) :: (Resource m, IsSource src) =&gt; src m a -&gt; Conduit a m b -&gt; Source m b
 
 -- Right fusion: conduit + sink = sink
 (=$) :: Resource m =&gt; Conduit a m b -&gt; Sink b m c -&gt; Sink a m c
 
 -- Middle fusion: conduit + conduit = conduit
-(=$=) :: Resource m =&gt; Conduit a m b -&gt; Conduit b m c -&gt; Conduit a m c</pre>
+(=$=) :: Resource m =&gt; Conduit a m b -&gt; Conduit b m c -&gt; Conduit a m c</code></pre>
   <p class="hascomments">Using these operators is straightforward.</p>
-  <pre>useConduits = do
+  <pre><code>useConduits = do
     runResourceT
           $  CL.sourceList [1..10]
           $= reverse
@@ -1057,7 +1057,7 @@ main = return ()</pre>
     runResourceT
           $  CL.sourceList [1..10]
           $$ (reverse =$= CL.map show)
-          =$ CL.consume</pre>
+          =$ CL.consume</code></pre>
   <p class="hascomments">There is in fact one last way of expressing the same idea. I'll leave it as an exercise to the
    reader to discover it.</p>
   <p class="hascomments">It may seem like all these different approaches are redundant. While occassionally you can in
@@ -1077,39 +1077,39 @@ main = return ()</pre>
    plain old lists- that will take a list of numbers, apply some kind of transformation to them,
    take the first five transformed values and do something with them, and then do something else
    with the remaining non-transformed values. For example, we want something like:</p>
-  <pre>main = do
+  <pre><code>main = do
     let list = [1..10]
         transformed = map show list
         (begin, end) = splitAt 5 transformed
         untransformed = map read end
     mapM_ putStrLn begin
-    print $ sum untransformed</pre>
+    print $ sum untransformed</code></pre>
   <p class="hascomments">But clearly this isn't a good general solution, since we don't want to have to transform and
    then untransform every element in the list. For one thing, we may not always have an inverse
    function. Another issue is efficiency. In this case, we can write something more efficient:</p>
-  <pre>main = do
+  <pre><code>main = do
     let list = [1..10]
         (begin, end) = splitAt 5 list
         transformed = map show begin
     mapM_ putStrLn transformed
-    print $ sum end</pre>
+    print $ sum end</code></pre>
   <p class="hascomments">Note the change: we perform our split before transforming any elements. This works because,
    with map, we have a 1-to-1 correspondence between the input and output elements.
    So splitting at 5 before or after mapping show is the same thing. But what
    happens if we replace map show with something more devious.</p>
-  <pre>deviousTransform =
+  <pre><code>deviousTransform =
     concatMap go
   where
     go 1 = [show 1]
     go 2 = [show 2, "two"]
     go 3 = replicate 5 "three"
-    go x = [show x]</pre>
+    go x = [show x]</code></pre>
   <p class="hascomments">We no longer have the 1-to-1 correspondence. As a result, we can't use the second method. But
    it's even worse: we can't use the first method either, since there's no inverse of our
     deviousTransform.</p>
   <p class="hascomments">There's only one solution to the problem that I'm aware of: transform elements one at a time.
    The final program looks like this:</p>
-  <pre>deviousTransform 1 = [show 1]
+  <pre><code>deviousTransform 1 = [show 1]
 deviousTransform 2 = [show 2, "two"]
 deviousTransform 3 = replicate 5 "three"
 deviousTransform x = [show x]
@@ -1132,13 +1132,13 @@ main = do
     let list = [1..10]
         (begin, end) = transform5 list
     mapM_ putStrLn begin
-    print $ sum end</pre>
-  <p class="hascomments">The final output of this program is<pre>1
+    print $ sum end</code></pre>
+  <p class="hascomments">The final output of this program is<pre><code>1
 2
 two
 three
 three
-49</pre>What's important
+49</code></pre>What's important
    to note is that the number 3 is converted into five copies of the word "three", yet only two of
    them show up in the output. The rest are discarded in the take 5 call.</p>
   <p class="hascomments">This whole exercise is just to demonstrate the issue of data loss in conduits. By forcing
@@ -1155,7 +1155,7 @@ three
    up every five. In other words, for the input [1..50], it should result in the
    sequence [15,40,65,90,115,140,165,190,215,240]. We can definitely do this with
    the low-level conduit interface.</p>
-  <pre>import Data.Conduit
+  <pre><code>import Data.Conduit
 -- START
 sum5Raw :: Resource m =&gt; Conduit Int m Int
 sum5Raw =
@@ -1172,7 +1172,7 @@ sum5Raw =
         | otherwise  = return [total]
 -- STOP
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
   <p class="hascomments">But this is frustrating, since we already have all the tools we need to do this at a high
    level! There's the fold sink for adding up the numbers, and the
     isolate conduit which will only allow up to a certain number of elements to be
@@ -1184,7 +1184,7 @@ main = return ()</pre>
    into a Conduit using the sequenceSink function. This function
    also takes some state value that gets passed through to the sink.</p>
   <p class="hascomments">So we can rewrite sum5Raw in a much more high-level manner.</p>
-  <pre>import Data.Conduit
+  <pre><code>import Data.Conduit
 import qualified Data.Conduit.List as CL
 -- START
 sum5 :: Resource m =&gt; Conduit Int m Int
@@ -1192,7 +1192,7 @@ sum5 = sequenceSink () $ \() -&gt; do
     nextSum &lt;- CL.isolate 5 =$ CL.fold (+) 0
     return $ Emit () [nextSum]
 -- STOP
-main = return ()</pre>
+main = return ()</code></pre>
   <p class="hascomments">All of the () in there are simply the unused state variable being passed
    around, they can be ignored. Otherwise, we're doing exactly what we want. We fuse
     isolate to fold to get the sum of the next five elements from
@@ -1201,7 +1201,7 @@ main = return ()</pre>
    through the remaining values, multiplied by 2. We can keep track of how many values we've
    returned in our state, and then use the StartConduit constructor to pass control
    to the multiply-by-2 conduit next.</p>
-  <pre>import Data.Conduit
+  <pre><code>import Data.Conduit
 import qualified Data.Conduit.List as CL
 -- START
 sum5Pass :: Resource m =&gt; Conduit Int m Int
@@ -1212,7 +1212,7 @@ sum5Pass = sequenceSink 0 $ \count -&gt; do
             nextSum &lt;- CL.isolate 5 =$ CL.fold (+) 0
             return $ Emit (count + 1) [nextSum]
 -- STOP
-main = return ()</pre>
+main = return ()</code></pre>
   <p class="hascomments">These are obviously very contrived examples, but I hope it makes clear the power and simplicity
    available from this approach.</p>
  <h2>Buffering</h2>
@@ -1264,15 +1264,15 @@ main = return ()</pre>
  <h4>A web server</h4>
   <p class="hascomments">Let's say we're going to write a web server. We're going to use the following low-level
    operations:</p>
-  <pre>data Socket
+  <pre><code>data Socket
 recv    :: Socket -&gt; Int -&gt; IO ByteString -- returns empty when the socket is closed
-sendAll :: Socket -&gt; ByteString -&gt; IO ()</pre>
+sendAll :: Socket -&gt; ByteString -&gt; IO ()</code></pre>
   <p class="hascomments">We're up to the part where we need to implement the function handleConn that
    handles an individual connection. It will look something like this:</p>
-  <pre>data Request  -- request headers, HTTP version, etc
+  <pre><code>data Request  -- request headers, HTTP version, etc
 data Response -- status code, response headers, resposne body
 type Application = Request -&gt; IO Response
-handleConn :: Application -&gt; Socket -&gt; IO ()</pre>
+handleConn :: Application -&gt; Socket -&gt; IO ()</code></pre>
   <p class="hascomments">What does our handleConn need to do? In broad strokes:</p>
   <ol id="ol_23c2db36-3ed2-4d54-bc0e-38be6417ccf1">
    <li>Parse the request line</li>
@@ -1285,18 +1285,18 @@ handleConn :: Application -&gt; Socket -&gt; IO ()</pre>
   <p class="hascomments">We start off by writing steps 1 and 2 manually, without using conduits. We'll do this very
    simply and just assume three space-separated strings. We end up with something that looks
    like:</p>
-  <pre>data RequestLine = RequestLine ByteString ByteString ByteString
+  <pre><code>data RequestLine = RequestLine ByteString ByteString ByteString
 
 parseRequestLine :: Socket -&gt; IO RequestLine
 parseRequestLine socket = do
     bs &lt;- recv socket 4096
     let (method:path:version:ignored) = S8.words bs
-    return $ RequestLine method path version</pre>
+    return $ RequestLine method path version</code></pre>
   <p class="hascomments">There are two issues here: it doesn't handle the case where there are less than three words in
    the chunk of data, and it throws away any extra data. We can definitely solve both of these
    issues manually, but it's very tedious. It's much easier to implement this in terms of
    conduits.</p>
-  <pre>-- START
+  <pre><code>-- START
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as S
 import Data.Conduit
@@ -1318,12 +1318,12 @@ parseRequestLine = do
     version &lt;- getWord
     return $ RequestLine method path version
 -- STOP
-main = return ()</pre>
+main = return ()</code></pre>
   <p class="hascomments">This means that our code will automatically be supplied with more data as it comes in, and any
    extra data will automatically be buffered in the Source, ready for the next time
    it's used. Now we can easily structure our program together, demonstrating the power of the
    conduits approach:</p>
-  <pre>-- START
+  <pre><code>-- START
 import Data.ByteString (ByteString)
 import Data.Conduit
 import Data.Conduit.Network (sourceSocket)
@@ -1354,7 +1354,7 @@ handleConn app socket = do
     res &lt;- liftIO $ app req
     liftIO $ sendResponse socket res
 -- STOP
-main = return ()</pre>
+main = return ()</code></pre>
  <h4>Whither the request body?</h4>
   <p class="hascomments">This is all great, until we realize we can't read the request body. The
     Application is simply given the Request, and lives in the
@@ -1388,7 +1388,7 @@ main = return ()</pre>
     BufferedSource. This is an abstract data type, but all it really does is keep a
    mutable reference to a buffer and an underlying Source. In order to create one
    of these, you use the bufferSource function.</p>
-  <pre>bufferSource ::Resource m =&gt; Source m a -&gt; ResourceT m (BufferedSource m a)</pre>
+  <pre><code>bufferSource ::Resource m =&gt; Source m a -&gt; ResourceT m (BufferedSource m a)</code></pre>
   <p class="hascomments">This one little change is what allows us to easily solve our web server dilemna. Instead of
    connecting a Source to our parsing Sinks, we use a
     BufferedSource. At the end of each connection, any leftover data is put back on
@@ -1404,12 +1404,12 @@ main = return ()</pre>
   <p class="hascomments">There's one "gotcha" in the BufferedSource instance of this typeclass, so
    let's explain it. Suppose we want to write a file copy function, without any buffering. This is a
    fairly standard usage of conduits:</p>
-  <pre>sourceFile input $$ sinkFile output</pre>
+  <pre><code>sourceFile input $$ sinkFile output</code></pre>
   <p class="hascomments">When this line is run, both the input and output files are opened, the data is copied, and then
    both files are closed. Let's change this example slightly to use buffering:</p>
-  <pre>bsrc &lt;- bufferSource $ sourceFile input
+  <pre><code>bsrc &lt;- bufferSource $ sourceFile input
 bsrc $$ isolate 50 =$ sinkFile output1
-bsrc $$ sinkFile output2</pre>
+bsrc $$ sinkFile output2</code></pre>
   <p class="hascomments">When is the input file opened and closed? The opening occurs on the first line, when buffering
    the source. And if we follow the normal rules from sources, the file should be closed after the
    second line. However, if we did that, we couldn't reuse bsrc for line 3!</p>
@@ -1426,7 +1426,7 @@ bsrc $$ sinkFile output2</pre>
    source will automatically be closed when runResourceT is called.</p>
  <h3>Recapping the web server</h3>
   <p class="hascomments">So what exactly does our web server look like now?</p>
-  <pre>-- START
+  <pre><code>-- START
 import Data.ByteString (ByteString)
 import Data.Conduit
 import Data.Conduit.Network (sourceSocket)
@@ -1457,7 +1457,7 @@ handleConn app socket = runResourceT $ do
     res &lt;- app req
     liftIO $ sendResponse socket res
 -- STOP
-main = return ()</pre>
+main = return ()</code></pre>
   <p class="hascomments">We've made a few minor changes. Firstly, the Application now lives in the
     ResourceT IO monad. This isn't strictly necessary, but it's very convenient:
    the application can now register cleanup actions that will only take place after the response has

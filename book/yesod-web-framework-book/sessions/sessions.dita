@@ -50,7 +50,7 @@
             a session to continue under such circumstances, at the cost of exposing a user to
             session hijacking.</p><h2>Session Operations</h2><p id="o1" class="hascomments">Like most frameworks, a session in Yesod is a key-value store. The base session API boils
             down to four functions: lookupSession gets a value for a key
-            (if available), getSession returns all of the key/value pairs, setSession sets a value for a key, and deleteSession clears a value for a key.</p><pre id="x4">{-# LANGUAGE TypeFamilies, QuasiQuotes, TemplateHaskell, MultiParamTypeClasses, OverloadedStrings #-}
+            (if available), getSession returns all of the key/value pairs, setSession sets a value for a key, and deleteSession clears a value for a key.</p><pre id="x4"><code>{-# LANGUAGE TypeFamilies, QuasiQuotes, TemplateHaskell, MultiParamTypeClasses, OverloadedStrings #-}
 import Yesod
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 
@@ -87,7 +87,7 @@ instance RenderMessage SessionExample FormMessage where
     renderMessage _ _ = defaultFormMessage
 
 main :: IO ()
-main = warpDebug 3000 SessionExample</pre><h2>Messages</h2><p id="m1" class="hascomments">One usage of sessions previously alluded to is messages. They come to solve a common
+main = warpDebug 3000 SessionExample</code></pre><h2>Messages</h2><p id="m1" class="hascomments">One usage of sessions previously alluded to is messages. They come to solve a common
             problem in web development: the user performs a POST request, the web
             app makes a change, and then the web app wants to simultaneously redirect
             the user to a new page and send the user a success message. (This is known as
@@ -98,7 +98,7 @@ main = warpDebug 3000 SessionExample</pre><h2>Messages</h2><p id="m1" class="has
             displayed twice.</p><p id="m3" class="hascomments">It is recommended to have a call to getMessage in defaultLayout so that any available message is shown to a user
             immediately, without having to remember to add getMessage calls to
             every handler.</p>
-        <pre id="x-3">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
+        <pre id="x-3"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
              QuasiQuotes, MultiParamTypeClasses #-}
 import Yesod
 
@@ -143,7 +143,7 @@ postSetMessageR = do
     redirect RootR
 
 main :: IO ()
-main = warpDebug 3000 Messages</pre>
+main = warpDebug 3000 Messages</code></pre>
         <figure id="x-4"><figcaption>Initial page load, no message</figcaption>
             
             <img src="../../images/messages-1.png" id="image_oka_gxb_yd" placement="inline"/>
@@ -177,7 +177,7 @@ main = warpDebug 3000 Messages</pre>
             session, and then tell the user his/her name from another route. If the name hasn't been
             set yet, the user will be redirected to the set name page, with an ultimate destination
             set to come back to the current page.</p>
-        <pre>{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
+        <pre><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
              QuasiQuotes, MultiParamTypeClasses #-}
 import Yesod
 
@@ -237,7 +237,7 @@ getSayHelloR = do
 |]
 
 main :: IO ()
-main = warpDebug 3000 UltDest</pre><h2>Summary</h2>
+main = warpDebug 3000 UltDest</code></pre><h2>Summary</h2>
         <p id="x-3" class="hascomments">Sessions are the number one way we bypass the statelessness imposed by HTTP. We
             shouldn't consider this an escape hatch to perform whatever actions we want:
             statelessness in web applications is a virtue, and we should respect it whenever

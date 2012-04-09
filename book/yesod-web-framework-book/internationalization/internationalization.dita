@@ -18,21 +18,21 @@
             <li id="x-8">Absolutely no issues at all with word order.</li>
         </ul>
     <h2>Synopsis</h2>
-  <pre id="x-3">-- @messages/en.msg
+  <pre id="x-3"><code>-- @messages/en.msg
 Hello: Hello
 EnterItemCount: I would like to buy: 
 Purchase: Purchase
 ItemCount count@Int: You have purchased #{showInt count} #{plural count "item" "items"}.
 SwitchLanguage: Switch language to: 
-Switch: Switch</pre>
-  <pre id="x-4">-- @messages/he.msg
+Switch: Switch</code></pre>
+  <pre id="x-4"><code>-- @messages/he.msg
 Hello: שלום
 EnterItemCount: אני רוצה לקנות: 
 Purchase: קנה
 ItemCount count: קנית #{showInt count} #{plural count "דבר" "דברים"}.
 SwitchLanguage: החלף שפה ל:
-Switch: החלף</pre>
-  <pre id="x-5">-- @i18n-synopsis.hs
+Switch: החלף</code></pre>
+  <pre id="x-5"><code>-- @i18n-synopsis.hs
 {-# LANGUAGE OverloadedStrings, QuasiQuotes, TemplateHaskell, TypeFamilies,
     MultiParamTypeClasses #-}
 import Yesod
@@ -88,7 +88,7 @@ postLangR = do
     redirect RootR
 
 main :: IO ()
-main = warpDebug 3000 I18N</pre>
+main = warpDebug 3000 I18N</code></pre>
  <h2>Overview</h2>
   <p id="x-3" class="hascomments">Most existing i18n solutions out there, like gettext or Java message bundles, work on the
    principle of string lookups. Usually some form of printf-interpolation is used to interpolate
@@ -97,12 +97,12 @@ main = warpDebug 3000 I18N</pre>
   <p id="x-4" class="hascomments">Let's take a concrete example. Suppose our application has two things it wants to say
    to a user: say hello, and state how many users are logged into the system. This can be modeled
    with a sum type:</p>
-  <pre id="x-5">data MyMessage = MsgHello | MsgUsersLoggedIn Int</pre>
+  <pre id="x-5"><code>data MyMessage = MsgHello | MsgUsersLoggedIn Int</code></pre>
   <p id="x-6" class="hascomments">I can also write a function to turn this datatype into an English representation:</p>
-  <pre id="x-7">toEnglish :: MyMessage -&gt; String
+  <pre id="x-7"><code>toEnglish :: MyMessage -&gt; String
 toEnglish MsgHello = "Hello there!"
 toEnglish (MsgUsersLoggedIn 1) = "There is 1 user logged in."
-toEnglish (MsgUsersLoggedIn i) = "There are " ++ show i ++ " users logged in."</pre>
+toEnglish (MsgUsersLoggedIn i) = "There are " ++ show i ++ " users logged in."</code></pre>
   <p id="x-8" class="hascomments">We can also write similar functions for other languages. The advantage to this
    inside-Haskell approach is that we have the full power of Haskell for addressing tricky grammar
    issues, especially pluralization.</p>
@@ -137,11 +137,11 @@ toEnglish (MsgUsersLoggedIn i) = "There are " ++ show i ++ " users logged in."</
    unless you are actually creating separate translations by locale. This ensures that someone
    asking for Canadian English will still see your English. Behind the scenes, Yesod will add the
    two-letter codes where relevant. For example, suppose a user has the following language
-   list:<pre id="x-12">pt-BR, es, he</pre>What this means is "I like Brazilian Porteguese, then
+   list:<pre id="x-12"><code>pt-BR, es, he</code></pre>What this means is "I like Brazilian Porteguese, then
    Spanish, and then Hebrew." Suppose your application provides the languages pt (general
    Porteguese) and English, with English as the default. Strictly following the user's language list
    would result in the user being served English. Instead, Yesod translates that list
-   into:<pre id="x-13">pt-BR, es, he, pt</pre>In other words: unless you're giving different
+   into:<pre id="x-13"><code>pt-BR, es, he, pt</code></pre>In other words: unless you're giving different
    translations based on locale, just stick to the two-letter language codes.</p>
   <p id="x-8" class="hascomments">Now what about these message files? The syntax should be very familiar after your work
    with Hamlet and Persistent. The line starts off with the name of the message. Since this is a
@@ -156,8 +156,8 @@ toEnglish (MsgUsersLoggedIn i) = "There are " ++ show i ++ " users logged in."</
    to a data constructor must be given a data type. We use a @-syntax for this. For example, to
    create the datatype data MyMessage = MsgHello | MsgSayAge Int, we would
    write:</p>
-  <pre id="x-5">Hello: Hi there!
-SayAge age@Int: Your age is: #{show age}</pre>
+  <pre id="x-5"><code>Hello: Hi there!
+SayAge age@Int: Your age is: #{show age}</code></pre>
   <p id="x-6" class="hascomments">But there are two problems with this:</p>
   <ol id="ol_cvd_tjd_d2">
    <li id="x-7">It's not very DRY (don't repeat yourself) to have to specify this datatype in every
@@ -172,11 +172,11 @@ SayAge age@Int: Your age is: #{show age}</pre>
   <p id="x-3" class="hascomments">Your call to mkMessage creates an instance of the
     RenderMessage typeclass, which is the core of Yesod's i18n. It is defined
    as:</p>
-  <pre id="x-5">class RenderMessage master message where
+  <pre id="x-5"><code>class RenderMessage master message where
     renderMessage :: master
                   -&gt; [Text] -- ^ languages
                   -&gt; message
-                  -&gt; Text </pre>
+                  -&gt; Text </code></pre>
   <p id="x-6" class="hascomments">Notice that there are two parameters to the RenderMessage class: the
    master site and the message type. In theory, we could skip the master type here, but that would
    mean that every site would need to have the same set of translations for each message type. When
@@ -187,13 +187,13 @@ SayAge age@Int: Your age is: #{show age}</pre>
     Text that can be displayed.</p>
   <p id="x-8" class="hascomments">A simple instance of RenderMessage may involve no actual translation
    of strings; instead, it will just display the same value for every language. For example:</p>
-  <pre id="x-9">data MyMessage = Hello | Greet Text
+  <pre id="x-9"><code>data MyMessage = Hello | Greet Text
 instance RenderMessage MyApp MyMessage where
     renderMessage _ _ Hello = "Hello"
-    renderMessage _ _ (Greet name) = "Welcome, " &lt;&gt; name &lt;&gt; "!"</pre>
+    renderMessage _ _ (Greet name) = "Welcome, " &lt;&gt; name &lt;&gt; "!"</code></pre>
   <p id="x-10" class="hascomments">Notice how we ignore the first two parameters to renderMessage. We
    can now extend this to support multiple languages:</p>
-  <pre id="x-11">renderEn Hello = "Hello"
+  <pre id="x-11"><code>renderEn Hello = "Hello"
 renderEn (Greet name) = "Welcome, " &lt;&gt; name &lt;&gt; "!"
 renderHe Hello = "שלום"
 renderHe (Greet name) = "ברוכים הבאים, " &lt;&gt; name &lt;&gt; "!"
@@ -201,7 +201,7 @@ instance RenderMessage MyApp MyMessage where
     renderMessage _ ("en":_) = renderEn
     renderMessage _ ("he":_) = renderHe
     renderMessage master (_:langs) = renderMessage master langs
-    renderMessage _ [] = renderEn</pre>
+    renderMessage _ [] = renderEn</code></pre>
   <p id="x-12" class="hascomments">The idea here is fairly straight-forward: we define helper functions to support each language.
    We then add a clause to catch each of those languages in the renderMessage definition. We then
    have two final cases: if no languages matched, continue checking with the next language in the
@@ -226,11 +226,11 @@ instance RenderMessage MyApp MyMessage where
    "You have added 4 turtles to your cart." and "You have purchased 4 turtles, congratulations!" As
    a programmer, you'll immediately notice the code reuse potential: we have the phrase "4 turtles"
    twice. So you might structure your message file as:</p>
-  <pre id="x-4">AddStart: You have added
+  <pre id="x-4"><code>AddStart: You have added
 AddEnd: to your cart.
 PurchaseStart: You have purchased
 PurchaseEnd: , congratulations!
-Turtles count@Int: #{show count} #{plural count "turtle" "turtles"}</pre>
+Turtles count@Int: #{show count} #{plural count "turtle" "turtles"}</code></pre>
   <p id="x-5" class="hascomments">STOP RIGHT THERE! This is all well and good from a programming perspective, but
    translations are not programming. There are a many things that could go wrong
    with this, such as:</p>

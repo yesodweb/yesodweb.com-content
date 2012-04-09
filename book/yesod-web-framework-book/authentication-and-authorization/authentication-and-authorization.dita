@@ -48,7 +48,7 @@
    functions, though this undermines many of the benefits of a declarative authorization system.</p>
  <h2>Authenticate Me</h2>
   <p id="x-3" class="hascomments">Let's jump right in with an example of authentication.</p>
-  <pre id="x-4">{-# LANGUAGE OverloadedStrings, TemplateHaskell, TypeFamilies,
+  <pre id="x-4"><code>{-# LANGUAGE OverloadedStrings, TemplateHaskell, TypeFamilies,
              MultiParamTypeClasses, QuasiQuotes #-}
 import Yesod
 import Yesod.Auth
@@ -104,12 +104,12 @@ $nothing
 main :: IO ()
 main = do
     man &lt;- newManager def
-    warpDebug 3000 $ MyAuthSite man</pre>
+    warpDebug 3000 $ MyAuthSite man</code></pre>
   <p id="x-5" class="hascomments">We'll start with the route declarations. First we declare our standard RootR
    route, and then we set up the authentication subsite. Remember that a subsite needs four
    parameters: the path to the subsite, the route name, the subsite name, and a function to get the
    subsite value. In other words, based on the line:</p>
-  <pre id="x-7">/auth AuthR Auth getAuth</pre>
+  <pre id="x-7"><code>/auth AuthR Auth getAuth</code></pre>
   <p id="x-8" class="hascomments">We need to have getAuth :: MyAuthSite -&gt; Auth. While we haven't written that
    function ourselves, yesod-auth provides it automatically. With other subsites
    (like static files), we provide configuration settings in the subsite value, and therefore need
@@ -192,7 +192,7 @@ main = do
    emails to users (verify account, password retrieval, etc.).</p>
   <p id="x-11" class="hascomments">Let's have a look at a site that provides email authentication, storing passwords in a
    Persistent SQLite database.</p>
-  <pre id="x-12">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes, GADTs,
+  <pre id="x-12"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes, GADTs,
              TemplateHaskell, MultiParamTypeClasses, FlexibleContexts #-}
 import Yesod
 import Yesod.Auth
@@ -336,13 +336,13 @@ $nothing
 main :: IO ()
 main = withSqliteConn "email.db3" $ \conn -&gt; do
     runSqlConn (runMigration migrateAll) conn
-    warpDebug 3000 $ MyEmailApp conn</pre>
+    warpDebug 3000 $ MyEmailApp conn</code></pre>
  <h2>Authorization</h2>
   <p id="x-3" class="hascomments">Once you can authenticate your users, you can use their credentials to authorize requests. Authorization in Yesod is simple and declarative: most of
             the time, you just need to add the authRoute and
                 isAuthorized methods to your Yesod typeclass instance. Let's see an
             example.</p>
-  <pre id="x-5">{-# LANGUAGE OverloadedStrings, TemplateHaskell, TypeFamilies,
+  <pre id="x-5"><code>{-# LANGUAGE OverloadedStrings, TemplateHaskell, TypeFamilies,
              MultiParamTypeClasses, QuasiQuotes #-}
 import Yesod
 import Yesod.Auth
@@ -423,7 +423,7 @@ getAdminR = defaultLayout [whamlet|
 main :: IO ()
 main = do
     manager &lt;- newManager def
-    warpDebug 3000 $ MyAuthSite manager</pre>
+    warpDebug 3000 $ MyAuthSite manager</code></pre>
   <p id="x-6" class="hascomments">authRoute should be your login page, almost always
                 AuthR
             LoginR. isAuthorized is a function that takes two

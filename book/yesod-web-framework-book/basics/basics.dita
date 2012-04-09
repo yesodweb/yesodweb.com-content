@@ -3,7 +3,7 @@
         <p id="x-3" class="hascomments">The first step with any new technology is getting it running. The goal of this chapter is
             to get you started with a simple Yesod application, and cover some of the basic concepts
             and terminology.</p>
-    <h2>Hello World</h2><p id="hw1" class="hascomments">Let's get this book started properly: a simple web page that says Hello World:</p><pre id="x1">{-# LANGUAGE TypeFamilies, QuasiQuotes, MultiParamTypeClasses,
+    <h2>Hello World</h2><p id="hw1" class="hascomments">Let's get this book started properly: a simple web page that says Hello World:</p><pre id="x1"><code>{-# LANGUAGE TypeFamilies, QuasiQuotes, MultiParamTypeClasses,
              TemplateHaskell, OverloadedStrings #-}
 import Yesod
 
@@ -19,17 +19,17 @@ getHomeR :: Handler RepHtml
 getHomeR = defaultLayout [whamlet|Hello World!|]
 
 main :: IO ()
-main = warpDebug 3000 HelloWorld</pre><p id="hw2" class="hascomments">If you save that code in helloworld.hs and run it with runhaskell helloworld.hs, you'll get a web server running on port 3000. If you point your browser to <a href="http://localhost:3000" id="x6">http://localhost:3000</a>, you'll get the following HTML:</p><pre id="x7">&lt;!DOCTYPE html&gt;
-&lt;html&gt;&lt;head&gt;&lt;title&gt;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;Hello World!&lt;/body&gt;&lt;/html&gt;</pre>
+main = warpDebug 3000 HelloWorld</code></pre><p id="hw2" class="hascomments">If you save that code in helloworld.hs and run it with runhaskell helloworld.hs, you'll get a web server running on port 3000. If you point your browser to <a href="http://localhost:3000" id="x6">http://localhost:3000</a>, you'll get the following HTML:</p><pre id="x7"><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;&lt;head&gt;&lt;title&gt;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;Hello World!&lt;/body&gt;&lt;/html&gt;</code></pre>
         <p id="x-3" class="hascomments">We'll refer back to this example through the rest of the chapter.</p><h2>Routing</h2><p id="routing1" class="hascomments">Like most modern web frameworks, Yesod follows a <a href="http://en.wikipedia.org/wiki/Front_Controller_pattern" id="x1">front controller pattern</a>. This means that every request to a
             Yesod application enters at the same point and is routed from there. As a contrast, in
             systems like PHP and ASP you usually create a number of different files, and the web
             server automatically directs requests to the relevant file.</p>
         <p id="x-3" class="hascomments">In addition, Yesod uses a declarative style for specifying routes. In our example above,
             this looked like:</p>
-        <pre id="x-4">mkYesod "HelloWorld" [parseRoutes|
+        <pre id="x-4"><code>mkYesod "HelloWorld" [parseRoutes|
 / HomeR GET
-|]</pre>
+|]</code></pre>
         <aside id="x-10" class="note">mkYesod is a Template Haskell function, and
                 parseRoutes is a QuasiQuoter.</aside>
         <p id="x-5" class="hascomments">In English, all this means is: <q id="x-6">In the HelloWorld application, create
@@ -43,7 +43,7 @@ main = warpDebug 3000 HelloWorld</pre><p id="hw2" class="hascomments">If you sav
                 <a href="../../yesod-web-framework-book/routing-and-handlers/routing-and-handlers.dita#file89-routing-and-handlersrouting-and-handlers" id="x-18">the routing chapter</a>. But by using the
                 -ddump-splices GHC option, we can get an immediate look at the
             generated code. A much cleaned up version of it is:</p>
-        <pre id="x-20">{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, OverloadedStrings #-}
+        <pre id="x-20"><code>{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, OverloadedStrings #-}
 import qualified Yesod.Routes.Dispatch
 import Yesod.Routes.Class
 import Yesod.Core
@@ -85,7 +85,7 @@ instance YesodDispatch HelloWorld HelloWorld where
 getHomeR = return ()
 
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
         <p id="x-21" class="hascomments">Some of that will likely not make sense yet. In particular, the implementation of
                 yesodDispatch is a bit hairy to accomodate different dispatch
             approaches and fit the model necessary for our high-performance routing structures.
@@ -143,7 +143,7 @@ main = return ()</pre>
             for other Haskell development (both framework and non-framework applications), as well
             as a standard file server in a number of production environments.</p><h2>Resources and type-safe URLs</h2><p id="resources1" class="hascomments">In our hello world, we defined just a single resource (HomeR). A
             web application is usually much more exciting with more than one page on it. Let's take
-            a look:</p><pre id="x1">{-# LANGUAGE TypeFamilies, QuasiQuotes, MultiParamTypeClasses,
+            a look:</p><pre id="x1"><code>{-# LANGUAGE TypeFamilies, QuasiQuotes, MultiParamTypeClasses,
              TemplateHaskell, OverloadedStrings #-}
 import Yesod
 
@@ -161,12 +161,12 @@ getHomeR  = defaultLayout [whamlet|&lt;a href=@{Page1R}&gt;Go to page 1!|]
 getPage1R = defaultLayout [whamlet|&lt;a href=@{Page2R}&gt;Go to page 2!|]
 getPage2R = defaultLayout [whamlet|&lt;a href=@{HomeR}&gt;Go home!|]
 
-main = warpDebug 3000 Links</pre><p id="resources2" class="hascomments">Overall, this is very similar to Hello World. Our foundation is now
+main = warpDebug 3000 Links</code></pre><p id="resources2" class="hascomments">Overall, this is very similar to Hello World. Our foundation is now
                 Links instead of HelloWorld, and in addition to
             the HomeR resource, we've added Page1R and
                 Page2R. As such, we've also added two more handler functions:
                 getPage1R and getPage2R.</p><p id="resources3" class="hascomments">The only truly new feature is inside the whamlet
-            quasi-quotation. We'll delve into syntax in the <a href="../../yesod-web-framework-book/shakespearean-templates/shakespearean-templates.dita#file52-shakespearean-templatestemplates" id="x-15">Shakespeare chapter</a>, but we can see that:</p><pre id="x2">&lt;a href=@{Page1R}&gt;Go to page 1!</pre><p id="resources4" class="hascomments">creates a link to the Page1R resource. The important thing to
+            quasi-quotation. We'll delve into syntax in the <a href="../../yesod-web-framework-book/shakespearean-templates/shakespearean-templates.dita#file52-shakespearean-templatestemplates" id="x-15">Shakespeare chapter</a>, but we can see that:</p><pre id="x2"><code>&lt;a href=@{Page1R}&gt;Go to page 1!</code></pre><p id="resources4" class="hascomments">creates a link to the Page1R resource. The important thing to
             note here is that Page1R is a data constructor. By making each resource
             a data constructor, we have a feature called <dfn id="x3">type-safe URLs</dfn>.
             Instead of splicing together strings to create URLs, we simply create a plain old
@@ -174,7 +174,7 @@ main = warpDebug 3000 Links</pre><p id="resources2" class="hascomments">Overall,
             automatically renders those values to textual URLs before sending things off to the
             user. We can see how this is implemented by looking again at the
                 -ddump-splices output:</p>
-        <pre id="x-20">{-# LANGUAGE TypeFamilies, OverloadedStrings #-}
+        <pre id="x-20"><code>{-# LANGUAGE TypeFamilies, OverloadedStrings #-}
 import Yesod.Core
 
 data Links = Links
@@ -190,7 +190,7 @@ instance RenderRoute Links where
 -- STOP
 
 main :: IO ()
-main = return ()</pre>
+main = return ()</code></pre>
         <p id="x-21" class="hascomments">In the Route associated type for Links, we have
             additional constructors for Page1R and Page2R. We also
             now have a better glimpse of the return values for returnRoute. The

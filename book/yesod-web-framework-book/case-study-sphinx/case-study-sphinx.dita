@@ -35,7 +35,7 @@
   <p id="x-10" class="hascomments">In our case, we're going to provide a URL from our application (/search/xmlpipe) that provides
    the XML file required by Sphinx, and then pipe that through to the indexer. So we'll add the
    following to our Sphinx config file:</p>
-  <pre id="x-11">source searcher_src
+  <pre id="x-11"><code>source searcher_src
 {
 	type = xmlpipe2
 	xmlpipe_command = curl http://localhost:3000/search/xmlpipe
@@ -47,7 +47,7 @@ index searcher
 	path = /var/data/searcher
 	docinfo = extern
 	charset_type = utf-8
-}</pre>
+}</code></pre>
   <p id="x-12" class="hascomments">In order to build your search index, you would run indexer searcher. Obviously
    this won't work until you have your web app running. For a production site, it would make sense
    to run this command via a crontab script so the index is regularly updated.</p>
@@ -56,7 +56,7 @@ index searcher
    holding documents, which consist of a title and content. We'll store this in a SQLite database,
    and provide routes for searching, adding documents, viewing documents and providing the xmlpipe
    file to Sphinx.</p>
-  <pre id="x-4">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
+  <pre id="x-4"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
@@ -304,10 +304,10 @@ endEvents =
 main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
-    warpDebug 3000 $ Searcher pool</pre>
+    warpDebug 3000 $ Searcher pool</code></pre>
   <p id="x-5" class="hascomments">Hopefully all of this looks pretty familiar by now. Next we'll define some forms: one for
    creating documents, and one for searching:</p>
-  <pre id="x-6">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
+  <pre id="x-6"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
@@ -555,11 +555,11 @@ endEvents =
 main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
-    warpDebug 3000 $ Searcher pool</pre>
+    warpDebug 3000 $ Searcher pool</code></pre>
   <p id="x-7" class="hascomments">The True parameter to searchField makes the field auto-focus on page load.
    Finally, we have some standard handlers for the homepage (shows the add document form and the
    search form), the document display, and adding a document.</p>
-  <pre id="x-9">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
+  <pre id="x-9"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
@@ -807,7 +807,7 @@ endEvents =
 main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
-    warpDebug 3000 $ Searcher pool</pre>
+    warpDebug 3000 $ Searcher pool</code></pre>
  <h2>Searching</h2>
         <p id="x-3" class="hascomments">Now that we've got the boring stuff out of the way, let's jump into the actual
             searching. We're going to need three pieces of information for displaying a result: the
@@ -818,13 +818,13 @@ main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
             <img src="../../images/search-results.png" id="image_dba_loh_rd" placement="inline"/>
         </figure>
         <p id="x-7" class="hascomments">So let's start off by defining a Result datatype:</p>
-        <pre id="x-8">data Result = Result
+        <pre id="x-8"><code>data Result = Result
     { resultId :: DocId
     , resultTitle :: Text
     , resultExcerpt :: Html
-    }</pre>
+    }</code></pre>
         <p id="x-9" class="hascomments">Next we'll look at the search handler:</p>
-        <pre id="x-10">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
+        <pre id="x-10"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
@@ -1074,14 +1074,14 @@ endEvents =
 main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
-    warpDebug 3000 $ Searcher pool</pre>
+    warpDebug 3000 $ Searcher pool</code></pre>
         <p id="x-11" class="hascomments">Nothing magical here, we're just relying on the searchForm defined above, and the getResults
             function which hasn't been defined yet. This function just takes a search string, and
             returns a list of results. This is where we first interact with the Sphinx API. We'll be
             using two functions: query will return a list of matches, and
                 buildExcerpts will return the highlighted excerpts. Let's
             first look at query:</p>
-        <pre id="x-12">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
+        <pre id="x-12"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
@@ -1331,7 +1331,7 @@ endEvents =
 main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
-    warpDebug 3000 $ Searcher pool</pre>
+    warpDebug 3000 $ Searcher pool</code></pre>
         <p id="x-13" class="hascomments">query takes three parameters: the configuration
             options, the index to search against (searcher in this case) and the search string. It
             returns a list of document IDs that contain the search string. The tricky bit here is
@@ -1346,7 +1346,7 @@ main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
             a [Result]. In the where clause, we define our local
             settings, which override the default port and set up the search to work when any term matches the document.</p>
         <p id="x-22" class="hascomments">Let's finally look at the getResult function:</p>
-        <pre id="x-23">getResult :: DocId -&gt; Doc -&gt; Text -&gt; IO Result
+        <pre id="x-23"><code>getResult :: DocId -&gt; Doc -&gt; Text -&gt; IO Result
 getResult docid doc qstring = do
     excerpt' &lt;- S.buildExcerpts
         excerptConfig
@@ -1372,7 +1372,7 @@ escape =
     escapeChar '&lt;' = "&amp;lt;"
     escapeChar '&gt;' = "&amp;gt;"
     escapeChar '&amp;' = "&amp;amp;"
-    escapeChar c   = T.singleton c</pre>
+    escapeChar c   = T.singleton c</code></pre>
         <p id="x-24" class="hascomments">buildExcerpts takes four parameters: the
             configuration options, the textual contents of the document, the search index and the
             search term. The interesting bit is that we entity escape the text content. Sphinx won't
@@ -1382,11 +1382,11 @@ escape =
             to a lazy text (ignoring invalid UTF-8 character sequences), and use preEscapedLazyText
             to make sure that the tags inserted for matches are not escaped. A sample of this HTML
             is:</p>
-        <pre id="x-26">&amp;#8230; Departments.  The President shall have &lt;span class='match'&gt;Power&lt;/span&gt; to fill up all Vacancies
+        <pre id="x-26"><code>&amp;#8230; Departments.  The President shall have &lt;span class='match'&gt;Power&lt;/span&gt; to fill up all Vacancies
 &amp;#8230;  people. Amendment 11 The Judicial &lt;span class='match'&gt;power&lt;/span&gt; of the United States shall
 &amp;#8230; jurisdiction. 2. Congress shall have &lt;span class='match'&gt;power&lt;/span&gt; to enforce this article by
 &amp;#8230; 5. The Congress shall have &lt;span class='match'&gt;power&lt;/span&gt; to enforce, by appropriate legislation
-&amp;#8230;</pre>
+&amp;#8230;</code></pre>
     <h2>Streaming xmlpipe output</h2>
   <p id="x-3" class="hascomments">We've saved the best for last. For the majority of Yesod handlers, the recommended approach is
    to load up the database results into memory and then produce the output document based on that.
@@ -1409,7 +1409,7 @@ escape =
    interface directly. xml-conduit provides some high-level interfaces for dealing
    with documents as a whole, but in our case, we're going to need to use the low-level Event
    interface to ensure minimal memory impact. So the function we're interested in is:</p>
-  <pre id="x-12">renderBuilder :: Resource m =&gt; RenderSettings -&gt; Conduit Event m Builder b</pre>
+  <pre id="x-12"><code>renderBuilder :: Resource m =&gt; RenderSettings -&gt; Conduit Event m Builder b</code></pre>
   <p id="x-13" class="hascomments">In plain English, that means renderBuilder takes some settings (we'll just use the
    defaults), and will then convert a stream of Events to a stream of
     Builders. This is looking pretty good, all we need now is a stream of
@@ -1421,7 +1421,7 @@ escape =
    child content element.</p>
   <figure id="x-20"><figcaption>Sample xmlpipe document</figcaption>
    
-   <pre id="x-22">&lt;sphinx:docset xmlns:sphinx="http://sphinxsearch.com/"&gt;
+   <pre id="x-22"><code>&lt;sphinx:docset xmlns:sphinx="http://sphinxsearch.com/"&gt;
     &lt;sphinx:schema&gt;
         &lt;sphinx:field name="content"/&gt;
     &lt;/sphinx:schema&gt;
@@ -1431,12 +1431,12 @@ escape =
     &lt;sphinx:document id="2"&gt;
         &lt;content&gt;foo bar baz&lt;/content&gt;
     &lt;/sphinx:document&gt;
-&lt;/sphinx:docset&gt;</pre>
+&lt;/sphinx:docset&gt;</code></pre>
   </figure>
   <p id="x-23" class="hascomments">Every document is going to start off with the same events (start the docset, start
    the schema, etc) and end with the same event (end the docset). We'll start off by defining
    those:</p>
-  <pre id="x-24">toName :: Text -&gt; X.Name
+  <pre id="x-24"><code>toName :: Text -&gt; X.Name
 toName x = X.Name x (Just "http://sphinxsearch.com/") (Just "sphinx")
 
 docset, schema, field, document, content :: X.Name
@@ -1458,16 +1458,16 @@ startEvents =
 
 endEvents =
     [ X.EventEndElement docset
-    ]</pre>
+    ]</code></pre>
   <p id="x-25" class="hascomments">Now that we have the shell of our document, we need to get the Events for each individual document. This is actually a fairly simple function:</p>
-  <pre id="x-27">entityToEvents :: (Entity Doc) -&gt; [X.Event]
+  <pre id="x-27"><code>entityToEvents :: (Entity Doc) -&gt; [X.Event]
 entityToEvents (Entity docid doc) =
     [ X.EventBeginElement document [("id", [X.ContentText $ toPathPiece docid])]
     , X.EventBeginElement content []
     , X.EventContent $ X.ContentText $ unTextarea $ docContent doc
     , X.EventEndElement content
     , X.EventEndElement document
-    ]</pre>
+    ]</code></pre>
   <p id="x-28" class="hascomments">We start the document element with an id attribute, start the
    content, insert the content, and then close both elements. We use toPathPiece to
    convert a DocId into a Text value. Next, we need to be able to
@@ -1477,18 +1477,18 @@ entityToEvents (Entity docid doc) =
    database. For most of this book, we've used the selectList function, but
    Persistent also provides the (more powerful) selectSourceConn function. So we
    end up with the function:</p>
-  <pre id="x-32">docSource :: Connection -&gt; C.Source IO X.Event
-docSource conn = selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents</pre>
+  <pre id="x-32"><code>docSource :: Connection -&gt; C.Source IO X.Event
+docSource conn = selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents</code></pre>
   <p id="x-33" class="hascomments">The $= operator joins together a source and a conduit into a new source. Now that we
    have our Event source, all we need to do is surround it with the document start
    and end events. With Source's Monoid instance, this is a piece
    of cake:</p>
-  <pre id="x-34">fullDocSource :: Connection -&gt; C.Source IO X.Event
+  <pre id="x-34"><code>fullDocSource :: Connection -&gt; C.Source IO X.Event
 fullDocSource conn = mconcat
     [ CL.sourceList startEvents
     , docSource conn
     , CL.sourceList endEvents
-    ]</pre>
+    ]</code></pre>
   <p id="x-35" class="hascomments">We're almost there, now we just need to tie it together in
     getXmlpipeR. We need to get a database connection to be used. Normally,
    database connections are taken and returned automatically via the runDB
@@ -1500,19 +1500,19 @@ fullDocSource conn = mconcat
   <p id="x-36" class="hascomments">By default, a resource will not be returned to the pool. This has to do with proper
    exception handling, but is not relevant for our use case. Therefore, we need to force the
    connection to be returned to the pool.</p>
-  <pre id="x-37">getXmlpipeR :: Handler RepXml
+  <pre id="x-37"><code>getXmlpipeR :: Handler RepXml
 getXmlpipeR = do
     Searcher pool &lt;- getYesod
     let headers = [("Content-Type", "text/xml")]
     managedConn &lt;- lift $ takeResource pool
     let conn = mrValue managedConn
     lift $ mrReuse managedConn True let source = fullDocSource conn C.$= renderBuilder def
-    sendWaiResponse $ ResponseSource status200 headers source</pre>
+    sendWaiResponse $ ResponseSource status200 headers source</code></pre>
   <p id="x-38" class="hascomments">We get our connection pool from the foundation variable, then send a WAI response. We
    use the ResponseSource constructor, and provide it the status code, response
    headers, and body.</p>
  <h2>Full code</h2>
-  <pre id="x-3">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
+  <pre id="x-3"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
@@ -1760,5 +1760,5 @@ endEvents =
 main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
-    warpDebug 3000 $ Searcher pool</pre>
+    warpDebug 3000 $ Searcher pool</code></pre>
  </html>

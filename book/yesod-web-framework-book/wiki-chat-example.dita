@@ -3,7 +3,7 @@
   <p id="x-3" class="hascomments">This example will tie together a few different ideas. We'll start with a chat subsite, which
    allows us to embed a chat widget on any page. We'll use the HTML 5 event source API to handle
    sending events from the server to the client.</p>
-  <pre id="x-4">-- @Chat.hs
+  <pre id="x-4"><code>-- @Chat.hs
 {-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
              TemplateHaskell, FlexibleInstances, MultiParamTypeClasses,
              FlexibleContexts
@@ -165,7 +165,7 @@ input.onkeyup = function(event) {
     $nothing
         logged in
     \ to chat.
-|]</pre>
+|]</code></pre>
   <p id="x-5" class="hascomments">This module stands on its own, and can be used in any application. Next we'll provide such a
    driver application: a wiki. Our wiki will have a hard-coded homepage, and then a wiki section of
    the site. We'll be using <dfn id="x-6">multiple dynamic pieces</dfn> to allow an arbitrary hierarchy of
@@ -174,7 +174,7 @@ input.onkeyup = function(event) {
    application, this should be replaced with a proper database. The content will be stored and
    served as Markdown. yesod-auth's dummy plugin will provide us with (fake)
    authentication.</p>
-  <pre id="x-10">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
+  <pre id="x-10"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
              TemplateHaskell, FlexibleInstances, MultiParamTypeClasses,
              FlexibleContexts
   #-}
@@ -324,5 +324,5 @@ main = do
     icontent &lt;- I.newIORef Map.empty
 
     -- Run our app
-    warpDebug 3000 $ Wiki (Chat chan) icontent</pre>
+    warpDebug 3000 $ Wiki (Chat chan) icontent</code></pre>
  </html>

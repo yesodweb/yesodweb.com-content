@@ -18,8 +18,8 @@
                 GET request is similar to a pure function, which cannot have side
             effects. In practice, your GET functions will probably perform
                 IO, such as reading information from a database, logging user
-            actions, and so on.</p><p id="rm4" class="hascomments">See the <a href="../../yesod-web-framework-book/routing-and-handlers/routing-and-handlers.dita" id="x16">routing and handlers chapter</a> chapter for more information on the syntax of defining handler functions for each request method.</p><h2>Representations</h2><p id="rp1" class="hascomments">Suppose we have a Haskell datatype and value:</p><pre id="x1">data Person = Person { name :: String, age :: Int }
-michael = Person "Michael" 25</pre><p id="rp2" class="hascomments">We could represent that data as HTML:</p><pre id="x2">&lt;table&gt;
+            actions, and so on.</p><p id="rm4" class="hascomments">See the <a href="../../yesod-web-framework-book/routing-and-handlers/routing-and-handlers.dita" id="x16">routing and handlers chapter</a> chapter for more information on the syntax of defining handler functions for each request method.</p><h2>Representations</h2><p id="rp1" class="hascomments">Suppose we have a Haskell datatype and value:</p><pre id="x1"><code>data Person = Person { name :: String, age :: Int }
+michael = Person "Michael" 25</code></pre><p id="rp2" class="hascomments">We could represent that data as HTML:</p><pre id="x2"><code>&lt;table&gt;
     &lt;tr&gt;
         &lt;th&gt;Name&lt;/th&gt;
         &lt;td&gt;Michael&lt;/td&gt;
@@ -28,19 +28,19 @@ michael = Person "Michael" 25</pre><p id="rp2" class="hascomments">We could repr
         &lt;th&gt;Age&lt;/th&gt;
         &lt;td&gt;25&lt;/td&gt;
     &lt;/tr&gt;
-&lt;/table&gt;</pre><p id="rp3" class="hascomments">or we could represent it as JSON:</p><pre id="x3">{"name":"Michael","age":25}</pre><p id="rp4" class="hascomments">or as XML:</p><pre id="x4">&lt;person&gt;
+&lt;/table&gt;</code></pre><p id="rp3" class="hascomments">or we could represent it as JSON:</p><pre id="x3"><code>{"name":"Michael","age":25}</code></pre><p id="rp4" class="hascomments">or as XML:</p><pre id="x4"><code>&lt;person&gt;
     &lt;name&gt;Michael&lt;/name&gt;
     &lt;age&gt;25&lt;/age&gt;
-&lt;/person&gt;</pre><p id="rp5" class="hascomments">Often times, web applications will use a different URL to get each of these
+&lt;/person&gt;</code></pre><p id="rp5" class="hascomments">Often times, web applications will use a different URL to get each of these
             representations; perhaps /person/michael.html,
                 /person/michael.json, etc. Yesod follows the RESTful principle of a
             single URL for each <dfn id="x5">resource</dfn>. So in Yesod, all of these would be
             accessed from /person/michael.</p><p id="rp6" class="hascomments">Then the question becomes how do we determine which representation to
             serve. The answer is the HTTP Accept header: it gives a prioritized
             list of content types the client is expecting. Yesod will automatically determine which
-            representation to serve based upon this header.</p><p id="rp7" class="hascomments">Let's make that last sentence a bit more concrete with some code:</p><pre id="x7">type ChooseRep = [ContentType] -&gt; IO (ContentType, Content)
+            representation to serve based upon this header.</p><p id="rp7" class="hascomments">Let's make that last sentence a bit more concrete with some code:</p><pre id="x7"><code>type ChooseRep = [ContentType] -&gt; IO (ContentType, Content)
 class HasReps a where
-    chooseRep :: a -&gt; ChooseRep</pre><p id="rp8" class="hascomments">The chooseRep function takes two arguments: the value we are getting
+    chooseRep :: a -&gt; ChooseRep</code></pre><p id="rp8" class="hascomments">The chooseRep function takes two arguments: the value we are getting
             representations for, and a list of content types that the client will accept. We
             determine this by reading the Accept request header.
                 chooseRep returns a tuple containing the content type of our
@@ -53,16 +53,16 @@ class HasReps a where
             types parsed from the Accept header.</p>
         <p class="hascomments">Yesod provides a number of instances of HasReps out of the
             box. When we use defaultLayout, for example, the return type
-            is RepHtml, which looks like:</p><pre id="x8">newtype RepHtml = RepHtml Content
+            is RepHtml, which looks like:</p><pre id="x8"><code>newtype RepHtml = RepHtml Content
 instance HasReps RepHtml where
-    chooseRep (RepHtml content) _ = return ("text/html", content)</pre><p id="rp11" class="hascomments">Notice that we ignore entirely the list of expected content types. A number of the
+    chooseRep (RepHtml content) _ = return ("text/html", content)</code></pre><p id="rp11" class="hascomments">Notice that we ignore entirely the list of expected content types. A number of the
             built in representations (RepHtml, RepPlain,
                 RepJson, RepXml) in fact only support a single
             representation, and therefore what the client requests in the Accept
             header is irrelevant.</p><h3>RepHtmlJson</h3><p id="rhj1" class="hascomments">An example to the contrary is RepHtmlJson, which provides either an
             HTML or JSON representation. This instance helps greatly in programming AJAX
             applications that degrade nicely. Here is an example that returns either HTML or JSON
-            data, depending on what the client wants.</p><pre id="x1">{-# LANGUAGE QuasiQuotes, TypeFamilies, OverloadedStrings #-}
+            data, depending on what the client wants.</p><pre id="x1"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses, TemplateHaskell #-}
 import Yesod
 data R = R
@@ -114,7 +114,7 @@ getNameR name = do
     let json = object ["name" .= name]
     defaultLayoutJson widget json
 
-main = warpDebug 4000 R</pre><p id="rhj2" class="hascomments">Our getRootR handler creates a page with three links and some
+main = warpDebug 4000 R</code></pre><p id="rhj2" class="hascomments">Our getRootR handler creates a page with three links and some
             Javascript which intercept clicks on the links and performs asynchronous requests. If
             the user has Javascript enabled, clicking on the link will cause a request to be sent
             with an Accept header of application/json. In that case, getNameR will
@@ -132,23 +132,23 @@ main = warpDebug 4000 R</pre><p id="rhj2" class="hascomments">Our getRootR handl
             selected, and therefore only one of them will ever be run.</aside><h3>News Feeds</h3><p id="n1" class="hascomments">A great, practical example of multiple representations if the yesod-newsfeed package. There are two major formats for news feeds on the web: RSS and Atom. They contain almost exactly the same information, but are just packaged up differently.</p><p id="n2" class="hascomments">The yesod-newsfeed package defines a Feed
             datatype which contains information like title, description, and last updated time. It
             then provides two separate sets of functions for displaying this data: one for RSS, one
-            for Atom. They each define their own representation datatypes:</p><pre id="x3">newtype RepAtom = RepAtom Content
+            for Atom. They each define their own representation datatypes:</p><pre id="x3"><code>newtype RepAtom = RepAtom Content
 instance HasReps RepAtom where
     chooseRep (RepAtom c) _ = return (typeAtom, c)
 newtype RepRss = RepRss Content
 instance HasReps RepRss where
-    chooseRep (RepRss c) _ = return (typeRss, c)</pre><p id="n3" class="hascomments">But there's a third module which defines another datatype:</p><pre id="x4">data RepAtomRss = RepAtomRss RepAtom RepRss
+    chooseRep (RepRss c) _ = return (typeRss, c)</code></pre><p id="n3" class="hascomments">But there's a third module which defines another datatype:</p><pre id="x4"><code>data RepAtomRss = RepAtomRss RepAtom RepRss
 instance HasReps RepAtomRss where
     chooseRep (RepAtomRss (RepAtom a) (RepRss r)) = chooseRep
         [ (typeAtom, a)
         , (typeRss, r)
-        ]</pre><p id="n4" class="hascomments">This datatype will automatically serve whichever representation the client prefers, defaulting to Atom. If a client connects that only understands RSS, assuming it provides the correct HTTP headers, Yesod will provide RSS output.</p><h2>Other request headers</h2><p id="rh1" class="hascomments">There are a great deal of other request headers available. Some of them only affect the
+        ]</code></pre><p id="n4" class="hascomments">This datatype will automatically serve whichever representation the client prefers, defaulting to Atom. If a client connects that only understands RSS, assuming it provides the correct HTTP headers, Yesod will provide RSS output.</p><h2>Other request headers</h2><p id="rh1" class="hascomments">There are a great deal of other request headers available. Some of them only affect the
             transfer of data between the server and client, and should not affect the application at
             all. For example, Accept-Encoding informs the server which compression
             schemes the client understands, and Host informs the server which
             virtual host to serve up.</p><p id="rh2" class="hascomments">Other headers do affect the application, but are automatically read by
             Yesod. For example, the Accept-Language header specifies which human
             language (English, Spanish, German, Swiss-German) the client prefers. See the <a href="../../yesod-web-framework-book/internationalization/internationalization.dita" id="x2">i18n chapter</a>
-            for details on how this header is used.</p><h2>Stateless</h2><p id="stateless1" class="hascomments">I've saved this section for the last, not because it is less important, but rather because there are no specific features in Yesod to enforce this.</p><p id="stateless2" class="hascomments">HTTP is a stateless protocol: each request is to be seen as the beginning of a conversation. This means, for instance, it doesn't matter to the server if you requested five pages previously, it will treat your sixth request as if it's your first one.</p><p id="stateless3" class="hascomments">On the other hand, some features on websites won't work without some kind of state. For example, how can you implement a shopping cart without saving information about items in between requests?</p><p id="stateless4" class="hascomments">The solution to this is cookies, and built on top of this, sessions. We have a <a href="../../yesod-web-framework-book/sessions/sessions.dita" id="x1">whole section</a> addressing the sessions features in Yesod. However, I cannot stress enough that this should be used sparingly.</p><p id="stateless5" class="hascomments">Let me give you an example. There's a popular bug tracking system that I deal with on a daily basis which horribly abuses sessions. There's a little drop-down on every page to select the current project. Seems harmless, right? What that dropdown does is set the current project in your session.</p><p id="stateless6" class="hascomments">The result of all this is that clicking on the "view issues" link is entirely dependent on the last project you selected. There's no way to create a bookmark to your "Yesod" issues and a separate link for your "Hamlet" issues.</p><p id="stateless7" class="hascomments">The proper RESTful approach to this is to have one resource for all of the Yesod issues and a separate one for all the Hamlet issues. In Yesod, this is easily done with a route definition like:</p><pre id="x2">/ ProjectsR GET
+            for details on how this header is used.</p><h2>Stateless</h2><p id="stateless1" class="hascomments">I've saved this section for the last, not because it is less important, but rather because there are no specific features in Yesod to enforce this.</p><p id="stateless2" class="hascomments">HTTP is a stateless protocol: each request is to be seen as the beginning of a conversation. This means, for instance, it doesn't matter to the server if you requested five pages previously, it will treat your sixth request as if it's your first one.</p><p id="stateless3" class="hascomments">On the other hand, some features on websites won't work without some kind of state. For example, how can you implement a shopping cart without saving information about items in between requests?</p><p id="stateless4" class="hascomments">The solution to this is cookies, and built on top of this, sessions. We have a <a href="../../yesod-web-framework-book/sessions/sessions.dita" id="x1">whole section</a> addressing the sessions features in Yesod. However, I cannot stress enough that this should be used sparingly.</p><p id="stateless5" class="hascomments">Let me give you an example. There's a popular bug tracking system that I deal with on a daily basis which horribly abuses sessions. There's a little drop-down on every page to select the current project. Seems harmless, right? What that dropdown does is set the current project in your session.</p><p id="stateless6" class="hascomments">The result of all this is that clicking on the "view issues" link is entirely dependent on the last project you selected. There's no way to create a bookmark to your "Yesod" issues and a separate link for your "Hamlet" issues.</p><p id="stateless7" class="hascomments">The proper RESTful approach to this is to have one resource for all of the Yesod issues and a separate one for all the Hamlet issues. In Yesod, this is easily done with a route definition like:</p><pre id="x2"><code>/ ProjectsR GET
 /projects/#ProjectID ProjectIssuesR GET
-/issues/#IssueID IssueR GET</pre><p id="stateless8" class="hascomments">Be nice to your users: proper stateless architecture means that basic features like bookmarks, permalinks and the back/forward button will always work.</p><h2>Summary</h2><p id="s1" class="hascomments">Yesod adheres to the following tenets of REST:</p><ul id="x1"><li id="x2">Use the correct request method.</li><li id="x3">Each resource should have precisely one URL.</li><li id="x4">Allow multiple representations of data on the same URL.</li><li id="x5">Inspect request headers to determine extra information about what the client wants.</li></ul><p id="s2" class="hascomments">This makes it easy to use Yesod not just for building websites, but for building APIs. In fact, using techniques such as RepHtmlJson, you can serve both a user-friendly, HTML page and a machine-friendly, JSON page from the same URL.</p></html>
+/issues/#IssueID IssueR GET</code></pre><p id="stateless8" class="hascomments">Be nice to your users: proper stateless architecture means that basic features like bookmarks, permalinks and the back/forward button will always work.</p><h2>Summary</h2><p id="s1" class="hascomments">Yesod adheres to the following tenets of REST:</p><ul id="x1"><li id="x2">Use the correct request method.</li><li id="x3">Each resource should have precisely one URL.</li><li id="x4">Allow multiple representations of data on the same URL.</li><li id="x5">Inspect request headers to determine extra information about what the client wants.</li></ul><p id="s2" class="hascomments">This makes it easy to use Yesod not just for building websites, but for building APIs. In fact, using techniques such as RepHtmlJson, you can serve both a user-friendly, HTML page and a machine-friendly, JSON page from the same URL.</p></html>

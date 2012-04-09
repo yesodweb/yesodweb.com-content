@@ -22,14 +22,14 @@
  <h2>Synopsis</h2>
   <figure id="x-3"><figcaption>Input XML file</figcaption>
    
-   <pre id="x-5">&lt;document title="My Title"&gt;
+   <pre id="x-5"><code>&lt;document title="My Title"&gt;
     &lt;para&gt;This is a paragraph. It has &lt;em&gt;emphasized&lt;/em&gt; and &lt;strong&gt;strong&lt;/strong&gt; words.&lt;/para&gt;
     &lt;image href="myimage.png"/&gt;
-&lt;/document&gt;</pre>
+&lt;/document&gt;</code></pre>
   </figure>
   <figure id="x-6"><figcaption>Haskell code</figcaption>
    
-   <pre id="x-8">{-# LANGUAGE QuasiQuotes #-}
+   <pre id="x-8"><code>{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 import Prelude hiding (readFile, writeFile)
 import Text.XML
@@ -84,11 +84,11 @@ goElem (Element "image" attrs _children) =
     fixAttr x = x
 goElem (Element name attrs children) =
     -- don't know what to do, just pass it through...
-    Element name attrs $ concatMap goNode children</pre>
+    Element name attrs $ concatMap goNode children</code></pre>
   </figure>
   <figure id="x-9"><figcaption>Output XHTML</figcaption>
    
-   <pre id="x-11">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+   <pre id="x-11"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;html&gt;
     &lt;head&gt;
         &lt;title&gt;
@@ -109,7 +109,7 @@ goElem (Element name attrs children) =
         &lt;/p&gt;
         &lt;img src="myimage.png"/&gt;
     &lt;/body&gt;
-&lt;/html&gt;</pre>
+&lt;/html&gt;</code></pre>
   </figure>
  <h2>Types</h2>
   <p id="x-3" class="hascomments">Let's take a bottom-up approach to analyzing types. This section will also serve as a primer on
@@ -119,9 +119,9 @@ goElem (Element name attrs children) =
    with properly expressing names. The issue is that there are in fact three components to a name:
    its local name, its namespace (optional), and its prefix (also optional). Let's look at some XML
    to explain:</p>
-  <pre id="x-6">&lt;no-namespace/&gt;
+  <pre id="x-6"><code>&lt;no-namespace/&gt;
 &lt;no-prefix xmlns="first-namespace" first-attr="value1"/&gt;
-&lt;foo:with-prefix xmlns:foo="second-namespace" foo:second-attr="value2"/&gt;</pre>
+&lt;foo:with-prefix xmlns:foo="second-namespace" foo:second-attr="value2"/&gt;</code></pre>
   <p id="x-7" class="hascomments">The first tag has a local name of no-namespace, and no
    namespace or prefix. The second tag (local name: no-prefix) also has no prefix, but it does have a namespace (first-namespace). first-attr, however, does not
    inherit that namespace: attribute namespaces must always be explicitly set with a prefix.</p>
@@ -134,11 +134,11 @@ goElem (Element name attrs children) =
    specification, and are not considered attributes of their respective elements.</p>
   <p id="x-18" class="hascomments">So let's review what we need from a name: every name has a local name, and it can optionally
    have a prefix and namespace. Seems like a simple fit for a record type:</p>
-  <pre id="x-19">data Name = Name
+  <pre id="x-19"><code>data Name = Name
     { nameLocalName :: Text
     , nameNamespace :: Maybe Text
     , namePrefix :: Maybe Text
-    }</pre>
+    }</code></pre>
   <p id="x-20" class="hascomments">According the the XML namespace standard, two names are considered equivalent if they
    have the same localname and namespace. In other words, the prefix is not important. Therefore,
     xml-types defines Eq and Ord instances that
@@ -149,13 +149,13 @@ goElem (Element name attrs children) =
     "p" will resolve to that all by itself! In addition, the
     IsString instance recognizes something called Clark notation, which allows you
    to prefix the namespace surrounded in curly brackets. In other words:</p>
-  <pre id="x-23">"{namespace}element" == Name "element" (Just "namespace") Nothing
-"element" == Name "element" Nothing Nothing</pre>
+  <pre id="x-23"><code>"{namespace}element" == Name "element" (Just "namespace") Nothing
+"element" == Name "element" Nothing Nothing</code></pre>
  <h3>The Four Types of Nodes</h3>
   <p id="x-3" class="hascomments">XML documents are a tree of nested nodes. There are in fact four different types of nodes
    allowed: elements, content (i.e., text), comments, and processing instructions.</p>
   <aside id="x-4" class="note">You may not be familiar with that last one, it's less commonly used. It is marked
-   up as:<pre id="x-5">&lt;?target data?&gt;</pre>There are two
+   up as:<pre id="x-5"><code>&lt;?target data?&gt;</code></pre>There are two
    surprising facts about processing instructions (PIs):<ul id="ul_zfo_vsx_md">
     <li id="x-6">PIs don't have attributes. While often times you'll see processing instructions
      that appear to have attributes, there are in fact no rules about that data of an
@@ -167,10 +167,10 @@ goElem (Element name attrs children) =
    </ul></aside>
   <p id="x-8" class="hascomments">Since processing instructions have two pieces of text associated with them (the target and the
    data), we have a simple data type:</p>
-  <pre id="x-9">data Instruction = Instruction
+  <pre id="x-9"><code>data Instruction = Instruction
     { instructionTarget :: Text
     , instructionData :: Text
-    }</pre>
+    }</code></pre>
   <p id="x-10" class="hascomments">Comments have no special datatype, since they are just text. But content is an
    interesting one: it could contain either plain text or unresolved entities (e.g.,
     &amp;copyright-statement;). xml-types keeps those
@@ -187,22 +187,22 @@ goElem (Element name attrs children) =
    information: a name, a list of attributes and a list of children nodes. An attribute has two
    pieces of information: a name and a value. (In xml-types, this value could
    contain unresolved entities as well.) So our Element is defined as:</p>
-  <pre id="x-16">data Element = Element
+  <pre id="x-16"><code>data Element = Element
     { elementName :: Name
     , elementAttributes :: [(Name, Text)]
     , elementNodes :: [Node]
-    }</pre>
+    }</code></pre>
   <p id="x-17" class="hascomments">Which of course begs the question: what does a Node look like? This
    is where Haskell really shines: its sum types model the XML data model perfectly.</p>
-  <pre id="x-18">data Node
+  <pre id="x-18"><code>data Node
     = NodeElement Element
     | NodeInstruction Instruction
     | NodeContent Text
-    | NodeComment Text</pre>
+    | NodeComment Text</code></pre>
  <h3>Documents</h3>
   <p id="x-3" class="hascomments">So now we have elements and nodes, but what about an entire document? Let's just lay out the
    datatypes:</p>
-  <pre id="x-4">data Document = Document
+  <pre id="x-4"><code>data Document = Document
     { documentPrologue :: Prologue
     , documentRoot :: Element
     , documentEpilogue :: [Miscellaneous]
@@ -225,7 +225,7 @@ data Doctype = Doctype
 
 data ExternalID
     = SystemID Text
-    | PublicID Text Text</pre>
+    | PublicID Text Text</code></pre>
   <p id="x-5" class="hascomments">The XML spec says that a document has a single root element
     (documentRoot). It also has an optional doctype statement. Before and after
    both the doctype and the root element, you are allowed to have comments and processing
@@ -234,9 +234,9 @@ data ExternalID
    optional public and system identifiers. These are used to refer to DTD files, which give more
    information about the file (e.g., validation rules, default attributes, entity resolution). Let's
    see some examples:</p>
-  <pre id="x-7">&lt;!DOCTYPE root&gt; &lt;!-- no external identifier --&gt;
+  <pre id="x-7"><code>&lt;!DOCTYPE root&gt; &lt;!-- no external identifier --&gt;
 &lt;!DOCTYPE root SYSTEM "root.dtd"&gt; &lt;!-- a system identifier --&gt;
-&lt;!DOCTYPE root PUBLIC "My Root Public Identifier" "root.dtd"&gt; &lt;!-- public identifiers have a system ID as well --&gt;</pre>
+&lt;!DOCTYPE root PUBLIC "My Root Public Identifier" "root.dtd"&gt; &lt;!-- public identifiers have a system ID as well --&gt;</code></pre>
   <p id="x-8" class="hascomments">And that, my friends, is the entire XML data model. For many parsing purposes, you'll
    be able to simply ignore the entire Document datatype and go immediately to the
     documentRoot.</p>
@@ -251,8 +251,8 @@ data ExternalID
   <p id="x-3" class="hascomments">The recommended entry point to xml-conduit is the xml-conduit:Text.XML module. This module exports all of the datatypes you'll need to
    manipulate XML in a DOM fashion, as well as a number of different approaches for parsing and
    rendering XML content. Let's start with the simple
-   ones:<pre id="x-5">readFile  :: ParseSettings  -&gt; FilePath -&gt; IO Document
-writeFile :: RenderSettings -&gt; FilePath -&gt; Document -&gt; IO ()</pre>This
+   ones:<pre id="x-5"><code>readFile  :: ParseSettings  -&gt; FilePath -&gt; IO Document
+writeFile :: RenderSettings -&gt; FilePath -&gt; Document -&gt; IO ()</code></pre>This
    introduces the ParseSettings and RenderSettings datatypes. You can use these to modify the behavior of the parser and
    renderer, such as adding character entities and turning on pretty (i.e., indented) output. Both
    these types are instances of the data-default:Data.Default:Default
@@ -314,7 +314,7 @@ writeFile :: RenderSettings -&gt; FilePath -&gt; Document -&gt; IO ()</pre>This
    empty list.</p>
   <p id="x-16" class="hascomments">And thanks to the monad instance for lists, it's easy to string all of these
    together. For example, to do our title lookup, we would write the following program:</p>
-  <pre id="x-17">{-# LANGUAGE OverloadedStrings #-}
+  <pre id="x-17"><code>{-# LANGUAGE OverloadedStrings #-}
 import Prelude hiding (readFile)
 import Text.XML
 import Text.XML.Cursor
@@ -326,7 +326,7 @@ main = do
     let cursor = fromDocument doc
     print $ T.concat $
             child cursor &gt;&gt;= element "head" &gt;&gt;= child
-                         &gt;&gt;= element "title" &gt;&gt;= descendant &gt;&gt;= content</pre>
+                         &gt;&gt;= element "title" &gt;&gt;= descendant &gt;&gt;= content</code></pre>
   <p id="x-18" class="hascomments">What this says is:</p>
   <ol id="ol_d37c1613-8879-4be8-862c-9823d88f5b90">
    <li id="x-19">Get me all the child nodes of the root element</li>
@@ -338,18 +338,18 @@ main = do
    <li id="x-24">Get only the text nodes.</li>
   </ol>
   <p id="x-25" class="hascomments">So for the input document:</p>
-  <pre id="x-26">&lt;html&gt;
+  <pre id="x-26"><code>&lt;html&gt;
     &lt;head&gt;
         &lt;title&gt;My &lt;b&gt;Title&lt;/b&gt;&lt;/title&gt;
     &lt;/head&gt;
     &lt;body&gt;
         &lt;p&gt;Foo bar baz&lt;/p&gt;
     &lt;/body&gt;
-&lt;/html&gt;</pre>
+&lt;/html&gt;</code></pre>
   <p id="x-27" class="hascomments">We end up with the output My Title. This is all well and good, but it's much
    more verbose than the XPath solution. To combat this verbosity, Aristid Breitkreuz added a set of
    operators to the Cursor module to handle many common cases. So we can rewrite our example as:</p>
-  <pre id="x-29">{-# LANGUAGE OverloadedStrings #-}
+  <pre id="x-29"><code>{-# LANGUAGE OverloadedStrings #-}
 import Prelude hiding (readFile)
 import Text.XML
 import Text.XML.Cursor
@@ -360,7 +360,7 @@ main = do
     doc &lt;- readFile def "test.xml"
     let cursor = fromDocument doc
     print $ T.concat $
-        cursor $/ element "head" &amp;/ element "title" &amp;// content</pre>
+        cursor $/ element "head" &amp;/ element "title" &amp;// content</code></pre>
   <p id="x-30" class="hascomments">$/ says to apply the axis on the right to the children of
    the cursor on the left. &amp;/ is almost identical, but is instead
    used to combine two axes together. This is a general rule in Text.XML.Cursor: operators beginning with $ directly apply an axis, while &amp; will
@@ -368,7 +368,7 @@ main = do
    descendants.</p>
   <p id="x-34" class="hascomments">Let's go for a more complex, if more contrived, example. We have a document that looks
    like:</p>
-  <pre id="x-35">&lt;html&gt;
+  <pre id="x-35"><code>&lt;html&gt;
     &lt;head&gt;
         &lt;title&gt;Headings&lt;/title&gt;
     &lt;/head&gt;
@@ -382,11 +382,11 @@ main = do
             &lt;h2 class="bar"&gt;Heading 2 bar&lt;/h2&gt;
         &lt;/hgroup&gt;
     &lt;/body&gt;
-&lt;/html&gt;</pre>
+&lt;/html&gt;</code></pre>
   <p id="x-36" class="hascomments">We want to get the content of all the h1 tags which precede an
     h2 tag with a class attribute of "bar". To perform this
    convoluted lookup, we can write:</p>
-  <pre id="x-40">{-# LANGUAGE OverloadedStrings #-}
+  <pre id="x-40"><code>{-# LANGUAGE OverloadedStrings #-}
 import Prelude hiding (readFile)
 import Text.XML
 import Text.XML.Cursor
@@ -401,7 +401,7 @@ main = do
                &gt;=&gt; attributeIs "class" "bar"
                &gt;=&gt; precedingSibling
                &gt;=&gt; element "h1"
-               &amp;// content</pre>
+               &amp;// content</code></pre>
   <p id="x-41" class="hascomments">Let's step through that. First we get all h2 elements in the document.
     ($// gets all descendants of the root element.) Then we filter out only those
    with class=bar. That &gt;=&gt; operator is actually
@@ -417,7 +417,7 @@ main = do
   <p id="x-3" class="hascomments">Thanks to the simplicity of Haskell's data type system, creating
             XML content with the Text.XML API is easy, if a bit verbose. The
             following code:</p>
-  <pre id="x-4">{-# LANGUAGE OverloadedStrings #-}
+  <pre id="x-4"><code>{-# LANGUAGE OverloadedStrings #-}
 import Text.XML
 import Prelude hiding (writeFile)
 
@@ -439,16 +439,16 @@ main =
                 [ NodeContent "foo bar baz"
                 ]
             ]
-        ]</pre>
+        ]</code></pre>
   <p id="x-5" class="hascomments">produces</p>
-  <pre id="x-6">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
-&lt;html&gt;&lt;head&gt;&lt;title&gt;My &lt;b&gt;Title&lt;/b&gt;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;p&gt;foo bar baz&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</pre>
+  <pre id="x-6"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;html&gt;&lt;head&gt;&lt;title&gt;My &lt;b&gt;Title&lt;/b&gt;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;p&gt;foo bar baz&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</code></pre>
   <p id="x-7" class="hascomments">This is leaps and bounds easier than having to deal with an imperative, mutable-value-based API
    (cough, Java, cough), but it's far from pleasant, and obscures what we're really trying to
    achieve. To simplify things, we have the xml-hamlet package, which using
    Quasi-Quotation to allow you to type in your XML in a natural syntax. For example, the above
    could be rewritten as:</p>
-  <pre id="x-9">{-# LANGUAGE OverloadedStrings #-}
+  <pre id="x-9"><code>{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 import Text.XML
 import Text.Hamlet.XML
@@ -465,7 +465,7 @@ main =
         &lt;b&gt;Title
 &lt;body&gt;
     &lt;p&gt;foo bar baz
-|]</pre>
+|]</code></pre>
   <p id="x-10" class="hascomments">Let's make a few points:</p>
   <ul id="ul_56cf6fac-3c78-4e75-b51a-7dfd6b087eeb">
    <li id="x-11">The syntax is almost identical to normal Hamlet, except URL-interpolation (@{...}) has been
@@ -482,7 +482,7 @@ main =
   </ul>
   <p id="x-18" class="hascomments">And like normal Hamlet, you can use variable interpolation and control structures. So a
    slightly more complex example would be:</p>
-  <pre id="x-19">{-# LANGUAGE OverloadedStrings #-}
+  <pre id="x-19"><code>{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 import Text.XML
 import Text.Hamlet.XML
@@ -523,7 +523,7 @@ personNodes :: Person -&gt; [Node]
 personNodes person = [xml|
 &lt;dt&gt;#{personName person}
 &lt;dd&gt;#{pack $ show $ personAge person}
-|]</pre>
+|]</code></pre>
   <p id="x-20" class="hascomments">A few more notes:</p>
   <ul id="ul_4f926e00-4348-4801-97a1-a9d95fb18a04">
    <li id="x-21">The caret-interpolation (^{...}) takes a list of nodes, and so can easily embed
@@ -554,7 +554,7 @@ personNodes person = [xml|
     blaze-html:Text.Blaze:ToHtml instance for Nodes,
     Documents and Elements. In order to use it, just import the
     xml2html:Text.XML.Xml2Html module.</p>
-  <pre id="x-21">{-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
+  <pre id="x-21"><code>{-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
 import Text.Blaze (toHtml)
 import Text.Blaze.Renderer.String (renderHtml)
 import Text.XML
@@ -572,9 +572,9 @@ root = Element "html" [] [xml|
     &lt;style&gt;body &gt; h1 { color: red }
 &lt;body&gt;
     &lt;h1&gt;Hello World!
-|]</pre>
+|]</code></pre>
   <p id="x-22" class="hascomments">Outputs: (whitespace added)</p>
-  <pre id="x-23">&lt;!DOCTYPE HTML&gt;
+  <pre id="x-23"><code>&lt;!DOCTYPE HTML&gt;
 &lt;html&gt;
     &lt;head&gt;
         &lt;title&gt;Test&lt;/title&gt;
@@ -584,5 +584,5 @@ root = Element "html" [] [xml|
     &lt;body&gt;
         &lt;h1&gt;Hello World!&lt;/h1&gt;
     &lt;/body&gt;
-&lt;/html&gt;</pre>
+&lt;/html&gt;</code></pre>
  </html>

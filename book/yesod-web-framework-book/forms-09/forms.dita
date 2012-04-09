@@ -17,7 +17,7 @@
    API. It builds on top of Yesod's widgets to simplify styling of forms and applying Javascript
    appropriately. And like the rest of Yesod, it uses Haskell's type system to make sure everything
    is working correctly.</p>
- <h2>Synopsis</h2>  <pre id="x1">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+ <h2>Synopsis</h2>  <pre id="x1"><code>{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -112,7 +112,7 @@ postPersonR = do
 |]
 
 main :: IO ()
-main = warpDebug 3000 Synopsis</pre>
+main = warpDebug 3000 Synopsis</code></pre>
  <h2>Kinds of Forms</h2>
   <p id="x1" class="hascomments">Before jumping into the types themselves, we should begin with an overview of the different
    kinds of forms. There are three categories:</p>
@@ -255,7 +255,7 @@ main = warpDebug 3000 Synopsis</pre>
   <p id="x1" class="hascomments">Now that I've (hopefully) convinced you that in our synopsis we were really dealing with
    applicative forms, let's have a look and try to understand how these things get created. Let's
    take a simple example:</p>
-  <pre id="x2">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+  <pre id="x2"><code>{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -304,7 +304,7 @@ getCarR = do
     &lt;table&gt;
         ^{widget}
     &lt;input type=submit&gt;
-|]</pre>
+|]</code></pre>
   <p id="x3" class="hascomments">Here, we've explicitly split up applicative and monadic forms. In carAForm, we use the &lt;$&gt; and &lt;*&gt; operators. This should not be surprising; these are
             almost always used in applicative-style code. And we have one line for each record in
             our Car datatype. Perhaps unsurprisingly, we have a textField for the Text record, and an
@@ -324,7 +324,7 @@ getCarR = do
             default values.</p>
   <figure id="x9"><figcaption>Form with default values</figcaption>
    
-   <pre id="x11">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+   <pre id="x11"><code>{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -373,13 +373,13 @@ getCarR = do
     &lt;table&gt;
         ^{widget}
     &lt;input type=submit&gt;
-|]</pre>
+|]</code></pre>
   </figure>
  <h3>Optional fields</h3>  <p id="x1" class="hascomments">Suppose we wanted to have an optional field (like the car color). All we do instead is
             use the aopt function.</p>
   <figure id="x2"><figcaption>Optional fields</figcaption>
    
-   <pre id="x4">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+   <pre id="x4"><code>{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -430,7 +430,7 @@ getCarR = do
     &lt;table&gt;
         ^{widget}
     &lt;input type=submit&gt;
-|]</pre>
+|]</code></pre>
   </figure>
   <p id="x5" class="hascomments">And like required fields, the last argument is the optional default value. However,
             this has two layers of Maybe wrapping. This may seem redundant (and it is), but it makes
@@ -438,7 +438,7 @@ getCarR = do
             the next example.</p>
   <figure id="x6"><figcaption>Default optional fields</figcaption>
    
-   <pre id="x8">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+   <pre id="x8"><code>{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -489,14 +489,14 @@ getCarR = do
     &lt;table&gt;
         ^{widget}
     &lt;input type=submit&gt;
-|]</pre>
+|]</code></pre>
   </figure>
  <h2>Validation</h2>
   <p id="x1" class="hascomments">How would we make our form only accept cars created after 1990? If you remember, we
             said above that the Field itself contained the information on what is a
             valid entry. So all we need to do is write a new Field, right? Well,
             that would be a bit tedious. Instead, let's just modify an existing one:</p>
-  <pre id="x2">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+  <pre id="x2"><code>{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -556,12 +556,12 @@ getCarR = do
     &lt;table&gt;
         ^{widget}
     &lt;input type=submit&gt;
-|]</pre>
+|]</code></pre>
   <p id="x3" class="hascomments">The trick here is the check function. It takes a function
                 (validateYear) that returns either an error message or a modified
             field value. In this example, we haven't modified the value at all. That is usually
             going to be the case. This kind of checking is very common, so we have a shortcut:</p>
-  <pre id="x4">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+  <pre id="x4"><code>{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -617,7 +617,7 @@ getCarR = do
     &lt;table&gt;
         ^{widget}
     &lt;input type=submit&gt;
-|]</pre>
+|]</code></pre>
   <p id="x5" class="hascomments">checkBool takes two parameters: a condition that must be fulfilled,
             and an error message to be displayed if it was not.</p>
   <aside id="x6" class="note">You may have noticed the explicit Text type signature on
@@ -629,7 +629,7 @@ getCarR = do
             the year specified is not from the future? In order to look up the current year, we'll
             need to run some IO. For such circumstances, we'll need
                 checkM:</p>
-  <pre id="x8">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+  <pre id="x8"><code>{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -698,7 +698,7 @@ getCarR = do
     &lt;table&gt;
         ^{widget}
     &lt;input type=submit&gt;
-|]</pre>
+|]</code></pre>
   <p id="x9" class="hascomments">inPast is a function that will return an Either
             result. However, it uses a Handler monad. We use liftIO getCurrentYear to get the current year and then compare it against
             the user-supplied year. Also, notice how we can chain together multiple validators.</p>
@@ -711,7 +711,7 @@ getCarR = do
             is a drop-down list.</p>
   <figure id="x2"><figcaption>Drop-down lists</figcaption>
    
-   <pre id="x4">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+   <pre id="x4"><code>{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -785,7 +785,7 @@ getCarR = do
     &lt;table&gt;
         ^{widget}
     &lt;input type=submit&gt;
-|]</pre>
+|]</code></pre>
   </figure>
   <p id="x5" class="hascomments">selectFieldList takes a list of pairs. The first item in the pair is
             the text displayed to the user in the drop-down list, and the second item is the actual
@@ -793,7 +793,7 @@ getCarR = do
             result using the Enum and Bounded instance GHC automatically derives for us.</p>
   <figure id="x6"><figcaption>Uses Enum and Bounded</figcaption>
    
-   <pre id="x8">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+   <pre id="x8"><code>{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -867,7 +867,7 @@ getCarR = do
     &lt;table&gt;
         ^{widget}
     &lt;input type=submit&gt;
-|]</pre>
+|]</code></pre>
   </figure>
   <p id="x9" class="hascomments">[minBound..maxBound] gives us a list of all the different
                 Color values. We then apply a map and
@@ -877,7 +877,7 @@ getCarR = do
             one-word change. For example, see <a href="../../yesod-web-framework-book/forms-09/forms.dita#file97-more-sophiticated-fieldsforms/radio-buttons">Radio buttons</a></p>
   <figure id="radio-buttons"><figcaption>Radio buttons</figcaption>
             
-            <pre id="x13">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+            <pre id="x13"><code>{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
     OverloadedStrings, TypeFamilies #-}
 import Yesod
 import Yesod.Form.Jquery
@@ -951,7 +951,7 @@ getCarR = do
     &lt;table&gt;
         ^{widget}
     &lt;input type=submit&gt;
-|]</pre>
+|]</code></pre>
         </figure>
  <h2>Running forms</h2>
   <p id="x1" class="hascomments">At some point, we're going to need to take our beautiful forms and produce some results. There
@@ -1006,8 +1006,8 @@ getCarR = do
      FormMessage datatype. Therefore, to use yesod-form, you'll
     need to have an appropriate RenderMessage instance. A simple one that uses the
     default English translations would
-    be:<pre id="x4">instance RenderMessage MyApp FormMessage where
-    renderMessage _ _ = defaultFormMessage</pre>This
+    be:<pre id="x4"><code>instance RenderMessage MyApp FormMessage where
+    renderMessage _ _ = defaultFormMessage</code></pre>This
     is provided automatically by the scaffolded site.</li>
    
   </ul>
@@ -1023,7 +1023,7 @@ getCarR = do
             than their applicative cousins, but this verbosity allows you to have complete control
             over what the form will look like. In order to generate the form above, we could code
             something like this.</p>
-        <pre id="x-7">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
+        <pre id="x-7"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
              TemplateHaskell, MultiParamTypeClasses #-}
 import Yesod
 import Control.Applicative
@@ -1076,7 +1076,7 @@ getRootR = do
 |]
 
 main :: IO ()
-main = warpDebug 3000 MFormExample</pre>
+main = warpDebug 3000 MFormExample</code></pre>
         <p id="x-8" class="hascomments">Similar to the applicative areq, we use mreq for monadic forms. (And yes, there's also
                 mopt for optional fields.) But there's a big difference:
                 mreq gives us back a pair of values. Instead of hiding away the
@@ -1092,13 +1092,13 @@ main = warpDebug 3000 MFormExample</pre>
             "neither is this" values. mreq takes a FieldSettings as its second argument. Since FieldSettings
             provides an IsString instance, the strings are essentially expanded by
             the compiler
-            to:<pre>fromString "this is not used" == FieldSettings
+            to:<pre><code>fromString "this is not used" == FieldSettings
     { fsLabel = "this is not used"
     , fsTooltip = Nothing
     , fsId = Nothing
     , fsName = Nothing
     , fsClass = []
-    }</pre>In
+    }</code></pre>In
             the case of applicative forms, the fsLabel and
                 fsTooltip values are used when constructing your HTML. In the case
             of monadic forms, Yesod does not generate any of the "wrapper" HTML for you, and
@@ -1137,7 +1137,7 @@ main = warpDebug 3000 MFormExample</pre>
    will be brought back to the same page, with your previously entered values in the form, and an
    error message explaning what you need to correct. With input forms, the user simply gets an error
    message.</p>
-  <pre id="x-10">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
+  <pre id="x-10"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
              TemplateHaskell, MultiParamTypeClasses #-}
 import Yesod
 import Control.Applicative
@@ -1178,7 +1178,7 @@ getInputR = do
     defaultLayout [whamlet|&lt;p&gt;#{show person}|]
 
 main :: IO ()
-main = warpDebug 3000 Input</pre>
+main = warpDebug 3000 Input</code></pre>
  <h2>Custom fields</h2>
   <p id="x-3" class="hascomments">The fields that come built-in with Yesod will likely cover the vast majority of your
    form needs. But occassionally, you'll need something more specialized. Fortunately, you can
@@ -1210,7 +1210,7 @@ main = warpDebug 3000 Input</pre>
             This field has two text inputs- both with the same name attribute- and returns an error
             message if the values don't match. Note that, unlike most fields, it does not provide a value attribute on the input tags, as you don't want to send back
             a user-entered password in your HTML ever.</p>
-  <pre id="x-18">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
+  <pre id="x-18"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
              TemplateHaskell, MultiParamTypeClasses #-}
 import Yesod
 import Control.Applicative
@@ -1255,7 +1255,7 @@ getRootR = do
 |]
 -- STOP
 main :: IO ()
-main = warpDebug 3000 Password</pre>
+main = warpDebug 3000 Password</code></pre>
  <h2>Summary</h2>
   <p id="x-3" class="hascomments">Forms in Yesod are broken up into three groups. Applicative is the most common, as it provides
    a nice user interface with an easy-to-use API. Monadic forms give you more power, but are harder

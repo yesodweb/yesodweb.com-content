@@ -17,7 +17,7 @@
                 experimental CouchDB and MySQL support in the works.</li><li id="x3">By being non-relational in nature, we simultaneously are able to support a wider number of storage layers and are not constrained by some of the performance bottlenecks incurred through joins.</li><li id="x4">A major source of frustration in dealing with SQL databases is changes to the schema. Persistent can automatically perform database migrations.</li></ul>
     
 
-<h2>Synopsis</h2>  <pre id="x1">{-# LANGUAGE QuasiQuotes, TemplateHaskell, TypeFamilies, OverloadedStrings #-}
+<h2>Synopsis</h2>  <pre id="x1"><code>{-# LANGUAGE QuasiQuotes, TemplateHaskell, TypeFamilies, OverloadedStrings #-}
 {-# LANGUAGE GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -50,12 +50,12 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     liftIO $ print (john :: Maybe Person)
 
     delete janeId
-    deleteWhere [BlogPostAuthorId ==. johnId]</pre>
+    deleteWhere [BlogPostAuthorId ==. johnId]</code></pre>
  <h2>Solving the boundary issue</h2><p id="b1" class="hascomments">Suppose you are storing information on people in a SQL database. Your table might look
-            something like:</p><pre id="x1">CREATE TABLE Person(id SERIAL PRIMARY KEY, name VARCHAR NOT NULL, age INTEGER)</pre><p id="b2" class="hascomments">And if you are using a database like PostgreSQL, you can be guaranteed that the database will never store some arbitrary text in your age field. (The same cannot be said of SQLite, but let's forget about that for now.) To mirror this database table, you would likely create a Haskell datatype that looks something like:</p><pre id="x2">data Person = Person
+            something like:</p><pre id="x1"><code>CREATE TABLE Person(id SERIAL PRIMARY KEY, name VARCHAR NOT NULL, age INTEGER)</code></pre><p id="b2" class="hascomments">And if you are using a database like PostgreSQL, you can be guaranteed that the database will never store some arbitrary text in your age field. (The same cannot be said of SQLite, but let's forget about that for now.) To mirror this database table, you would likely create a Haskell datatype that looks something like:</p><pre id="x2"><code>data Person = Person
     { personName :: Text
     , personAge :: Int
-    }</pre><p id="b3" class="hascomments">It looks like everything is type safe: the database schema matches our Haskell datatypes, the database ensures that invalid data can never make it into our data store, and everything is generally awesome. Well, until:</p><ul id="x3"><li id="x4">You want to pull data from the database, and the database layer gives you the data in an untyped format.</li><li id="x5">You want to find everyone older than 32, and you accidently write "thirtytwo" in your SQL statement. Guess what: that will compile just fine, and you won't find out you have a problem until runtime.</li><li id="x6">You decide you want to find the first 10 people alphabetically. No problem... until you
+    }</code></pre><p id="b3" class="hascomments">It looks like everything is type safe: the database schema matches our Haskell datatypes, the database ensures that invalid data can never make it into our data store, and everything is generally awesome. Well, until:</p><ul id="x3"><li id="x4">You want to pull data from the database, and the database layer gives you the data in an untyped format.</li><li id="x5">You want to find everyone older than 32, and you accidently write "thirtytwo" in your SQL statement. Guess what: that will compile just fine, and you won't find out you have a problem until runtime.</li><li id="x6">You decide you want to find the first 10 people alphabetically. No problem... until you
                 make a typo in your SQL. Once again, you don't find out until runtime.</li></ul><p id="b4" class="hascomments">In dynamic languages, the answers to these issues is unit testing. For everything that can go wrong, make sure you write a test case. But as I am sure you are aware by now, that doesn't jive well with the Yesod approach to things. We like to take advantage of Haskell's strong typing to save us wherever possible, and data storage is no exception.</p><p id="b5" class="hascomments">So the question remains: how can we use Haskell's type system to save the day?</p><h3>Types</h3><p id="ba1" class="hascomments">Like routing, there is nothing intrinsically difficult about type-safe data access. It
             just requires a lot of monotonous, error prone, boiler plate code. As usual, this means
             we can use the type system to keep us honest. And to avoid some of the drudgery, we'll
@@ -65,7 +65,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
             package. This approach uses phantom types to carry a lot of the burden.</aside>
 <p id="ba2" class="hascomments">PersistValue is the basic building block of Persistent. It is a
             sum type that can represent data that gets sent to and from a database. Its definition
-            is:</p><pre id="x4">data PersistValue = PersistText Text
+            is:</p><pre id="x4"><code>data PersistValue = PersistText Text
                   | PersistByteString ByteString
                   | PersistInt64 Int64
                   | PersistDouble Double
@@ -76,7 +76,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
                   | PersistNull
                   | PersistList [PersistValue]
                   | PersistMap [(T.Text, PersistValue)]
-                  | PersistForeignKey ByteString -- ^ intended especially for MongoDB backend</pre><p id="ba4" class="hascomments">Each Persistent backend needs to know how to translate the relevant values into
+                  | PersistForeignKey ByteString -- ^ intended especially for MongoDB backend</code></pre><p id="ba4" class="hascomments">Each Persistent backend needs to know how to translate the relevant values into
             something the database can understand. However, it would be awkward do have to express
             all of our data simply in terms of these basic types. The next layer is the PersistField typeclass, which defines how an arbitrary Haskell
             datatype can be marshaled to and from a PersistValue. A
@@ -101,7 +101,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
                 <td id="x16">Table</td>
                 <td id="x17">PersistEntity</td>
             </tr>
-        </table><h3>Code Generation</h3><p id="bb1" class="hascomments">In order to ensure that the PersistEntity instances match up properly with your Haskell datatypes, Persistent takes responsibility for both. This is also good from a DRY (Don't Repeat Yourslef) perspective: you only need to define your entities once. Let's see a quick example:</p><pre id="x1">-- START
+        </table><h3>Code Generation</h3><p id="bb1" class="hascomments">In order to ensure that the PersistEntity instances match up properly with your Haskell datatypes, Persistent takes responsibility for both. This is also good from a DRY (Don't Repeat Yourslef) perspective: you only need to define your entities once. Let's see a quick example:</p><pre id="x1"><code>-- START
 {-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell, OverloadedStrings, GADTs #-}
 import Database.Persist
 import Database.Persist.TH
@@ -115,7 +115,7 @@ Person
 |]
 -- STOP
 main = return ()
-</pre><p id="bb2" class="hascomments">We use a combination of Template Haskell and Quasi-Quotation (like when defining
+</code></pre><p id="bb2" class="hascomments">We use a combination of Template Haskell and Quasi-Quotation (like when defining
             routes): persistent-template:Database.Persist.TH:persist is a
             quasi-quoter which converts a whitespace-sensitive syntax into a list of entity
             definitions. (You can also declare your entities in a separate file using
@@ -123,7 +123,7 @@ main = return ()
                 persistent-template:Database.Persist.TH:mkPersist takes that list
             of entities and declares:</p><ul id="x2"><li id="x3">One Haskell datatype for each entity.</li><li id="x4">A PersistEntity instance for each datatype defined.</li></ul>
         <p class="hascomments">The example above generates code that looks like the following:</p>
-        <pre>-- START
+        <pre><code>-- START
 {-# LANGUAGE TypeFamilies, GeneralizedNewtypeDeriving, OverloadedStrings, GADTs #-}
 import Database.Persist
 import Database.Persist.Store
@@ -186,14 +186,14 @@ instance PersistEntity Person where
     persistUniqueKeys = undefined
     persistIdField = undefined
 main :: IO ()
-main = return ()</pre><p id="bb3" class="hascomments">As you might expect, our Person datatype closely matches the definition
+main = return ()</code></pre><p id="bb3" class="hascomments">As you might expect, our Person datatype closely matches the definition
             we gave in the original Template Haskell version. We also have a Generalized Algebraic
             Datatype (GADT) which gives a separate constructor for each field. This GADT encodes
             both the type of the entity and the type of the field. We use its constructors
             throughout Persistent, such as to ensure that when we apply a filter, the types of the
             filtering value match the field.</p>
         <p class="hascomments">We can use the generated Person type like any other Haskell type, and
-            then pass it off to other Persistent functions.</p><pre id="x5">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell, OverloadedStrings, GADTs #-}
+            then pass it off to other Persistent functions.</p><pre id="x5"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell, OverloadedStrings, GADTs #-}
 import Database.Persist
 import Database.Persist.TH
 import Database.Persist.Sqlite
@@ -210,7 +210,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     michael &lt;- get michaelId
     liftIO $ print michael
 -- STOP
-</pre><p id="bb4" class="hascomments">We start off with some standard database connection code. In this case, we used the single-connection functions. Persistent also comes built in with connection pool functions, which we will generally want to use in production.</p><p id="bb5" class="hascomments">In this example, we have seen two functions: insert creates a new
+</code></pre><p id="bb4" class="hascomments">We start off with some standard database connection code. In this case, we used the single-connection functions. Persistent also comes built in with connection pool functions, which we will generally want to use in production.</p><p id="bb5" class="hascomments">In this example, we have seen two functions: insert creates a new
             record in the database and returns its ID. Like everything else in Persistent, IDs are
             type safe. We'll get into more details of how these IDs work later. So when you call
                 insert $ Person "Michael" 25, it gives you a value back of
@@ -240,7 +240,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
             Persistent.</aside><p id="bc5" class="hascomments">One important thing to note is that everything which occurs inside a single call to
                 runSqlConn runs in a single transaction. This has two important
             implications:</p><ul id="x4"><li id="x5">For many databases, committing a transaction can be a costly activity. By putting multiple steps into a single transaction, you can speed up code dramatically.</li><li id="x6">If an exception is thrown anywhere inside a single call to runSqlConn,
-                all actions will be rolled back (assuming your backend has rollback support).</li></ul><h2>Migrations</h2><p id="m1" class="hascomments">I'm sorry to tell you, but so far I have lied to you a bit: the example from the previous section does not actually work. If you try to run it, you will get an error message about a missing table.</p><p id="m2" class="hascomments">For SQL databases, one of the major pains can be managing schema changes. Instead of leaving this to the user, Persistent steps in to help, but you have to ask it to help. Let's see what this looks like:</p><pre id="x2">-- START
+                all actions will be rolled back (assuming your backend has rollback support).</li></ul><h2>Migrations</h2><p id="m1" class="hascomments">I'm sorry to tell you, but so far I have lied to you a bit: the example from the previous section does not actually work. If you try to run it, you will get an error message about a missing table.</p><p id="m2" class="hascomments">For SQL databases, one of the major pains can be managing schema changes. Instead of leaving this to the user, Persistent steps in to help, but you have to ask it to help. Let's see what this looks like:</p><pre id="x2"><code>-- START
 {-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
@@ -260,12 +260,12 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     michael &lt;- get michaelId
     liftIO $ print michael
 -- STOP
-</pre><p id="m3" class="hascomments">With this one little code change, Persistent will automatically create your
+</code></pre><p id="m3" class="hascomments">With this one little code change, Persistent will automatically create your
                 Person table for you. This split between
                 runMigration and migrate allows you to migrate
             multiple tables simultaneously.</p><p id="m4" class="hascomments">This works when dealing with just a few entities, but can quickly get tiresome once we
             are dealing with a dozen entities. Instead of repeating yourself, Persistent provides a
-            helper function, mkMigrate:</p><pre id="x3">-- START
+            helper function, mkMigrate:</p><pre id="x3"><code>-- START
 {-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
@@ -285,7 +285,7 @@ Car
 main = withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
 -- STOP
-</pre><p id="m5" class="hascomments">mkMigrate is a Template Haskell function which creates a new function
+</code></pre><p id="m5" class="hascomments">mkMigrate is a Template Haskell function which creates a new function
             that will automatically call migrate on all entities defined in the
                 persist block. The share function is just a little
             helper that passes the information from the persist block to each Template Haskell
@@ -309,12 +309,12 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
             constraints. A typical example would be requiring that a username be unique.</p>
         <figure id="x1"><figcaption>Unique Username</figcaption>
             
-            <pre id="x5">User
+            <pre id="x5"><code>User
     username Text
-    UniqueUsername username</pre>
+    UniqueUsername username</code></pre>
         </figure>
         <p id="x6" class="hascomments">While each field name must begin with a lowercase letter, the uniqueness constraints must
-            begin with an uppercase letter.</p><pre id="x2">-- START
+            begin with an uppercase letter.</p><pre id="x2"><code>-- START
 {-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
@@ -336,7 +336,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     insert $ Person "Michael" "Snoyman" 26
     michael &lt;- getBy $ PersonName "Michael" "Snoyman"
     liftIO $ print michael
--- STOP</pre><p id="u2" class="hascomments">To declare a unique combination of fields, we add an extra line to our declaration. Persistent knows that it is defining a unique constructor, since the line begins with a capital letter. Each following word must be a field in this entity.</p><p id="u3" class="hascomments">The main restriction on uniqueness is that it can only be applied non-null fields. The
+-- STOP</code></pre><p id="u2" class="hascomments">To declare a unique combination of fields, we add an extra line to our declaration. Persistent knows that it is defining a unique constructor, since the line begins with a capital letter. Each following word must be a field in this entity.</p><p id="u3" class="hascomments">The main restriction on uniqueness is that it can only be applied non-null fields. The
             reason for this is that the SQL standard is ambiguous on how uniqueness should be
             applied to NULL (e.g., is NULL=NULL true or false?).
             Besides that ambiguity, most SQL engines in fact implement rules which would be contrary to what the Haskell datatypes anticipate (e.g., PostgreSQL says
@@ -347,7 +347,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
             within your Haskell code, like the getBy demonstrated above.
             This happens via the Unique associated type. In the example
             above, we end up with a new constructor:</p>
-        <pre id="x8">PersonName :: String -&gt; String -&gt; Unique Person</pre><h2>Queries</h2>
+        <pre id="x8"><code>PersonName :: String -&gt; String -&gt; Unique Person</code></pre><h2>Queries</h2>
         <p id="x-3" class="hascomments">Depending on what your goal is, there are different approaches to querying the database.
             Some commands query based on a numeric ID, while others will filter. Queries also differ
             in the number of results they return: some lookups should return no more than one result
@@ -361,7 +361,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
    value may or may not exist, its return type is wrapped in a Maybe.</p>
   <figure id="x2"><figcaption>Using get</figcaption>
    
-   <pre id="x4">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+   <pre id="x4"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -384,7 +384,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     case maybePerson of
         Nothing -&gt; liftIO $ putStrLn "Just kidding, not really there"
         Just person -&gt; liftIO $ print person
--- STOP</pre>
+-- STOP</code></pre>
   </figure>
   <p id="x5" class="hascomments">This can be very useful for sites that provide URLs like /person/5. However, in such a case, we don't usually care about the
     Maybe wrapper, and just want the value, returning a 404 message if it is not
@@ -395,7 +395,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
             uniqueness constraint instead of an ID it takes a Unique value.</p>
   <figure id="x2"><figcaption>Using getBy</figcaption>
    
-   <pre id="x4">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+   <pre id="x4"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -419,7 +419,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     case maybePerson of
         Nothing -&gt; liftIO $ putStrLn "Just kidding, not really there"
         Just person -&gt; liftIO $ print person
--- STOP</pre>
+-- STOP</code></pre>
   </figure>
         <p id="x-5" class="hascomments">Like get404, there is also a getBy404 function.</p>
  <h3>Select functions</h3>
@@ -466,7 +466,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
   <aside id="x20" class="note">The combination of limits and offsets is very important; it allows for efficient
    pagination in your webapps.</aside>
   <p id="x21" class="hascomments">Let's jump straight into an example of filtering, and then analyze it.</p>
-   <pre id="x22">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+   <pre id="x22"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -488,7 +488,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
 -- START
     people &lt;- selectList [PersonAge &gt;. 25, PersonAge &lt;=. 30] []
     liftIO $ print people
--- STOP</pre>
+-- STOP</code></pre>
   <p id="x23" class="hascomments">As simple as that example is, we really need to cover three points:</p>
   <ol id="ol_zxf_yhw_kd">
    <li id="x24">PersonAge is a constructor for an associated phantom type. That
@@ -506,7 +506,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
    described later). Don't worry: if you use the wrong one, the compiler will catch you. The other
    two surprising operators are the "is member" and "is not member". They are, respectively, &lt;-. and /&lt;-. (both end with a period).</p>
   <p id="x30" class="hascomments">And regarding ORs, we use the ||. operator. For example:</p>
-  <pre id="x32">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+  <pre id="x32"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -533,7 +533,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
         )
         []
     liftIO $ print people
--- STOP</pre>
+-- STOP</code></pre>
   <p id="x33" class="hascomments">This (completely nonsensical) example means: find people who are 26-30, inclusive, OR whose
    names are neither Adam or Bonny, OR whose age is either 50 or 60.</p>
  <h4>SelectOpt</h4>
@@ -564,7 +564,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
   <p id="x15" class="hascomments">The following code defines a function that will break down results into pages. It returns all
    people aged 18 and over, and then sorts them by age (oldest person first). For people with the
    same age, they are sorted alphabetically by last name, then first name.</p>
-  <pre id="x16">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+  <pre id="x16"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -597,7 +597,7 @@ resultsForPage pageNumber = do
 main = withSqliteConn ":memory:" $ runSqlConn $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
-    resultsForPage 1 &gt;&gt;= liftIO . print</pre>
+    resultsForPage 1 &gt;&gt;= liftIO . print</code></pre>
  <h2>Manipulation</h2>
         <p id="x-3" class="hascomments">Querying is only half the battle. We also need to be able to add data to and modify
             existing data in the database.</p>
@@ -616,13 +616,13 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
   <p id="x5" class="hascomments">However, there is one issue that newcomers are often bothered by: why are IDs and values
    completely separate? It seems like it would be very logical to embed the ID inside the value. In
    other words, instead of
-   having:<pre id="x6">data Person = Person { name :: String }</pre>have<pre id="x7">data Person = Person { personId :: PersonId, name :: String }</pre></p>
+   having:<pre id="x6"><code>data Person = Person { name :: String }</code></pre>have<pre id="x7"><code>data Person = Person { personId :: PersonId, name :: String }</code></pre></p>
   <p id="x8" class="hascomments">Well, there's one problem with this right off the bat: how do we do an
     insert? If a Person needs to have an ID, and we get the ID by inserting, and an
    insert needs a Person, we have an impossible loop. We could solve this with
     undefined, but that's just asking for trouble.</p>
   <p id="x9" class="hascomments">OK, you say, let's try something a bit
-   safer:<pre id="x10">data Person = Person { personId :: Maybe PersonId, name :: String }</pre>I
+   safer:<pre id="x10"><code>data Person = Person { personId :: Maybe PersonId, name :: String }</code></pre>I
    definitely prefer insert $ Person Nothing "Michael" to insert $ Person undefined "Michael". And now our types will be much simpler, right?
    For example, selectList could return a simple [Person]
    instead of that ugly [Entity SqlPersist Person].</p>
@@ -647,15 +647,15 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
    code.</p>
  <h3>Update</h3>  <p id="x1" class="hascomments">Now, in the context of that discussion, let's think about updating. The simplest way to
             update
-            is:<pre id="x2">let michael = Person "Michael" 26
-    michaelAfterBirthday = michael { personAge = 27 }</pre>But
+            is:<pre id="x2"><code>let michael = Person "Michael" 26
+    michaelAfterBirthday = michael { personAge = 27 }</code></pre>But
             that's not actually updating anything, it's just creating a new Person
             value based on the old one. When we say update, we're not talking about
             modifications to the values in Haskell. (We better not be of course, since Haskell data
             types are immutable.)</p>
   <p id="x4" class="hascomments">Instead, we're looking at ways of modifying rows in a table. And the simplest way to do
             that is with the update function.</p>
-  <pre id="x5">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+  <pre id="x5"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -689,11 +689,11 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     update personId [PersonAge =. 27]
 -- STOP
-    resultsForPage 1 &gt;&gt;= liftIO . print</pre>
+    resultsForPage 1 &gt;&gt;= liftIO . print</code></pre>
   <p id="x6" class="hascomments">update takes two arguments: an ID, and a list of Updates. The simplest update is assignment, but it's not always
             the best. What if you want to increase someone's age by 1, but you don't have their
             current age? Persistent has you covered:</p>
-  <pre id="x7">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+  <pre id="x7"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -730,7 +730,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     update personId [PersonAge =. 27]
     haveBirthday personId
-    resultsForPage 1 &gt;&gt;= liftIO . print</pre>
+    resultsForPage 1 &gt;&gt;= liftIO . print</code></pre>
   <p id="x8" class="hascomments">And as you might expect, we have all the basic mathematical operators:
                 +=., -=., *=., and
                 /=. (full stop). These can be convenient for updating a single
@@ -741,7 +741,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
   <p id="x9" class="hascomments">Sometimes you'll want to update many fields at once (give all your employees a 5% pay
             increase, for example). updateWhere takes two parameters: a list of
             filters, and a list of updates to apply.</p>
-  <pre id="x10">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+  <pre id="x10"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -779,10 +779,10 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     resultsForPage 1 &gt;&gt;= liftIO . print
 -- START
     updateWhere [PersonFirstName ==. "Michael"] [PersonAge *=. 2] -- it's been a long day
--- STOP</pre>
+-- STOP</code></pre>
   <p id="x11" class="hascomments">Occassionally, you'll just want to completely replace the value in a database with a
             different value. For that, you use (surprise) the replace function.</p>
-  <pre id="x12">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+  <pre id="x12"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -821,7 +821,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     update personId [PersonAge =. 27]
     haveBirthday personId
     updateWhere [PersonFirstName ==. "Michael"] [PersonAge *=. 2] -- it's been a long day
-    resultsForPage 1 &gt;&gt;= liftIO . print</pre>
+    resultsForPage 1 &gt;&gt;= liftIO . print</code></pre>
 <h3>Delete</h3>
   <p id="x1" class="hascomments">As much as it pains us, sometimes we must part with our data. To do so, we have three
    functions:</p>
@@ -839,7 +839,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     <dd id="x11">Delete based on a set of filters</dd>
    
   </dl>
-  <pre id="x12">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+  <pre id="x12"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -882,10 +882,10 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     delete personId
     deleteBy $ UniqueName "Michael" "Snoyman"
     deleteWhere [PersonFirstName ==. "Michael"]
--- STOP</pre>
+-- STOP</code></pre>
   <p id="x13" class="hascomments">We can even use deleteWhere to wipe out all the records in a table, we just need to give some
    hints to GHC as to what table we're interested in:</p>
-  <pre id="x14">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+  <pre id="x14"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -929,13 +929,13 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     deleteWhere [PersonFirstName ==. "Michael"]
 -- START
     deleteWhere ([] :: [Filter Person])
--- STOP</pre>
+-- STOP</code></pre>
  <h2>Attributes</h2><p id="attr1" class="hascomments">So far, we have seen a basic syntax for our persist blocks: a line
             for the name of our entities, and then an indented line for each field with two words:
             the name of the field and the datatype of the field. Persistent handles more than this:
             you can assign an arbitrary list of attributes after the first two words on a line.</p><p id="attr2" class="hascomments">Suppose we want to have a Person entity with an (optional) age and
             the timestamp of when he/she was added to the system. For entities already in the
-            database, we want to just use the current date-time for that timestamp.</p><pre id="x1">-- START
+            database, we want to just use the current date-time for that timestamp.</p><pre id="x1"><code>-- START
 {-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
@@ -957,13 +957,13 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     insert $ Person "Michael" (Just 26) time
     insert $ Person "Greg" Nothing time
 -- STOP
-</pre><p id="attr3" class="hascomments">Maybe is a built in, single word attribute. It makes the
+</code></pre><p id="attr3" class="hascomments">Maybe is a built in, single word attribute. It makes the
             field optional. In Haskell, this means it is wrapped in a Maybe. In
             SQL, it makes the column nullable.</p>
         <p id="x8" class="hascomments">The default attribute is backend specific, and uses
             whatever syntax is understood by the database. In this case, it uses the database's
             built-in now() function. Suppose that we now want to add a
-            field for a person's favorite programming language:</p><pre id="x4">-- START
+            field for a person's favorite programming language:</p><pre id="x4"><code>-- START
 {-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
@@ -982,11 +982,11 @@ Person
 main = withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
 -- STOP
-</pre>
+</code></pre>
 <aside id="x5" class="note">The default attribute has absolutely no impact on the Haskell code itself; you still need to fill in all values. This will only affect the database schema and automatic migrations.</aside>
 <p id="attr4" class="hascomments">We need to surround the string with single quotes so that the database can properly
             interpret it. Finally, Persistent can use double quotes for containing white space, so
-            if we want to set someone's default home country to be El Salvador:</p><pre id="x7">-- START
+            if we want to set someone's default home country to be El Salvador:</p><pre id="x7"><code>-- START
 {-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
@@ -1005,11 +1005,11 @@ Person
 
 main = withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
--- STOP</pre>
+-- STOP</code></pre>
         <p id="x9" class="hascomments">One last trick you can do with attributes is to specify the names to be used for
             the SQL tables and columns. This can be convenient when interacting with existing
             databases.</p>
-        <pre id="x10">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+        <pre id="x10"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
 import Database.Persist.Sqlite
@@ -1042,9 +1042,9 @@ resultsForPage pageNumber = do
 main = withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
-    resultsForPage 1 &gt;&gt;= liftIO . print</pre><h2>Relations</h2><p id="r1" class="hascomments">Persistent allows references between your data types in a manner that is consistent with
+    resultsForPage 1 &gt;&gt;= liftIO . print</code></pre><h2>Relations</h2><p id="r1" class="hascomments">Persistent allows references between your data types in a manner that is consistent with
             supporting non-SQL databases. We do this by embedding an ID in the related entity. So if
-            a person has many cars:</p><pre id="x1">-- START
+            a person has many cars:</p><pre id="x1"><code>-- START
 {-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
@@ -1070,11 +1070,11 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     cars &lt;- selectList [CarOwnerId ==. bruce] []
     liftIO $ print cars
 -- STOP
-</pre><p id="r4" class="hascomments">Using this technique, you can define one-to-many relationships. To define many-to-many
+</code></pre><p id="r4" class="hascomments">Using this technique, you can define one-to-many relationships. To define many-to-many
             relationships, we need a join entity, which has a one-to-many relationship with each of
             the original tables. It is also a good idea to use uniqueness constraints on these. For
             example, to model a situation where we want to track which people have shopped in which
-            stores:</p><pre id="x2">-- START
+            stores:</p><pre id="x2"><code>-- START
 {-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
@@ -1108,7 +1108,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
 
     insert $ PersonStore michael target
     insert $ PersonStore michael sevenEleven
--- STOP</pre><h2>Closer look at types</h2>
+-- STOP</code></pre><h2>Closer look at types</h2>
   <p id="x1" class="hascomments">So far, we've spoken about Person and PersonId
    without really explaining what they are. In the simplest sense, for a SQL-only system, the
     PersonId could just be type PersonId = Int64. However,
@@ -1116,20 +1116,20 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     Person entity. As a result, you could accidently use a
     PersonId and get a Car. In order to model this relationship,
    we use phantom types. So, our next naive step would be:</p>
-  <pre id="x3">newtype Key entity = Key Int64
-type PersonId = Key Person</pre>
+  <pre id="x3"><code>newtype Key entity = Key Int64
+type PersonId = Key Person</code></pre>
   <aside id="x4" class="note">Prior to Persistent 0.6, we used associated types instead of phantom types. You could solve
    the problem in that direction as well, but phantoms worked out better.</aside>
   <p id="x5" class="hascomments">And that works out really well, until you get to a backend that doesn't use Int64 for
    its IDs. And that's not just a theoretical question; MongoDB uses ByteStrings
    instead. So what we need is a key value that can contain an Int and a
     ByteString. Seems like a great time for a sum type:</p>
-  <pre id="x6">data Key entity = KeyInt Int64 | KeyByteString ByteString</pre>
+  <pre id="x6"><code>data Key entity = KeyInt Int64 | KeyByteString ByteString</code></pre>
   <p id="x7" class="hascomments">But that's just asking for trouble. Next we'll have a backend that uses timestamps, so
    we'll need to add another constructor to Key. This could go on for a while.
    Fortunately, we already have a sum type intended for representing arbitrary data:
     PersistValue:</p>
-  <pre id="x8">newtype Key entity = Key PersistValue</pre>
+  <pre id="x8"><code>newtype Key entity = Key PersistValue</code></pre>
   <p id="x9" class="hascomments">But this has another problem. Let's say we have a web application that takes an ID as a
    parameter from the user. It will need to receive that parameter as Text and then
    try to convert it to a Key. Well, that's simple: write a function to convert a
@@ -1144,32 +1144,32 @@ type PersonId = Key Person</pre>
    dependent on the rules of the backend in question. And once phrased that way, the answer is
    simple: just add another phantom. The real, actual definition of Key in
    Persistent is:</p>
-  <pre id="x12">newtype Key backend entity = Key { unKey :: PersistValue }</pre>
+  <pre id="x12"><code>newtype Key backend entity = Key { unKey :: PersistValue }</code></pre>
   <p id="x13" class="hascomments">This works great: we can have a Text -&gt; Key MongoDB entity function and a
     Text -&gt; Key SqlPersist entity function, and everything runs smoothly. But now
    we have a new problem: relations. Let's say we want to represent blogs and blog posts. We would
    use the entity definition:</p>
-  <pre id="x16">Blog
+  <pre id="x16"><code>Blog
     title Text
 Post
     title Text
-    blogId BlogId</pre>
+    blogId BlogId</code></pre>
   <p id="x17" class="hascomments">But what would that look like in terms of our Key datatype?</p>
-  <pre id="x18">data Blog = Blog { blogTitle :: Text }
-data Post = Post { postTitle :: Text, postBlogId :: Key &lt;what goes here?&gt; Blog }</pre>
+  <pre id="x18"><code>data Blog = Blog { blogTitle :: Text }
+data Post = Post { postTitle :: Text, postBlogId :: Key &lt;what goes here?&gt; Blog }</code></pre>
   <p id="x19" class="hascomments">We need something to fill in as the backend. In theory, we could hardcode this to
     SqlPersist, or Mongo, but then our datatypes will only work
    for a single backend. For an individual application, that might be acceptable, but what about
    libraries defining datatypes to be used by multiple applications, using multiple backends?</p>
   <p id="x20" class="hascomments">So things got a little more complicated. Our types are actually:</p>
-  <pre id="x21">data BlogGeneric backend = Blog { blogTitle :: Text }
-data PostGeneric backend = Post { postTitle :: Text, postBlogId :: Key backend (BlogGeneric backend) }</pre>
+  <pre id="x21"><code>data BlogGeneric backend = Blog { blogTitle :: Text }
+data PostGeneric backend = Post { postTitle :: Text, postBlogId :: Key backend (BlogGeneric backend) }</code></pre>
   <p id="x22" class="hascomments">Notice that we still keep the short names for the constructors and the records. Finally, to
    give a simple interface for normal code, we define some type synonyms:</p>
-  <pre id="x23">type Blog = BlogGeneric SqlPersist
+  <pre id="x23"><code>type Blog = BlogGeneric SqlPersist
 type BlogId = Key SqlPersist Blog
 type Post = PostGeneric SqlPersist
-type PostId = Key SqlPersist Post</pre>
+type PostId = Key SqlPersist Post</code></pre>
   <p id="x24" class="hascomments">And no, SqlPersist isn't hard-coded into Persistent anywhere. That
     sqlSettings parameter you've been passing to mkPersist is what
    tells us to use SqlPersist. Mongo code will use mongoSettings
@@ -1179,7 +1179,7 @@ type PostId = Key SqlPersist Post</pre>
     Key or Generic stuff directly. The most common place for it to
    pop up is in compiler error messages. So it's important to be aware that this exists, but it
    shouldn't affect you on a day-to-day basis.</p>
- <h2>Custom Fields</h2><p id="cf1" class="hascomments">Occassionally, you will want to define a custom field to be used in your datastore. The most common case is an enumeration, such as employment status. For this, Persistent provides a helper Template Haskell function:</p><pre id="x1">-- START
+ <h2>Custom Fields</h2><p id="cf1" class="hascomments">Occassionally, you will want to define a custom field to be used in your datastore. The most common case is an enumeration, such as employment status. For this, Persistent provides a helper Template Haskell function:</p><pre id="x1"><code>-- START
 {-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist
@@ -1202,7 +1202,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     insert $ Person "Bruce Wayne" Retired
     insert $ Person "Peter Parker" Unemployed
     insert $ Person "Michael" Employed
--- STOP</pre><p id="cf2" class="hascomments">derivePersistField stores the data in the database using a string
+-- STOP</code></pre><p id="cf2" class="hascomments">derivePersistField stores the data in the database using a string
             field, and performs marshaling using the Show and Read
             instances of the datatype. This may not be as efficient as storing via an integer, but
             it is much more future proof: even if you add extra constructors in the future, your
@@ -1217,7 +1217,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
         <aside id="x4" class="note">Actually, you can express a LIKE operator directly in the
             normal syntax due to a feature added in Persistent 0.6, which allows backend-specific
             operators. But this is still a good example, so let's roll with it.</aside>
-  <pre id="x3">{-# LANGUAGE OverloadedStrings, TemplateHaskell, QuasiQuotes, TypeFamilies #-}
+  <pre id="x3"><code>{-# LANGUAGE OverloadedStrings, TemplateHaskell, QuasiQuotes, TypeFamilies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving, GADTs, FlexibleContexts #-}
 import Database.Persist.Sqlite (withSqliteConn)
 import Database.Persist.TH (mkPersist, persist, share, mkMigrate, sqlSettings)
@@ -1249,7 +1249,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     -- whole Snoyman family...
     let sql = "SELECT name FROM Person WHERE name LIKE '%Snoyman'"
     C.runResourceT $ withStmt sql []
-                C.$$ CL.mapM_ $ liftIO . print</pre>
+                C.$$ CL.mapM_ $ liftIO . print</code></pre>
         <p id="x-3" class="hascomments">There is also higher-level support that allows for automated data marshaling. Please see
             the Haddock API docs for more details.</p>
  <h2>Integration with Yesod</h2>
@@ -1260,7 +1260,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
   <p id="x2" class="hascomments">The yesod-persistent package provides the meeting point
             between Persistent and Yesod. It provides the YesodPersist
             typeclass, which standardizes access to the database via the runDB method. Let's see this in action.</p>
-  <pre id="x4">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, FlexibleContexts #-}
+  <pre id="x4"><code>{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, FlexibleContexts #-}
 {-# LANGUAGE TemplateHaskell, OverloadedStrings, GADTs, MultiParamTypeClasses #-}
 import Yesod
 import Database.Persist.Sqlite
@@ -1310,14 +1310,14 @@ main :: IO ()
 main = withSqlitePool "test.db3" openConnectionCount $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
     runSqlPool (insert $ Person "Michael" "Snoyman" 26) pool
-    warpDebug 3000 $ PersistTest pool</pre>
+    warpDebug 3000 $ PersistTest pool</code></pre>
   <p id="x5" class="hascomments">There are two important pieces here for general use. runDB is used to
             run a DB action from within a Handler. Within the
                 runDB, you can use any of the functions we've spoken about so far,
             such as insert and selectList.</p>
         <aside class="note">The type of runDB is runDB :: YesodDB sub master a -&gt; GHandler
                 sub master a. YesodDB is defined
-            as:<pre>type YesodDB sub master = YesodPersistBackend master (GHandler sub master)</pre>Since
+            as:<pre><code>type YesodDB sub master = YesodPersistBackend master (GHandler sub master)</code></pre>Since
             it is built on top of the YesodPersistBackend associated type, it uses
             the appropriate database backend based on the current site.</aside>
   <p id="x6" class="hascomments">The other new feature is get404. It works just like

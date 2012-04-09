@@ -8,7 +8,7 @@
   <p id="x1" class="hascomments">WAI uses the conduit package to handle streaming request
             bodies, and efficiently generates responses using blaze-builder. aeson uses attoparsec for parsing; by using attoparsec-conduit we get easy interoperability with WAI. This plays out
             as:</p>
-  <pre id="x7">{-# LANGUAGE OverloadedStrings #-}
+  <pre id="x7"><code>{-# LANGUAGE OverloadedStrings #-}
 import Network.Wai (Response, responseLBS, Application, requestBody)
 import Network.HTTP.Types (status200, status400)
 import Network.Wai.Handler.Warp (run)
@@ -43,7 +43,7 @@ invalidJson ex = return $ responseLBS
 
 -- Application-specific logic would go here.
 modValue :: Value -&gt; IO Value
-modValue = return</pre>
+modValue = return</code></pre>
  <h2>Client</h2>
   <p id="x1" class="hascomments">http-conduit was written as a companion to WAI. It too uses
     conduit and blaze-builder pervasively, meaning we once again
@@ -62,7 +62,7 @@ modValue = return</pre>
     higher level functions (such as httpLbs) that let you ignore the issues of
     sources and get the entire body directly.</li>
   </ul>
-  <pre id="x8">{-# LANGUAGE OverloadedStrings #-}
+  <pre id="x8"><code>{-# LANGUAGE OverloadedStrings #-}
 import Network.HTTP.Conduit
     ( http, parseUrl, withManager, RequestBody (RequestBodyLBS)
     , requestBody, method, Response (..)
@@ -94,5 +94,5 @@ makeValue = return $ object
 
 -- Application-specific function to handle the response from the server
 handleResponse :: Value -&gt; IO ()
-handleResponse = print</pre>
+handleResponse = print</code></pre>
  </html>

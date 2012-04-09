@@ -8,55 +8,55 @@
   <p id="x3" class="hascomments">We have the core monad- also known as the innermost or bottom monad. On top of this
    core, we add layers, each adding a new feature and spreading outward/upward. As a motivating
    example, let's consider an Error monad stacked on top of the IO
-   monad:<pre id="x4">newtype ErrorT e m a = ErrorT { runErrorT :: m (Either e a) }
-type MyStack = ErrorT MyError IO</pre>Now
+   monad:<pre id="x4"><code>newtype ErrorT e m a = ErrorT { runErrorT :: m (Either e a) }
+type MyStack = ErrorT MyError IO</code></pre>Now
    pay close attention here: ErrorT is just a simple newtype around an Either wrapped in a monad.
    Getting rid of the newtype, we
-   have:<pre id="x5">type ErrorTUnwrapped e m a = m (Either e a)</pre></p>
+   have:<pre id="x5"><code>type ErrorTUnwrapped e m a = m (Either e a)</code></pre></p>
   <p id="x6" class="hascomments">At some point, we'll need to actually perform some IO inside our MyStack. If we went with the
    unwrapped approach, it would be trivial, since there would be no ErrorT constructor in the way.
    However, we need that newtype wrapper for a whole bunch of type reasons I won't go into here
    (this isn't a monad transformer tutorial after all). So the solution is the MonadTrans
    typeclass:</p>
-  <pre id="x7">class MonadTrans t where
-    lift :: Monad m =&gt; m a -&gt; t m a</pre>
+  <pre id="x7"><code>class MonadTrans t where
+    lift :: Monad m =&gt; m a -&gt; t m a</code></pre>
   <p id="x8" class="hascomments">I'll admit, the first time I saw that type signature, my response was stunned confusion, and
    incredulity that it actually meant anything. But looking at an instance helps a
-   bit:<pre id="x9">instance (Error e) =&gt; MonadTrans (ErrorT e) where
+   bit:<pre id="x9"><code>instance (Error e) =&gt; MonadTrans (ErrorT e) where
     lift m = ErrorT $ do
         a &lt;- m
-        return (Right a)</pre>All
+        return (Right a)</code></pre>All
    we're doing is wrapping the inside of the IO with a Right value, and then applying our newtype
    wrapper. This allows us to take an action that lives in IO, and "lift" it to the outer/upper
    monad.</p>
   <p id="x10" class="hascomments">But now to the point at hand. This works very well for simple functions. For example:</p>
-  <pre id="x11">sayHi :: IO ()
+  <pre id="x11"><code>sayHi :: IO ()
 sayHi = putStrLn "Hello"
 
 sayHiError :: ErrorT MyError IO ()
-sayHiError = lift $ putStrLn "Hello"</pre>
+sayHiError = lift $ putStrLn "Hello"</code></pre>
   <p id="x12" class="hascomments">But let's take something slightly more complicated, like a callback:</p>
-  <pre id="x13">withMyFile :: (Handle -&gt; IO a) -&gt; IO a
+  <pre id="x13"><code>withMyFile :: (Handle -&gt; IO a) -&gt; IO a
 withMyFile = withFile "test.txt" WriteMode
 
 sayHi :: Handle -&gt; IO ()
 sayHi handle = hPutStrLn handle "Hi there"
 
 useMyFile :: IO ()
-useMyFile = withMyFile sayHi</pre>
+useMyFile = withMyFile sayHi</code></pre>
   <p id="x14" class="hascomments">So far so good, right? Now let's say that we need a version of sayHi that has access to the
    Error monad:</p>
-  <pre id="x15">sayHiError :: Handle -&gt; ErrorT MyError IO ()
+  <pre id="x15"><code>sayHiError :: Handle -&gt; ErrorT MyError IO ()
 sayHiError handle = do
     lift $ hPutStrLn handle "Hi there, error!"
-    throwError MyError</pre>
+    throwError MyError</code></pre>
   <p id="x16" class="hascomments">We would like to write a function that combines withMyFile and sayHiError.
    Unfortunately, GHC doesn't like this very
-   much:<pre id="x17">useMyFileErrorBad :: ErrorT MyError IO ()
+   much:<pre id="x17"><code>useMyFileErrorBad :: ErrorT MyError IO ()
 useMyFileErrorBad = withMyFile sayHiError
 
     Couldn't match expected type `ErrorT MyError IO ()'
-                with actual type `IO ()'</pre>Why
+                with actual type `IO ()'</code></pre>Why
    does this happen, and how can we work around it?</p>
  <h2>Intuition</h2>
   <p id="x1" class="hascomments">Let's try and develop an external intuition of what's happening here. The ErrorT monad
@@ -87,7 +87,7 @@ useMyFileErrorBad = withMyFile sayHiError
    while the lifting process leaves it the same.</p>
   <p id="x15" class="hascomments">But still, with a little fancy footwork we can unwrap the ErrorT, do some processing, and then
    wrap it back up again.</p>
-  <pre id="x16">useMyFileError1 :: ErrorT MyError IO ()
+  <pre id="x16"><code>useMyFileError1 :: ErrorT MyError IO ()
 useMyFileError1 =
     let unwrapped :: Handle -&gt; IO (Either MyError ())
         unwrapped handle = runErrorT $ sayHiError handle
@@ -95,7 +95,7 @@ useMyFileError1 =
         applied = withMyFile unwrapped
         rewrapped :: ErrorT MyError IO ()
         rewrapped = ErrorT applied
-     in rewrapped</pre>
+     in rewrapped</code></pre>
   <p id="x17" class="hascomments">This is the crucial point of this whole article, so look closely. We first unwrap our monad.
    This means that, to the outside world, it's now just a plain old IO value. Internally, we've
    stored all the information from our ErrorT transformer. Now that we have a plain old IO, we can
@@ -122,7 +122,7 @@ useMyFileError1 =
     MonadControlIO to MonadBaseControl, but the concepts are still
    the same.</aside>
   <p id="x8" class="hascomments">The first type we're going to look at
-   is:<pre id="x9">type Run t = forall n o b. (Monad n, Monad o, Monad (t o)) =&gt; t n b -&gt; n (t o b)</pre>That's
+   is:<pre id="x9"><code>type Run t = forall n o b. (Monad n, Monad o, Monad (t o)) =&gt; t n b -&gt; n (t o b)</code></pre>That's
    incredibly dense, let's talk it out. The only "input" datatype to this thing is t, a monad
    transformer. A Run is a function that will then work with any combination of types n, o
    and b (that's what the forall means). n and o are both monads, while b is a simple value
@@ -142,7 +142,7 @@ useMyFileError1 =
   <p id="x18" class="hascomments">Alright, now we're getting somewhere. If we had access to one of those Run functions, we could
    use it to peel off the ErrorT on our sayHiError function and pass it to withMyFile. With the
    magic of undefined, we can play such a game:</p>
-  <pre id="x19">errorRun :: Run (ErrorT MyError)
+  <pre id="x19"><code>errorRun :: Run (ErrorT MyError)
 errorRun = undefined
 
 useMyFileError2 :: IO (ErrorT MyError Identity ())
@@ -151,7 +151,7 @@ useMyFileError2 =
         afterRun handle = errorRun $ sayHiError handle
         applied :: IO (ErrorT MyError Identity ())
         applied = withMyFile afterRun
-     in applied</pre>
+     in applied</code></pre>
   <p id="x20" class="hascomments">This looks eerily similar to our previous example. In fact, errorRun is acting almost
    identically to runErrorT. However, we're still left with two problems: we don't know where to get
    that errorRun value from, and we still need to restructure the original ErrorT after we're
@@ -164,13 +164,13 @@ useMyFileError2 =
   <p id="x3" class="hascomments">So let's review what we need: access to a Run function, and some way to restructure our
    original transformer after the fact. And thus was born MonadTransControl, with its single method
    liftControl:</p>
-  <pre id="x4">class MonadTrans t =&gt; MonadTransControl t where
-    liftControl :: Monad m =&gt; (Run t -&gt; m a) -&gt; t m a</pre>
+  <pre id="x4"><code>class MonadTrans t =&gt; MonadTransControl t where
+    liftControl :: Monad m =&gt; (Run t -&gt; m a) -&gt; t m a</code></pre>
   <p id="x5" class="hascomments">Let's look at this closely. liftControl takes a function (the one we'll be writing). That
    function is provided with a Run function, and must return a value in some monad (m). liftControl
    will then take the result of that function and reinstate the original transformer on top of
    everything.</p>
-  <pre id="x6">useMyFileError3 :: Monad m =&gt; ErrorT MyError IO (ErrorT MyError m ())
+  <pre id="x6"><code>useMyFileError3 :: Monad m =&gt; ErrorT MyError IO (ErrorT MyError m ())
 useMyFileError3 =
     liftControl inside
   where
@@ -178,7 +178,7 @@ useMyFileError3 =
     inside run = withMyFile $ helper run
     helper :: Monad m
            =&gt; Run (ErrorT MyError) -&gt; Handle -&gt; IO (ErrorT MyError m ())
-    helper run handle = run (sayHiError handle :: ErrorT MyError IO ())</pre>
+    helper run handle = run (sayHiError handle :: ErrorT MyError IO ())</code></pre>
   <p id="x7" class="hascomments">Close, but not exactly what I had in mind. What's up with the double monads? Well, let's start
    at the end: sayHiError handle returns a value of type ErrorT MyError IO (). This
    we knew already, no surprises. What might be a little surprising (it got me, at least) is the
@@ -195,14 +195,14 @@ useMyFileError3 =
    can be any monad, including IO. If we treat it that way, we get ErrorT MyError IO (ErrorT
     MyError IO ()). That looks a lot like m (m a), and we want just plain
    old m a. Fortunately, now we're in
-   luck:<pre id="x17">useMyFileError4 :: ErrorT MyError IO ()
-useMyFileError4 = join useMyFileError3</pre>And
+   luck:<pre id="x17"><code>useMyFileError4 :: ErrorT MyError IO ()
+useMyFileError4 = join useMyFileError3</code></pre>And
    it turns out that this usage is so common, that Bas had mercy on us and defined a helper
-   function:<pre id="x18">control :: (Monad m, Monad (t m), MonadTransControl t)
+   function:<pre id="x18"><code>control :: (Monad m, Monad (t m), MonadTransControl t)
         =&gt; (Run t -&gt; m (t m a)) -&gt; t m a
-control = join . liftControl</pre>So
+control = join . liftControl</code></pre>So
    all we need to write
-   is:<pre id="x19">useMyFileError5 :: ErrorT MyError IO ()
+   is:<pre id="x19"><code>useMyFileError5 :: ErrorT MyError IO ()
 useMyFileError5 =
     control inside
   where
@@ -210,56 +210,56 @@ useMyFileError5 =
     inside run = withMyFile $ helper run
     helper :: Monad m
            =&gt; Run (ErrorT MyError) -&gt; Handle -&gt; IO (ErrorT MyError m ())
-    helper run handle = run (sayHiError handle :: ErrorT MyError IO ())</pre></p>
+    helper run handle = run (sayHiError handle :: ErrorT MyError IO ())</code></pre></p>
   <p id="x20" class="hascomments">And just to make it a little
-   shorter:<pre id="x21">useMyFileError6 :: ErrorT MyError IO ()
-useMyFileError6 = control $ \run -&gt; withMyFile $ run . sayHiError</pre></p>
+   shorter:<pre id="x21"><code>useMyFileError6 :: ErrorT MyError IO ()
+useMyFileError6 = control $ \run -&gt; withMyFile $ run . sayHiError</code></pre></p>
  <h3>MonadControlIO</h3>
   <p id="x1" class="hascomments">The MonadTrans class provides the lift method, which allows you to lift an action one level in
    the stack. There is also the MonadIO class that provides liftIO, which lifts an IO action as far
    in the stack as desired. We have the same breakdown in monad-control. But first, we need a
    corrolary to
-   Run:<pre id="x2">type RunInBase m base = forall b. m b -&gt; base (m b)</pre>Instead
+   Run:<pre id="x2"><code>type RunInBase m base = forall b. m b -&gt; base (m b)</code></pre>Instead
    of dealing with a transformer, we're dealing with two monads. base is the underlying monad, and m
    is a stack built on top of it. RunInBase is a function that takes a value of the entire stack,
    pops out that base, and puts in on the outside. Unlike in the Run type, we don't replace it with
    an arbitrary monad, but with the original one. To use some more concrete types:</p>
-  <pre id="x3">RunInBase (ErrorT MyError IO) IO = forall b. ErrorT MyError IO b -&gt; IO (ErrorT MyError IO b)</pre>
+  <pre id="x3"><code>RunInBase (ErrorT MyError IO) IO = forall b. ErrorT MyError IO b -&gt; IO (ErrorT MyError IO b)</code></pre>
   <p id="x4" class="hascomments">This should look fairly similar to what we've been looking at so far, the only difference is
    that we want to deal with a specific inner monad. Our MonadControlIO class is really just an
    extension of MonadControlTrans using this RunInBase.</p>
-  <pre id="x5">class MonadIO m =&gt; MonadControlIO m where
-    liftControlIO :: (RunInBase m IO -&gt; IO a) -&gt; m a</pre>
+  <pre id="x5"><code>class MonadIO m =&gt; MonadControlIO m where
+    liftControlIO :: (RunInBase m IO -&gt; IO a) -&gt; m a</code></pre>
   <p id="x6" class="hascomments">Simply put, liftControlIO takes a function which receives a RunInBase. That RunInBase can be
    used to strip down our monad to just an IO, and then liftControlIO builds everything back up
    again. And like MonadControlTrans, it comes with a helper function</p>
-  <pre id="x7">controlIO :: MonadControlIO m =&gt; (RunInBase m IO -&gt; IO (m a)) -&gt; m a
-controlIO = join . liftControlIO</pre>
+  <pre id="x7"><code>controlIO :: MonadControlIO m =&gt; (RunInBase m IO -&gt; IO (m a)) -&gt; m a
+controlIO = join . liftControlIO</code></pre>
   <p id="x8" class="hascomments">We can easily rewrite our previous example with
-   it:<pre id="x9">useMyFileError7 :: ErrorT MyError IO ()
-useMyFileError7 = controlIO $ \run -&gt; withMyFile $ run . sayHiError</pre>And
+   it:<pre id="x9"><code>useMyFileError7 :: ErrorT MyError IO ()
+useMyFileError7 = controlIO $ \run -&gt; withMyFile $ run . sayHiError</code></pre>And
    as an advantage, it easily scales to multiple
-   transformers:<pre id="x10">sayHiCrazy :: Handle -&gt; ReaderT Int (StateT Double (ErrorT MyError IO)) ()
+   transformers:<pre id="x10"><code>sayHiCrazy :: Handle -&gt; ReaderT Int (StateT Double (ErrorT MyError IO)) ()
 sayHiCrazy handle = liftIO $ hPutStrLn handle "Madness!"
 
 useMyFileCrazy :: ReaderT Int (StateT Double (ErrorT MyError IO)) ()
-useMyFileCrazy = controlIO $ \run -&gt; withMyFile $ run . sayHiCrazy</pre></p>
+useMyFileCrazy = controlIO $ \run -&gt; withMyFile $ run . sayHiCrazy</code></pre></p>
  <h2>Real Life Examples</h2>
   <p id="x1" class="hascomments">Let's solve some real-life problems with this code. Probably the biggest motivating use case is
    exception handling in a transformer stack. For example, let's say that we want to automatically
    run some cleanup code when an exception is thrown. If this were normal IO code, we'd
-   use:<pre id="x2">onException :: IO a -&gt; IO b -&gt; IO a</pre>But if we're
+   use:<pre id="x2"><code>onException :: IO a -&gt; IO b -&gt; IO a</code></pre>But if we're
    in the ErrorT monad, we can't pass in either the action or the cleanup. In comes controlIO to the
-   rescue:<pre id="x3">onExceptionError :: ErrorT MyError IO a
+   rescue:<pre id="x3"><code>onExceptionError :: ErrorT MyError IO a
                  -&gt; ErrorT MyError IO b
                  -&gt; ErrorT MyError IO a
 onExceptionError action after = controlIO $ \run -&gt;
-    run action `onException` run after</pre></p>
+    run action `onException` run after</code></pre></p>
   <p id="x4" class="hascomments">Let's say we need to allocate some memory to store a Double in. In the IO monad, we could just
    use the alloca function. Once again, our solution is
-   simple:<pre id="x5">allocaError :: (Ptr Double -&gt; ErrorT MyError IO b)
+   simple:<pre id="x5"><code>allocaError :: (Ptr Double -&gt; ErrorT MyError IO b)
             -&gt; ErrorT MyError IO b
-allocaError f = controlIO $ \run -&gt; alloca $ run . f</pre></p>
+allocaError f = controlIO $ \run -&gt; alloca $ run . f</code></pre></p>
  <h2>Lost State</h2>
   <p id="x1" class="hascomments">Let's rewind a bit to our onExceptionError. It uses onException under the surface,
    which has a type signature: IO a -&gt; IO b -&gt; IO a. Let me ask you
@@ -276,21 +276,21 @@ allocaError f = controlIO $ \run -&gt; alloca $ run . f</pre></p>
  <h2>More Complicated Cases</h2>
   <p id="x1" class="hascomments">In order to make our tricks work so far, we've needed to have functions that give us full
    access to play around with their values. Sometimes, this isn't the case. Take, for instance:</p>
-  <pre id="x2">addMVarFinalizer :: MVar a -&gt; IO () -&gt; IO ()</pre>
+  <pre id="x2"><code>addMVarFinalizer :: MVar a -&gt; IO () -&gt; IO ()</code></pre>
   <p id="x3" class="hascomments">In this case, we are required to have no value inside our finalizer function. Intuitively, the
    first thing we should notice is that there will be no way to capture our monadic side effects. So
    how do we get something like this to compile? Well, we need to explicitly tell it to drop all of
    its state-holding
-   information:<pre id="x4">addMVarFinalizerError :: MVar a -&gt; ErrorT MyError IO () -&gt; ErrorT MyError IO ()
+   information:<pre id="x4"><code>addMVarFinalizerError :: MVar a -&gt; ErrorT MyError IO () -&gt; ErrorT MyError IO ()
 addMVarFinalizerError mvar f = controlIO $ \run -&gt;
-    return $ liftIO $ addMVarFinalizer mvar (run f &gt;&gt; return ())</pre></p>
+    return $ liftIO $ addMVarFinalizer mvar (run f &gt;&gt; return ())</code></pre></p>
   <p id="x5" class="hascomments">Another case from the same module
-   is:<pre id="x6">modifyMVar :: MVar a -&gt; (a -&gt; IO (a, b)) -&gt; IO b</pre>Here,
+   is:<pre id="x6"><code>modifyMVar :: MVar a -&gt; (a -&gt; IO (a, b)) -&gt; IO b</code></pre>Here,
    we have a restriction on the return type in the second argument: it must be a tuple of the value
    passed to that function and the final return value. Unfortunately, I can't see a way of writing a
    little wrapper around modifyMVar to make it work for ErrorT. Instead, in this case, I copied the
    definition of modifyMVar and modified it:</p>
-  <pre id="x7">modifyMVar :: MVar a
+  <pre id="x7"><code>modifyMVar :: MVar a
            -&gt; (a -&gt; ErrorT MyError IO (a, b))
            -&gt; ErrorT MyError IO b
 modifyMVar m io =
@@ -298,5 +298,5 @@ modifyMVar m io =
     a      &lt;- liftIO $ takeMVar m
     (a',b) &lt;- restore (io a) `onExceptionError` liftIO (putMVar m a)
     liftIO $ putMVar m a'
-    return b</pre>
+    return b</code></pre>
  </html>

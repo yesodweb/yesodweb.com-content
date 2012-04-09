@@ -180,7 +180,7 @@
    have to remember to include those Lucius and Julius files manually every time you refer to a
    Hamlet file. For this, the site template provides the widgetFile function.</p>
   <p id="x-5" class="hascomments">If you have a handler function:</p>
-  <pre id="x-6">getRootR = defaultLayout $(widgetFile "homepage")</pre>
+  <pre id="x-6"><code>getRootR = defaultLayout $(widgetFile "homepage")</code></pre>
   <p id="x-7" class="hascomments">, Yesod will look for the following files:</p>
   <ul id="ul_vih_ddh_oe">
    <li id="x-8">templates/homepage.hamlet</li>

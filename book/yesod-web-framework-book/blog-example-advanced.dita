@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <html><h1>Blog: i18n, authentication, authorization, and database</h1>
-  <pre id="x-3">This is a simple blog app. It allows an admin to add blog posts via a rich text
+  <pre id="x-3"><code>This is a simple blog app. It allows an admin to add blog posts via a rich text
 editor (nicedit), allows logged-in users to comment, and has full i18n support.
 It is also a good example of using a Persistent database, leveraging Yesod's
 authorization system, and templates.
@@ -447,5 +447,5 @@ Finally our main function.
 &gt;     -- perform any necessary migration
 &gt;     runSqlPool (runMigration migrateAll) pool
 &gt;     manager &lt;- newManager def -- create a new HTTP manager
-&gt;     warpDebug 3000 $ Blog pool manager -- start our server</pre>
+&gt;     warpDebug 3000 $ Blog pool manager -- start our server</code></pre>
  </html>

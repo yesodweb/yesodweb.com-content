@@ -4,7 +4,7 @@
             build modular pieces of code that can be easily composed, it can be a headache to
             coordinate all three pieces separately. Widgets are Yesod's solution to the problem.
             They also help with the issue of including libraries, such as jQuery, one time only.</p><p id="i3" class="hascomments">Our four template languages- Hamlet, Cassius, Lucius and Julius- provide the raw tools for constructing your output. Widgets provide the glue that allows them to work together seamlessly.</p><h2>Synopsis</h2>
-  <pre id="x1">{-# LANGUAGE OverloadedStrings #-}
+  <pre id="x1"><code>{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -35,9 +35,9 @@ $(function() {
     toWidgetBody [julius| alert("This is included in the body itself"); |]
 -- STOP
 
-main = warpDebug 3000 W</pre>
+main = warpDebug 3000 W</code></pre>
   <p id="x2" class="hascomments">This produces the following HTML (indentation added):</p>
-  <pre id="x3">&lt;!DOCTYPE html&gt; 
+  <pre id="x3"><code>&lt;!DOCTYPE html&gt; 
 &lt;html&gt;
     &lt;head&gt;
         &lt;title&gt;My Page Title&lt;/title&gt;
@@ -55,7 +55,7 @@ $(function() {
         &lt;h2&gt;Here's another &lt;/h2&gt;
         &lt;script&gt; alert("This is included in the body itself"); &lt;/script&gt;
     &lt;/body&gt;
-&lt;/html&gt;</pre>
+&lt;/html&gt;</code></pre>
  <h2>What's in a Widget?</h2><p id="ww1" class="hascomments">At a very superficial level, an HTML document is just a
             bunch of nested tags. This is the approach most HTML generation
             tools take: you simply define hierarchies of tags and are done with
@@ -132,7 +132,7 @@ $(function() {
    compose pieces together.</p>
   <figure id="x2"><figcaption>Combining Widgets</figcaption>
    
-   <pre id="x4">myWidget1 = do
+   <pre id="x4"><code>myWidget1 = do
     toWidget [hamlet|&lt;h1&gt;My Title|]
     toWidget [lucius|h1 { color: green } |]
 
@@ -145,7 +145,7 @@ myWidget = do
     myWidget2
 
 -- or, if you want
-myWidget' = myWidget1 &gt;&gt; myWidget2</pre>
+myWidget' = myWidget1 &gt;&gt; myWidget2</code></pre>
   </figure>
   <aside id="x5" class="note">If you're so inclined, there's also a Monoid instance of
     Widget, meaning you can use mconcat or a
@@ -159,7 +159,7 @@ myWidget' = myWidget1 &gt;&gt; myWidget2</pre>
    for this handler.</p>
   <figure id="x2"><figcaption>Using newIdent</figcaption>
    
-   <pre id="x4">{-# LANGUAGE OverloadedStrings #-}
+   <pre id="x4"><code>{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -181,7 +181,7 @@ getRootR = defaultLayout $ do
     toWidget [lucius| .#{headerClass} { color: green; } |]
 -- STOP
 
-main = warpDebug 3000 W</pre>
+main = warpDebug 3000 W</code></pre>
   </figure>
   <aside id="x5" class="note">You might be wondering: what does lift mean? A Widget is a monad
    transformer, sitting on top of a Handler. newIdent is a
@@ -192,7 +192,7 @@ main = warpDebug 3000 W</pre>
  <h2>whamlet</h2>
   <p id="x1" class="hascomments">Let's say you've got a fairly standard Hamlet template, that embeds another Hamlet template to
    represent the footer:</p>
-  <pre id="x2">page = [hamlet|
+  <pre id="x2"><code>page = [hamlet|
 &lt;p&gt;This is my page. I hope you enjoyed it.
 ^{footer}
 |]
@@ -200,24 +200,24 @@ main = warpDebug 3000 W</pre>
 footer = [hamlet|
 &lt;footer&gt;
     &lt;p&gt;That's all folks!
-|]</pre>
+|]</code></pre>
   <p id="x3" class="hascomments">That works fine if the footer is plain old HTML, but what if we want to add some style? Well,
    we can easily spice up the footer by turning it into a Widget:</p>
-  <pre id="x4">footer = do
+  <pre id="x4"><code>footer = do
     toWidget [lucius| footer { font-weight: bold; text-align: center } |]
     toWidget [hamlet|
 &lt;footer&gt;
     &lt;p&gt;That's all folks!
-|]</pre>
+|]</code></pre>
   <p id="x5" class="hascomments">But now we've got a problem: a Hamlet template can only embed another Hamlet template;
       it knows nothing about a Widget. This is where whamlet comes in. It takes
       exactly the same syntax as normal Hamlet, and variable (#{...}) and URL (@{...}) interpolation
       are unchanged. But embedding (^{...}) takes a Widget, and the final result is
       a Widget. To use it, we can just do:</p>
-  <pre id="x6">page = [whamlet|
+  <pre id="x6"><code>page = [whamlet|
 &lt;p&gt;This is my page. I hope you enjoyed it.
 ^{footer}
-|]</pre>
+|]</code></pre>
   <p id="x7" class="hascomments">There is also whamletFile, if you would prefer to keep your template
       in a separate file.</p>
     <aside id="x-3" class="note">The scaffolded site has an even more convenient function, widgetFile,
@@ -245,7 +245,7 @@ footer = [hamlet|
    site declares a type synonym to help you out. Let's say your foundation type is MyCoolApp, it
    will define type Widget = GWidget MyCoolApp MyCoolApp (). Therefore, we can get
    some very user-friendly type signatures on our widgets:</p>
-  <pre id="x10">footer :: Widget
+  <pre id="x10"><code>footer :: Widget
 footer = do
     toWidget [lucius| footer { font-weight: bold; text-align: center } |]
     toWidget [hamlet|
@@ -257,7 +257,7 @@ page :: Widget
 page = [whamlet|
 &lt;p&gt;This is my page. I hope you enjoyed it.
 ^{footer}
-|]</pre>
+|]</code></pre>
   <p id="x11" class="hascomments">If you've been paying close attention, you might be confused. We used lift on Widget in the ID generation example above, but
     GWidget isn't actually a monad transformer. What's going on here?
    Well, in older versions of Yesod, it was a transformer around the Handler type. Unfortunately, this led to difficult-to-parse error messages.
@@ -282,12 +282,12 @@ page = [whamlet|
             question: when we're inside defaultLayout, how do we unwrap a
                 Widget? The answer is widgetToPageContent. Let's
             look at some (simplified) types:</p>
-  <pre id="x4">widgetToPageContent :: Widget -&gt; Handler (PageContent url)
+  <pre id="x4"><code>widgetToPageContent :: Widget -&gt; Handler (PageContent url)
 data PageContent url = PageContent
     { pageTitle :: Html
     , pageHead :: HtmlUrl url
     , pageBody :: HtmlUrl url
-    }</pre>
+    }</code></pre>
   <p id="x5" class="hascomments">This is getting closer to what we need. We now have direct access to the HTML making up
             the head and body, as well as the title. At this point, we can use Hamlet to combine
             them all together into a single document, along with our site layout, and we use
@@ -295,7 +295,7 @@ data PageContent url = PageContent
             that's ready to be shown to the user. The next figure demonstrates this process.</p>
   <figure id="x6"><figcaption>Using widgetToPageContent</figcaption>
    
-   <pre id="x8">{-# LANGUAGE OverloadedStrings #-}
+   <pre id="x8"><code>{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -333,7 +333,7 @@ instance Yesod MyApp where
     defaultLayout = myLayout
 -- STOP
 
-main = warpDebug 3000 MyApp</pre>
+main = warpDebug 3000 MyApp</code></pre>
   </figure>
   <aside id="x9" class="note">You may have noticed that we used GWidget and
                 GHandler instead of Widget and
@@ -355,7 +355,7 @@ main = warpDebug 3000 MyApp</pre>
             do-notation again, as in <a href="../../yesod-web-framework-book/widgets-09/widgets.dita#file60-using-widgetswidgets/last-minute-widget-adjustment">Last-Minute Widget Adjustment</a>.</p>
   <figure id="last-minute-widget-adjustment"><figcaption>Last-Minute Widget Adjustment</figcaption>
             
-            <pre id="x17">{-# LANGUAGE OverloadedStrings #-}
+            <pre id="x17"><code>{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -394,7 +394,7 @@ $doctype 5
 instance Yesod MyApp where
     defaultLayout = myLayout
 
-main = warpDebug 3000 MyApp</pre>
+main = warpDebug 3000 MyApp</code></pre>
         </figure>
  <h2>Summary</h2>
   <p id="x-3" class="hascomments">The basic building block of each page is a widget. Individual snippets of HTML, CSS, and

@@ -3,9 +3,9 @@
             methods of the Yesod typeclass.</p><p id="i2" class="hascomments">The Yesod typeclass gives us a central place for defining
             settings for our application. Eeverything else has a default definition which is usually
             the right thing. But in order to build a powerful, customized application, you'll
-            usually end up wanting to override at least a few of these methods.</p><h2>Rendering and Parsing URLs</h2><p id="rpu1" class="hascomments">We've already mentioned how Yesod is able to automatically render type-safe URLs into a textual URL that can be inserted into an HTML page. Let's say we have a route definition that looks like:</p><pre id="x1">mkYesod "MyApp" [parseRoutes|
+            usually end up wanting to override at least a few of these methods.</p><h2>Rendering and Parsing URLs</h2><p id="rpu1" class="hascomments">We've already mentioned how Yesod is able to automatically render type-safe URLs into a textual URL that can be inserted into an HTML page. Let's say we have a route definition that looks like:</p><pre id="x1"><code>mkYesod "MyApp" [parseRoutes|
 /some/path SomePathR GET
-]</pre><p id="rpu2" class="hascomments">If we place SomePathR into a hamlet template, how does Yesod render
+]</code></pre><p id="rpu2" class="hascomments">If we place SomePathR into a hamlet template, how does Yesod render
             it? Yesod always tries to construct absolute URLs. This is especially
             useful once we start creating XML sitemaps and Atom feeds, or sending emails. But in
             order to construct an absolute URL, we need to know the domain name of the
@@ -15,8 +15,8 @@
             mean that, depending on how the user submitted a request would generate different URLs.
             For example, we would generate different URLs depending if the user connected to
             "example.com" or "www.example.com". For Search Engine Optimization, we want to be able
-            to consolidate on a single canonical URL.</p><p id="rpu4" class="hascomments">And finally, Yesod doesn't make any assumption about where you host your application. For example, I may have a mostly static site (http://static.example.com/), but I'd like to stick a Yesod-powered Wiki at /wiki/. There is no reliable way for an application to determine what subpath it is being hosted from. So instead of doing all of this guesswork, Yesod needs you to tell it the <dfn id="x5">application root</dfn>.</p><p id="rpu5" class="hascomments">Using the wiki example, you would write your Yesod instance as:</p><pre id="x6">instance Yesod MyWiki where
-    approot _ = "http://static.example.com/wiki" -- FIXME this is out-of-date</pre><p id="rpu6" class="hascomments">Notice that there is no trailing slash there. Next, when Yesod wants to construct a URL
+            to consolidate on a single canonical URL.</p><p id="rpu4" class="hascomments">And finally, Yesod doesn't make any assumption about where you host your application. For example, I may have a mostly static site (http://static.example.com/), but I'd like to stick a Yesod-powered Wiki at /wiki/. There is no reliable way for an application to determine what subpath it is being hosted from. So instead of doing all of this guesswork, Yesod needs you to tell it the <dfn id="x5">application root</dfn>.</p><p id="rpu5" class="hascomments">Using the wiki example, you would write your Yesod instance as:</p><pre id="x6"><code>instance Yesod MyWiki where
+    approot _ = "http://static.example.com/wiki" -- FIXME this is out-of-date</code></pre><p id="rpu6" class="hascomments">Notice that there is no trailing slash there. Next, when Yesod wants to construct a URL
             for SomePathR, it determines that the relative path for
                 SomePathR is /some/path, appends that to your
             approot and creates http://static.example.com/wiki/some/path.</p><p id="rpu7" class="hascomments">This also explains our cryptic approot _ = "" FIXME: for our
@@ -51,7 +51,7 @@
                 then a 301 response is sent to the client. This is used to force canonical URLs (eg,
                 remove extra slashes).</li><li id="x8">Otherwise, we try to dispatch using the response from cleanPath (a
                     Right). If this works, we return a response. Otherwise, we
-                return a 404.</li></ol><p id="cp2" class="hascomments">This combination allows subsites to retain full control of how their URLs appear, yet allows master sites to have modified URLs. As a simple example, let's see how we could modify Yesod to always produce trailing slashes on URLs:</p><pre id="x9">-- START
+                return a 404.</li></ol><p id="cp2" class="hascomments">This combination allows subsites to retain full control of how their URLs appear, yet allows master sites to have modified URLs. As a simple example, let's see how we could modify Yesod to always produce trailing slashes on URLs:</p><pre id="x9"><code>-- START
 {-# LANGUAGE TypeFamilies, QuasiQuotes, MultiParamTypeClasses, TemplateHaskell, OverloadedStrings #-}
 import Yesod
 import Network.HTTP.Types (encodePath)
@@ -97,7 +97,7 @@ getRootR = defaultLayout [whamlet|
 
 getFooR = getRootR
 
-main = warpDebug 3000 Slash</pre><p id="cp3" class="hascomments">First, let's look at our joinPath implementation. This is copied almost
+main = warpDebug 3000 Slash</code></pre><p id="cp3" class="hascomments">First, let's look at our joinPath implementation. This is copied almost
             verbatim from the default Yesod implementation, with one difference: we append an extra
             empty string to the end. When dealing with path pieces, an empty string will append
             another slash. So adding an extra empty string will force a trailing slash.</p><p id="cp4" class="hascomments">cleanPath is a little bit trickier. First, we check for the empty path
@@ -116,7 +116,7 @@ main = warpDebug 3000 Slash</pre><p id="cp3" class="hascomments">First, let's lo
                 hamletToRepHtml to convert a Hamlet template into a
                 RepHtml. We can even add extra widget components, like a Lucius
             template. from within defaultLayout. An example should make this all
-            clear:</p><pre id="x2">{-# LANGUAGE TypeFamilies, QuasiQuotes #-}
+            clear:</p><pre id="x2"><code>{-# LANGUAGE TypeFamilies, QuasiQuotes #-}
 {-# LANGUAGE MultiParamTypeClasses, TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
 import Yesod
@@ -152,7 +152,7 @@ getRootR = defaultLayout $ do
     color: red
 |]
     addHamlet [hamlet|&lt;h1&gt;Hello|]
-main = warpDebug 4000 Layout</pre><h3>getMessage</h3><p id="gm1" class="hascomments">Even though we haven't covered sessions yet, I'd like to mention
+main = warpDebug 4000 Layout</code></pre><h3>getMessage</h3><p id="gm1" class="hascomments">Even though we haven't covered sessions yet, I'd like to mention
                 getMessage here. A common pattern in web development is setting a
             message in one handler and displaying it in another. For example, if a user
                 POSTs a form, you may want to redirect him/her to another page
@@ -162,7 +162,7 @@ main = warpDebug 4000 Layout</pre><h3>getMessage</h3><p id="gm1" class="hascomme
                 getMessage retrieves the message (and clears it, so it doesn't
             appear a second time). It's recommended that you put the result of
                 getMessage into your defaultLayout. For
-            example:</p><pre id="x1">{-# LANGUAGE TypeFamilies, QuasiQuotes #-}
+            example:</p><pre id="x1"><code>{-# LANGUAGE TypeFamilies, QuasiQuotes #-}
 {-# LANGUAGE MultiParamTypeClasses, TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
 import Yesod
@@ -192,11 +192,11 @@ $doctype 5
 getRootR = defaultLayout [whamlet|&lt;a href="@{MsgR}"&gt;message|]
 getMsgR = setMessage "foo" &gt;&gt; redirect RootR &gt;&gt; return ()
 main = warpDebug 4000 Layout
-</pre><p id="gm3" class="hascomments">We'll cover getMessage/setMessage in more detail when
+</code></pre><p id="gm3" class="hascomments">We'll cover getMessage/setMessage in more detail when
             we <a href="../../yesod-web-framework-book/sessions/sessions.dita" id="x2">discuss sessions</a>.</p><h2>Custom error pages</h2><p id="cep1" class="hascomments">One of the marks of a professional web site is a properly designed error page. Yesod
             gets you a long way there by automatically using your defaultLayout for
             displaying error pages. But sometimes, you'll want to go even further. For this, you'll
-            want to override the errorHandler method:</p><pre id="x1">{-# LANGUAGE TypeFamilies, QuasiQuotes, OverloadedStrings #-}
+            want to override the errorHandler method:</p><pre id="x1"><code>{-# LANGUAGE TypeFamilies, QuasiQuotes, OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses, TemplateHaskell #-}
 import Yesod
 data Layout = Layout
@@ -212,11 +212,11 @@ instance Yesod Layout where
     errorHandler other = defaultErrorHandler other
 -- STOP
 getRootR = defaultLayout [whamlet|Hello World|]
-main = warpDebug 4000 Layout</pre><p id="cep2" class="hascomments">Here we specify a custom 404 error page. We can also use the
+main = warpDebug 4000 Layout</code></pre><p id="cep2" class="hascomments">Here we specify a custom 404 error page. We can also use the
                 defaultErrorHandler when we don't want to write a custom handler
             for each error type. Due to type constraints, we need to start off our methods with
                 fmap chooseRep, but otherwise you can write a typical handler
-            function.</p><p id="cep3" class="hascomments">In fact, you could even use special responses like redirects:</p><pre id="x2">{-# LANGUAGE TypeFamilies, QuasiQuotes, OverloadedStrings #-}
+            function.</p><p id="cep3" class="hascomments">In fact, you could even use special responses like redirects:</p><pre id="x2"><code>{-# LANGUAGE TypeFamilies, QuasiQuotes, OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses, TemplateHaskell #-}
 import Yesod
 data Layout = Layout
@@ -228,7 +228,7 @@ instance Yesod Layout where
 -- STOP
 getRootR = defaultLayout [whamlet|Hello World|]
 main = warpDebug 4000 Layout
-</pre><aside id="x3" class="note">Even though you can do this, I don't actually recommend such practices. A 404 should be a 404.</aside><h2>External CSS and Javascript</h2>
+</code></pre><aside id="x3" class="note">Even though you can do this, I don't actually recommend such practices. A 404 should be a 404.</aside><h2>External CSS and Javascript</h2>
   <aside id="in-scaffolding" class="note">The functionality described here is automatically included in the
    scaffolded site, so you don't need to worry about implementing this yourself.</aside>
   <p id="x-3" class="hascomments">One of the most powerful, and most intimidating, methods in the Yesod typeclass is
@@ -284,9 +284,9 @@ main = warpDebug 4000 Layout
   <p id="x-5" class="hascomments">To facilitate this, we have the urlRenderOverride method. This method
    intercepts the normal URL rendering and sets a special value for some routes. For example, the
    scaffolding defines this method as:</p>
-  <pre id="x-7">    urlRenderOverride y (StaticR s) =
+  <pre id="x-7"><code>    urlRenderOverride y (StaticR s) =
         Just $ uncurry (joinPath y (Settings.staticRoot $ settings y)) $ renderRoute s
-    urlRenderOverride _ _ = Nothing</pre>
+    urlRenderOverride _ _ = Nothing</code></pre>
   <p id="x-8" class="hascomments">This means that static routes are served from a special static root, which you can configure to
    be a different domain. This is a great example of the power and flexibility of type-safe URLs:
    with a single line of code you're able to change the rendering of static routes throughout all of

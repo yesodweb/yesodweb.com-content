@@ -29,11 +29,11 @@
   <p id="x-8" class="hascomments">Instead, we have monad transformers. In addition to Reader, we have
     ReaderT, which adds reader functionality to any other monad. So we could
    represent our ReaderError as (conceptually):</p>
-  <pre id="x-9">type ReaderError = ReaderT Error</pre>
+  <pre id="x-9"><code>type ReaderError = ReaderT Error</code></pre>
   <p id="x-10" class="hascomments">In order to access our settings variable, we can use the ask function. But what about short-circuiting a computation? We'd like to use
     throwError, but that won't exactly work. Instead, we need to lift our call into the next monad up. In other words:</p>
-  <pre id="x-13">throwError :: errValue -&gt; Error
-lift . throwError :: errValue -&gt; ReaderT Error</pre>
+  <pre id="x-13"><code>throwError :: errValue -&gt; Error
+lift . throwError :: errValue -&gt; ReaderT Error</code></pre>
   <p id="x-14" class="hascomments">There are a few things you should pick up here:</p>
   <ul id="ul_d29d1697-acc1-4f67-8cc6-a1b8305f865a">
    <li id="x-15">A transformer can be used to add functionality to an existing monad.</li>
@@ -64,7 +64,7 @@ lift . throwError :: errValue -&gt; ReaderT Error</pre>
    perform on a database, like get. This typeclass essentially looks like
     class (Monad (b m)) =&gt; PersistStore b m. b is the backend itself, and is in fact a monad transformer, while m is the inner monad that b wraps around. Both SQL and
    MongoDB have their own instances; in the case of SQL, it looks like:</p>
-  <pre id="x-11">instance MonadBaseControl IO m =&gt; PersistBackend SqlPersist m</pre>
+  <pre id="x-11"><code>instance MonadBaseControl IO m =&gt; PersistBackend SqlPersist m</code></pre>
   <p id="x-12" class="hascomments">This means that you can run a SQL database with any underlying monad, so long as that
    underlying monad supports MonadBaseControl IO, which allows you to
    properly deal with exceptions in a monad stack. That basically means any transformer stack built
@@ -100,7 +100,7 @@ lift . throwError :: errValue -&gt; ReaderT Error</pre>
             for modularity, as this Widget can be used in any
                 Handler we want, without any need to pass in the database
             contents.</p>
-  <pre id="x-4">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell, FlexibleContexts,
+  <pre id="x-4"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell, FlexibleContexts,
              QuasiQuotes, TypeFamilies, MultiParamTypeClasses, GADTs #-}
 import Yesod
 import Database.Persist.Sqlite
@@ -168,7 +168,7 @@ postAddLinkR = do
 main :: IO ()
 main = withSqlitePool "links.db3" 10 $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
-    warpDebug 3000 $ LinksExample pool</pre>
+    warpDebug 3000 $ LinksExample pool</code></pre>
   <p id="x-5" class="hascomments">Pay attention in particular to the existingLinks function.
             Notice how all we needed to do was apply lift to a normal
             database action. And from within getRootR, we treated existingLinks like any ordinary Widget,
@@ -180,7 +180,7 @@ main = withSqlitePool "links.db3" 10 $ \pool -&gt; do
  <h2>Example: Request information</h2>
   <p id="x-3" class="hascomments">Likewise, you can get request information inside a Widget. Here we
             can determine the sort order of a list based on a GET parameter.</p>
-  <pre id="x-4">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
+  <pre id="x-4"><code>{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
              QuasiQuotes, TypeFamilies, MultiParamTypeClasses, GADTs #-}
 import Yesod
 import Data.Text (Text)
@@ -239,7 +239,7 @@ showPeople = do
 |]
 
 main :: IO ()
-main = warpDebug 3000 People</pre>
+main = warpDebug 3000 People</code></pre>
   <p id="x-5" class="hascomments">Once again, all we need to do is lift our normal
                 Handler code (in this case, runInputGet) to have
             it run in our Widget.</p>

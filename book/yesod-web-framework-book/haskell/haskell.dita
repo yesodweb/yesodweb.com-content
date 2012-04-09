@@ -20,7 +20,7 @@
      data types, like Int, can be treated as primitive values, while other data
      types will build on top of these to create more complicated values. For example, you might
      represent a person
-     with:<pre id="x-9">data Person = Person Text Int</pre>Here, the
+     with:<pre id="x-9"><code>data Person = Person Text Int</code></pre>Here, the
       Text would give the person's name, and the Int would give
      the person's age. Due to its simplicity, this specific example type will recur throughout the
      book. There are essentially three ways you can create a new data type:<ul id="ul_unf_nuw_ff">
@@ -77,7 +77,7 @@
     <li>You'll need to install some additional build tools, alex and
       happy in particular.</li>
     <li>Make sure to install all of the <a href="http://www.vex.net/%7Etrebla/haskell/haskell-platform.xhtml" id="x-12">required C libraries</a>. On Debian-based systems, you would need to
-     run:<pre id="x-13">sudo apt-get install libedit-dev libbsd-dev libgmp3-dev zlib1g-dev freeglut3-dev</pre>
+     run:<pre id="x-13"><code>sudo apt-get install libedit-dev libbsd-dev libgmp3-dev zlib1g-dev freeglut3-dev</code></pre>
     </li>
    </ul></aside>
   <p id="x-14" class="hascomments">Regardless of how you've installed your tools, you should sure to put cabal's
@@ -100,7 +100,7 @@
    number of language extensions, allowing more powerful type classes, syntax changes, and more.
    There are multiple ways to tell GHC to turn on these extensions. For most of the code snippets in
    this book, you'll see <dfn id="x-4">language pragmas</dfn>, which look like this:</p>
-  <pre id="x-5">{-# LANGUAGE MyLanguageExtension #-}</pre>
+  <pre id="x-5"><code>{-# LANGUAGE MyLanguageExtension #-}</code></pre>
   <p id="x-6" class="hascomments">These should always appear at the top of your source file. Additionally, there are two
    other common approaches:</p>
   <ul id="ul_ano_hnw_ff">
@@ -128,15 +128,15 @@
     OverloadedStrings. When enabled, literal strings no longer have the monomorphic
    type String; instead, they have the type IsString a =&gt; a, where
     IsString is defined as:</p>
-  <pre id="x-15">class IsString a where
-    fromString :: String -&gt; a</pre>
+<pre id="x-15"><code>class IsString a where
+        fromString :: String -&gt; a</code></pre>
   <p id="x-16" class="hascomments">There are IsString instances available for a number of types in Haskell, such
    as Text (a much more efficient packed String type),
     ByteString, and Html. Virtually every example in this book
    will assume that this language extension is turned on.</p>
   <p id="x-22" class="hascomments">Unfortunately, there is one drawback to this extension: it can sometimes confuse GHC's type
    checker. Imagine we have:</p>
-  <pre id="x-23">{-# LANGUAGE OverloadedStrings, TypeSynonymInstances, FlexibleInstances #-}
+  <pre id="x-23"><code>{-# LANGUAGE OverloadedStrings, TypeSynonymInstances, FlexibleInstances #-}
 import Data.Text (Text)
 
 class DoSomething a where
@@ -149,7 +149,7 @@ instance DoSomething Text where
     something _ = putStrLn "Text"
 
 myFunc :: IO ()
-myFunc = something "hello"</pre>
+myFunc = something "hello"</code></pre>
   <p id="x-24" class="hascomments">Will the program print out String or Text? It's not clear. So
    instead, you'll need to give an explicit type annotation to specify whether
     "hello" should be treated as a String or
@@ -160,7 +160,7 @@ myFunc = something "hello"</pre>
    don't want it to work just on lists; we'd like it to treat a ByteString like a
    list of Word8s. To do so, we need to introduce some <dfn id="x-6">associated type</dfn>
    to specify what the contents of a certain type are.</p>
-  <pre id="x-7">{-# LANGUAGE TypeFamilies, OverloadedStrings #-}
+  <pre id="x-7"><code>{-# LANGUAGE TypeFamilies, OverloadedStrings #-}
 import Data.Word (Word8)
 import qualified Data.ByteString as S
 import Data.ByteString.Char8 () -- get an orphan IsString instance
@@ -186,7 +186,7 @@ main = do
     print $ safeHead ("hello" :: String)
 
     print $ safeHead ("" :: S.ByteString)
-    print $ safeHead ("hello" :: S.ByteString)</pre>
+    print $ safeHead ("hello" :: S.ByteString)</code></pre>
   <p id="x-8" class="hascomments">The new syntax is the ability to place a type inside of a
     class and instance. We can also use data
    instead, which will create a new datatype instead of reference an existing one.</p>
@@ -205,7 +205,7 @@ main = do
    tests to ensure that the generated code is correct. As a user, all you need to do is call these
    already existing functions. For example, to include an externally defined Hamlet template, you
    can write:</p>
-  <pre id="x-7">$(hamletFile "myfile.hamlet")</pre>
+  <pre id="x-7"><code>$(hamletFile "myfile.hamlet")</code></pre>
   <p id="x-8" class="hascomments">(Hamlet is discussed in the <a href="../../yesod-web-framework-book/shakespearean-templates/shakespearean-templates.dita#file52-shakespearean-templatestemplates" id="x-9">Shakespeare chapter</a>.) The dollar sign immediately followed by parantheses
    tell GHC that what follows is a Template Haskell function. The code inside is then run by the
    compiler and generates a Haskell AST, which is then compiled. And yes, it's even possible to
@@ -215,7 +215,7 @@ main = do
    example usage is to have compile-time checked HTML, CSS, and Javascript templates.</p>
   <p id="x-13" class="hascomments">If your Template Haskell code is being used to generate declarations, and is being placed at
    the top level of our file, we can leave off the dollar sign and parentheses. In other words:</p>
-  <pre id="x-14">{-# LANGUAGE TemplateHaskell #-}
+  <pre id="x-14"><code>{-# LANGUAGE TemplateHaskell #-}
 
 -- Normal function declaration, nothing special
 myFunction = ...
@@ -224,7 +224,7 @@ myFunction = ...
 $(myThCode)
 
 -- Or equivalently
-myThCode</pre>
+myThCode</code></pre>
   <p id="x-15" class="hascomments">It can be useful to see what code is being generated by Template Haskell for you. To do so, you
    should use the -ddump-splices GHC option.</p>
   <aside id="x-17" class="note">There are many other features of Template Haskell not covered here. For more information,
@@ -235,9 +235,9 @@ myThCode</pre>
     hamletFile TH function, which reads the template contents from an external
    file. We also have a quasi-quoter named hamlet that takes the content
    inline:</p>
-  <pre id="x-6">{-# LANGUAGE QuasiQuotes #-}
+  <pre id="x-6"><code>{-# LANGUAGE QuasiQuotes #-}
 
-[hamlet|&lt;p&gt;This is quasi-quoted Hamlet.|]</pre>
+[hamlet|&lt;p&gt;This is quasi-quoted Hamlet.|]</code></pre>
   <p id="x-7" class="hascomments">The syntax is set off using square brackets and pipes. The name of the quasi-quoter is given
    between the opening bracket and the first pipe, and the content is given between the pipes.</p>
   <p id="x-8" class="hascomments">Throughout the book, we will often times use the QQ-approach over a TH-powered external file
