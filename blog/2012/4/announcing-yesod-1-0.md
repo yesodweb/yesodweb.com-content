@@ -1,3 +1,5 @@
+3 years of development. 80 packages. Dozens of contributors. Thousands of commits.
+
 The Yesod team is very pleased to announce the release of Yesod 1.0. As
 expected, this was a minor incremental upgrade over version 0.10. You can see
 [a full changelog](https://github.com/yesodweb/yesod/wiki/Changelog) on the
