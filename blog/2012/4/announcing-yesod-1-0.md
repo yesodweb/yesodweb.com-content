@@ -68,7 +68,8 @@ We'll be coming out with a few more introductory blog posts over the next few
 weeks, and hopefully a few more screencasts too. If you're ready to jump in,
 the [getting started guide](http://www.yesodweb.com/page/quickstart) gives you
 all the information you need to get up-and-running with Yesod, as well as a
-number of handy links.
+number of handy links. If you want a third-party opinion on what makes Yesod great,
+check out [Yesod excellent ideas](http://yannesposito.com/Scratch/en/blog/Yesod-excellent-ideas/).
 
 And later this month, O'Reilly will be publishing our
 [first book on Yesod](http://shop.oreilly.com/product/0636920023142.do). You can already
