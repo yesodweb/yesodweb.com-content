@@ -22,17 +22,16 @@ The rest of this post is intended as an introduction to Yesod for new users.
 ## Why another web framework?
 
 The main goal of Yesod is to provide robustness. We want a web framework that
-helps you build secure sites and minimize bugs. In this endeavor, we follow the
+helps you build secure sites and minimize production bugs. In this endeavor, we follow the
 mantra that the compiler is your ally, *not* your enemy. To make this happen,
 we use Haskell's strong typing to eliminate entire classes of bugs and security
 holes. This applies to everything from creating valid links
 ([type-safe URLs](http://www.yesodweb.com/book/routing-and-handlers)), avoiding Cross
-Site Scriping (XSS) attacks, and data marshaling.
+Site Scriping (XSS) attacks, and automatic data marshaling.
 
-Those of you familiar with more commonly used statically typed languages, like
-Java or C++, may have already decided that you want to stick with a dynamic
-language. In the Haskell world, we hear two complaints about statically typed
-languages a lot:
+Those familiar with more commonly used statically typed languages, like
+Java or C++, may have already decided that the extra safety is not worth it.
+Two complaints from traditionaly statically typed languages are:
 
 * They're just so verbose!
 * I haven't written a single bug that would have been caught by a compiler.
@@ -44,7 +43,7 @@ compiler. But in most cases it's optional.
 
 As for the second point: it's true that the type systems in Java and C++ make
 it difficult to express program invariants well. In Haskell, however, the
-strong type system let's us do much more. If you've ever had an XSS
+expressive type system let's us do much more. If you've ever had an XSS
 vulnerability, generated an invalid link, treated a stream of bytes as text, or
 just made a typo, the compiler *can* help you. This means that in Haskell, you
 don't have to waste time writing unit tests for the boring, mundane stuff. Let
@@ -52,7 +51,7 @@ the compiler handle it for you automatically, and you can worry about the more
 important issues.
 
 The result: Yesod is a web framework with a level of productivity rivaling
-Rails or Django, but with a much easier code maintenance.
+Rails or Django, but with greater security and much easier code maintenance.
 
 ### The other advantages
 
