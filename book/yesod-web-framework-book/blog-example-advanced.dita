@@ -121,10 +121,10 @@ properly, this must be a valid URL.
 </p><pre><code>    approot = ApprootStatic "http://localhost:3000"
 </code></pre><p>
 Our authorization scheme. We want to have the following rules:
-</p><p>* Only admins can add a new entry.
-* Only logged in users can add a new comment.
-* All other pages can be accessed by anyone.
-</p><p>We set up our routes in a RESTful way, where the actions that could make
+</p><ul><li>Only admins can add a new entry.</li>
+<li>Only logged in users can add a new comment.</li>
+<li>All other pages can be accessed by anyone.</li></ul>
+<p>We set up our routes in a RESTful way, where the actions that could make
 changes are always using a POST method. As a result, we can simply check for
 whether or not a request is a write request, given by the True in the second
 field.
