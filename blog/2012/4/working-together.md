@@ -74,7 +74,7 @@ Instead of ignoring what the other groups are doing, it's time to coordinate.
 Newcomers are confused about which framework to start with? Instead of touting
 our own virtues on Reddit and Stack Overflow, we should have a single Wiki page
 that gives fair, unbiased, and comprehensive descriptions of the distinctions
-amongst the frameworks. Someone loves Hamlet but wants to user acid-state,
+amongst the frameworks. Someone loves Hamlet but wants to use acid-state,
 while using Snap's routing? They should be able to ask us about it on
 web-devel, and we'll talk it out and come up with a solid example of how it's
 done.
