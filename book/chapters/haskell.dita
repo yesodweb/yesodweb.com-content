@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "concept.dtd">
+<concept id="haskell-8"><title>Haskell</title><conbody>
+  <p id="8-x-3">In order to use Yesod, you're going to have to know at least the basics of Haskell.
+   Additionally, Yesod uses some features of Haskell that aren't covered in most introductory texts.
+   While this book assumes the reader has a basic familiarity with Haskell, this chapter is intended
+   to fill in the gaps.</p>
+  <p id="8-x-4">If you are already fluent in Haskell, feel free to completely skip this chapter. Also, if you
+   would prefer to start off by getting your feet wet with Yesod, you can always come back to this
+   chapter later as a reference.</p>
+  <p id="8-x-5">If you are looking for a more thorough introduction to Haskell, I would recommend either Real
+   World Haskell or Learn You a Haskell.</p>
+ </conbody><concept id="terminology-9"><title>Terminology</title><conbody>
+  <p id="9-x-3">Even for those familiar with Haskell as a language, there can sometimes be some
+   confusion about terminology. Let's establish some base terms that we can use throughout this
+   book.</p>
+  <dl id="9-x-4">
+   <dlentry id="9-x-5">
+    <dt id="9-x-6">Data type</dt>
+    <dd id="9-x-7">This is one of the core building blocks for a strongly typed language like Haskell. Some
+     data types, like <codeph id="9-x-8">Int</codeph>, can be treated as primitive values, while other data
+     types will build on top of these to create more complicated values. For example, you might
+     represent a person
+     with:<codeblock id="9-x-9" outputclass="haskell">data Person = Person Text Int</codeblock>Here, the
+      <codeph id="9-x-10">Text</codeph> would give the person's name, and the <codeph id="9-x-11">Int</codeph> would give
+     the person's age. Due to its simplicity, this specific example type will recur throughout the
+     book. There are essentially three ways you can create a new data type:<ul id="9-ul_unf_nuw_ff">
+      <li id="9-x-12">A <codeph id="9-x-13">type</codeph> declaration such as <codeph id="9-x-14">type GearCount = Int</codeph> merely
+       creates a synonym for an existing type. The type system will do nothing to prevent you from
+       using an <codeph id="9-x-15">Int</codeph> where you asked for a <codeph id="9-x-16">GearCount</codeph>. Using this
+       can make your code more self-documenting.</li>
+      <li id="9-x-17">A <codeph id="9-x-18">newtype</codeph> declaration such as <codeph id="9-x-19">newtype Make = Make Text</codeph>.
+       In this case, you cannot accidently use a <codeph id="9-x-20">Text</codeph> in place of a
+        <codeph id="9-x-21">Make</codeph>; the compiler will stop you. The newtype wrapper always disappears
+       during compilation, and will introduce no overhead.</li>
+      <li id="9-x-22">A <codeph id="9-x-23">data</codeph> declaration, such as <codeph id="9-x-24">Person</codeph> above. You can also
+       create Algebraic Data Types (ADTs), such as <codeph id="9-x-25">data Vehicle = Bicycle GearCount | Car
+        Make Model</codeph>.</li>
+     </ul></dd>
+   </dlentry>
+   <dlentry id="9-x-26">
+    <dt id="9-x-27">Data constructor</dt>
+    <dd id="9-x-28">In our examples above, <codeph id="9-x-29">Person</codeph>, <codeph id="9-x-30">Make</codeph>,
+      <codeph id="9-x-31">Bicycle</codeph>, and <codeph id="9-x-32">Car</codeph> are all data constructors.</dd>
+   </dlentry>
+   <dlentry id="9-x-33">
+    <dt id="9-x-34">Type constructor</dt>
+    <dd id="9-x-35">In our examples above, <codeph id="9-x-36">Person</codeph>, <codeph id="9-x-37">Make</codeph>, and
+      <codeph id="9-x-38">Vehicle</codeph> are all type constructors.</dd>
+   </dlentry>
+   <dlentry id="9-x-39">
+    <dt id="9-x-40">Type variables</dt>
+    <dd id="9-x-41">Consider the data type <codeph id="9-x-42">data Maybe a = Just a | Nothing</codeph>. In this case,
+      <codeph id="9-x-43">a</codeph> is a type variable.</dd>
+   </dlentry>
+  </dl>
+ </conbody></concept><concept id="tools-10"><title>Tools</title><conbody>
+  <p id="10-x-3">There are two main tools you'll need to Haskell development. The Glasgow Haskell Compiler (GHC)
+   is the standard Haskell compiler, and the only one officially supported by Yesod. You'll also
+   need Cabal, which is the standard Haskell build tool. Not only do we use Cabal for building our
+   local code, but it can automatically download and install dependencies from Hackage, the Haskell
+   package repository.</p>
+  <p id="10-x-4">If you're on Windows or Mac, it is strongly recommended to download the <xref id="10-x-5" href="http://hackage.haskell.org/platform/" format="html" scope="external">Haskell
+    Platform</xref>. On Linux, many distributions include the Haskell Platform in their
+   repositories. On Debian-based systems, for example, you can get started by running <codeph>sudo
+    apt-get install haskell-platform</codeph>. If your distribution does not include the Haskell
+   Platform, you can install it manually by following the instructions on the Haskell Platform's
+   page.</p>
+  <p>One important tool you'll need to update is <cmdname>alex</cmdname>. The Haskell Platform
+   includes version 2, while the Javascript minifier Yesod uses, <apiname>hjsmin</apiname>, requires
+   version three. Be sure to <cmdname>cabal install alex</cmdname> after getting set up with the
+   Haskell Platform, or you'll run into error messages about the
+    <apiname>language-javascript</apiname> package.</p>
+  <note>Some people like to live in the bleeding edge and install the latest version of GHC before
+   it is available in the Haskell Platform. We try to keep Yesod up-to-date with all current
+   versions of GHC, but we only officially support the Haskell Platform. If you do go the route of
+   manually install GHC, here are a few notes:<ul id="10-ul_da4256c1-39b0-4276-8c64-d88825acb6d8">
+    <li>You'll need to install some additional build tools, <cmdname>alex</cmdname> and
+      <cmdname>happy</cmdname> in particular.</li>
+    <li>Make sure to install all of the <xref id="10-x-12" href="http://www.vex.net/%7Etrebla/haskell/haskell-platform.xhtml" format="html" scope="external">required C libraries</xref>. On Debian-based systems, you would need to
+     run:<codeblock id="10-x-13" outputclass="shell">sudo apt-get install libedit-dev libbsd-dev libgmp3-dev zlib1g-dev freeglut3-dev</codeblock>
+    </li>
+   </ul></note>
+  <p id="10-x-14">Regardless of how you've installed your tools, you should sure to put <codeph id="10-x-15">cabal</codeph>'s
+   bin folder in your <codeph id="10-x-16">PATH</codeph> variable. On Mac and Linux, this will be
+    <codeph id="10-x-17">$HOME/.cabal/bin</codeph> and on Windows it will be
+   <codeph id="10-x-18">%APPDATA%\cabal\bin</codeph>.</p>
+  <p id="10-x-19"><codeph id="10-x-20">cabal</codeph> has lots of different options available, but for now, just try out two
+   commands:</p>
+  <ul id="10-ul_fwo_zrw_ff">
+   <li id="10-x-21"><cmdname id="10-x-22">cabal update</cmdname> will download the most recent list of packages from
+    Hackage.</li>
+   <li id="10-x-23"><cmdname id="10-x-24">cabal install yesod</cmdname> will install Yesod and all its dependencies.</li>
+  </ul>
+  <note id="10-x-25">Many people in the community prefer to perform sandboxed builds of their Haskell
+   packages, which prevents your install Yesod from breaking existing packages, or packages you
+   install in the future from breaking your Yesod install. I won't go into details on how to use
+   these in the book, but the two most commonly used tools are <xref id="10-x-26" href="http://hackage.haskell.org/package/cabal-dev" format="html" scope="external">cabal-dev</xref> and <xref id="10-x-27" href="http://hackage.haskell.org/package/virthualenv" format="html" scope="external">virthualenv</xref>.</note>
+ </conbody></concept><concept id="language-pragmas-11"><title>Language Pragmas</title><conbody>
+  <p id="11-x-3">GHC will run by default in something very close to Haskell98 mode. It also ships with a large
+   number of language extensions, allowing more powerful type classes, syntax changes, and more.
+   There are multiple ways to tell GHC to turn on these extensions. For most of the code snippets in
+   this book, you'll see <term id="11-x-4">language pragmas</term>, which look like this:</p>
+  <codeblock id="11-x-5" outputclass="haskell">{-# LANGUAGE MyLanguageExtension #-}</codeblock>
+  <p id="11-x-6">These should always appear at the top of your source file. Additionally, there are two
+   other common approaches:</p>
+  <ul id="11-ul_ano_hnw_ff">
+   <li id="11-x-7">On the GHC command line, pass an extra argument
+    <userinput id="11-x-8">-XMyLanguageExtension</userinput>.</li>
+   <li id="11-x-9">In your <codeph id="11-x-10">cabal</codeph> file, add an <codeph id="11-x-11">extensions</codeph> block.</li>
+  </ul>
+  <p id="11-x-12">I personally never use the GHC command line argument approach. It's a personal preference, but
+   I like to have my settings clearly stated in a file. In general it's recommended to avoid putting
+   extensions in your <codeph id="11-x-13">cabal</codeph> file; however, in the <xref id="11-x-14" href="scaffolding-and-the-site-template.dita#scaffolding-and-the-site-template-166" format="dita">Yesod scaffolded site</xref> we specifically use this approach to avoid the
+   boilerplate of specifying the same language pragmas in every source file.</p>
+  <p id="11-x-15">We'll end up using quite a few language extensions in this book (the scaffolding uses 11). We
+   will not cover the meaning of all of them. Instead, please see the <xref id="11-x-16" href="http://www.haskell.org/ghc/docs/latest/html/users_guide/ghc-language-features.html" format="html" scope="external">GHC documentation</xref>.</p>
+ </conbody></concept><concept id="overloaded-strings-12"><title>Overloaded Strings</title><conbody>
+  <p id="12-x-3">What's the type of <codeph id="12-x-4">"hello"</codeph>? Traditionally, it's <codeph id="12-x-5">String</codeph>, which
+   is defined as <codeph id="12-x-6">type String = [Char]</codeph>. Unfortunately, there are a number of
+   limitations with this:</p>
+  <ul id="12-ul_nev_fdx_ff">
+   <li id="12-x-7">It's a very inefficient implementation of textual data. We need to allocate extra memory for
+    each cons cell, plus the characters themselves each take up a full machine word.</li>
+   <li id="12-x-8">Sometimes we have string-like data that's not actually text, such as
+     <codeph id="12-x-9">ByteString</codeph>s and HTML.</li>
+  </ul>
+  <p id="12-x-10">To work around these limitations, GHC has a language extension called
+    <codeph id="12-x-11">OverloadedStrings</codeph>. When enabled, literal strings no longer have the monomorphic
+   type <codeph id="12-x-12">String</codeph>; instead, they have the type <codeph id="12-x-13">IsString a =&gt; a</codeph>, where
+    <codeph id="12-x-14">IsString</codeph> is defined as:</p>
+  <codeblock id="12-x-15" outputclass="haskell">class IsString a where
+    fromString :: String -&gt; a</codeblock>
+  <p id="12-x-16">There are <codeph id="12-x-17">IsString</codeph> instances available for a number of types in Haskell, such
+   as <codeph id="12-x-18">Text</codeph> (a much more efficient packed <codeph id="12-x-19">String</codeph> type),
+    <codeph id="12-x-20">ByteString</codeph>, and <codeph id="12-x-21">Html</codeph>. Virtually every example in this book
+   will assume that this language extension is turned on.</p>
+  <p id="12-x-22">Unfortunately, there is one drawback to this extension: it can sometimes confuse GHC's type
+   checker. Imagine we have:</p>
+  <codeblock id="12-x-23" outputclass="haskell">{-# LANGUAGE OverloadedStrings, TypeSynonymInstances, FlexibleInstances #-}
+import Data.Text (Text)
+
+class DoSomething a where
+    something :: a -&gt; IO ()
+
+instance DoSomething String where
+    something _ = putStrLn "String"
+
+instance DoSomething Text where
+    something _ = putStrLn "Text"
+
+myFunc :: IO ()
+myFunc = something "hello"</codeblock>
+  <p id="12-x-24">Will the program print out <codeph id="12-x-25">String</codeph> or <codeph id="12-x-26">Text</codeph>? It's not clear. So
+   instead, you'll need to give an explicit type annotation to specify whether
+    <codeph id="12-x-27">"hello"</codeph> should be treated as a <codeph id="12-x-28">String</codeph> or
+   <codeph id="12-x-29">Text</codeph>.</p>
+ </conbody></concept><concept id="type-families-13"><title>Type Families</title><conbody>
+  <p id="13-x-3">The basic idea of a type family is to state some association between two different types.
+   Suppose we want to write a function that will safely take the first element of a list. But we
+   don't want it to work just on lists; we'd like it to treat a <codeph id="13-x-4">ByteString</codeph> like a
+   list of <codeph id="13-x-5">Word8</codeph>s. To do so, we need to introduce some <term id="13-x-6">associated type</term>
+   to specify what the contents of a certain type are.</p>
+  <codeblock id="13-x-7" outputclass="haskell">{-# LANGUAGE TypeFamilies, OverloadedStrings #-}
+import Data.Word (Word8)
+import qualified Data.ByteString as S
+import Data.ByteString.Char8 () -- get an orphan IsString instance
+
+class SafeHead a where
+    type Content a
+    safeHead :: a -&gt; Maybe (Content a)
+
+instance SafeHead [a] where
+    type Content [a] = a
+    safeHead [] = Nothing
+    safeHead (x:_) = Just x
+
+instance SafeHead S.ByteString where
+    type Content S.ByteString = Word8
+    safeHead bs
+        | S.null bs = Nothing
+        | otherwise = Just $ S.head bs
+
+main :: IO ()
+main = do
+    print $ safeHead ("" :: String)
+    print $ safeHead ("hello" :: String)
+
+    print $ safeHead ("" :: S.ByteString)
+    print $ safeHead ("hello" :: S.ByteString)</codeblock>
+  <p id="13-x-8">The new syntax is the ability to place a <codeph id="13-x-9">type</codeph> inside of a
+    <codeph id="13-x-10">class</codeph> and <codeph id="13-x-11">instance</codeph>. We can also use <codeph id="13-x-12">data</codeph>
+   instead, which will create a new datatype instead of reference an existing one.</p>
+  <note id="13-x-13">There are other ways to use associated types outside the context of a typeclass. However, in
+   Yesod, all of our associated types are in fact part of a type class. For more information on type
+   families, see <xref id="13-x-14" href="http://www.haskell.org/haskellwiki/GHC/Type_families" format="html" scope="external">the Haskell wiki page</xref>.</note>
+ </conbody></concept><concept id="template-haskell-14"><title>Template Haskell</title><conbody>
+  <p id="14-x-3">Template Haskell (TH) is an approach to <i id="14-x-4">code generation</i>. We use it in Yesod in a number
+   of places to reduce boilerplate, and to ensure that the generated code is correct. Template
+   Haskell is essentially Haskell which generates a Haskell Abstract Syntax Tree (AST).</p>
+  <note id="14-x-5">There's actually more power in TH than that, as it can actually introspect code. We don't
+   use these facilities in Yesod, however.</note>
+  <p id="14-x-6">Writing TH code can be tricky, and unfortunately there isn't very much type safety involved.
+   You can easily write TH that will generate code that won't compile. This is only an issue for the
+   developers of Yesod, not for its users. During development, we use a large collection of unit
+   tests to ensure that the generated code is correct. As a user, all you need to do is call these
+   already existing functions. For example, to include an externally defined Hamlet template, you
+   can write:</p>
+  <codeblock id="14-x-7" outputclass="haskell">$(hamletFile "myfile.hamlet")</codeblock>
+  <p id="14-x-8">(Hamlet is discussed in the <xref id="14-x-9" href="shakespearean-templates.dita#shakespearean-templates-27" format="dita">Shakespeare chapter</xref>.) The dollar sign immediately followed by parantheses
+   tell GHC that what follows is a Template Haskell function. The code inside is then run by the
+   compiler and generates a Haskell AST, which is then compiled. And yes, it's even possible to
+    <xref id="14-x-10" href="http://www.yesodweb.com/blog/2010/09/yo-dawg-template-haskell" format="html" scope="external">go meta with this</xref>.</p>
+  <p id="14-x-11">A nice trick is that TH code is allowed to perform arbitrary <codeph id="14-x-12">IO</codeph> actions, and
+   therefore we can place some input in external files and have it parsed at compile time. One
+   example usage is to have compile-time checked HTML, CSS, and Javascript templates.</p>
+  <p id="14-x-13">If your Template Haskell code is being used to generate declarations, and is being placed at
+   the top level of our file, we can leave off the dollar sign and parentheses. In other words:</p>
+  <codeblock id="14-x-14" outputclass="haskell">{-# LANGUAGE TemplateHaskell #-}
+
+-- Normal function declaration, nothing special
+myFunction = ...
+
+-- Include some TH code
+$(myThCode)
+
+-- Or equivalently
+myThCode</codeblock>
+  <p id="14-x-15">It can be useful to see what code is being generated by Template Haskell for you. To do so, you
+   should use the <codeph id="14-x-16">-ddump-splices</codeph> GHC option.</p>
+  <note id="14-x-17">There are many other features of Template Haskell not covered here. For more information,
+   see the <xref id="14-x-18" href="http://www.haskell.org/haskellwiki/Template_Haskell" format="html" scope="external">Haskell wiki page</xref>.</note>
+ </conbody></concept><concept id="quasi-quotes-15"><title>QuasiQuotes</title><conbody>
+  <p id="15-x-3">QuasiQuotes (QQ) are a minor extension of Template Haskell that let us embed arbitrary content
+   within our Haskell source files. For example, we mentioned previously the
+    <codeph id="15-x-4">hamletFile</codeph> TH function, which reads the template contents from an external
+   file. We also have a quasi-quoter named <codeph id="15-x-5">hamlet</codeph> that takes the content
+   inline:</p>
+  <codeblock id="15-x-6" outputclass="haskell">{-# LANGUAGE QuasiQuotes #-}
+
+[hamlet|&lt;p&gt;This is quasi-quoted Hamlet.|]</codeblock>
+  <p id="15-x-7">The syntax is set off using square brackets and pipes. The name of the quasi-quoter is given
+   between the opening bracket and the first pipe, and the content is given between the pipes.</p>
+  <p id="15-x-8">Throughout the book, we will often times use the QQ-approach over a TH-powered external file
+   since the former is simpler to copy-and-paste. However, in production, external files are
+   recommended for all but the shortest of inputs as it gives a nice separation of the non-Haskell
+   syntax from your Haskell code.</p>
+ </conbody></concept><concept id="summary-16"><title>Summary</title><conbody>
+  <p id="16-x-3">You don't need to be an expert in Haskell to use Yesod, a basic familiarity will suffice. This
+   chapter hopefully gave you just enough extra information to feel more comfortable following the
+   rest of the book.</p>
+ </conbody></concept></concept>

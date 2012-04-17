@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "concept.dtd">
+<concept id="scaffolding-and-the-site-template-166"><title>Scaffolding and the Site Template</title><conbody>
+        <p id="166-x-3">So you're tired of running small examples, and ready to write a real site? Then you're at
+            the right chapter. Even with the entire Yesod library at your fingertips, there are
+            still a lot of steps you need to go through to get a production-quality site setup:</p>
+        <ul id="166-ul_nys_vtf_42">
+            <li id="166-x-4">Config file parsing</li>
+            <li id="166-x-5">Signal handling (*nix)</li>
+            <li id="166-x-6">More efficient static file serving</li>
+            <li id="166-x-7">A good file layout</li>
+        </ul>
+        <p id="166-x-8">The scaffolded site is a combination of many Yesoders' best practices combined together
+            into a ready-to-use skeleton for your sites. It is highly recommended for all sites.
+            This chapter will explain the overall structure of the scaffolding, how to use it, and
+            some of its less-than-obvious features.</p>
+        <p>For the most part, this chapter will not contain code samples. It is recommended that you
+            follow along with an actual scaffolded site.</p>
+        <note id="166-x-9">Due to the nature of the scaffolded site, it is the most fluid component of Yesod, and
+            can change from version to version. It is possible that the information in this chapter
+            is slightly outdated.</note></conbody><concept id="how-to-scaffold-167"><title>How to Scaffold</title><conbody>
+  <p id="167-x-3">The <apiname id="167-x-4">yesod</apiname> package installs both a library and an
+   executable (conveniently named <cmdname id="167-x-5">yesod</cmdname> as well). This executable
+   provides a few commands (run <cmdname id="167-x-17">yesod</cmdname> by itself to get a list). In order to
+   generate a scaffolding, the command is <cmdname id="167-x-6">yesod init</cmdname>. This will start a
+   question-and-answer process where you get to provide basic details (your name, the project name,
+   etc). After answering the questions, you will have a site template in a subfolder with the name
+   of your project.</p>
+  <p id="167-x-7">The most important of these questions is the database backend. You get four choices here:
+   SQLite, PostgreSQL, MongoDB, and tiny. tiny is not a database backend; instead, it is specifying
+   that you do not want to use any database. This option also turns off a few extra dependencies,
+   giving you a leaner overall site. The remainder of this chapter will focus on the scaffoldings
+   for one of the database backends. There will be minor differences for the tiny backend.</p>
+  <p id="167-x-8">After creating your files, the scaffolder will print a message about getting started.
+   It gives two sets of options for commands: one using <cmdname id="167-x-18">cabal</cmdname>, and the other
+   using <cmdname id="167-x-19">cabal-dev</cmdname>. <cmdname id="167-x-20">cabal-dev</cmdname> is basically a wrapper around
+   cabal which causes all dependencies to be built in a sandbox. Using it is a good way to ensure
+   that installing other packages will not break your site setup. It is strongly recommended. If you
+   don't have <cmdname id="167-x-21">cabal-dev</cmdname>, you can install it by running <cmdname id="167-x-9">cabal
+    install cabal-dev</cmdname>.</p>
+  <p id="167-x-10">Note that you really do need to use the <cmdname id="167-x-11">cabal install
+    --only-dependencies</cmdname> (or <cmdname id="167-x-12">cabal-dev install
+    --only-dependencies</cmdname>) command. Most likely, you do not yet have all the dependencies in
+   place needed by your site. For example, none of the database backends, nor the Javascript
+   minifier (<apiname id="167-x-13">hjsmin</apiname>) are installed when installing the <codeph id="167-x-22">yesod</codeph> package.</p>
+  <p id="167-x-14">Finally, to launch your development site, you would use <cmdname id="167-x-15">yesod
+    devel</cmdname> (or <cmdname id="167-x-16">yesod --dev devel</cmdname>). This site will
+   automatically rebuild and reload whenever you change your code.</p>
+ </conbody></concept><concept id="file-structure-168"><title>File Structure</title><conbody>
+  <p id="168-x-3">The scaffolded site is built as a fully cabalized Haskell package. In addition to
+   source files, config files, templates, and static files are produced as well.</p>
+ </conbody><concept id="cabal-file-169"><title>Cabal file</title><conbody>
+  <p id="169-x-3">Whether directly using <cmdname id="169-x-4">cabal</cmdname>, or indirectly using <cmdname id="169-x-5">yesod devel</cmdname>, building your code will always go through the cabal file. If
+      you open the file, you'll see that there are both library and executable blocks. Only one of
+      these is built at a time, depending on the value of the <codeph id="169-x-6">library-only</codeph>
+      flag. If <codeph id="169-x-7">library-only</codeph> is turned on, then the library is built, which
+      is how <cmdname id="169-x-8">yesod devel</cmdname> calls your app. Otherwise, the executable is
+      built.</p>
+    <p id="169-x-9">The <codeph id="169-x-10">library-only</codeph> flag should only be used by
+        <cmdname id="169-x-25">yesod devel</cmdname>; you should never be explicitly passing it into
+        <cmdname id="169-x-26">cabal</cmdname>. There is an additional flag, <codeph id="169-x-11">dev</codeph>, that
+      allows cabal to build an executable, but turns on some of the same features as
+      the library-only flag, i.e., no optimizations and reload versions of the Shakespearean
+      template functions.</p>
+  <p id="169-x-12">In general, you will build as follows:</p>
+    <ul id="169-ul_4wr_4wg_42">
+      <li id="169-x-13">When developing, use <cmdname id="169-x-27">yesod devel</cmdname> exclusively.</li>
+      <li id="169-x-14">When building a production build, perform <cmdname id="169-x-15">cabal clean
+          &amp;&amp; cabal configure &amp;&amp; cabal build</cmdname>. This will produce an
+        optimized executable in your <filepath id="169-x-28">dist</filepath> folder.<note id="169-x-16">In the past we
+          had a <codeph id="169-x-29">-fproduction</codeph> flag. If you produced a scaffolded site in the past,
+          you may have to use this flag to get a production build.</note></li>
+    </ul>
+    <p id="169-x-17">You'll also notice that we specify all language extensions in the cabal file. The
+      extensions are specified <i id="169-x-18">twice</i>: once for the executable, and once for the
+      library. If you add any extensions to the list, add it to both places.</p>
+    <p id="169-x-19">You might be surprised to see the <codeph id="169-x-20">NoImplicitPrelude</codeph> extension. We turn this
+      on since the site includes its own module, <codeph id="169-x-21">Import</codeph>, with a few changes to the
+      Prelude that make working with Yesod a little more convenient.</p>
+    <p id="169-x-22">The last thing to note is the exported-modules list. If you add any modules to your
+      application, you <b id="169-x-23">must</b> update this list to get yesod devel to work correctly.
+      Unfortunately, neither Cabal nor GHC will give you a warning if you forgot to make this
+      update, and instead you'll get a very scary-looking error message from yesod devel.<note id="169-x-24">One of our planned improvements to <cmdname id="169-x-30">yesod devel</cmdname> is to check if
+        there are any missing modules.</note></p>
+ </conbody></concept><concept id="routes-entities-model-170"><title>Routes and entities</title><conbody>
+  <p id="170-x-3">Multiple times in this book, you've seen a comment like "We're declaring our routes/entities
+   with quasiquotes for convenience. In a production site, you should use an external file." The
+   scaffolding uses such an external file.</p>
+  <p id="170-x-4">Routes are defined in <filepath id="170-x-5">config/routes</filepath>, and entities in
+    <filepath id="170-x-6">config/models</filepath>. They have the exact same syntax as the quasiquoting
+   you've seen throughout the book, and <cmdname id="170-x-15">yesod devel</cmdname> knows to automatically
+   recompile the appropriate modules when these files change.</p>
+  <p id="170-x-7">The <filepath id="170-x-16">models</filepath> files is referenced by <codeph id="170-x-8">Model.hs</codeph>. You are free to declare whatever you like in this file, but here are some
+   guidelines:</p>
+  <ul id="170-ul_gui_tyg_oe">
+   <li id="170-x-9">Any data types used in <filepath id="170-x-17">entities</filepath>
+    <b id="170-x-10">must</b> be imported/declared in <filepath id="170-x-18">Model.hs</filepath>, above the <codeph id="170-x-11">persistFile</codeph> call.</li>
+   <li id="170-x-12">Helper utilities should either be declared in <codeph id="170-x-13">Import.hs</codeph>
+    or, if very model-centric, in a file within the <codeph id="170-x-14">Model</codeph> folder and
+    imported into <filepath id="170-x-19">Import.hs</filepath>.</li>
+  </ul>
+ </conbody></concept><concept id="foundation-application-171"><title>Foundation and Application modules</title><conbody>
+  <p id="171-x-3">The <codeph id="171-x-4">mkYesod</codeph> function which we have used throughout the book declares a few
+   things:</p>
+  <ul id="171-ul_ajc_dzg_oe">
+   <li id="171-x-5">Route type</li>
+   <li id="171-x-6">Route render function</li>
+   <li id="171-x-7">Dispatch function</li>
+  </ul>
+  <p id="171-x-8">The dispatch function refers to all of the handler functions, and therefore all of those must
+   either be defined in the same file as the dispatch function, or be imported by the dispatch
+   function.</p>
+  <p id="171-x-9">Meanwhile, the handler functions will almost certainly refer to the route type. Therefore,
+    <i id="171-x-10">they</i> must be either in the same file where the route type is defined, or must import that
+   file. If you follow the logic here, your entire application must essentially live in a single
+   file!</p>
+  <p id="171-x-11">Clearly this isn't what we want. So instead of using <codeph id="171-x-12">mkYesod</codeph>, the scaffolding
+   site uses a decomposed version of the function. <codeph id="171-x-13">Foundation</codeph> calls
+    <codeph id="171-x-14">mkYesodData</codeph>, which declares the route type and render function. Since it does
+   not declare the dispatch function, the handler functions need not be in scope.
+    <codeph id="171-x-15">Import.hs</codeph> imports <codeph id="171-x-16">Foundation.hs</codeph>, and all the handler modules
+   import <codeph id="171-x-17">Import.hs</codeph>.</p>
+  <p id="171-x-18">In <codeph id="171-x-19">Application.hs</codeph>, we call <codeph id="171-x-20">mkYesodDispatch</codeph>, which creates our
+   dispatch function. For this to work, all handler functions must be in scope, so be sure to add an
+   import statement for any new handler modules you create.</p>
+  <p id="171-x-21">Other than that, <filepath id="171-x-32">Application.hs</filepath> is pretty simple. It provides
+   two functions: <codeph id="171-x-33">withDevelAppPort</codeph> is used by <cmdname id="171-x-22">yesod
+    devel</cmdname> to launch your app, and <codeph id="171-x-23">getApplication</codeph> is used by the
+   executable to launch.</p>
+  <p id="171-x-24"><filepath id="171-x-34">Foundation.hs</filepath> is much more exciting. It:</p>
+  <ul id="171-ul_ero_hah_oe">
+   <li id="171-x-25">Declares your foundation datatype</li>
+   <li id="171-x-26">Declares a number of instances, such as <codeph id="171-x-35">Yesod</codeph>,
+     <codeph id="171-x-36">YesodAuth</codeph>, and <codeph id="171-x-37">YesodPersist</codeph></li>
+   <li id="171-x-27">Imports the messages files. If you look for the line starting with <codeph id="171-x-28">mkMessage</codeph>, you will see that it specifies the folder containing the messages
+     (<filepath id="171-x-29">messages</filepath>) and the default language (en, for English).</li>
+  </ul>
+  <p id="171-x-30">This is the right file for adding extra instances for your foundation, such as
+    <codeph id="171-x-38">YesodAuthEmail</codeph> or <codeph id="171-x-39">YesodBreadcrumbs</codeph>.</p>
+  <p id="171-x-31">We'll be referring back to this file later, as we discussed some of the special
+   implementations of <codeph id="171-x-40">Yesod</codeph> typeclass methods.</p>
+ </conbody></concept><concept id="import-172"><title>Import</title><conbody>
+  <p id="172-x-3">The <codeph id="172-x-12">Import</codeph> module was born out of a few commonly recurring
+   patterns.</p>
+  <ul id="172-ul_skn_hbh_oe">
+   <li id="172-x-4">I want to define some helper functions (maybe the <codeph id="172-x-5">&lt;&gt; = mappend</codeph> operator)
+    to be used by all handlers.</li>
+   <li id="172-x-6">I'm always adding the same five import statements (<codeph id="172-x-13">Data.Text</codeph>,
+     <codeph id="172-x-14">Control.Applicative</codeph>, etc) to every handler module.</li>
+   <li id="172-x-7">I want to make sure I never use some evil function (<codeph id="172-x-15">head</codeph>,
+     <codeph id="172-x-16">readFile</codeph>, ...) from <codeph id="172-x-17">Prelude</codeph>.<note id="172-x-8">Yes, evil is
+     hyperbole. If you're wondering why I listed those functions as bad: <codeph id="172-x-9">head</codeph> is partial, and throws exceptions on an empty list, and <codeph id="172-x-10">readFile</codeph> uses lazy I/O, which doesn't close file handles quickly enough. Also,
+      <codeph id="172-x-18">readFile</codeph> uses <codeph id="172-x-19">String</codeph> instead of
+     <codeph id="172-x-20">Text</codeph>.</note></li>
+  </ul>
+  <p id="172-x-11">The solution is to turn on the <codeph id="172-x-21">NoImplicitPrelude</codeph> language extension,
+   re-export the parts of <codeph id="172-x-22">Prelude</codeph> we want, add in all the other stuff we want,
+   define our own functions as well, and then import this file in all handlers.</p>
+ </conbody></concept><concept id="handlers-173"><title>Handler modules</title><conbody>
+  <p id="173-x-3">Handler modules should go inside the <filepath id="173-x-13">Handler</filepath> folder. The site
+   template includes one module: <filepath id="173-x-14">Handler/Root.hs</filepath>. How you split up your handler
+   functions into individual modules is your decision, but a good rule of thumb is:</p>
+  <ul id="173-ul_esf_zbh_oe">
+   <li id="173-x-4">Different methods for the same route should go in the same file, e.g.
+     <codeph id="173-x-15">getBlogR</codeph> and <codeph id="173-x-16">postBlogR</codeph>.</li>
+   <li id="173-x-5">Related routes can also usually go in the same file, e.g.,
+     <codeph id="173-x-17">getPeopleR</codeph> and <codeph id="173-x-18">getPersonR</codeph>.</li>
+  </ul>
+  <p id="173-x-6">Of course, it's entirely up to you. When you add a new handler file, make sure you do the
+   following:</p>
+  <ul id="173-ul_qml_dch_oe">
+   <li id="173-x-7">Add it to version control (you <i id="173-x-8">are</i> using version control, right?).</li>
+   <li id="173-x-9">Add it to the cabal file.</li>
+   <li id="173-x-10">Add it to the <filepath id="173-x-19">Application.hs</filepath> file.</li>
+   <li id="173-x-11">Put a module statement at the top, and an <codeph id="173-x-12">import Import</codeph> line below it.</li>
+  </ul>
+  <note id="173-x-20">One of the planned improvements to the <cmdname id="173-x-21">yesod</cmdname> executable is to automate
+   these four steps.</note>
+ </conbody></concept></concept><concept id="templates-widgetFile-174"><title>widgetFile</title><conbody>
+  <p id="174-x-3">It's very common to want to include CSS and Javascript specific to a page. You don't want to
+   have to remember to include those Lucius and Julius files manually every time you refer to a
+   Hamlet file. For this, the site template provides the <codeph id="174-x-4">widgetFile</codeph> function.</p>
+  <p id="174-x-5">If you have a handler function:</p>
+  <codeblock id="174-x-6" outputclass="haskell">getRootR = defaultLayout $(widgetFile "homepage")</codeblock>
+  <p id="174-x-7">, Yesod will look for the following files:</p>
+  <ul id="174-ul_vih_ddh_oe">
+   <li id="174-x-8"><filepath id="174-x-9">templates/homepage.hamlet</filepath></li>
+   <li id="174-x-10"><filepath id="174-x-11">templates/homepage.lucius</filepath></li>
+   <li id="174-x-12"><filepath id="174-x-13">templates/homepage.cassius</filepath></li>
+   <li id="174-x-14"><filepath id="174-x-15">templates/homepage.julius</filepath></li>
+  </ul>
+  <p id="174-x-16">If any of those files are present, they will be automatically included in the output.</p>
+  <note id="174-x-17">Due to the nature of how this works, if you launch your app with <cmdname id="174-x-19">yesod
+    devel</cmdname>, and then create a new file (e.g.,
+    <filepath id="174-x-20">templates/homepage.julius</filepath>), the contents will <i id="174-x-18">not</i> be
+   included until the file calling <codeph id="174-x-21">widgetFile</codeph> is recompiled. In such a case, you
+   may need to force a save of that file to get <cmdname id="174-x-22">yesod devel</cmdname> to recompile.</note>
+ </conbody></concept><concept id="default-layout-175"><title>defaultLayout</title><conbody>
+  <p id="175-x-3">One of the first things you're going to want to customize is the look of your site. The layout
+   is actually broken up into two files:</p>
+  <ul id="175-ul_jjz_kch_oe">
+   <li id="175-x-4"><filepath id="175-x-5">templates/default-layout-wrapper.hamlet</filepath> contains just the basic shell of
+    a page. This file is interpreted as plain Hamlet, not as a Widget, and therefore cannot refer
+    to other widgets, embed i18n strings, or add extra CSS/JS.</li>
+   <li id="175-x-6"><filepath id="175-x-7">templates/default-layout.hamlet</filepath> is where you would put the bulk of your
+    page. You <b id="175-x-8">must</b> remember to include the <codeph id="175-x-9">widget</codeph> value in the page, as that
+    contains the per-page contents. This file is interpreted as a Widget.</li>
+  </ul>
+  <p id="175-x-10">Also, since default-layout is included via the <codeph id="175-x-12">widgetFile</codeph> function,
+   any Lucius, Cassius, or Julius files named <filepath id="175-x-11">default-layout.*</filepath> will
+   automatically be included as well.</p>
+ </conbody></concept><concept id="static-files-176"><title>Static files</title><conbody>
+  <p id="176-x-3">The scaffolded site automatically includes the static file subsite, optimized for
+   serving files that will not change over the lifetime of the current build. What this means is
+   that:</p>
+  <ul id="176-ul_rui_odh_oe">
+   <li id="176-x-4">When your static file identifiers are generated (e.g.,
+     <filepath id="176-x-13">static/mylogo.png</filepath> becomes <codeph id="176-x-14">mylogo_png</codeph>), a query-string
+    parameter is added to it with a hash of the contents of the file. All of this happens at compile
+    time.</li>
+   <li id="176-x-5">When <codeph id="176-x-15">yesod-static</codeph> serves your static files, it sets expiration
+    headers far in the future, and incldues an etag based on a hash of your content.</li>
+   <li id="176-x-6">Whenever you embed a link to <codeph id="176-x-16">mylogo_png</codeph>, the rendering includes the
+    query-string parameter. If you change the logo, recompile, and launch your new app, the query
+    string will have changed, causing users to ignore the cached copy and download a new
+    version.</li>
+  </ul>
+  <p id="176-x-7">Additionally, you can set a specific static root in your
+    <filepath id="176-x-17">Settings.hs</filepath> file to serve from a different domain name. This has the
+   advantage of not requiring transmission of cookies for static file requests, and also lets you
+   offload static file hosting to a CDN or a service like Amazon S3. See the comments in the file
+   for more details.</p>
+  <p id="176-x-8">Another optimization is that CSS and Javascript included in your widgets will not be included
+   inside your HTML. Instead, their contents will be written to an external file, and a link given.
+   This file will be named based on a hash of the contents as well, meaning:</p>
+  <ol id="176-ol_xmt_geh_oe">
+   <li id="176-x-9">Caching works properly.</li>
+   <li id="176-x-10">Yesod can avoid an expensive disk write of the CSS/Javascript file contents if a file with
+    the same hash already exists.</li>
+  </ol>
+  <p id="176-x-11">Finally, all of your Javascript is automatically minified via <apiname id="176-x-12">hjsmin</apiname>.</p>
+ </conbody></concept><concept id="conclusion-177"><title>Conclusion</title><conbody>
+  <p id="177-x-3">The purpose of this chapter was not to explain every line that exists in the scaffolded site,
+   but instead to give a general overview to how it works. The best way to become more familiar with
+   it is to jump right in and start writing a Yesod site with it.</p>
+ </conbody></concept></concept>

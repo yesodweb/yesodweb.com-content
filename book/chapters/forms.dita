@@ -1,0 +1,1276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "concept.dtd">
+<concept id="forms-90"><title>Forms</title><conbody>
+  <p id="90-x1">I've mentioned the boundary issue already: whenever data enters or leaves an
+   application, we need to validate it. Probably the most difficult place this occurs is forms.
+   Coding forms is complex; in an ideal world, we'd like a solution that addresses the following
+   problems:</p>
+  <ul id="90-ul_fvy_beg_md">
+   <li id="90-x2">Ensure data is valid.</li>
+   <li id="90-x3">Marshal string data in the form submission to Haskell datatypes.</li>
+   <li id="90-x4">Generate HTML code for displaying the form.</li>
+   <li id="90-x5">Generate Javascript to do clientside validation and provide more user-friendly widgets, such
+    as date pickers.</li>
+   <li id="90-x6">Build up more complex forms by combining together simpler forms.</li>
+   <li id="90-x7">Automatically assign names to our fields that are guaranteed to be unique.</li>
+  </ul>
+  <p id="90-x8">The <apiname id="90-x9">yesod-form</apiname> package provides all these features in a simple, declarative
+   API. It builds on top of Yesod's widgets to simplify styling of forms and applying Javascript
+   appropriately. And like the rest of Yesod, it uses Haskell's type system to make sure everything
+   is working correctly.</p>
+ </conbody><concept id="synopsis-91"><title>Synopsis</title><conbody>  <codeblock id="91-x1" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+    OverloadedStrings, TypeFamilies #-}
+import Yesod
+import Yesod.Form.Jquery
+import Data.Time (Day)
+import Data.Text (Text)
+import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
+
+data Synopsis = Synopsis
+
+mkYesod "Synopsis" [parseRoutes|
+/ RootR GET
+/person PersonR POST
+|]
+
+instance Yesod Synopsis
+
+-- Tells our application to use the standard English messages.
+-- If you want i18n, then you can supply a translating function instead.
+instance RenderMessage Synopsis FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+-- And tell us where to find the jQuery libraries. We'll just use the defaults,
+-- which point to the Google CDN.
+instance YesodJquery Synopsis
+
+-- The datatype we wish to receive from the form
+data Person = Person
+    { personName :: Text
+    , personBirthday :: Day
+    , personFavoriteColor :: Maybe Text
+    , personEmail :: Text
+    , personWebsite :: Maybe Text
+    }
+  deriving Show
+
+-- Declare the form. The type signature is a bit intimidating, but here's the
+-- overview:
+--
+-- * The Html parameter is used for encoding some extra information. See the
+-- discussion regarding runFormGet and runFormPost below for further
+-- explanation.
+--
+-- * We have the sub and master site types, as usual.
+--
+-- * FormResult can be in three states: FormMissing (no data available),
+-- FormFailure (invalid data) and FormSuccess
+--
+-- * The Widget is the viewable form to place into the web page.
+--
+-- Note that the scaffolded site provides a convenient Form type synonym,
+-- so that our signature could be written as:
+--
+-- &gt; personForm :: Form Person
+--
+-- For our purposes, it's good to see the long version.
+personForm :: Html -&gt; MForm Synopsis Synopsis (FormResult Person, Widget)
+personForm = renderDivs $ Person
+    &lt;$&gt; areq textField "Name" Nothing
+    &lt;*&gt; areq (jqueryDayField def
+        { jdsChangeYear = True -- give a year dropdown
+        , jdsYearRange = "1900:-5" -- 1900 till five years ago
+        }) "Birthday" Nothing
+    &lt;*&gt; aopt textField "Favorite color" Nothing
+    &lt;*&gt; areq emailField "Email address" Nothing
+    &lt;*&gt; aopt urlField "Website" Nothing
+
+-- The GET handler displays the form
+getRootR :: Handler RepHtml
+getRootR = do
+    -- Generate the form to be displayed
+    (widget, enctype) &lt;- generateFormPost personForm
+    defaultLayout [whamlet|
+&lt;p&gt;The widget generated contains only the contents of the form, not the form tag itself. So...
+&lt;form method=post action=@{PersonR} enctype=#{enctype}&gt;
+    ^{widget}
+    &lt;p&gt;It also doesn't include the submit button.
+    &lt;input type=submit&gt;
+|]
+
+-- The POST handler processes the form. If it is successful, it displays the
+-- parsed person. Otherwise, it displays the form again with error messages.
+postPersonR :: Handler RepHtml
+postPersonR = do
+    ((result, widget), enctype) &lt;- runFormPost personForm
+    case result of
+        FormSuccess person -&gt; defaultLayout [whamlet|&lt;p&gt;#{show person}|]
+        _ -&gt; defaultLayout [whamlet|
+&lt;p&gt;Invalid input, let's try again.
+&lt;form method=post action=@{PersonR} enctype=#{enctype}&gt;
+    ^{widget}
+    &lt;input type=submit&gt;
+|]
+
+main :: IO ()
+main = warpDebug 3000 Synopsis</codeblock>
+ </conbody></concept><concept id="kinds-of-forms-92"><title>Kinds of Forms</title><conbody>
+  <p id="92-x1">Before jumping into the types themselves, we should begin with an overview of the different
+   kinds of forms. There are three categories:</p>
+  <dl id="92-x2">
+   <dlentry id="92-x3">
+    <dt id="92-x4">Applicative</dt>
+    <dd id="92-x5">These are the most commonly used (it's what appeared in the synopsis). Applicative
+     gives us some nice properties of letting error messages coallesce together and keep a very
+     high-level, declarative approach. (For more information on applicative code, see <xref href="http://www.haskell.org/haskellwiki/Applicative_functor" format="html" scope="external">the Haskell wiki</xref>.)</dd>
+   </dlentry>
+   <dlentry id="92-x6">
+    <dt id="92-x7">Monadic</dt>
+    <dd id="92-x8">A more powerful alternative to applicative. While this allows you more flexibility,
+     it does so at the cost of being more verbose. Useful if you want to create forms that don't fit
+     into the standard two-column look.</dd>
+   </dlentry>
+   <dlentry id="92-x9">
+    <dt id="92-x10">Input</dt>
+    <dd id="92-x11">Used only for receiving input. Does not generate any HTML for receiving the user input.
+     Useful for interacting with existing forms.</dd>
+   </dlentry>
+  </dl>
+  <p id="92-x12">In addition, there are a number of different variables that come into play for each form and
+   field you will want to set up:</p>
+  <ul id="92-ul_ibl_vig_md">
+   <li id="92-x13">Is the field required or optional?</li>
+   <li id="92-x14">Should it be submitted with GET or POST?</li>
+   <li id="92-x15">Does it have a default value, or not?</li>
+  </ul>
+  <p id="92-x16">An overriding goal is to minimize the number of field definitions and let them work in
+   as many contexts as possible. One result of this is that we end up with a few extra words for
+   each field. In the synopsis, you may have noticed things like <codeph id="92-x-3">areq</codeph> and that
+   extra <codeph id="92-x-4">Nothing</codeph> parameter. We'll cover why all of those exist in the course of
+   this chapter, but for now realize that by making these parameters explicit, we are able to reuse
+   the individuals fields (like <apiname id="92-x17">yesod-form:Yesod.Form.Fields:intField</apiname>)
+   in many different ways.</p>
+  <p id="92-x-5">A quick note on naming conventions. Each form type has a one-letter prefix (A, M and I) which
+   is used in a few places, such as saying MForm. We also use req and opt to mean required and
+   optional. Combining these, we create a required applicative field with <codeph id="92-x-6">areq</codeph>, or
+   an optional input field with <codeph id="92-x-7">iopt</codeph>.</p>
+ </conbody></concept><concept id="types-93"><title>Types</title><conbody>
+  <p id="93-x1">The <apiname id="93-x2">yesod-form:Yesod.Form.Types</apiname> module declares a few types. Let's start off
+   with some simple helpers:</p>
+  <dl id="93-x3">
+   <dlentry id="93-x4">
+    <dt id="93-x5">Enctype</dt>
+    <dd id="93-x6">The encoding type, either <codeph id="93-x-3">UrlEncoded</codeph> or <codeph id="93-x-4">Multipart</codeph>.
+     This datatype declares an instance of <codeph id="93-x-5">ToHtml</codeph>, so you can use the enctype
+     directly in Hamlet.</dd>
+   </dlentry>
+   <dlentry id="93-x7">
+    <dt id="93-x8">Env</dt>
+    <dd id="93-x9">Maps a parameter name to a list of values.</dd>
+   </dlentry>
+   <dlentry id="93-x10">
+    <dt id="93-x11">FileEnv</dt>
+    <dd id="93-x12">Maps a parameter name to the associated uploaded file.</dd>
+   </dlentry>
+   <dlentry id="93-x13">
+    <dt id="93-x14">Ints</dt>
+    <dd id="93-x15">As mentioned in the introduction, <codeph id="93-x-6">yesod-form</codeph> automatically assigns
+     a unique name to each field. <codeph id="93-x-7">Ints</codeph> is used to keep track of the next number to
+     assign.</dd>
+   </dlentry>
+   <dlentry id="93-x16">
+    <dt id="93-x17">FormResult</dt>
+    <dd id="93-x18">Has one of three possible states: <codeph id="93-x-8">FormMissing</codeph> if no data was
+     submitted, <codeph id="93-x-9">FormFailure</codeph> if there was an error parsing the form (e.g., missing a
+     required field, invalid content), or <codeph id="93-x-10">FormSuccess</codeph> if everything went
+     smoothly.</dd>
+   </dlentry>
+  </dl>
+  <p id="93-x19">Next we have three datatypes used for defining individual fields.</p>
+  <note id="93-x20">A field is a single piece of information, such as a number, a string or an email address.
+   Fields are combined together to build forms.</note>
+  <dl id="93-x21">
+   <dlentry id="93-x22">
+    <dt id="93-x23">Field</dt>
+    <dd id="93-x24">Defines two pieces of functionality: how to parse the text input from a user into a
+     Haskell value, and how to create the widget to be displayed to the user.
+      <codeph id="93-x-11">yesod-form</codeph> defines a number of individual Fields in <apiname id="93-x25">yesod-form:Yesod.Form.Fields</apiname>.</dd>
+   </dlentry>
+   <dlentry id="93-x26">
+    <dt id="93-x27">FieldSettings</dt>
+    <dd id="93-x28">Basic information on how a field should be displayed, such as the display name, an
+     optional tooltip, and possibly hardcoded <codeph id="93-x-12">id</codeph> and <codeph id="93-x-13">name</codeph>
+     attributes. (If none are provided, they are automatically generated.)<note id="93-x29"><codeph id="93-x-14">FieldSettings</codeph> provides an <codeph id="93-x-15">IsString</codeph> instance, so when you
+      need to provide a <codeph id="93-x-16">FieldSettings</codeph> value, you can actually type in a literal
+      string. That's how we interacted with it in the synopsis.</note></dd>
+   </dlentry>
+   <dlentry id="93-x30">
+    <dt id="93-x31">FieldView</dt>
+    <dd id="93-x32">An intermediate format containing a bunch of view information on a field. This is hardly
+     ever used directly by the user, we'll see more details later.</dd>
+   </dlentry>
+  </dl>
+  <p id="93-x33">And finally, we get to the important stuff: the forms themselves. There are three
+   types for this: <codeph id="93-x-17">MForm</codeph> is for monadic forms, <codeph id="93-x-18">AForm</codeph> for
+   applicative and <codeph id="93-x-19">IForm</codeph> (declared in <apiname id="93-x34">yesod-form:Yesod.Form.Input:IForm</apiname>) for input. <codeph id="93-x-20">MForm</codeph> is actually a
+   type synonym for a monad stack that provides the following features:</p>
+  <ul id="93-ul_cju_elg_md">
+   <li id="93-x35">A <codeph id="93-x-21">Reader</codeph> monad giving us the parameters (<codeph id="93-x-22">Env</codeph> and
+     <codeph id="93-x-23">FileEnv</codeph>), the master site argument and the list of languages the user
+    supports. The last two are used for i18n (more on this later).</li>
+   <li id="93-x36">A <codeph id="93-x-24">Writer</codeph> monad keeping track of the <codeph id="93-x-25">Enctype</codeph>. A
+    form will always be <codeph id="93-x-26">UrlEncoded</codeph>, unless there is a file input field, which will
+    force us to use multipart instead.</li>
+   <li id="93-x37">A <codeph id="93-x-27">State</codeph> monad holding an <codeph id="93-x-28">Ints</codeph> to keep track of the
+    next unique name to produce.</li>
+  </ul>
+  <p id="93-x38">An <codeph id="93-x-29">AForm</codeph> is pretty similar. However, there are a few major
+   differences:</p>
+  <ul id="93-ul_atf_olg_md">
+   <li id="93-x39">It produces a list of <codeph id="93-x-30">FieldViews</codeph>. This allows us to keep an
+    abstract idea of the form display, and then at the end of the day choose an appropriate function
+    for laying it out on the page. In the synopsis, we used <codeph id="93-x-31">renderDivs</codeph>, which
+    creates a bunch of div tags. Another option would be <codeph id="93-x-32">renderTable</codeph>.</li>
+   <li id="93-x40">It does not provide a <codeph id="93-x-33">Monad</codeph> instance. The goal of
+     <codeph id="93-x-34">Applicative</codeph> is to allow the entire form to run, grab as much information on
+    each field as possible, and then create the final result. This cannot work in the context of
+     <codeph id="93-x-35">Monad</codeph>.</li>
+  </ul>
+  <p id="93-x41">An <codeph id="93-x-36">IForm</codeph> is even simpler: it returns either a list of error messages
+   or a result.</p>
+ </conbody></concept><concept id="converting-94"><title>Converting</title><conbody>
+  <p id="94-x1">"But wait a minute," you say. "You said the synopsis uses applicative forms, but I'm
+   sure the type signature said <codeph id="94-x-3">MForm</codeph>. Shouldn't it be Monadic?" That's true, the
+   final form we produced was monadic. But what really happened is that we converted an applicative
+   form to a monadic one.</p>
+  <p id="94-x2">Again, our goal is to reuse code as much as possible, and minimize the number of
+   functions in the API. And Monadic forms are more powerful than Applicative, if more clumsy, so
+   anything that can be expressed in an Applicative form could also be expressed in a Monadic form.
+   There are two core functions that help out with this: <codeph id="94-x-4">aformToForm</codeph> converts any
+   applicative form to a monadic one, and <codeph id="94-x-5">formToAForm</codeph> converts certain kinds of
+   monadic forms to applicative forms.</p>
+  <p id="94-x3">"But wait <b id="94-x4">another</b> minute," you insist. "I didn't see any
+    <codeph id="94-x-6">aformToForm</codeph>!" Also true. The <codeph id="94-x-7">renderDivs</codeph> function takes care of
+   that for us.</p>
+ </conbody></concept><concept id="create-aforms-95"><title>Create AForms</title><conbody>
+  <p id="95-x1">Now that I've (hopefully) convinced you that in our synopsis we were really dealing with
+   applicative forms, let's have a look and try to understand how these things get created. Let's
+   take a simple example:</p>
+  <codeblock id="95-x2" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+    OverloadedStrings, TypeFamilies #-}
+import Yesod
+import Yesod.Form.Jquery
+import Data.Time (Day)
+import Data.Text (Text)
+import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
+
+data Synopsis = Synopsis
+
+mkYesod "Synopsis" [parseRoutes|
+/car CarR GET
+|]
+
+instance Yesod Synopsis
+
+-- Necessary for i18n. The default function uses English.
+instance RenderMessage Synopsis FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+main :: IO ()
+main = warpDebug 3000 Synopsis
+
+-- START
+data Car = Car
+    { carModel :: Text
+    , carYear :: Int
+    }
+  deriving Show
+
+carAForm :: AForm Synopsis Synopsis Car
+carAForm = Car
+    &lt;$&gt; areq textField "Model" Nothing
+    &lt;*&gt; areq intField "Year" Nothing
+
+carForm :: Html -&gt; MForm Synopsis Synopsis (FormResult Car, Widget)
+carForm = renderTable carAForm
+-- STOP
+
+getCarR :: Handler RepHtml
+getCarR = do
+    ((result, widget), enctype) &lt;- runFormGet carForm
+    case result of
+        FormSuccess car -&gt; defaultLayout [whamlet|&lt;p&gt;#{show car}|]
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=get action=@{CarR} enctype=#{enctype}&gt;
+    &lt;table&gt;
+        ^{widget}
+    &lt;input type=submit&gt;
+|]</codeblock>
+  <p id="95-x3">Here, we've explicitly split up applicative and monadic forms. In <codeph id="95-x-3">carAForm</codeph>, we use the <codeph id="95-x-4">&lt;$&gt;</codeph> and <codeph id="95-x-5">&lt;*&gt;</codeph> operators. This should not be surprising; these are
+            almost always used in applicative-style code. And we have one line for each record in
+            our <codeph id="95-x-6">Car</codeph> datatype. Perhaps unsurprisingly, we have a <codeph id="95-x-7">textField</codeph> for the <codeph id="95-x-8">Text</codeph> record, and an
+                <codeph id="95-x-9">intField</codeph> for the <codeph id="95-x-10">Int</codeph>
+            record.</p>
+  <p id="95-x5">Let's look a bit more closely at the <codeph id="95-x-11">areq</codeph> function. Its (simplified)
+            type signature is <codeph id="95-x6">Field a -&gt; FieldSettings -&gt; Maybe a -&gt; AForm
+                a</codeph>. So that first argument is going to determine the datatype of this field,
+            how to parse it, and how to render it. The next argument,
+            <codeph id="95-x-12">FieldSettings</codeph>, tells us the label, tooltip, name and ID of the field.
+            In this case, we're using the previously-mentioned <codeph id="95-x-13">IsString</codeph> instance of
+                <codeph id="95-x-14">FieldSettings</codeph>.</p>
+  <p id="95-x7">And what's up with that <codeph id="95-x-15">Maybe a</codeph>? It provides the optional default
+            value. For example, if we want our form to fill in "2007" as the default car year, we
+            would use <codeph id="95-x8">areq intField "Year" (Just 2007)</codeph>. We can even take
+            this to the next level, and have a form that takes an optional parameter giving the
+            default values.</p>
+  <fig id="95-x9">
+   <title id="95-x10">Form with default values</title>
+   <codeblock id="95-x11" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+    OverloadedStrings, TypeFamilies #-}
+import Yesod
+import Yesod.Form.Jquery
+import Data.Time (Day)
+import Data.Text (Text)
+import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
+
+data Synopsis = Synopsis
+
+mkYesod "Synopsis" [parseRoutes|
+/car CarR GET
+|]
+
+instance Yesod Synopsis
+
+-- Necessary for i18n. The default function uses English.
+instance RenderMessage Synopsis FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+main :: IO ()
+main = warpDebug 3000 Synopsis
+
+data Car = Car
+    { carModel :: Text
+    , carYear :: Int
+    }
+  deriving Show
+
+-- START
+carAForm :: Maybe Car -&gt; AForm Synopsis Synopsis Car
+carAForm mcar = Car
+    &lt;$&gt; areq textField "Model" (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq intField "Year" (carYear &lt;$&gt; mcar)
+-- STOP
+
+carForm :: Html -&gt; MForm Synopsis Synopsis (FormResult Car, Widget)
+carForm = renderTable (carAForm $ Just $ Car "Forte" 2010)
+
+getCarR :: Handler RepHtml
+getCarR = do
+    ((result, widget), enctype) &lt;- runFormGet carForm
+    case result of
+        FormSuccess car -&gt; defaultLayout [whamlet|&lt;p&gt;#{show car}|]
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=get action=@{CarR} enctype=#{enctype}&gt;
+    &lt;table&gt;
+        ^{widget}
+    &lt;input type=submit&gt;
+|]</codeblock>
+  </fig>
+ </conbody><concept id="optional-fields-96"><title>Optional fields</title><conbody>  <p id="96-x1">Suppose we wanted to have an optional field (like the car color). All we do instead is
+            use the <codeph id="96-x-3">aopt</codeph> function.</p>
+  <fig id="96-x2">
+   <title id="96-x3">Optional fields</title>
+   <codeblock id="96-x4" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+    OverloadedStrings, TypeFamilies #-}
+import Yesod
+import Yesod.Form.Jquery
+import Data.Time (Day)
+import Data.Text (Text)
+import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
+
+data Synopsis = Synopsis
+
+mkYesod "Synopsis" [parseRoutes|
+/car CarR GET
+|]
+
+instance Yesod Synopsis
+
+-- Necessary for i18n. The default function uses English.
+instance RenderMessage Synopsis FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+main :: IO ()
+main = warpDebug 3000 Synopsis
+
+-- START
+data Car = Car
+    { carModel :: Text
+    , carYear :: Int
+    , carColor :: Maybe Text
+    }
+  deriving Show
+
+carAForm :: AForm Synopsis Synopsis Car
+carAForm = Car
+    &lt;$&gt; areq textField "Model" Nothing
+    &lt;*&gt; areq intField "Year" Nothing
+    &lt;*&gt; aopt textField "Color" Nothing
+-- STOP
+
+carForm :: Html -&gt; MForm Synopsis Synopsis (FormResult Car, Widget)
+carForm = renderTable carAForm
+
+getCarR :: Handler RepHtml
+getCarR = do
+    ((result, widget), enctype) &lt;- runFormGet carForm
+    case result of
+        FormSuccess car -&gt; defaultLayout [whamlet|&lt;p&gt;#{show car}|]
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=get action=@{CarR} enctype=#{enctype}&gt;
+    &lt;table&gt;
+        ^{widget}
+    &lt;input type=submit&gt;
+|]</codeblock>
+  </fig>
+  <p id="96-x5">And like required fields, the last argument is the optional default value. However,
+            this has two layers of Maybe wrapping. This may seem redundant (and it is), but it makes
+            it much easier to write code that takes an optional default form parameter, such as in
+            the next example.</p>
+  <fig id="96-x6">
+   <title id="96-x7">Default optional fields</title>
+   <codeblock id="96-x8" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+    OverloadedStrings, TypeFamilies #-}
+import Yesod
+import Yesod.Form.Jquery
+import Data.Time (Day)
+import Data.Text (Text)
+import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
+
+data Synopsis = Synopsis
+
+mkYesod "Synopsis" [parseRoutes|
+/car CarR GET
+|]
+
+instance Yesod Synopsis
+
+-- Necessary for i18n. The default function uses English.
+instance RenderMessage Synopsis FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+main :: IO ()
+main = warpDebug 3000 Synopsis
+
+-- START
+data Car = Car
+    { carModel :: Text
+    , carYear :: Int
+    , carColor :: Maybe Text
+    }
+  deriving Show
+
+carAForm :: Maybe Car -&gt; AForm Synopsis Synopsis Car
+carAForm mcar = Car
+    &lt;$&gt; areq textField "Model" (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq intField  "Year"  (carYear  &lt;$&gt; mcar)
+    &lt;*&gt; aopt textField "Color" (carColor &lt;$&gt; mcar)
+
+carForm :: Html -&gt; MForm Synopsis Synopsis (FormResult Car, Widget)
+carForm = renderTable $ carAForm $ Just $ Car "Forte" 2010 $ Just "gray"
+-- STOP
+
+getCarR :: Handler RepHtml
+getCarR = do
+    ((result, widget), enctype) &lt;- runFormGet carForm
+    case result of
+        FormSuccess car -&gt; defaultLayout [whamlet|&lt;p&gt;#{show car}|]
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=get action=@{CarR} enctype=#{enctype}&gt;
+    &lt;table&gt;
+        ^{widget}
+    &lt;input type=submit&gt;
+|]</codeblock>
+  </fig>
+ </conbody></concept></concept><concept id="validation-97"><title>Validation</title><conbody>
+  <p id="97-x1">How would we make our form only accept cars created after 1990? If you remember, we
+            said above that the <codeph id="97-x-3">Field</codeph> itself contained the information on what is a
+            valid entry. So all we need to do is write a new <codeph id="97-x-4">Field</codeph>, right? Well,
+            that would be a bit tedious. Instead, let's just modify an existing one:</p>
+  <codeblock id="97-x2" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+    OverloadedStrings, TypeFamilies #-}
+import Yesod
+import Yesod.Form.Jquery
+import Data.Time (Day)
+import Data.Text (Text)
+import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
+
+data Synopsis = Synopsis
+
+mkYesod "Synopsis" [parseRoutes|
+/car CarR GET
+|]
+
+instance Yesod Synopsis
+
+-- Necessary for i18n. The default function uses English.
+instance RenderMessage Synopsis FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+main :: IO ()
+main = warpDebug 3000 Synopsis
+
+data Car = Car
+    { carModel :: Text
+    , carYear :: Int
+    , carColor :: Maybe Text
+    }
+  deriving Show
+
+-- START
+carAForm :: Maybe Car -&gt; AForm Synopsis Synopsis Car
+carAForm mcar = Car
+    &lt;$&gt; areq textField    "Model" (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField "Year"  (carYear  &lt;$&gt; mcar)
+    &lt;*&gt; aopt textField    "Color" (carColor &lt;$&gt; mcar)
+  where
+    errorMessage :: Text
+    errorMessage = "Your car is too old, get a new one!"
+
+    carYearField = check validateYear intField
+
+    validateYear y
+        | y &lt; 1990 = Left errorMessage
+        | otherwise = Right y
+-- STOP
+
+carForm :: Html -&gt; MForm Synopsis Synopsis (FormResult Car, Widget)
+carForm = renderTable $ carAForm $ Just $ Car "Forte" 2010 $ Just "gray"
+
+getCarR :: Handler RepHtml
+getCarR = do
+    ((result, widget), enctype) &lt;- runFormGet carForm
+    case result of
+        FormSuccess car -&gt; defaultLayout [whamlet|&lt;p&gt;#{show car}|]
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=get action=@{CarR} enctype=#{enctype}&gt;
+    &lt;table&gt;
+        ^{widget}
+    &lt;input type=submit&gt;
+|]</codeblock>
+  <p id="97-x3">The trick here is the <codeph id="97-x-5">check</codeph> function. It takes a function
+                (<codeph id="97-x-6">validateYear</codeph>) that returns either an error message or a modified
+            field value. In this example, we haven't modified the value at all. That is usually
+            going to be the case. This kind of checking is very common, so we have a shortcut:</p>
+  <codeblock id="97-x4" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+    OverloadedStrings, TypeFamilies #-}
+import Yesod
+import Yesod.Form.Jquery
+import Data.Time (Day)
+import Data.Text (Text)
+import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
+
+data Synopsis = Synopsis
+
+mkYesod "Synopsis" [parseRoutes|
+/car CarR GET
+|]
+
+instance Yesod Synopsis
+
+-- Necessary for i18n. The default function uses English.
+instance RenderMessage Synopsis FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+main :: IO ()
+main = warpDebug 3000 Synopsis
+
+data Car = Car
+    { carModel :: Text
+    , carYear :: Int
+    , carColor :: Maybe Text
+    }
+  deriving Show
+
+carAForm :: Maybe Car -&gt; AForm Synopsis Synopsis Car
+carAForm mcar = Car
+    &lt;$&gt; areq textField "Model" (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField "Year" (carYear &lt;$&gt; mcar)
+    &lt;*&gt; aopt textField "Color" (carColor &lt;$&gt; mcar)
+  where
+    errorMessage :: Text
+    errorMessage = "Your car is too old, get a new one!"
+
+-- START
+    carYearField = checkBool (&gt;= 1990) errorMessage intField
+-- STOP
+
+carForm :: Html -&gt; MForm Synopsis Synopsis (FormResult Car, Widget)
+carForm = renderTable $ carAForm $ Just $ Car "Forte" 2010 $ Just "gray"
+
+getCarR :: Handler RepHtml
+getCarR = do
+    ((result, widget), enctype) &lt;- runFormGet carForm
+    case result of
+        FormSuccess car -&gt; defaultLayout [whamlet|&lt;p&gt;#{show car}|]
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=get action=@{CarR} enctype=#{enctype}&gt;
+    &lt;table&gt;
+        ^{widget}
+    &lt;input type=submit&gt;
+|]</codeblock>
+  <p id="97-x5"><codeph id="97-x-7">checkBool</codeph> takes two parameters: a condition that must be fulfilled,
+            and an error message to be displayed if it was not.</p>
+  <note id="97-x6">You may have noticed the explicit <codeph id="97-x-8">Text</codeph> type signature on
+                <codeph id="97-x-9">errorMessage</codeph>. In the presence of
+            <codeph id="97-x-10">OverloadedStrings</codeph>, this is necessary. In order to support i18n,
+            messages can have many different datatypes, and GHC has no way of determining which
+            instance of <codeph id="97-x-11">IsString</codeph> you intended to use.</note>
+  <p id="97-x7">It's great to make sure the car isn't too old. But what if we want to make sure that
+            the year specified is not from the future? In order to look up the current year, we'll
+            need to run some <codeph id="97-x-12">IO</codeph>. For such circumstances, we'll need
+                <codeph id="97-x-13">checkM</codeph>:</p>
+  <codeblock id="97-x8" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+    OverloadedStrings, TypeFamilies #-}
+import Yesod
+import Yesod.Form.Jquery
+import Data.Time (Day, getCurrentTime, utctDay, toGregorian)
+import Data.Text (Text)
+import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
+
+data Synopsis = Synopsis
+
+mkYesod "Synopsis" [parseRoutes|
+/car CarR GET
+|]
+
+instance Yesod Synopsis
+
+-- Necessary for i18n. The default function uses English.
+instance RenderMessage Synopsis FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+main :: IO ()
+main = warpDebug 3000 Synopsis
+
+data Car = Car
+    { carModel :: Text
+    , carYear :: Int
+    , carColor :: Maybe Text
+    }
+  deriving Show
+
+carAForm :: Maybe Car -&gt; AForm Synopsis Synopsis Car
+carAForm mcar = Car
+    &lt;$&gt; areq textField "Model" (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField "Year" (carYear &lt;$&gt; mcar)
+    &lt;*&gt; aopt textField "Color" (carColor &lt;$&gt; mcar)
+  where
+    errorMessage :: Text
+    errorMessage = "Your car is too old, get a new one!"
+
+-- START
+    carYearField = checkM inPast $ checkBool (&gt;= 1990) errorMessage intField
+
+    inPast y = do
+        thisYear &lt;- liftIO getCurrentYear
+        return $ if y &lt;= thisYear
+            then Right y
+            else Left ("You have a time machine!" :: Text)
+
+getCurrentYear :: IO Int
+getCurrentYear = do
+    now &lt;- getCurrentTime
+    let today = utctDay now
+    let (year, _, _) = toGregorian today
+    return $ fromInteger year
+-- STOP
+
+carForm :: Html -&gt; MForm Synopsis Synopsis (FormResult Car, Widget)
+carForm = renderTable $ carAForm $ Just $ Car "Forte" 2010 $ Just "gray"
+
+getCarR :: Handler RepHtml
+getCarR = do
+    ((result, widget), enctype) &lt;- runFormGet carForm
+    case result of
+        FormSuccess car -&gt; defaultLayout [whamlet|&lt;p&gt;#{show car}|]
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=get action=@{CarR} enctype=#{enctype}&gt;
+    &lt;table&gt;
+        ^{widget}
+    &lt;input type=submit&gt;
+|]</codeblock>
+  <p id="97-x9"><codeph id="97-x-14">inPast</codeph> is a function that will return an <codeph id="97-x-15">Either</codeph>
+            result. However, it uses a <codeph id="97-x-16">Handler</codeph> monad. We use <codeph id="97-x10">liftIO getCurrentYear</codeph> to get the current year and then compare it against
+            the user-supplied year. Also, notice how we can chain together multiple validators.</p>
+  <note id="97-x11">Since the <codeph id="97-x-17">checkM</codeph> validator runs in the <codeph id="97-x-18">Handler</codeph>
+            monad, it has access to a lot of the stuff you can normally do in Yesod. This is
+            especially useful for running database actions, which we'll cover in the <xref id="97-x-19" href="persistent.dita#persistent-112" format="dita">Persistent
+                chapter</xref>.</note>
+ </conbody></concept><concept id="more-sophiticated-fields-98"><title>More sophisticated fields</title><conbody>
+  <p id="98-x1">Our color entry field is nice, but it's not exactly user-friendly. What we really want
+            is a drop-down list.</p>
+  <fig id="98-x2">
+   <title id="98-x3">Drop-down lists</title>
+   <codeblock id="98-x4" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+    OverloadedStrings, TypeFamilies #-}
+import Yesod
+import Yesod.Form.Jquery
+import Data.Time (Day, getCurrentTime, utctDay, toGregorian)
+import Data.Text (Text)
+import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
+
+data Synopsis = Synopsis
+
+mkYesod "Synopsis" [parseRoutes|
+/car CarR GET
+|]
+
+instance Yesod Synopsis
+
+-- Necessary for i18n. The default function uses English.
+instance RenderMessage Synopsis FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+main :: IO ()
+main = warpDebug 3000 Synopsis
+
+-- START
+data Car = Car
+    { carModel :: Text
+    , carYear :: Int
+    , carColor :: Maybe Color
+    }
+  deriving Show
+
+data Color = Red | Blue | Gray | Black
+    deriving (Show, Eq, Enum, Bounded)
+
+carAForm :: Maybe Car -&gt; AForm Synopsis Synopsis Car
+carAForm mcar = Car
+    &lt;$&gt; areq textField "Model" (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField "Year" (carYear &lt;$&gt; mcar)
+    &lt;*&gt; aopt (selectFieldList colors) "Color" (carColor &lt;$&gt; mcar)
+  where
+    colors :: [(Text, Color)]
+    colors = [("Red", Red), ("Blue", Blue), ("Gray", Gray), ("Black", Black)]
+-- STOP
+    errorMessage :: Text
+    errorMessage = "Your car is too old, get a new one!"
+
+    carYearField = checkM inPast $ checkBool (&gt;= 1990) errorMessage intField
+
+    inPast y = do
+        thisYear &lt;- liftIO getCurrentYear
+        return $ if y &lt;= thisYear
+            then Right y
+            else Left ("You have a time machine!" :: Text)
+
+getCurrentYear :: IO Int
+getCurrentYear = do
+    now &lt;- getCurrentTime
+    let today = utctDay now
+    let (year, _, _) = toGregorian today
+    return $ fromInteger year
+
+carForm :: Html -&gt; MForm Synopsis Synopsis (FormResult Car, Widget)
+carForm = renderTable $ carAForm $ Just $ Car "Forte" 2010 $ Just Black
+
+getCarR :: Handler RepHtml
+getCarR = do
+    ((result, widget), enctype) &lt;- runFormGet carForm
+    case result of
+        FormSuccess car -&gt; defaultLayout [whamlet|&lt;p&gt;#{show car}|]
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=get action=@{CarR} enctype=#{enctype}&gt;
+    &lt;table&gt;
+        ^{widget}
+    &lt;input type=submit&gt;
+|]</codeblock>
+  </fig>
+  <p id="98-x5"><codeph id="98-x-3">selectFieldList</codeph> takes a list of pairs. The first item in the pair is
+            the text displayed to the user in the drop-down list, and the second item is the actual
+            Haskell value. Of course, the code above looks really repetitive; we can get the same
+            result using the Enum and Bounded instance GHC automatically derives for us.</p>
+  <fig id="98-x6">
+   <title id="98-x7">Uses Enum and Bounded</title>
+   <codeblock id="98-x8" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+    OverloadedStrings, TypeFamilies #-}
+import Yesod
+import Yesod.Form.Jquery
+import Data.Time (Day, getCurrentTime, utctDay, toGregorian)
+import Data.Text (Text, pack)
+import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
+import Control.Arrow ((&amp;&amp;&amp;))
+
+data Synopsis = Synopsis
+
+mkYesod "Synopsis" [parseRoutes|
+/car CarR GET
+|]
+
+instance Yesod Synopsis
+
+-- Necessary for i18n. The default function uses English.
+instance RenderMessage Synopsis FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+main :: IO ()
+main = warpDebug 3000 Synopsis
+
+-- START
+data Car = Car
+    { carModel :: Text
+    , carYear :: Int
+    , carColor :: Maybe Color
+    }
+  deriving Show
+
+data Color = Red | Blue | Gray | Black
+    deriving (Show, Eq, Enum, Bounded)
+
+carAForm :: Maybe Car -&gt; AForm Synopsis Synopsis Car
+carAForm mcar = Car
+    &lt;$&gt; areq textField "Model" (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField "Year" (carYear &lt;$&gt; mcar)
+    &lt;*&gt; aopt (selectFieldList colors) "Color" (carColor &lt;$&gt; mcar)
+  where
+    colors = map (pack . show &amp;&amp;&amp; id) $ [minBound..maxBound]
+-- STOP
+    errorMessage :: Text
+    errorMessage = "Your car is too old, get a new one!"
+
+    carYearField = checkM inPast $ checkBool (&gt;= 1990) errorMessage intField
+
+    inPast y = do
+        thisYear &lt;- liftIO getCurrentYear
+        return $ if y &lt;= thisYear
+            then Right y
+            else Left ("You have a time machine!" :: Text)
+
+getCurrentYear :: IO Int
+getCurrentYear = do
+    now &lt;- getCurrentTime
+    let today = utctDay now
+    let (year, _, _) = toGregorian today
+    return $ fromInteger year
+
+carForm :: Html -&gt; MForm Synopsis Synopsis (FormResult Car, Widget)
+carForm = renderTable $ carAForm $ Just $ Car "Forte" 2010 $ Just Black
+
+getCarR :: Handler RepHtml
+getCarR = do
+    ((result, widget), enctype) &lt;- runFormGet carForm
+    case result of
+        FormSuccess car -&gt; defaultLayout [whamlet|&lt;p&gt;#{show car}|]
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=get action=@{CarR} enctype=#{enctype}&gt;
+    &lt;table&gt;
+        ^{widget}
+    &lt;input type=submit&gt;
+|]</codeblock>
+  </fig>
+  <p id="98-x9"><codeph id="98-x-4">[minBound..maxBound]</codeph> gives us a list of all the different
+                <codeph id="98-x-5">Color</codeph> values. We then apply a <codeph id="98-x-6">map</codeph> and
+                <codeph id="98-x-7">&amp;&amp;&amp;</codeph> (a.k.a, the fan-out operator) to turn that into a
+            list of pairs.</p>
+  <p id="98-x10">Some people prefer radio buttons to drop-down lists. Fortunately, this is just a
+            one-word change. For example, see <xref href="forms.dita#more-sophiticated-fields-98/98-radio-buttons" format="dita">Radio buttons</xref></p>
+  <fig id="98-radio-buttons">
+            <title id="98-x12">Radio buttons</title>
+            <codeblock id="98-x13" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses,
+    OverloadedStrings, TypeFamilies #-}
+import Yesod
+import Yesod.Form.Jquery
+import Data.Time (Day, getCurrentTime, utctDay, toGregorian)
+import Data.Text (Text, pack)
+import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
+import Control.Arrow ((&amp;&amp;&amp;))
+
+data Synopsis = Synopsis
+
+mkYesod "Synopsis" [parseRoutes|
+/car CarR GET
+|]
+
+instance Yesod Synopsis
+
+-- Necessary for i18n. The default function uses English.
+instance RenderMessage Synopsis FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+main :: IO ()
+main = warpDebug 3000 Synopsis
+
+-- START
+data Car = Car
+    { carModel :: Text
+    , carYear :: Int
+    , carColor :: Maybe Color
+    }
+  deriving Show
+
+data Color = Red | Blue | Gray | Black
+    deriving (Show, Eq, Enum, Bounded)
+
+carAForm :: Maybe Car -&gt; AForm Synopsis Synopsis Car
+carAForm mcar = Car
+    &lt;$&gt; areq textField "Model" (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField "Year" (carYear &lt;$&gt; mcar)
+    &lt;*&gt; aopt (radioFieldList colors) "Color" (carColor &lt;$&gt; mcar)
+  where
+    colors = map (pack . show &amp;&amp;&amp; id) $ [minBound..maxBound]
+-- STOP
+    errorMessage :: Text
+    errorMessage = "Your car is too old, get a new one!"
+
+    carYearField = checkM inPast $ checkBool (&gt;= 1990) errorMessage intField
+
+    inPast y = do
+        thisYear &lt;- liftIO getCurrentYear
+        return $ if y &lt;= thisYear
+            then Right y
+            else Left ("You have a time machine!" :: Text)
+
+getCurrentYear :: IO Int
+getCurrentYear = do
+    now &lt;- getCurrentTime
+    let today = utctDay now
+    let (year, _, _) = toGregorian today
+    return $ fromInteger year
+
+carForm :: Html -&gt; MForm Synopsis Synopsis (FormResult Car, Widget)
+carForm = renderTable $ carAForm $ Just $ Car "Forte" 2010 $ Just Black
+
+getCarR :: Handler RepHtml
+getCarR = do
+    ((result, widget), enctype) &lt;- runFormGet carForm
+    case result of
+        FormSuccess car -&gt; defaultLayout [whamlet|&lt;p&gt;#{show car}|]
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=get action=@{CarR} enctype=#{enctype}&gt;
+    &lt;table&gt;
+        ^{widget}
+    &lt;input type=submit&gt;
+|]</codeblock>
+        </fig>
+ </conbody></concept><concept id="running-forms-99"><title>Running forms</title><conbody>
+  <p id="99-x1">At some point, we're going to need to take our beautiful forms and produce some results. There
+   are a number of different functions available for this, each with its own purpose. I'll go
+   through them, starting with the most common.</p>
+  <dl id="99-x2">
+   <dlentry id="99-x3">
+    <dt id="99-x4">runFormPost</dt>
+    <dd id="99-x5">This will run your form against any submitted <codeph id="99-x-3">POST</codeph>
+     parameters. If this is not a <codeph id="99-x-4">POST</codeph> submission, it will return a
+      <codeph id="99-x-5">FormMissing</codeph>. This automatically inserts a security token as a hidden
+     form field to avoid <xref id="99-x6" href="http://en.wikipedia.org/wiki/Cross-site_request_forgery" format="html" scope="external">CSRF</xref> attacks.</dd>
+   </dlentry>
+   <dlentry id="99-x7">
+    <dt id="99-x8">runFormGet</dt>
+    <dd id="99-x9">Same as <codeph id="99-x-6">runFormPost</codeph>, for GET parameters. In order to
+     distinguish a normal <codeph id="99-x-7">GET</codeph> page load from a <codeph id="99-x-8">GET</codeph> submission, it includes an extra <codeph id="99-x-9">_hasdata</codeph> hidden field
+     in the form.</dd>
+   </dlentry>
+   <dlentry id="99-x10">
+    <dt id="99-x11">runFormPostNoNonce</dt>
+    <dd id="99-x12">Same as <codeph id="99-x-10">runFormPost</codeph>, but does not include (or require) the CSRF
+     security token.</dd>
+   </dlentry>
+   <dlentry id="99-x13">
+    <dt id="99-x14">generateFormPost</dt>
+    <dd id="99-x15">Instead of binding to existing <codeph id="99-x-11">POST</codeph> parameters, acts as if there
+     are none. This can be useful when you want to generate a new form after a previous form was
+     submitted, such as in a wizard.</dd>
+   </dlentry>
+   <dlentry id="99-x16">
+    <dt id="99-x17">generateFormGet</dt>
+    <dd id="99-x18">Same as <codeph id="99-x-12">generateFormPost</codeph>, but for <codeph id="99-x-13">GET</codeph>.</dd>
+   </dlentry>
+  </dl>
+  <p id="99-x19">The return type from the first three is <codeph id="99-x20">((FormResult a, Widget),
+    Enctype)</codeph>. The <codeph id="99-x-14">Widget</codeph> will already have any validation errors and
+   previously submitted values.</p>
+ </conbody></concept><concept id="i18n-100"><title>i18n</title><conbody>
+  <p id="100-x1">There have been a few references to i18n in this chapter. The topic will get more
+   thorough coverage in <xref id="100-x-3" href="internationalization.dita#internationalization-178" format="dita">its
+    own chapter</xref>, but since it has such a profound effect on <codeph id="100-x-4">yesod-form</codeph>, I
+   wanted to give a brief overview. The idea behind i18n in Yesod is to have data types represent
+   messages. Each site can have an instance of <codeph id="100-x-5">RenderMessage</codeph> for a given datatype
+   which will translate that message based on a list of languages the user accepts. As a result of
+   all this, there are a few things you should be aware of:</p>
+  <ul id="100-ul_pgx_iyg_md">
+   <li id="100-x2">There is an automatic instance of <codeph id="100-x-6">RenderMessage</codeph> for
+     <codeph id="100-x-7">Text</codeph> in every site, so you can just use plain strings if you don't care about
+    i18n support. However, you may need to use explicit type signatures occassionally.</li>
+   <li id="100-x3"><codeph id="100-x-8">yesod-form</codeph> expresses all of its messages in terms of the
+     <codeph id="100-x-9">FormMessage</codeph> datatype. Therefore, to use <codeph id="100-x-10">yesod-form</codeph>, you'll
+    need to have an appropriate <codeph id="100-x-11">RenderMessage</codeph> instance. A simple one that uses the
+    default English translations would
+    be:<codeblock id="100-x4" outputclass="haskell">instance RenderMessage MyApp FormMessage where
+    renderMessage _ _ = defaultFormMessage</codeblock>This
+    is provided automatically by the scaffolded site.</li>
+   <!-- Perhaps include this later? <li id="x5">In order to allow multiple different message types to co-exist, we use an existential
+    type called <codeph id="x-12">SomeMessage</codeph>. You will occassionally need to wrap your values inside
+    of it, though this is not common in normal library use.</li>-->
+  </ul>
+ </conbody></concept><concept id="monadic-101"><title>Monadic Forms</title><conbody>
+        <p id="101-x-3">Often times, a simple form layout is adequate, and applicative forms excel at
+            this approach. Sometimes, however, you'll want to have a more customized look to your
+            form.</p>
+        <fig id="101-x-4">
+            <title id="101-x-5">A non-standard form layout</title>
+            <image id="101-image_d604c9d5-b1e2-447a-a3ee-efe4559f0d2f" href="../images/monadic-form.png"/>
+        </fig>
+        <p id="101-x-6">For these use cases, monadic forms fit the bill. They are a bit more verbose
+            than their applicative cousins, but this verbosity allows you to have complete control
+            over what the form will look like. In order to generate the form above, we could code
+            something like this.</p>
+        <codeblock id="101-x-7" outputclass="haskell">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
+             TemplateHaskell, MultiParamTypeClasses #-}
+import Yesod
+import Control.Applicative
+import Data.Text (Text)
+
+data MFormExample = MFormExample
+
+mkYesod "MFormExample" [parseRoutes|
+/ RootR GET
+|]
+
+instance Yesod MFormExample
+
+instance RenderMessage MFormExample FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+data Person = Person { personName :: Text, personAge :: Int }
+    deriving Show
+
+personForm :: Html -&gt; MForm MFormExample MFormExample (FormResult Person, Widget)
+personForm extra = do
+    (nameRes, nameView) &lt;- mreq textField "this is not used" Nothing
+    (ageRes, ageView) &lt;- mreq intField "neither is this" Nothing
+    let personRes = Person &lt;$&gt; nameRes &lt;*&gt; ageRes
+    let widget = do
+            toWidget [lucius|
+##{fvId ageView} {
+    width: 3em;
+}
+|]
+            [whamlet|
+#{extra}
+&lt;p&gt;
+    Hello, my name is #
+    ^{fvInput nameView}
+    \ and I am #
+    ^{fvInput ageView}
+    \ years old. #
+    &lt;input type=submit value="Introduce myself"&gt;
+|]
+    return (personRes, widget)
+
+getRootR :: Handler RepHtml
+getRootR = do
+    ((res, widget), enctype) &lt;- runFormGet personForm
+    defaultLayout [whamlet|
+&lt;p&gt;Result: #{show res}
+&lt;form enctype=#{enctype}&gt;
+    ^{widget}
+|]
+
+main :: IO ()
+main = warpDebug 3000 MFormExample</codeblock>
+        <p id="101-x-8">Similar to the applicative <codeph id="101-x-9">areq</codeph>, we use <codeph id="101-x-10">mreq</codeph> for monadic forms. (And yes, there's also
+                <codeph id="101-x-19">mopt</codeph> for optional fields.) But there's a big difference:
+                <codeph id="101-x-20">mreq</codeph> gives us back a pair of values. Instead of hiding away the
+                <apiname id="101-x-11">yesod-form:Yesod.Form.Types:FieldView</apiname> value and
+            automatically inserting it into a widget, we get the control to insert it as we see
+            fit.</p>
+        <p id="101-x-12"><codeph id="101-x-21">FieldView</codeph> has a number of pieces of information. The most
+            important is <codeph id="101-x-22">fvInput</codeph>, which is the actual form field. In this example,
+            we also use <codeph id="101-x-23">fvId</codeph>, which gives us back the HTML <codeph id="101-x-24">id</codeph>
+            attribute of the input tag. In our example, we use that to specify the width of the
+            field.</p>
+        <p id="101-x-13">You might be wondering what the story is with the "this is not used" and
+            "neither is this" values. <codeph id="101-x-25">mreq</codeph> takes a <codeph id="101-x-26">FieldSettings</codeph> as its second argument. Since <codeph>FieldSettings</codeph>
+            provides an <codeph>IsString</codeph> instance, the strings are essentially expanded by
+            the compiler
+            to:<codeblock outputclass="haskell">fromString "this is not used" == FieldSettings
+    { fsLabel = "this is not used"
+    , fsTooltip = Nothing
+    , fsId = Nothing
+    , fsName = Nothing
+    , fsClass = []
+    }</codeblock>In
+            the case of applicative forms, the <codeph>fsLabel</codeph> and
+                <codeph>fsTooltip</codeph> values are used when constructing your HTML. In the case
+            of monadic forms, Yesod does not generate any of the "wrapper" HTML for you, and
+            therefore these values are ignored. However, we still keep the
+                <codeph>FieldSettings</codeph> parameter to allow you to override the
+                <codeph>id</codeph> and <codeph>name</codeph> attributes of your fields if
+            desired.</p>
+        <p id="101-x-14">The other interesting bit is the <codeph id="101-x-15">extra</codeph> value.
+                <codeph id="101-x-33">GET</codeph> forms include an extra field to indicate that they
+            have been submitted, and <codeph id="101-x-34">POST</codeph> forms include a security tokens
+            to prevent CSRF attacks. If you don't include this extra hidden field in your form,
+            Yesod will not accept it.</p>
+        <p id="101-x-16">Other than that, things are pretty straight-forward. We create our
+                <codeph id="101-x-35">personRes</codeph> value by combining together the <codeph id="101-x-36">nameRes</codeph>
+            and <codeph id="101-x-37">ageRes</codeph> values, and then return a tuple of the person and the
+            widget. And in the <codeph id="101-x-38">getRootR</codeph> function, everything looks just like an
+            applicative form. In fact, you could swap out our monadic form with an applicative one
+            and the code would still work.</p>
+    </conbody></concept><concept id="input-102"><title>Input forms</title><conbody>
+  <p id="102-x-3">Applicative and monadic forms handle both the generation of your HTML code and the parsing of
+   user input. Sometimes, you only want to do the latter, such as when there's an already-existing
+   form in HTML somewhere, or if you want to generate a form dynamically using Javascript. In such a
+   case, you'll want input forms.</p>
+  <p id="102-x-4">These work mostly the same as applicative and monadic forms, with some differences:</p>
+  <ul id="102-ul_e3c4dff2-c3cd-4ba1-b146-3841e6018b14">
+   <li id="102-x-5">You use <codeph id="102-x-11">runInputPost</codeph> and <codeph id="102-x-12">runInputGet</codeph>.</li>
+   <li id="102-x-6">You use <codeph id="102-x-13">ireq</codeph> and <codeph id="102-x-14">iopt</codeph>. These functions now only
+    take two arguments: the field type and the name (i.e., HTML <codeph id="102-x-15">name</codeph> attribute) of
+    the field in question.</li>
+   <li id="102-x-7">After running a form, it returns the value. It doesn't return a widget or an
+                encoding type.</li>
+   <li id="102-x-8">If there are any validation errors, the page returns an "invalid arguments" error page.</li>
+  </ul>
+  <p id="102-x-9">You can use input forms to recreate the previous example. Note, however, that the
+   input version is less user friendly. If you make a mistake in an applicative or monadic form, you
+   will be brought back to the same page, with your previously entered values in the form, and an
+   error message explaning what you need to correct. With input forms, the user simply gets an error
+   message.</p>
+  <codeblock id="102-x-10" outputclass="haskell">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
+             TemplateHaskell, MultiParamTypeClasses #-}
+import Yesod
+import Control.Applicative
+import Data.Text (Text)
+
+data Input = Input
+
+mkYesod "Input" [parseRoutes|
+/ RootR GET
+/input InputR GET
+|]
+
+instance Yesod Input
+
+instance RenderMessage Input FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+data Person = Person { personName :: Text, personAge :: Int }
+    deriving Show
+
+getRootR :: Handler RepHtml
+getRootR = defaultLayout [whamlet|
+&lt;form action=@{InputR}&gt;
+    &lt;p&gt;
+        My name is #
+        &lt;input type=text name=name&gt;
+        \ and I am #
+        &lt;input type=text name=age&gt;
+        \ years old. #
+        &lt;input type=submit value="Introduce myself"&gt;
+|]
+
+getInputR :: Handler RepHtml
+getInputR = do
+    person &lt;- runInputGet $ Person
+                &lt;$&gt; ireq textField "name"
+                &lt;*&gt; ireq intField "age"
+    defaultLayout [whamlet|&lt;p&gt;#{show person}|]
+
+main :: IO ()
+main = warpDebug 3000 Input</codeblock>
+ </conbody></concept><concept id="custom-103"><title>Custom fields</title><conbody>
+  <p id="103-x-3">The fields that come built-in with Yesod will likely cover the vast majority of your
+   form needs. But occassionally, you'll need something more specialized. Fortunately, you can
+   create new forms in Yesod yourself. The <codeph id="103-x-19">Field</codeph> datatype has two records:
+    <codeph id="103-x-20">fieldParse</codeph> takes a list of values submitted by the user and returns one of
+   three results:</p>
+  <ul id="103-ul_d7bb7211-f4dc-4239-a2b0-ae26a58b6290">
+   <li id="103-x-4">An error message saying validation failed.</li>
+   <li id="103-x-5">The parsed value.</li>
+   <li id="103-x-6">Nothing, indicating that no data was supplied.</li>
+  </ul>
+  <p id="103-x-7">That last case might sound surprising: shouldn't Yesod automatically know that no information
+   is supplied when the input list is empty? Well, no actually. Checkboxes, for instance, indicate
+   an unchecked state by sending in an empty list.</p>
+  <p id="103-x-8">Also, what's up with the list? Shouldn't it be a <codeph id="103-x-21">Maybe</codeph>? Well, that's
+   also not the case. With grouped checkboxes and multi-select lists, you'll have multiple widgets
+   with the same name. We also use this trick in our example below.</p>
+  <p id="103-x-9">The second record is <codeph id="103-x-22">fieldView</codeph>, and it renders a widget to display to
+   the user. This function has four arguments: the <codeph id="103-x-23">id</codeph> attribute, the
+    <codeph id="103-x-24">name</codeph> attribute, the result and a <codeph id="103-x-25">Bool</codeph> indicating if the field
+   is required.</p>
+  <p id="103-x-10">What did I mean by result? It's actually an <codeph id="103-x-26">Either</codeph>, giving either
+   the unparsed input (when parsing failed) or the successfully parsed value.
+    <codeph id="103-x-27">intField</codeph> is a great example of how this works. If you type in <userinput id="103-x-11">42</userinput>, the value of result will be <codeph id="103-x-12">Right 42</codeph>. But
+   if you type in <userinput id="103-x-13">turtle</userinput>, the result will be <codeph id="103-x-14">Left
+    "turtle"</codeph>. This lets you put in a value attribute on your input tag that will give the
+   user a consistent experience.</p>
+  <p id="103-x-15">As a small example, we'll create a new field type that is a password confirm field.
+            This field has two text inputs- both with the same name attribute- and returns an error
+            message if the values don't match. Note that, unlike most fields, it does <i id="103-x-16">not</i> provide a value attribute on the input tags, as you don't want to send back
+            a user-entered password in your HTML <b id="103-x-17">ever</b>.</p>
+  <codeblock id="103-x-18" outputclass="haskell">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
+             TemplateHaskell, MultiParamTypeClasses #-}
+import Yesod
+import Control.Applicative
+import Data.Text (Text)
+
+data Password = Password
+
+mkYesod "Password" [parseRoutes|
+/ RootR GET
+|]
+
+instance Yesod Password
+
+instance RenderMessage Password FormMessage where
+    renderMessage _ _ = defaultFormMessage
+-- START
+passwordConfirmField :: Field sub master Text
+passwordConfirmField = Field
+    { fieldParse = \rawVals -&gt;
+        case rawVals of
+            [a, b]
+                | a == b -&gt; return $ Right $ Just a
+                | otherwise -&gt; return $ Left "Passwords don't match"
+            [] -&gt; return $ Right Nothing
+            _ -&gt; return $ Left "You must enter two values"
+    , fieldView = \idAttr nameAttr _ eResult isReq -&gt; [whamlet|
+&lt;input id=#{idAttr} name=#{nameAttr} type=password&gt;
+&lt;div&gt;Confirm:
+&lt;input id=#{idAttr}-confirm name=#{nameAttr} type=password&gt;
+|]
+    }
+
+getRootR :: Handler RepHtml
+getRootR = do
+    ((res, widget), enctype) &lt;- runFormGet $ renderDivs
+        $ areq passwordConfirmField "Password" Nothing
+    defaultLayout [whamlet|
+&lt;p&gt;Result: #{show res}
+&lt;form enctype=#{enctype}&gt;
+    ^{widget}
+    &lt;input type=submit value="Change password"&gt;
+|]
+-- STOP
+main :: IO ()
+main = warpDebug 3000 Password</codeblock>
+ </conbody></concept><concept id="summary-104"><title>Summary</title><conbody>
+  <p id="104-x-3">Forms in Yesod are broken up into three groups. Applicative is the most common, as it provides
+   a nice user interface with an easy-to-use API. Monadic forms give you more power, but are harder
+   to use. Input forms are intended when you just want to read data from the user, not generate the
+   input widgets.</p>
+  <p id="104-x-4">There are a number of different <codeph id="104-x-5">Field</codeph>s provided by Yesod out-of-the-box. In
+   order to use these in your forms, you need to indicate the kind of form and whether the field is
+   required or optional. The result is six helper functions: <codeph id="104-x-6">areq</codeph>,
+    <codeph id="104-x-7">aopt</codeph>, <codeph id="104-x-8">mreq</codeph>, <codeph id="104-x-9">mopt</codeph>, <codeph id="104-x-10">ireq</codeph>, and
+    <codeph id="104-x-11">iopt</codeph>.</p>
+  <p id="104-x-12">Forms have significant power available. They can automatically insert Javascript to help you
+   leverage nicer UI controls, such as a jQuery UI date picker. Forms are also fully i18n-ready, so
+   you can support a global community of users. And when you have more specific needs, you can slap
+   on some validation functions to an existing field, or write a new one from scratch.</p>
+ </conbody></concept></concept>

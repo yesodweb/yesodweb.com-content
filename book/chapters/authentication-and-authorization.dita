@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "concept.dtd">
+<concept id="authentication-and-authorization-160"><title>Authentication and Authorization</title><conbody>
+        <p id="160-x-3">Authentication and authorization are two very related, and yet separate, concepts. While
+            the former deals with identifying a user, the latter determines what a user is allowed
+            to do. Unfortunately, since both terms are often abbreviated as "auth," the concepts are
+            often conflated.</p>
+        <p id="160-x-4">Yesod provides built-in support for a number of third-party authentication systems, such
+            as OpenID, BrowserID and OAuth. These are systems where your application trusts some
+            external system for validating a user's credentials. Additionally, there is support for
+            more commonly used username/password and email/password systems. The former route
+            ensures simplicity for users (no new passwords to remember) and implementors (no need to
+            deal with an entire security architecture), while the latter gives the developer more
+            control.</p>
+        <p id="160-x-5">On the authorization side, we are able to take advantage of REST and type-safe
+            URLs to create simple, declarative systems. Additionally, since all authorization code
+            is written in Haskell, you have the full flexibility of the language at your
+            disposal.</p>
+        <p id="160-x-6">This chapter will cover how to set up an "auth" solution in Yesod and discuss some
+            trade-offs in the different authentication options.</p></conbody><concept id="high-level-overview-161"><title>Overview</title><conbody>
+  <p id="161-x-3">The <apiname id="161-x-4">yesod-auth</apiname> package provides a unified interface for a
+   number of different authentication plugins. The only real requirement for these backends is that
+   they identify a user based on some unique string. In OpenID, for instance, this would be the
+   actual OpenID value. In BrowserID, it's the email address. For HashDB (which uses a database of
+   hashed passwords), it's the username.</p>
+  <p id="161-x-5">Each authentication plugin provides its own system for logging in, whether it be via
+   passing tokens with an external site or a email/password form. After a successful login, the
+   plugin sets a value in the user's session to indicate his/her <codeph id="161-x-16">AuthId</codeph>. This
+    <codeph id="161-x-17">AuthId</codeph> is usually a Persistent ID from a table used for keeping track of
+   users.</p>
+  <p id="161-x-6">There are a few functions available for querying a user's <codeph id="161-x-18">AuthId</codeph>,
+   most commonly <codeph id="161-x-7">maybeAuthId</codeph>, <codeph id="161-x-8">requireAuthId</codeph>,
+    <codeph id="161-x-9">maybeAuth</codeph> and <codeph id="161-x-10">requireAuth</codeph>. The require
+   versions will redirect to a login page if the user is not logged in, while the second set of
+   functions (the ones <b id="161-x-11">not</b> ending in <codeph id="161-x-19">Id</codeph>) give both the table ID <i id="161-x-12">and</i> entity value.</p>
+  <p id="161-x-13">Since all of the storage of <codeph id="161-x-20">AuthId</codeph> is built on top of sessions, all
+   of the rules from there apply. In particular, the data is stored in an encrypted, HMACed client
+   cookie, which automatically times out after a certain configurable period of inactivity.
+   Additionally, since there is no server-side component to sessions, logging out simply deletes the
+   data from the session cookie; if a user reuses an older cookie value, the session will still be
+   valid.</p>
+  <note id="161-x-14">There are plans to add in a server-side component to sessions which would allow forced
+   logout. This will almost certainly be implemented before a 1.0 release of Yesod.</note>
+  <p id="161-x-15">On the flip side, authorization is handled by a few methods inside the
+    <codeph id="161-x-21">Yesod</codeph> typeclass. For every request, these methods are run to determine if
+   access should be allowed, denied, or if the user needs to be authenticated. By default, these
+   methods allow access for every request. Alternatively, you can implement authorization in a more
+   ad-hoc way by adding calls to <codeph id="161-x-22">requireAuth</codeph> and the like within individual handler
+   functions, though this undermines many of the benefits of a declarative authorization system.</p>
+ </conbody></concept><concept id="authenticate-me-162"><title>Authenticate Me</title><conbody>
+  <p id="162-x-3">Let's jump right in with an example of authentication.</p>
+  <codeblock id="162-x-4" outputclass="haskell">{-# LANGUAGE OverloadedStrings, TemplateHaskell, TypeFamilies,
+             MultiParamTypeClasses, QuasiQuotes #-}
+import Yesod
+import Yesod.Auth
+import Yesod.Auth.BrowserId
+import Yesod.Auth.GoogleEmail
+import Data.Text (Text)
+import Network.HTTP.Conduit (Manager, newManager, def)
+
+data MyAuthSite = MyAuthSite
+    { httpManager :: Manager
+    }
+
+mkYesod "MyAuthSite" [parseRoutes|
+/ RootR GET
+/auth AuthR Auth getAuth
+|]
+
+instance Yesod MyAuthSite where
+    -- Note: In order to log in with BrowserID, you must correctly
+    -- set your hostname here.
+    approot = ApprootStatic "http://localhost:3000"
+
+instance YesodAuth MyAuthSite where
+    type AuthId MyAuthSite = Text
+    getAuthId = return . Just . credsIdent
+
+    loginDest _ = RootR
+    logoutDest _ = RootR
+
+    authPlugins _ =
+        [ authBrowserId
+        , authGoogleEmail
+        ]
+
+    authHttpManager = httpManager
+
+instance RenderMessage MyAuthSite FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+getRootR :: Handler RepHtml
+getRootR = do
+    maid &lt;- maybeAuthId
+    defaultLayout [whamlet|
+&lt;p&gt;Your current auth ID: #{show maid}
+$maybe _ &lt;- maid
+    &lt;p&gt;
+        &lt;a href=@{AuthR LogoutR}&gt;Logout
+$nothing
+    &lt;p&gt;
+        &lt;a href=@{AuthR LoginR}&gt;Go to the login page
+|]
+
+main :: IO ()
+main = do
+    man &lt;- newManager def
+    warpDebug 3000 $ MyAuthSite man</codeblock>
+  <p id="162-x-5">We'll start with the route declarations. First we declare our standard <codeph id="162-x-6">RootR</codeph>
+   route, and then we set up the authentication subsite. Remember that a subsite needs four
+   parameters: the path to the subsite, the route name, the subsite name, and a function to get the
+   subsite value. In other words, based on the line:</p>
+  <codeblock id="162-x-7" outputclass="routes">/auth AuthR Auth getAuth</codeblock>
+  <p id="162-x-8">We need to have <codeph id="162-x-9">getAuth :: MyAuthSite -&gt; Auth</codeph>. While we haven't written that
+   function ourselves, <apiname id="162-x-10">yesod-auth</apiname> provides it automatically. With other subsites
+   (like static files), we provide configuration settings in the subsite value, and therefore need
+   to specify the get function. In the auth subsite, we specify these settings in a separate
+   typeclass, <codeph id="162-x-11">YesodAuth</codeph>.</p>
+  <note id="162-x-12">Why not use the subsite value? There are a number of settings we would like to give for an
+   auth subsite, and doing so from a record type would be inconvenient. Also, since we want to have
+   an <codeph id="162-x-13">AuthId</codeph> associated type, a typeclass is more natural.<p id="162-x-14">On the flip side, why
+    not use a typeclass for all subsites? It comes with a downside: you can then only have a single
+    instance per site, disallowing serving different sets of static files from different routes.
+    Also, the subsite value works better when we want to load data at app initialization.</p></note>
+  <p id="162-x-15">So what exactly goes in this YesodAuth instance? There are six required
+   declarations:</p>
+  <ul id="162-ul_mgj_phf_p2">
+   <li id="162-x-16"><codeph id="162-x-32">AuthId</codeph> is an associated type. This is the value
+     <codeph id="162-x-33">yesod-auth</codeph> will give you when you ask if a user is logged in (via
+     <codeph id="162-x-34">maybeAuthId</codeph> or <codeph id="162-x-35">requireAuthId</codeph>). In our case, we're simply
+    using <codeph id="162-x-36">Text</codeph>, to store the raw identifier- email address in our case, as we'll
+    soon see.</li>
+   <li id="162-x-17"><codeph id="162-x-37">getAuthId</codeph> gets the actual <codeph id="162-x-38">AuthId</codeph> from the <codeph id="162-x-18">Creds</codeph> (credentials) data type. This type has three pieces of information:
+    the authentication backend used (browserid or googleemail in our case), the actual identifier,
+    and an associated list of arbitrary extra information. Each backend provides different extra
+    information; see their docs for more information.</li>
+   <li id="162-x-19"><codeph id="162-x-39">loginDest</codeph> gives the route to redirect to after a successful
+    login.</li>
+   <li id="162-x-20">Likewise, <codeph id="162-x-40">logoutDest</codeph> gives the route to redirect to after a
+    logout.</li>
+   <li id="162-x-21"><codeph id="162-x-41">authPlugins</codeph> is a list of individual authentication backends to
+    use. In our example, we're using BrowserID, which logs in via Mozilla's BrowserID system, and
+    Google Email, which authenticates a user's email address using their Google account. The nice
+    thing about these two backends is:<ul id="162-ul_xwj_f3f_p2">
+     <li id="162-x-22">They require no set up, as opposed to Facebook or OAuth, which require setting up
+      credentials.</li>
+     <li id="162-x-23">They use email addresses as identifiers, which people are comfortable with, as
+      opposed to OpenID, which uses a URL.</li>
+    </ul></li>
+   <li id="162-x-42"><codeph id="162-x-43">authHttpManager</codeph> gets an HTTP connection manager from the foundation type.
+    This allow authentication backends which use HTTP connections (i.e., almost all third-party
+    login systems) to share connections, avoiding the cost of restarting a TCP connection for each
+    request.</li>
+  </ul>
+  <p id="162-x-24">In our <codeph id="162-x-44">RootR</codeph> handler, we have some simple links to the login and
+   logout pages, depending on whether or not the user is logged in. Notice how we construct these
+   subsite links: first we give the subsite route name (<codeph id="162-x-45">AuthR</codeph>), followed by the
+   route within the subsite (<codeph id="162-x-46">LoginR</codeph> and <codeph id="162-x-47">LogoutR</codeph>).</p>
+  <p id="162-x-25">The figures below show what the login process looks like from a user perspective.</p>
+  <fig id="162-x-26">
+   <title id="162-x-27">Initial page load</title>
+   <image href="../images/initial-screen.png" id="162-image_vw4_r3f_p2"/>
+  </fig>
+  <fig id="162-x-28">
+   <title id="162-x-29">BrowserID login screen</title>
+   <image href="../images/login-with-browserid.png" id="162-image_jp4_t3f_p2"/>
+  </fig>
+  <fig id="162-x-30">
+   <title id="162-x-31">Homepage after logging in</title>
+   <image href="../images/after-login.png" id="162-image_gz2_v3f_p2"/>
+  </fig>
+ </conbody></concept><concept id="email-163"><title>Email</title><conbody>
+  <p id="163-x-3">For many use cases, third-party authentication of email will be sufficient. Occassionally,
+   you'll want users to actual create passwords on your site. The scaffolded site does not include
+   this setup, because:</p>
+  <ul id="163-ul_mmf_nsk_pe">
+   <li id="163-x-4">In order to securely accept passwords, you need to be running over SSL. Many users are not
+    serving their sites over SSL.</li>
+   <li id="163-x-5">While the email backend properly salts and hashes passwords, a compromised database could
+    still be problematic. Again, we make no assumptions that Yesod users are following secure
+    deployment practices.</li>
+   <li id="163-x-6">You need to have a working system for sending email. Many web servers these days are
+                not equipped to deal with all of the spam protection measures used by mail
+                    servers.<note id="163-x-7">The example below will use the system's built-in <cmdname id="163-x-8">sendmail</cmdname> executable. If you would like to avoid the
+                    hassle of dealing with an email server yourself, you can use Amazon SES. There
+                    is a package called <apiname id="163-x-9">mime-mail-ses</apiname> which provides a
+                    drop-in replacement for the sendmail code used below. This is the approach we
+                    use on the Haskellers.com site.</note></li>
+  </ul>
+  <p id="163-x-10">But assuming you are able to meet these demands, and you want to have a separate password login
+   specifically for your site, Yesod offers a built-in backend. It requires quite a bit of code to
+   set up, since it needs to store passwords securely in the database and send a number of different
+   emails to users (verify account, password retrieval, etc.).</p>
+  <p id="163-x-11">Let's have a look at a site that provides email authentication, storing passwords in a
+   Persistent SQLite database.</p>
+  <codeblock id="163-x-12" outputclass="haskell">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes, GADTs,
+             TemplateHaskell, MultiParamTypeClasses, FlexibleContexts #-}
+import Yesod
+import Yesod.Auth
+import Yesod.Auth.Email
+import Database.Persist.Sqlite
+import Database.Persist.TH
+import Data.Text (Text)
+import Network.Mail.Mime
+import qualified Data.Text.Lazy.Encoding
+import Text.Shakespeare.Text (stext)
+import Text.Blaze.Renderer.Utf8 (renderHtml)
+import Text.Hamlet (shamlet)
+import Data.Maybe (isJust)
+import Control.Monad (join)
+
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
+User
+    email Text
+    password Text Maybe -- Password may not be set yet
+    verkey Text Maybe -- Used for resetting passwords
+    verified Bool
+    UniqueUser email
+|]
+
+data MyEmailApp = MyEmailApp Connection
+
+mkYesod "MyEmailApp" [parseRoutes|
+/ RootR GET
+/auth AuthR Auth getAuth
+|]
+
+instance Yesod MyEmailApp where
+    -- Emails will include links, so be sure to include an approot so that
+    -- the links are valid!
+    approot = ApprootStatic "http://localhost:3000"
+
+instance RenderMessage MyEmailApp FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+-- Set up Persistent
+instance YesodPersist MyEmailApp where
+    type YesodPersistBackend MyEmailApp = SqlPersist
+    runDB f = do
+        MyEmailApp conn &lt;- getYesod
+        runSqlConn f conn
+
+instance YesodAuth MyEmailApp where
+    type AuthId MyEmailApp = UserId
+
+    loginDest _ = RootR
+    logoutDest _ = RootR
+    authPlugins _ = [authEmail]
+
+    -- Need to find the UserId for the given email address.
+    getAuthId creds = runDB $ do
+        x &lt;- insertBy $ User (credsIdent creds) Nothing Nothing False
+        return $ Just $
+            case x of
+                Left (Entity userid _) -&gt; userid -- newly added user
+                Right userid -&gt; userid -- existing user
+
+    authHttpManager = error "Email doesn't need an HTTP manager"
+
+-- Here's all of the email-specific code
+instance YesodAuthEmail MyEmailApp where
+    type AuthEmailId MyEmailApp = UserId
+
+    addUnverified email verkey =
+        runDB $ insert $ User email Nothing (Just verkey) False
+
+    sendVerifyEmail email _ verurl =
+        liftIO $ renderSendMail (emptyMail $ Address Nothing "noreply")
+            { mailTo = [Address Nothing email]
+            , mailHeaders =
+                [ ("Subject", "Verify your email address")
+                ]
+            , mailParts = [[textPart, htmlPart]]
+            }
+      where
+        textPart = Part
+            { partType = "text/plain; charset=utf-8"
+            , partEncoding = None
+            , partFilename = Nothing
+            , partContent = Data.Text.Lazy.Encoding.encodeUtf8 [stext|
+Please confirm your email address by clicking on the link below.
+
+\#{verurl}
+
+Thank you
+|]
+            , partHeaders = []
+            }
+        htmlPart = Part
+            { partType = "text/html; charset=utf-8"
+            , partEncoding = None
+            , partFilename = Nothing
+            , partContent = renderHtml [shamlet|
+&lt;p&gt;Please confirm your email address by clicking on the link below.
+&lt;p&gt;
+    &lt;a href=#{verurl}&gt;#{verurl}
+&lt;p&gt;Thank you
+|]
+            , partHeaders = []
+            }
+    getVerifyKey = runDB . fmap (join . fmap userVerkey) . get
+    setVerifyKey uid key = runDB $ update uid [UserVerkey =. Just key]
+    verifyAccount uid = runDB $ do
+        mu &lt;- get uid
+        case mu of
+            Nothing -&gt; return Nothing
+            Just u -&gt; do
+                update uid [UserVerified =. True]
+                return $ Just uid
+    getPassword = runDB . fmap (join . fmap userPassword) . get
+    setPassword uid pass = runDB $ update uid [UserPassword =. Just pass]
+    getEmailCreds email = runDB $ do
+        mu &lt;- getBy $ UniqueUser email
+        case mu of
+            Nothing -&gt; return Nothing
+            Just (Entity uid u) -&gt; return $ Just EmailCreds
+                { emailCredsId = uid
+                , emailCredsAuthId = Just uid
+                , emailCredsStatus = isJust $ userPassword u
+                , emailCredsVerkey = userVerkey u
+                }
+    getEmail = runDB . fmap (fmap userEmail) . get
+
+getRootR :: Handler RepHtml
+getRootR = do
+    maid &lt;- maybeAuthId
+    defaultLayout [whamlet|
+&lt;p&gt;Your current auth ID: #{show maid}
+$maybe _ &lt;- maid
+    &lt;p&gt;
+        &lt;a href=@{AuthR LogoutR}&gt;Logout
+$nothing
+    &lt;p&gt;
+        &lt;a href=@{AuthR LoginR}&gt;Go to the login page
+|]
+
+main :: IO ()
+main = withSqliteConn "email.db3" $ \conn -&gt; do
+    runSqlConn (runMigration migrateAll) conn
+    warpDebug 3000 $ MyEmailApp conn</codeblock>
+ </conbody></concept><concept id="authorization-164"><title>Authorization</title><conbody>
+  <p id="164-x-3">Once you can authenticate your users, you can use their credentials to <i id="164-x-4">authorize</i> requests. Authorization in Yesod is simple and declarative: most of
+            the time, you just need to add the <codeph id="164-x-12">authRoute</codeph> and
+                <codeph id="164-x-13">isAuthorized</codeph> methods to your Yesod typeclass instance. Let's see an
+            example.</p>
+  <codeblock id="164-x-5" outputclass="haskell">{-# LANGUAGE OverloadedStrings, TemplateHaskell, TypeFamilies,
+             MultiParamTypeClasses, QuasiQuotes #-}
+import Yesod
+import Yesod.Auth
+import Yesod.Auth.Dummy -- just for testing, don't use in real life!!!
+import Data.Text (Text)
+import Network.HTTP.Conduit (Manager, newManager, def)
+
+data MyAuthSite = MyAuthSite
+    { httpManager :: Manager
+    }
+
+mkYesod "MyAuthSite" [parseRoutes|
+/ RootR GET POST
+/admin AdminR GET
+/auth AuthR Auth getAuth
+|]
+
+instance Yesod MyAuthSite where
+    authRoute _ = Just $ AuthR LoginR
+
+    -- route name, then a boolean indicating if it's a write request
+    isAuthorized RootR True = isAdmin
+    isAuthorized AdminR _ = isAdmin
+
+    -- anyone can access other pages
+    isAuthorized _ _ = return Authorized
+
+isAdmin = do
+    mu &lt;- maybeAuthId
+    return $ case mu of
+        Nothing -&gt; AuthenticationRequired
+        Just "admin" -&gt; Authorized
+        Just _ -&gt; Unauthorized "You must be an admin"
+
+instance YesodAuth MyAuthSite where
+    type AuthId MyAuthSite = Text
+    getAuthId = return . Just . credsIdent
+
+    loginDest _ = RootR
+    logoutDest _ = RootR
+
+    authPlugins _ = [authDummy]
+
+    authHttpManager = httpManager
+
+instance RenderMessage MyAuthSite FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+getRootR :: Handler RepHtml
+getRootR = do
+    maid &lt;- maybeAuthId
+    defaultLayout [whamlet|
+&lt;p&gt;Note: Log in as "admin" to be an administrator.
+&lt;p&gt;Your current auth ID: #{show maid}
+$maybe _ &lt;- maid
+    &lt;p&gt;
+        &lt;a href=@{AuthR LogoutR}&gt;Logout
+&lt;p&gt;
+    &lt;a href=@{AdminR}&gt;Go to admin page
+&lt;form method=post&gt;
+    Make a change (admins only)
+    \ #
+    &lt;input type=submit&gt;
+|]
+
+postRootR :: Handler ()
+postRootR = do
+    setMessage "You made some change to the page"
+    redirect RootR
+
+getAdminR :: Handler RepHtml
+getAdminR = defaultLayout [whamlet|
+&lt;p&gt;I guess you're an admin!
+&lt;p&gt;
+    &lt;a href=@{RootR}&gt;Return to homepage
+|]
+
+main :: IO ()
+main = do
+    manager &lt;- newManager def
+    warpDebug 3000 $ MyAuthSite manager</codeblock>
+  <p id="164-x-6"><codeph id="164-x-14">authRoute</codeph> should be your login page, almost always
+                <codeph id="164-x-15">AuthR</codeph>
+            <codeph id="164-x-16">LoginR</codeph>. <codeph id="164-x-17">isAuthorized</codeph> is a function that takes two
+            parameters: the requested route, and whether or not the request was a "write" request.
+            You can actually change the meaning of what a write request is using the
+                <codeph id="164-x-18">isWriteRequest</codeph> method, but the out-of-the-box version follows
+            RESTful principles: anything but a <codeph id="164-x-19">GET</codeph>, <codeph id="164-x-20">HEAD</codeph>,
+                <codeph id="164-x-21">OPTIONS</codeph> or <codeph id="164-x-22">TRACE</codeph> request is a write request.</p>
+  <p id="164-x-7">What's convenient about the body of <codeph id="164-x-23">isAuthorized</codeph> is that you can run
+            any <codeph id="164-x-24">Handler</codeph> code you want. This means you can:</p>
+  <ul id="164-ul_tew_ill_pe">
+   <li id="164-x-8">Access the filesystem (normal IO)</li>
+   <li id="164-x-9">Lookup values in the database</li>
+   <li id="164-x-10">Pull any session or request values you want</li>
+  </ul>
+  <p id="164-x-11">Using these techniques, you can develop as sophisticated an authorization system as you like,
+   or even tie into existing systems used by your organization.</p>
+ </conbody></concept><concept id="conclusion-165"><title>Conclusion</title><conbody>
+  <p id="165-x-3">This chapter covered the basics of setting up user authentication, as well as how the built-in
+   authorization functions provide a simple, declarative approach for users. While these are
+   complicated concepts, with many approaches, Yesod should provide you with the building blocks you
+   need to create your own customized auth solution.</p>
+ </conbody></concept></concept>
