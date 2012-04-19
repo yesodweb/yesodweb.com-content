@@ -18,12 +18,12 @@ such an error message. So I thought about the library stack at play here:
 
 I figured that the error message must have come from `tls`, because it's the
 only library in that stack that I didn't write. So I put together a quick test
-case to use `http-conduit` to connect the server. And it worked perfectly. So
+case to use `http-conduit` to connect to the server. And it worked perfectly. So
 the bug seemed to not be from either `http-conduit` or `tls`.
 
 OK, let's start over from the top of the stack. I took my `yesod-auth` test
 program and tried to connect to log in to example.com. Same error message. So
-it's not caused by yesod-auth. I tried using my authenticate test program.
+it's not caused by Haskellers. I tried using my authenticate test program.
 Again, same error message. But now I know it must be coming from somewhere in
 authenticate, right?
 
@@ -40,17 +40,17 @@ At this point, there were two things bothering me:
 * I still had no idea where that error message was coming from.
 * discoverYADIS was being called twice. It succeeded the first time, and failed the second.
 
-It's not surprising that the discover function is called twice, it's the very
+It's not surprising that the discoverYADIS function is called twice, it's the very
 nature of OpenID. Usually, we connect to the OpenID specified by the user, only
 to find an HTML tag or HTTP header telling us to look elsewhere for the rest of
 the login information. But why was it failing the second time around?
 
-I get the two URLs that were being requested, and went back to me http-conduit test program. I ran something along the lines of:
+I got the two URLs that were being requested, and went back to my http-conduit test program. I ran something along the lines of:
 
     simpleHttp "https://example.com/"
     simpleHttp "https://example.com/?xrds"
 
-No problem at all. So both URLs seemed to work. Then I get an idea: maybe it's
+No problem at all. So both URLs seemed to work. Then I got an idea: maybe it's
 a problem caused by connection sharing. So I modified the test program:
 
     withManager $ \m -> do
