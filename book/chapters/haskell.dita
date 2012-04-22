@@ -90,7 +90,7 @@
   <ul id="10-ul_fwo_zrw_ff">
    <li id="10-x-21"><cmdname id="10-x-22">cabal update</cmdname> will download the most recent list of packages from
     Hackage.</li>
-   <li id="10-x-23"><cmdname id="10-x-24">cabal install yesod</cmdname> will install Yesod and all its dependencies.</li>
+   <li id="10-x-23"><cmdname id="10-x-24">cabal install yesod-platform</cmdname> will install Yesod and all its dependencies.</li>
   </ul>
   <note id="10-x-25">Many people in the community prefer to perform sandboxed builds of their Haskell
    packages, which prevents your install Yesod from breaking existing packages, or packages you
