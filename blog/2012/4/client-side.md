@@ -55,7 +55,7 @@ above.
 
 We use the `textInput` function to generate two values: a widget containing the
 input tag, and some special value. We then use the `jsPlus` function to
-concatenate the first value and the last value, with a string in the middle. We
+concatenate the first value and the last value, with a space in the middle. We
 plug this value into the `textOutput` function to get a widget containing a
 span tag that will display the full name. And finally, we stick all of those
 widgets into a final widget and display it.
@@ -87,7 +87,7 @@ We have a new datatype `JSValue` which includes a
 [phantom type](http://www.haskell.org/haskellwiki/Phantom_type). This phantom states the
 Javascript datatype of the value. We can use this to prevent us from accidently
 adding a string and a number together, for example. Notice that `JSString` is
-just a `JSValue` for the `JSTypeString` phantom.
+just a `JSValue` with a `JSTypeString` phantom.
 
 We also introduce a new monad, `JS`, which our functions need to live inside.
 `runJS` is our unwrapper for this monad. When we run it, all necessary
