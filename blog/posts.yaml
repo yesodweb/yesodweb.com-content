@@ -1,3 +1,7 @@
+- 'time': '2012-04-23T16:01:00Z'
+  'author': 'michael'
+  'title': 'More Client Side Yesod: todo sample'
+  'path': '2012/4/yesod-js-todo.md'
 - 'time': '2012-04-22T16:01:00Z'
   'author': 'michael'
   'title': 'Client Side Yesod, an FRP-inspired approach'
