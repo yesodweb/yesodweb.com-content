@@ -234,7 +234,7 @@ main = return ()</codeblock>
             the routing. These resources are also data constructors, which lets us have type-safe
             URLs.</p><p id="26-summary2">By being built on top of WAI, Yesod applications can run with a number of different
             backends. <codeph id="26-x-4">warpDebug</codeph> is an easy way to get started, as it's included
-            with Yesod. For rapid development, you can use <codeph id="26-x-5">yesod devel</codeph> is a good
+            with Yesod. For rapid development, <codeph id="26-x-5">yesod devel</codeph> is a good
             choice. And when you're ready to move to production, you have Warp as a high-performance
             option.</p>
         <p id="26-x-3">When developing in Yesod, we get a number of choices for coding style:
