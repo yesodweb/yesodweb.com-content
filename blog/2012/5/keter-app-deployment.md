@@ -22,6 +22,12 @@ This system already provides quite a bit of convenience for users:
 * Automatically configures PostgreSQL databases as necessary.
 * Monitors processes and restarts them if they crash.
 
+__Note__: As [pointed out on Reddit](http://www.reddit.com/r/haskell/comments/thygx/keter_web_app_deployment/c4msbpa),
+this tool by itself is *not* sufficient to guarantee you'll never have downtime
+with deployments. One issue is database migrations, which can still cause
+downtime. My point is that with this approach, as opposed to the previous
+deployment scripts, it *is* possibility to have zero downtime between versions.
+
 ## Usage
 
 Keter is a single executable. The program takes a single argument: a folder
