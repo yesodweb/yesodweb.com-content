@@ -158,7 +158,7 @@
    define our own functions as well, and then import this file in all handlers.</p>
  </conbody></concept><concept id="handlers-173"><title>Handler modules</title><conbody>
   <p id="173-x-3">Handler modules should go inside the <filepath id="173-x-13">Handler</filepath> folder. The site
-   template includes one module: <filepath id="173-x-14">Handler/Root.hs</filepath>. How you split up your handler
+   template includes one module: <filepath id="173-x-14">Handler/Home.hs</filepath>. How you split up your handler
    functions into individual modules is your decision, but a good rule of thumb is:</p>
   <ul id="173-ul_esf_zbh_oe">
    <li id="173-x-4">Different methods for the same route should go in the same file, e.g.
@@ -181,7 +181,7 @@
    have to remember to include those Lucius and Julius files manually every time you refer to a
    Hamlet file. For this, the site template provides the <codeph id="174-x-4">widgetFile</codeph> function.</p>
   <p id="174-x-5">If you have a handler function:</p>
-  <codeblock id="174-x-6" outputclass="haskell">getRootR = defaultLayout $(widgetFile "homepage")</codeblock>
+  <codeblock id="174-x-6" outputclass="haskell">getHomeR = defaultLayout $(widgetFile "homepage")</codeblock>
   <p id="174-x-7">, Yesod will look for the following files:</p>
   <ul id="174-ul_vih_ddh_oe">
    <li id="174-x-8"><filepath id="174-x-9">templates/homepage.hamlet</filepath></li>
