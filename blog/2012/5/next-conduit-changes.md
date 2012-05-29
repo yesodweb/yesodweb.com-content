@@ -43,7 +43,7 @@ The reason for this is that you've provided no escape route for the code. Actual
 
 __Just because one part of the pipeline goes down, does not mean the rest of the pipeline goes down.__
 
-I'm beginning to think this is the core distinction between these two packages, and actually has led to a very deep difference in understanding when discussing this topic. I don't want to get into that now, since it's not really our focus, but would like to continue that discussion another time. As you'll see in the rest of this post, I think both approaches have there place. (And I think `pipes` 2.0 has come to that same conclusion with its `Frame` concept.)
+I'm beginning to think this is the core distinction between these two packages, and actually has led to a very deep difference in understanding when discussing this topic. I don't want to get into that now, since it's not really our focus, but would like to continue that discussion another time. As you'll see in the rest of this post, I think both approaches have their place. (And I think `pipes` 2.0 has come to that same conclusion with its `Frame` concept.)
 
 So let's start with the question: why *shouldn't* taking down one piece of the pipeline take down everything else? A simple- and incomplete- answer is that it wouldn't give us a chance to perform resource finalization. More generally, it won't allow us to perform *any* kind of operations after one piece of the pipeline completes. Imagine trying to implement `consume` where, if you check if there's anything left in the stream, your code stops running.
 
@@ -69,7 +69,7 @@ That's all well and good, and will hopefully solve Hiromi's issue. But it's stil
 
 We can really break down `sourceFile` into three steps:
 
-* Open a file handle, and register a cleanup function to close the handle in case of exceptions. (This is where `resourcet` comes into play.)
+* Open a file handle and register a cleanup function to close the handle in case of exceptions. (This is where `resourcet` comes into play.)
 * Loop over the contents of the file.
 * Close the file handle explicitly as soon as the "inner loop" completes.
 
