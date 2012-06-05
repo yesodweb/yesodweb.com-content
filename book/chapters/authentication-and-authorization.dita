@@ -204,7 +204,7 @@ import Data.Text (Text)
 import Network.Mail.Mime
 import qualified Data.Text.Lazy.Encoding
 import Text.Shakespeare.Text (stext)
-import Text.Blaze.Renderer.Utf8 (renderHtml)
+import Text.Blaze.Html.Renderer.Utf8 (renderHtml)
 import Text.Hamlet (shamlet)
 import Data.Maybe (isJust)
 import Control.Monad (join)

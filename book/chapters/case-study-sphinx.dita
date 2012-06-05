@@ -75,7 +75,7 @@ import Data.Text.Encoding.Error (ignore)
 import Data.Maybe (catMaybes)
 import Control.Monad (forM)
 import qualified Data.Text as T
-import Text.Blaze (preEscapedLazyText)
+import Text.Blaze (preEscapedToMarkup)
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
 import qualified Data.XML.Types as X
@@ -183,7 +183,7 @@ getResult docid doc qstring = do
         (unpack qstring)
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
                 _ -&gt; return ()
     return Result
         { resultId = docid
@@ -326,7 +326,7 @@ import Data.Text.Encoding.Error (ignore)
 import Data.Maybe (catMaybes)
 import Control.Monad (forM)
 import qualified Data.Text as T
-import Text.Blaze (preEscapedLazyText)
+import Text.Blaze (preEscapedToMarkup)
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
 import qualified Data.XML.Types as X
@@ -434,7 +434,7 @@ getResult docid doc qstring = do
         (unpack qstring)
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
                 _ -&gt; return ()
     return Result
         { resultId = docid
@@ -578,7 +578,7 @@ import Data.Text.Encoding.Error (ignore)
 import Data.Maybe (catMaybes)
 import Control.Monad (forM)
 import qualified Data.Text as T
-import Text.Blaze (preEscapedLazyText)
+import Text.Blaze (preEscapedToMarkup)
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
 import qualified Data.XML.Types as X
@@ -686,7 +686,7 @@ getResult docid doc qstring = do
         (unpack qstring)
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
                 _ -&gt; return ()
     return Result
         { resultId = docid
@@ -843,7 +843,7 @@ import Data.Text.Encoding.Error (ignore)
 import Data.Maybe (catMaybes)
 import Control.Monad (forM)
 import qualified Data.Text as T
-import Text.Blaze (preEscapedLazyText)
+import Text.Blaze (preEscapedToMarkup)
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
 import qualified Data.XML.Types as X
@@ -951,7 +951,7 @@ getResult docid doc qstring = do
         (unpack qstring)
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
                 _ -&gt; ""
     return Result
         { resultId = docid
@@ -1100,7 +1100,7 @@ import Data.Text.Encoding.Error (ignore)
 import Data.Maybe (catMaybes)
 import Control.Monad (forM)
 import qualified Data.Text as T
-import Text.Blaze (preEscapedLazyText)
+import Text.Blaze (preEscapedToMarkup)
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
 import qualified Data.XML.Types as X
@@ -1208,7 +1208,7 @@ getResult docid doc qstring = do
         (unpack qstring)
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
                 _ -&gt; ""
     return Result
         { resultId = docid
@@ -1356,7 +1356,7 @@ getResult docid doc qstring = do
         (unpack qstring)
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
                 _ -&gt; ""
     return Result
         { resultId = docid
@@ -1380,7 +1380,7 @@ escape =
             automatically escape these for us, so we must do it explicitly.</p>
         <p id="196-x-25">Similarly, the result from Sphinx is a list of lazy ByteStrings. But of course,
             we'd rather have Html. So we concat that list into a single lazy ByteString, decode it
-            to a lazy text (ignoring invalid UTF-8 character sequences), and use preEscapedLazyText
+            to a lazy text (ignoring invalid UTF-8 character sequences), and use preEscapedToMarkup
             to make sure that the tags inserted for matches are not escaped. A sample of this HTML
             is:</p>
         <codeblock id="196-x-26" outputclass="html">&amp;#8230; Departments.  The President shall have &lt;span class='match'&gt;Power&lt;/span&gt; to fill up all Vacancies
@@ -1531,7 +1531,7 @@ import Data.Text.Encoding.Error (ignore)
 import Data.Maybe (catMaybes)
 import Control.Monad (forM)
 import qualified Data.Text as T
-import Text.Blaze (preEscapedLazyText)
+import Text.Blaze (preEscapedToMarkup)
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
 import qualified Data.XML.Types as X
@@ -1639,7 +1639,7 @@ getResult docid doc qstring = do
         (unpack qstring)
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedLazyText $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
                 _ -&gt; ""
     return Result
         { resultId = docid

@@ -552,12 +552,12 @@ personNodes person = [xml|
     tags should not be escaped.</li>
   </ul>
   <p id="266-x-14">That's where the <apiname id="266-x-15">xml2html</apiname> package comes into play. It provides a
-    <apiname id="266-x-16">blaze-html:Text.Blaze:ToHtml</apiname> instance for <codeph id="266-x-17">Node</codeph>s,
+    <apiname id="266-x-16">blaze-html:Text.Blaze.Html:ToHtml</apiname> instance for <codeph id="266-x-17">Node</codeph>s,
     <codeph id="266-x-18">Document</codeph>s and <codeph id="266-x-19">Element</codeph>s. In order to use it, just import the
     <apiname id="266-x-20">xml2html:Text.XML.Xml2Html</apiname> module.</p>
   <codeblock id="266-x-21" outputclass="haskell">{-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
-import Text.Blaze (toHtml)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html (toHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 import Text.XML
 import Text.Hamlet.XML
 import Text.XML.Xml2Html ()

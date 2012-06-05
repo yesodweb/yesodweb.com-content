@@ -212,7 +212,7 @@ renderMyRoute Time _ = ...</codeblock></note>
 -- It will be explained later.
 {-# LANGUAGE QuasiQuotes #-}
 import Text.Hamlet (shamlet)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 import Data.Char (toLower)
 import Data.List (sort)
 
@@ -239,7 +239,7 @@ main = putStrLn $ renderHtml [shamlet|
    <codeblock outputclass="haskell" id="38-x13">{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 import Text.Hamlet (HtmlUrl, hamlet)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 import Data.Text (Text)
 
 data MyRoute = Home
@@ -419,7 +419,7 @@ a:link, a:visited { color: #{textcolor} }</codeblock>
 {-# LANGUAGE QuasiQuotes #-}
 import Text.Hamlet (HtmlUrl, hamlet)
 import Data.Text (Text)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 
 data MyRoute = Home | Time | Stylesheet
 
@@ -551,8 +551,8 @@ type HtmlUrlI18n msg url = Translate msg -&gt; Render url -&gt; Html</codeblock>
 import Data.Text (Text)
 import qualified Data.Text as T
 import Text.Hamlet (HtmlUrlI18n, ihamlet)
-import Text.Blaze (toHtml)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html (toHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 
 data MyRoute = Home | Time | Stylesheet
 
