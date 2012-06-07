@@ -418,7 +418,7 @@ $nothing
 <span style="color: blue;font-weight: bold;">getEntryR</span> entryId = <span style="color: green;font-weight: bold;">do</span>
     (entry, comments) &lt;- runDB $ <span style="color: green;font-weight: bold;">do</span>
         entry &lt;- get404 entryId
-        comments &lt;- selectList [] [<span style="color: blue;">Asc</span> <span style="color: blue;">CommentPosted</span>]
+        comments &lt;- selectList [CommentEntry ==. entryId] [<span style="color: blue;">Asc</span> <span style="color: blue;">CommentPosted</span>]
         return (entry, map entityVal comments)
     muser &lt;- maybeAuth
     ((_, commentWidget), enctype) &lt;-

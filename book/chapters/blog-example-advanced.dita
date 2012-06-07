@@ -388,7 +388,7 @@ logged in.
 &gt; getEntryR entryId = do
 &gt;     (entry, comments) &lt;- runDB $ do
 &gt;         entry &lt;- get404 entryId
-&gt;         comments &lt;- selectList [] [Asc CommentPosted]
+&gt;         comments &lt;- selectList [CommentEntry ==. entryId] [Asc CommentPosted]
 &gt;         return (entry, map entityVal comments)
 &gt;     muser &lt;- maybeAuth
 &gt;     (commentWidget, enctype) &lt;-
