@@ -189,6 +189,10 @@ import Data.Text (Text)
 import qualified Data.Text.Lazy as TL
 import qualified Data.IORef as I
 import qualified Data.Map as Map
+
+-- This package is not yet available on Hackage.
+-- You can get the source code from:
+-- https://github.com/snoyberg/markdown
 import Text.Markdown (markdown, def)
 
 -- | Our foundation type has both the chat subsite and a mutable reference to
