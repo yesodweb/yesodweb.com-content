@@ -2,7 +2,7 @@
 <!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "concept.dtd">
 <concept id="yesod-typeclass-63"><title>Yesod Typeclass</title><conbody><p id="63-i1">Every one of our Yesod applications requires an instance of the <codeph id="63-x-3">Yesod</codeph> typeclass. So far, we've only seen <codeph id="63-x-5">defaultLayout</codeph>. In this chapter, we'll explore the meaning of many of the
             methods of the <codeph id="63-x-7">Yesod</codeph> typeclass.</p><p id="63-i2">The <codeph id="63-x-8">Yesod</codeph> typeclass gives us a central place for defining
-            settings for our application. Eeverything else has a default definition which is usually
+            settings for our application. Everything else has a default definition which is usually
             the right thing. But in order to build a powerful, customized application, you'll
             usually end up wanting to override at least a few of these methods.</p></conbody><concept id="rendering-and-parsing-urls-64"><title>Rendering and Parsing URLs</title><conbody><p id="64-rpu1">We've already mentioned how Yesod is able to automatically render type-safe URLs into a textual URL that can be inserted into an HTML page. Let's say we have a route definition that looks like:</p><codeblock outputclass="haskell" id="64-x1">mkYesod "MyApp" [parseRoutes|
 /some/path SomePathR GET
