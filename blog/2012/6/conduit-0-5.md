@@ -2,7 +2,7 @@ I'm happy to announce release 0.5 of [conduit](http://hackage.haskell.org/packag
 
 This release is notable since it provides a simple, efficient, high-level interface for creating Sources, Sinks, and Conduits. Direct usage of the constructors should almost never be necessary. There are also some more powerful features available just under the hood, such as upstream results and explicit leftover discarding. These changes also allow for more Category-like behavior.
 
-The new package includes a fairly thorough tutorial in [the Haddocks themselves](http://hackage.haskell.org/packages/archive/conduit/latest/doc/html/Data-Conduit.html). I recommend going through that to start off with. Even if you've been using conduit for a few versions already, this tutorial makes explicit a few details that have never (to my knowledge) been completely clarified previously, such as exactly how finalization works.
+The new package includes a fairly thorough tutorial in [the Haddocks themselves](http://www.snoyman.com/haddocks/conduit-0.5.0-final/Data-Conduit.html). I recommend going through that to start off with. Even if you've been using conduit for a few versions already, this tutorial makes explicit a few details that have never (to my knowledge) been completely clarified previously, such as exactly how finalization works.
 
 One final note: this release only includes conduit and some accompanying packages like attoparsec-conduit and zlib-conduit. It does *not* include wai, persistent, yesod, and a few other conduit-based packages. Those will be released in time, when they are fully tested and ready for release. __Please do not file issues on Github asking for release of those packages__; we will do so when the Yesod team decides that they are ready for release.
 
@@ -216,4 +216,20 @@ Connect-and-resume isn't something you'll often need in the world of conduits, b
 
 Below is the full source for the server, proxy, and client, in <a href="https://gist.github.com/3010975">a single Gist for easy fork-ability</a>. I hope this tutorial helped demonstrate the power of conduit, and give a guide on how to use it. If there are any questions, or recommendations for how to clarify any points, please let me know!
 
-<script src="https://gist.github.com/3010975.js?file=proxy.hs">
+<script src="https://gist.github.com/3010975.js?file=proxy.hs"></script>
+
+By the way, [Felipe pointed out](https://gist.github.com/3010975#gistcomment-360243) that it would be nice to see `proxyLoop` implemented with threads to avoid deadlocks. I purposely chose the implementation of `proxyLoop` here to better demonstrate connect-and-resume, but for the curious, here's a threaded implementation:
+
+    proxyLoop fromClient0 toClient fromServer0 toServer = do
+        yield "Connected to server" $$ toClient
+        m <- M.newEmptyMVar
+        tid1 <- forkIO $ do
+            fromServer0 $$ toClient
+            M.putMVar m True
+        tid2 <- forkIO $ do
+            fromClient0 $$+- toServer
+            M.putMVar m False
+        x <- M.takeMVar m
+        if x
+            then killThread tid2
+            else killThread tid1
