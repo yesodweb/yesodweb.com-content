@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "concept.dtd">
 <concept id="conduits-208"><title>Conduit</title><conbody>
+        <p><b>Note:</b> This chapter is out of date, and is no longer being updated. Instead, conduit documentation is now being maintained in the Haddocks themselves. Please see the <apiname>conduit</apiname> package on Hackage for more details. This chapter is being maintained as a reference for some of the original motivation. In that sense, much of this content is still relevant, though the implementation details are not.</p>
   <p id="208-x-3">Conduits are a solution to the streaming data problem. Often times, laziness allows us
    to process large amounts of data without pulling all values into memory. However, doing so in the
    presence of I/O requires us to use <term>lazy I/O</term>. The main downside to lazy I/O is
