@@ -17,25 +17,16 @@
             For example, we would generate different URLs depending if the user connected to
             "example.com" or "www.example.com". For Search Engine Optimization, we want to be able
             to consolidate on a single canonical URL.</p><p id="64-rpu4">And finally, Yesod doesn't make any assumption about <i id="64-x4">where</i> you host your application. For example, I may have a mostly static site (http://static.example.com/), but I'd like to stick a Yesod-powered Wiki at /wiki/. There is no reliable way for an application to determine what subpath it is being hosted from. So instead of doing all of this guesswork, Yesod needs you to tell it the <term id="64-x5">application root</term>.</p><p id="64-rpu5">Using the wiki example, you would write your <codeph id="64-x-4">Yesod</codeph> instance as:</p><codeblock outputclass="haskell" id="64-x6">instance Yesod MyWiki where
-    approot _ = "http://static.example.com/wiki" -- FIXME this is out-of-date</codeblock><p id="64-rpu6">Notice that there is no trailing slash there. Next, when Yesod wants to construct a URL
+    approot = ApprootStatic "http://static.example.com/wiki"</codeblock><p id="64-rpu6">Notice that there is no trailing slash there. Next, when Yesod wants to construct a URL
             for <codeph id="64-x-5">SomePathR</codeph>, it determines that the relative path for
                 <codeph id="64-x-6">SomePathR</codeph> is <codeph id="64-x-7">/some/path</codeph>, appends that to your
-            approot and creates <codeph id="64-x-8">http://static.example.com/wiki/some/path</codeph>.</p><p id="64-rpu7">This also explains our cryptic <codeph id="64-x7">approot _ = ""</codeph> FIXME: for our
-            examples in the book, we're always serving from the root of the domain (in our case,
-                <codeph id="64-x-9">localhost</codeph>). By using an empty string, <codeph id="64-x-10">SomePathR</codeph>
-            renders to <codeph id="64-x-11">/some/path</codeph>, which works just fine. In real life
-            applications, however, you should use a real application root.</p>
-<note id="64-x13">The first argument to <codeph id="64-x-12">approot</codeph> FIXME is the site foundation. This means
-            that you could load your approot at program initialization, store it in the foundation,
-            and then retrieve it. This is in fact what the scaffolded site does, using a YAML config
-            file.</note>
-<p id="64-rpu8">And by the way, the scaffolded site can load different settings for developing,
+                approot and creates <codeph id="64-x-8">http://static.example.com/wiki/some/path</codeph>.</p>
+            <p>But if you remember, most of our examples so far haven't used an <codeph>approot</codeph> method. In those cases, our application gets a blank approot, or the empty string. This works for many use cases, since many applications are served from the root of the domain. In such a case, a route like <codeph>SomePathR</codeph> will be rendered to <codeph>/some/path</codeph>, which is a valid relative link from anywhere in your site. However, some use cases (like Atom/RSS feeds or XML sitemaps) require absolute paths. In such cases, you should state your approot explicitly.</p>
+            <p>In addition to the <codeph>ApprootStatic</codeph> constructor demonstrated above, you can also use the <codeph>ApprootMaster</codeph> and <codeph>ApprootRequest</codeph> constructors. The former allows you to determine the approot from the foundation value, which would let you load up the approot from a config file, for instance. The latter allows you to additionally use the request value to determine the approot; using this, you could for example provide a different domain name depending on how the user requested the site in the first place.</p>
+            <p id="64-rpu8">The scaffolded site uses <codeph>ApprootMaster</codeph> by default, and pulls your approot from a config file on launch. Additionally, it load different settings for developing,
             testing, staging, and production builds, so you can easily test on one domain- like
-            localhost- and serve from a different domain.</p><note id="64-x8"><p id="64-rpu9">To reiterate: even though for the simple cases in this book, the first argument to
-                    <codeph id="64-x-13">approot</codeph> is usually ignored, in real life code it usually isn't.
-                We also need to keep that argument so that Haskell's type system can determine which
-                instance of <codeph id="64-x-14">Yesod</codeph> to use in grabbing the
-                <codeph id="64-x-15">approot</codeph>.</p></note></conbody><concept id="joinpath-65"><title>joinPath</title><conbody><p id="65-jp1">In order to convert a type-safe URL into a text value, Yesod uses two helper functions.
+            localhost- and serve from a different domain.</p>
+                </conbody><concept id="joinpath-65"><title>joinPath</title><conbody><p id="65-jp1">In order to convert a type-safe URL into a text value, Yesod uses two helper functions.
             The first is the <codeph id="65-x1">renderRoute</codeph> method of the <codeph id="65-x2">RenderRoute</codeph> typeclass. Every type-safe URL is an instance of this
             typeclass. <codeph id="65-x3">renderRoute</codeph> converts a value into a list of path
             pieces. For example, our <codeph id="65-x4">SomePathR</codeph> from above would be
