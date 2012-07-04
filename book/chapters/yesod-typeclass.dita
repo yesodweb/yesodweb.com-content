@@ -107,7 +107,7 @@ main = warpDebug 3000 Slash</codeblock><p id="66-cp3">First, let's look at our <
             to convert a <codeph id="67-x-5">Widget</codeph> to a title, head tags and body tags, and then use
                 <codeph id="67-x-6">hamletToRepHtml</codeph> to convert a Hamlet template into a
                 <codeph id="67-x-7">RepHtml</codeph>. We can even add extra widget components, like a Lucius
-            template. from within <codeph id="67-x-8">defaultLayout</codeph>. An example should make this all
+            template from within <codeph id="67-x-8">defaultLayout</codeph>. An example should make this all
             clear:</p><codeblock id="67-x2" outputclass="haskell">{-# LANGUAGE TypeFamilies, QuasiQuotes #-}
 {-# LANGUAGE MultiParamTypeClasses, TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
