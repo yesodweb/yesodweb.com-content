@@ -1139,7 +1139,16 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
 
     insert $ PersonStore michael target
     insert $ PersonStore michael sevenEleven
--- STOP</codeblock></conbody></concept><concept id="closer-look-at-types-131"><title>Closer look at types</title><conbody>
+-- STOP</codeblock>
+
+<note>Since the <codeph>Id</codeph> suffix on a type is used to indicate a foreign key relationship to Persistent, you currently cannot use non-key types that end in <codeph>Id</codeph>. A simple workaround is to define a type synonym with a different suffix, e.g.:
+    <codeblock outputclass="haskell">data MyExistingTypeEndingInId = ...
+type IdIsNotTheSuffix = MyExistingTypeEndingInId
+[persist|
+Person
+    someField IdIsNotTheSuffix</codeblock></note>
+
+</conbody></concept><concept id="closer-look-at-types-131"><title>Closer look at types</title><conbody>
   <p id="131-x1">So far, we've spoken about <codeph id="131-x-3">Person</codeph> and <codeph id="131-x-4">PersonId</codeph>
    without really explaining what they are. In the simplest sense, for a SQL-only system, the
     <codeph id="131-x-5">PersonId</codeph> could just be <codeph id="131-x2">type PersonId = Int64</codeph>. However,
