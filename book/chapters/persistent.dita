@@ -387,7 +387,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
     firstName String
     lastName String
-    age Int Gt Desc
+    age Int
     deriving Show
 |]
 
@@ -422,7 +422,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
     firstName String
     lastName String
-    age Int Gt Desc
+    age Int
     UniqueName firstName lastName
     deriving Show
 |]
@@ -494,7 +494,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
     firstName String
     lastName String
-    age Int Gt Desc
+    age Int
     UniqueName firstName lastName
     deriving Show
 |]
@@ -535,7 +535,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
     firstName String
     lastName String
-    age Int Gt Desc
+    age Int
     UniqueName firstName lastName
     deriving Show
 |]
@@ -594,7 +594,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
     firstName String
     lastName String
-    age Int Gt Desc
+    age Int
     UniqueName firstName lastName
     deriving Show
 |]
@@ -686,7 +686,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
     firstName String sql=first_name
     lastName String sql=fldLastName
-    age Int Gt Desc "sql=The Age of the Person"
+    age Int "sql=The Age of the Person"
     UniqueName firstName lastName
     deriving Show
 |]
@@ -725,7 +725,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
     firstName String sql=first_name
     lastName String sql=fldLastName
-    age Int Gt Desc "sql=The Age of the Person"
+    age Int "sql=The Age of the Person"
     UniqueName firstName lastName
     deriving Show
 |]
@@ -774,7 +774,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
     firstName String sql=first_name
     lastName String sql=fldLastName
-    age Int Gt Desc "sql=The Age of the Person"
+    age Int "sql=The Age of the Person"
     UniqueName firstName lastName
     deriving Show
 |]
@@ -816,7 +816,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
     firstName String sql=first_name
     lastName String sql=fldLastName
-    age Int Gt Desc "sql=The Age of the Person"
+    age Int "sql=The Age of the Person"
     UniqueName firstName lastName
     deriving Show
 |]
@@ -874,7 +874,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
     firstName String sql=first_name
     lastName String sql=fldLastName
-    age Int Gt Desc "sql=The Age of the Person"
+    age Int "sql=The Age of the Person"
     UniqueName firstName lastName
     deriving Show
 |]
@@ -921,7 +921,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
     firstName String sql=first_name
     lastName String sql=fldLastName
-    age Int Gt Desc "sql=The Age of the Person"
+    age Int "sql=The Age of the Person"
     UniqueName firstName lastName
     deriving Show
 |]
@@ -1050,7 +1050,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
     firstName String sql=first_name
     lastName String sql=fldLastName
-    age Int Gt Desc "sql=The Age of the Person"
+    age Int "sql=The Age of the Person"
     UniqueName firstName lastName
     deriving Show
 |]
@@ -1310,7 +1310,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
     firstName String
     lastName String
-    age Int Gt Desc
+    age Int
     deriving Show
 |]
 
