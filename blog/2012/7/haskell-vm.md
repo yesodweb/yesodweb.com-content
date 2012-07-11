@@ -1,7 +1,6 @@
-# The Haskell Platfrom on a Virtual Machines
+# The Haskell Platfrom on a Virtual Machine
 
-I sent a patch to [update a vagrant Haskell VM to the latests version of the platform](https://bitbucket.org/puffnfresh/vagrant-haskell-heroku
-). The author published a blog article titled [Haskell on Heroku](http://brianmckenna.org/blog/haskell_on_heroku) when originally releasing, but a Haskell VM has little to do with Heroku.
+I sent a patch to [update a vagrant Haskell VM to the latests version of the platform](https://bitbucket.org/puffnfresh/vagrant-haskell-heroku). The author published a blog article titled [Haskell on Heroku](http://brianmckenna.org/blog/haskell_on_heroku) when originally releasing, but a Haskell VM has little to do with Heroku.
 
 
 # Why Vms
