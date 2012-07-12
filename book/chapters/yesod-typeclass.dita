@@ -350,7 +350,7 @@ main = warpDebug 4000 Layout
    </dlentry>
    <dlentry id="73-x-18">
     <dt id="73-x-19">maximumContentLength</dt>
-    <dd id="73-x-20">To prevent Denial of Server (DoS) attacks, Yesod will limit the size of request bodies. Some
+    <dd id="73-x-20">To prevent Denial of Service (DoS) attacks, Yesod will limit the size of request bodies. Some
      of the time, you'll want to bump that limit for some routes (e.g., a file upload page). This is
      where you'd do that.</dd>
    </dlentry>
