@@ -1,4 +1,4 @@
-tl;dr: Announcing the beginning of [classy-prelude](https://github.com/snoyberg/classy-prelude), an alternate prelude which makes it easier to use conflicting names via typeclasses, and thereby encourages usage of more powerful libraries like `text` and `unordered-containers`.
+tl;dr: Announcing the beginning of [classy-prelude](https://github.com/snoyberg/classy-prelude), an alternate prelude which makes it easier to use conflicting names via typeclasses, and thereby encourages usage of more powerful libraries like `text` and `unordered-containers`. I'll release the code to Hackage, as soon as Hackage comes back up.
 
 A few months ago, Max Cantor braved the treacherous journey into the barren wastelands of northern Israel to pay me a visit /melodrama. We discussed a number of different ideas then, one of which being an alternate prelude.
 
