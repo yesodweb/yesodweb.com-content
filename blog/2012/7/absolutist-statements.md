@@ -1,0 +1,18 @@
+I love the Haskell community for so many things. But one thing that drives me nuts is this constant *absolutism*. When Yesod first started getting popular, lots of people came out of the woodwork to denounce it as a horrible sin to use Yesod because it made use of Template Haskell. There was no substantive criticism necessary: pointing a finger and saying "Template Haskell" was deemed sufficient.
+
+Note that I'm *not* saying TH is perfect, or that there were not valid criticisms to be made. I'm simply pointing out that for a criticism to be leveled at Yesod, all that needed to be said was "TH".
+
+I have no idea what percentage of the community actually bought into those arguments, but it clearly wasn't enough to stop Yesod from growing. And I think the fact that Yesod succeeded not only *despite* its usage of TH, but in a large part *because* of a judicious and thoughtful usage of that tool, proves that the fear-mongering was baseless. Since then, I've seen a number of other uses of TH suddenly become deemed acceptable, such as lenses and command line parsing. Even the other two main web frameworks make use of TH: Happstack for boomerang and Snap for snapplets.
+
+So I was neither surprised nor concerned to see a similar session of fear-mongering pop up around my "classy prelude" blog post. Go read the criticisms: they're vacuous.
+
+* __Error messages will become impossible to decipher.__ Well, I *did* acknowledge in the blog post itself that error messages could become more difficult to decipher. But merely declaring it so in such absolute terms- with absolutely no evidence to support this- is hyperbole.
+* __It doesn't obey algebraic laws.__ OK. It's a form of name overloading. It's not meant to follow some rigorous notions of algebraic laws. We can't write libraries that provide syntactic sugar without submitting a PhD thesis now?
+* __I refuse to use this library or any library that uses it.__ Oh please.
+* __It uses a bunch of horrible type class extensions which means it's automatically bad.__ Which of the four extensions used is the evil one? NoImplicitPrelude? FunctionalDependencies? FlexibleInstances? TypeFamilies (only used for equality constraints)? And the superior alternative mentioned is some unwritten, unclarified, vaguely described namespace extension. That may well be, but like so many other claims, you've attacked a concrete implementation and put up a theoretical counterpoint that doesn't exist. You can't argue against theoretical, unsubstantiated claims. So I guess you win this round.
+
+For the group out there who continues to make these absolutist statements: you can continue doing so, it hasn't stopped the rest of us from making progress so far, and it won't going forward. classy-prelude is an experiment; I'm sure it's not perfect, and possibly every single one of your claims against it is absolutely true. But I'd rather determine that by *actually trying it* rather than just trusting you to make the decision for me. And I hope the rest of the Haskell community is wise enough to do the same. Not just for this specific case, but in general.
+
+I hope going forward you can try to bring up the level of the discussion from empty attacks to constructive criticism. But like so many recent Reddit discussions, I simply don't want to participate at the current level of dialogue.
+
+(Note: There were plenty of very thoughtful and insightful comments in the Reddit thread, I mean no disrespect to them. There were just a few "loud," opinionated, and categorical statements in there as well, which really soured the discussion for everyone else IMO.)
