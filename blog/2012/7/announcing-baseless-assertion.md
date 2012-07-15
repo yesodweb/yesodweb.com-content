@@ -2,8 +2,12 @@ I'm happy to announce the first release of baseless-assertion. This release is h
 
 baseless-assertion is a tool to help streamline discussions around Haskell. It is meant to deal with the all-too-prevalent usage of a statement made without any evidence to back it up. baseless-assertion comes in three forms:
 
-1. <p>A Fry meme:</p><img src="/assets/baseless-assertion.jpg" alt="Not sure if tapping into a deep universal truth Or just making a baseless assertion">
+1.   A Fry meme:
+
+     ![Not sure if tapping into a deep universal truth Or just making a baseless assertion](/assets/baseless-assertion.jpg "baseless-assertion.jpg")
+
 2. A text version: "Not sure if referencing some universal truth, or just making a baseless assertion."
+
 3. Textual reference to a non-present image: baseless-assertion.jpg. (Note: baseless-assertion.png is an acceptable usage as well. Please do *not* use baseless-assertion.gif, as it would imply non-present animation.)
 
 ## Example Usages
