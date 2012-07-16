@@ -10,14 +10,14 @@ Anyway, onto the main event.
 * * *
 
 When I [announced classy
-prelude](http://localhost:3000/blog/2012/07/classy-prelude), there was quite a
+prelude](/blog/2012/07/classy-prelude), there was quite a
 mixed reaction from the community. There was quite a bit of positive feedback,
 and lots of people seemed interested. And on the flip side, a number of people
 very unequivocally declared it a horrible, horrible idea.
 
 I'm not going to mince words: I think a couple of the detractors are making a
 number of [baseless
-assertions](http://localhost:3000/blog/2012/07/announcing-baseless-assertion),
+assertions](/blog/2012/07/announcing-baseless-assertion),
 attacking strawmen, and engaging in hyperbole. Declaring war on a new package
 and swearing to never use it or any of its dependencies to bring about its
 eventually demise does not really fit into a normal, healthy discussion. Making
