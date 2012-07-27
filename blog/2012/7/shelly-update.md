@@ -68,24 +68,20 @@ There are some downsides to the logging approach to errors.
 I didn't know writing variadic functions was so easy in Haskell -- that is if you return the same type every time.
 I had a lot of issues teaching the Haskell type system how to return either ShIO a or ShIO ().
 
-``` Haskell
     shelly $
       listing <- run "ls" ["-a", toTextIgnore "foo"]
       listing <- cmd "ls" "-a" "foo"
-```
 
 If all this did was remove brackets and commas, I would not have bothered. The real point is that shelly can now take as an argument any value that can be turned into a FilePath. Thanks to John Milikin for suggesting this approach. In practice it means you can now use a FilePath as an argument without extra boilerplate conversion. Shelly's filepath combinators `</>` and `<.>` work the opposite way, automatically converting a Text to FilePath. This means you can write large shelly scripts that very rarely need to convert between Text and FilePath. I now execute almost all shell commands with `cmd`. However, cmd loses compositional capabilities, so when I build up abstractions over commands I use `run`.
 
 `cmd` also creates a greater need for using Haskell's little known (and documented), but very useful defaulting feature.
 This is at the top of my scripts now:
 
-``` Haskell
     {-# LANGUAGE OverloadedStrings, ExtendedDefaultRules #-}
     {-# OPTIONS_GHC -fno-warn-type-defaults #-}
     import Shelly
     import Data.Text.Lazy (Text)
     default (Int, Text)
-```
 
 
 ## Relative paths
@@ -101,6 +97,7 @@ I generalized the find function into several 'find*' functions that one can use 
 ## Backgrounding and shelly-extra
 
 There are two use cases for backgrounding.
+
 * launching daemons
 * concurrency/futures
 
@@ -137,7 +134,7 @@ Shelly now has a crude way to run commands over SSH that should be improved in t
         ]
 
 It takes the list of command pairs and combines them with '&&' and runs them over ssh unescaped.
-Haskell does not have a client side SSH library, but I am beginning to wonder if it is truly a pre-requisite for simple SSH needs, or if we can get by on the existing system 'ssh' command.
+Haskell does not have a client side SSH library, but I am beginning to wonder if it is truly a pre-requisite for simple SSH needs, or if we can get by on the existing system `ssh` command.
 
 
 ## The future
