@@ -33,7 +33,7 @@ Since I originally published [an introductory article](http://www.linux-magazin.
 
 ## A list-oriented interface
 
-[Anton K](https://github.com/anton-k) contributed a [List-oriented interface](https://github.com/yesodweb/Shelly.hs/blob/master/examples/Pipe/Pictures.hs) which will automatically batch file operations.
+[Anton K](https://github.com/anton-k) made an amazing contribution of a [list-oriented interface](http://hackage.haskell.org/packages/archive/shelly/0.13.1/doc/html/Shelly-Pipe.html). You can automatically batch file operations without using forM, etc.
 He named it Shelly.Pipe, referrring to shell piping, but I am wondering if the name is overloaded by Haskell's streaming Pipe concept and if we should rename it to Shelly.List
 
 
