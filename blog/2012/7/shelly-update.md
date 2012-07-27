@@ -59,14 +59,15 @@ This is all in addition to the `verbosely` settings that will print out commands
 Shelly's own error messages strive to give necessary detail and in some cases it will catch Haskell exceptions and re-throw them with better messages.
 
 There are some downsides to the logging approach to errors.
-* You could have an exception from code that isn't logging its usage. Note that shelly will still dump its log on failure. But if you do some other IO that can fail, you should use liftIO to bring it into ShIO and use `trace` or `tag` to log what they are doing.
+
+* You could have an exception from code that isn't logging its usage. Note that shelly will still dump its log on failure. But if you do some other IO that can fail, you should use liftIO to bring it into `Sh` and use `trace` or `tag` to log what they are doing.
 * The logging as implemented is essentially a memory leak. I don't use shelly in long-running processes. A long-running program should re-enter the shelly monad to clear the previous logged data. In the future shelly may alwasy write to the log file and automatically delete it when there are no errors.
 
 
 ## A variadic command runner
 
 I didn't know writing variadic functions was so easy in Haskell -- that is if you return the same type every time.
-I had a lot of issues teaching the Haskell type system how to return either ShIO a or ShIO ().
+I had a lot of issues teaching the Haskell type system how to return either `Sh` a or `Sh` ().
 
     shelly $
       listing <- run "ls" ["-a", toTextIgnore "foo"]
