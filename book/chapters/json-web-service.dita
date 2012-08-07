@@ -70,7 +70,7 @@ import Network.HTTP.Conduit
     )
 import Data.Aeson (Value (Object, String))
 import Data.Aeson.Parser (json)
-import Data.Conduit (($$))
+import Data.Conduit (($$+-))
 import Data.Conduit.Attoparsec (sinkParser)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (encode, (.=), object)
@@ -84,7 +84,7 @@ main = withManager $ \manager -&gt; do
     req' &lt;- liftIO $ parseUrl "http://localhost:3000/"
     let req = req' { method = "POST", requestBody = RequestBodyLBS valueBS }
     Response status version headers body &lt;- http req manager
-    resValue &lt;- body $$ sinkParser json
+    resValue &lt;- body $$+- sinkParser json
     liftIO $ handleResponse resValue
 
 -- Application-specific function to make the request value

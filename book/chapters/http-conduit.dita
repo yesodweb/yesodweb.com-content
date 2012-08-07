@@ -41,7 +41,7 @@ main = do
         res &lt;- http req manager
 
         -- And finally stream the value to a file
-        responseBody res $$ sinkFile "foo.txt"
+        responseBody res $$+- sinkFile "foo.txt"
 
         -- Make it a POST request, don't follow redirects, and accept any
         -- status code.
@@ -51,7 +51,7 @@ main = do
                 , checkStatus = \_ _ -&gt; Nothing
                 }
         res2 &lt;- http req2 manager
-        responseBody res2 $$ sinkFile "post-foo.txt"</codeblock>
+        responseBody res2 $$+- sinkFile "post-foo.txt"</codeblock>
  </conbody></concept><concept id="concepts-251"><title>Concepts</title><conbody>
   <p id="251-x-3">The simplest way to make a request in <codeph id="251-x-4">http-conduit</codeph> is with the
     <codeph id="251-x-5">simpleHttp</codeph> function. This function takes a <codeph id="251-x-6">String</codeph> giving a URL

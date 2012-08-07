@@ -58,9 +58,10 @@ instance RenderRoute HelloWorld where
   renderRoute HomeR = ([], [])
 
 instance YesodDispatch HelloWorld HelloWorld where
-    yesodDispatch master sub toMaster app404 app405 method pieces =
+    yesodDispatch logger master sub toMaster app404 app405 method pieces =
         case dispatch pieces of
             Just f -&gt; f
+                logger
                 master
                 sub
                 toMaster
@@ -72,9 +73,10 @@ instance YesodDispatch HelloWorld HelloWorld where
         dispatch = Yesod.Routes.Dispatch.toDispatch
             [ Yesod.Routes.Dispatch.Route [] False onHome
             ]
-        onHome [] = Just $ \master sub toMaster _app404 app405 method -&gt;
+        onHome [] = Just $ \logger master sub toMaster _app404 app405 method -&gt;
             case method of
                 "GET" -&gt; yesodRunner
+                    logger
                     (fmap chooseRep getHomeR)
                     master
                     sub
