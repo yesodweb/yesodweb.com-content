@@ -5,7 +5,7 @@ while allowing you to write your code quickly and concisely. Persistent is
 Yesod's most commonly used data storage layer, featuring full compile time
 checking of database interactions.
 
-These releases maintain a large degree of backwards compatibility, and as such
+These releases maintain a large degree of backwards compatibility, and as such,
 upgrade should be fairly simple. As users begin the upgrade process, we'll put
 together a collection of notes for handling upgrades and post them here.
 
@@ -64,10 +64,9 @@ of advantages:
     to review code if you want.)
 
 *   If you have some crazy idea you'd like to experiment with, you can do so.
-    Since it's not part of the core packages, we needn't set a high bar for
-    entry.
+    Since it's not part of the core packages, you can play around as much as you want.
 
-So how do create an add-on to Yesod? I'd say it breaks down into one of three
+So how do you create an add-on to Yesod? I'd say it breaks down into one of three
 categories:
 
 ### A collection of helper functions
@@ -127,7 +126,7 @@ admin system).
 ## Conclusion
 
 I think this initiative will allow more users to become involved in Yesod
-development, and let more interesting bits of code come out of the wordwork.
+development, and let more interesting bits of code come out of the woodwork.
 None of this is to say that the Yesod core team is going to start turning away
 pull requests. Quite the contrary, we'll still happily be accepting added
 features that are solid and stable. (And of course bug fixes and performance
