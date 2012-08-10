@@ -127,7 +127,7 @@ main = return ()
             routes): <apiname id="116-x6">persistent-template:Database.Persist.TH:persist</apiname> is a
             quasi-quoter which converts a whitespace-sensitive syntax into a list of entity
             definitions. (You can also declare your entities in a separate file using
-                <apiname id="116-x9">persistent-template:Database.Persist.TH:persistFile</apiname>.)
+                <apiname id="116-x9">persistent-template:Database.Persist.TH:persistFileWith</apiname>.)
                 <apiname id="116-x10">persistent-template:Database.Persist.TH:mkPersist</apiname> takes that list
             of entities and declares:</p><ul id="116-x2"><li id="116-x3">One Haskell datatype for each entity.</li><li id="116-x4">A <codeph id="116-x-3">PersistEntity</codeph> instance for each datatype defined.</li></ul>
         <p>The example above generates code that looks like the following:</p>
