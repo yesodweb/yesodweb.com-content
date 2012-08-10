@@ -341,14 +341,14 @@ Person
     firstName String
     lastName String
     age Int
-    PersonName firstName lastName
+    UniqueName firstName lastName
     deriving Show
 |]
 
 main = withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
     insert $ Person "Michael" "Snoyman" 26
-    michael &lt;- getBy $ PersonName "Michael" "Snoyman"
+    michael &lt;- getBy $ UniqueName "Michael" "Snoyman"
     liftIO $ print michael
 -- STOP</codeblock><p id="119-u2">To declare a unique combination of fields, we add an extra line to our declaration. Persistent knows that it is defining a unique constructor, since the line begins with a capital letter. Each following word must be a field in this entity.</p><p id="119-u3">The main restriction on uniqueness is that it can only be applied non-null fields. The
             reason for this is that the SQL standard is ambiguous on how uniqueness should be
@@ -361,7 +361,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
             within your Haskell code, like the <codeph id="119-x-8">getBy</codeph> demonstrated above.
             This happens via the <codeph id="119-x-9">Unique</codeph> associated type. In the example
             above, we end up with a new constructor:</p>
-        <codeblock outputclass="haskell" id="119-x8">PersonName :: String -&gt; String -&gt; Unique Person</codeblock></conbody></concept><concept id="queries-120"><title>Queries</title><conbody>
+        <codeblock outputclass="haskell" id="119-x8">UniqueName :: String -&gt; String -&gt; Unique Person</codeblock></conbody></concept><concept id="queries-120"><title>Queries</title><conbody>
         <p id="120-x-3">Depending on what your goal is, there are different approaches to querying the database.
             Some commands query based on a numeric ID, while others will filter. Queries also differ
             in the number of results they return: some lookups should return no more than one result
