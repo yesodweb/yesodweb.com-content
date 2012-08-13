@@ -973,7 +973,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
     name String
     age Int Maybe
-    created UTCTime default=now()
+    created UTCTime default=CURRENT_TIME
     deriving Show
 |]
 
@@ -988,7 +988,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
             SQL, it makes the column nullable.</p>
         <p id="129-x8">The <codeph id="129-x3">default</codeph> attribute is backend specific, and uses
             whatever syntax is understood by the database. In this case, it uses the database's
-            built-in <codeph id="129-x-6">now()</codeph> function. Suppose that we now want to add a
+            built-in <codeph id="129-x-6">CURRENT_TIME</codeph> function. Suppose that we now want to add a
             field for a person's favorite programming language:</p><codeblock id="129-x4" outputclass="haskell">-- START
 {-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
@@ -1001,7 +1001,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
     name String
     age Int Maybe
-    created UTCTime default=now()
+    created UTCTime default=CURRENT_TIME
     language String default='Haskell'
     deriving Show
 |]
@@ -1025,7 +1025,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
     name String
     age Int Maybe
-    created UTCTime default=now()
+    created UTCTime default=CURRENT_TIME
     language String default='Haskell'
     country String "default='El Salvador'"
     deriving Show
