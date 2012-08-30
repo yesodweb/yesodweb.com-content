@@ -56,7 +56,7 @@ import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Gzip (gzip, def)
 import Network.HTTP.Types (status200)
 
-application _ = return $ responseLBS status200 [("Content-Type", "text/plain")]
-                       "Hello World"
+application _ = return $
+  responseLBS status200 [("Content-Type", "text/plain")] "Hello World"
 
 main = run 3000 $ gzip def application</codeblock><p id="247-middleware4">We added an import line to actually have access to the middleware, and then simply applied gzip to our application. You can also <i id="247-x3">chain together</i> multiple middlewares: a line such as <codeph id="247-x4">gzip False $ jsonp $ othermiddleware $ myapplication</codeph> is perfectly valid. One word of warning: the order the middleware is applied can be important. For example, jsonp needs to work on uncompressed data, so if you apply it after you apply gzip, you'll have trouble.</p></conbody></concept></concept>
