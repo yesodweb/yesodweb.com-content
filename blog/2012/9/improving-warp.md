@@ -1,4 +1,4 @@
-For last one month, I have been improving the performance of Warp and
+For the last month, I have been improving the performance of Warp and
 got a good result.  I would like to explain why I did it and what I
 have actually done in several blog articles. In the articles, I will
 only talk about GHC's threaded RTS.
@@ -7,10 +7,8 @@ In 2009, I started to implement my original Web server, Mighttpd
 (called Mighty) using GHC 6. Since I also implemented a mail related
 server before, I knew the limitation of GHC 6's IO manager:
 
-1. It is implemented using the select() system call. 
-  So, the IO manager cannot handle TCP connections over 1,024.
-2. Since the number of IO manager is one, it cannot utilize
-  multi-core.
+1. It is implemented using the select() system call.  So, the IO manager cannot handle TCP connections over 1,024.
+2. Since the number of IO manager is one, it cannot utilize multi-core.
 
 To solve these two problems, I hit upon an idea to use the pre-fork
 technique. This is, before accepting new TCP connections, some
@@ -19,7 +17,7 @@ The child processes shares its listening port and OS selects
 one of the child processes for a new TCP connection.
 
 As many know, Bryan O’Sullivan and Johan Tibell improved the IO
-manager by using modern system calls, the epoll family on Linux and
+manager by using modern system calls: the epoll family on Linux and
 the kqueue family on BSD/Mac. The new IO manager was integrated into
 GHC 7.
 
@@ -37,7 +35,7 @@ Since some people started to use Mighttpd 2 in the real world, I
 enhanced it to support dynamic re-configuration and graceful
 shutdown. To implement these features, I needed to write some
 boilerplate for inter-process communication using UNIX signals.
-It was really boring and I convinced that making the IO manager
+It was really boring and I was convinced that making the IO manager
 parallel is very important.
 
 When I sent messages about the parallel IO manager to GHC HQ, Simon
