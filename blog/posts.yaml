@@ -1,3 +1,7 @@
+- 'time': '2012-09-19T16:02:00Z'
+  'author': 'michael'
+  'title': 'Haskell Project Templates'
+  'path': '2012/9/project-templates.md'
 - 'time': '2012-09-19T16:01:00Z'
   'author': 'kazu'
   'title': 'Sending header and body at once'
