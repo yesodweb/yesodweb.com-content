@@ -175,18 +175,14 @@ I explained the `sendfile` function and
 the `sendfileWithHeader` function in
 this article and the previous one, respectively:
 
-```haskell
-sendfile :: Socket -> FilePath -> FileRange -> IO () -> IO ()
-sendfileWithHeader :: Socket -> FilePath -> FileRange -> IO () -> [ByteString] -> IO ()
-```
+    sendfile :: Socket -> FilePath -> FileRange -> IO () -> IO ()
+    sendfileWithHeader :: Socket -> FilePath -> FileRange -> IO () -> [ByteString] -> IO ()
 
 To avoid the `open()`/`close()` system call, I added two more functions
 to the simple-sendfile package:
 
-```haskell
-sendfileFd :: Socket -> Fd -> FileRange -> IO () -> IO ()
-sendfileFdWithHeader :: Socket -> Fd -> FileRange -> IO () -> [ByteString] -> IO ()
-```
+    sendfileFd :: Socket -> Fd -> FileRange -> IO () -> IO ()
+    sendfileFdWithHeader :: Socket -> Fd -> FileRange -> IO () -> [ByteString] -> IO ()
 
 Of course, the master branch of Warp uses the last one.
 
