@@ -172,7 +172,7 @@ Warp waiting for releasing.
 ## New functions in simple-sendfile
 
 I explained the `sendfile` function and
-the sendfileWithHeader function in
+the `sendfileWithHeader` function in
 this article and the previous one, respectively:
 
     sendfile :: Socket -> FilePath -> FileRange -> IO () -> IO ()
