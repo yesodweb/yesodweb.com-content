@@ -4,10 +4,10 @@ calls in this article.
 
 ## simple-sendfile basis
 
-I designed the simple-sendfile to use few system calls as possible
+I designed the simple-sendfile to use as few system calls as possible,
 since "system calls are evil for network programming in Haskell".
-To make a story simple, I will only talk about the sendfile system call
-of Linux.
+To make the story simple, I will only talk about the sendfile system call
+on Linux.
 
 The type of the `sendfile` function in `Network.Sendfile` is as follows:
 
@@ -15,16 +15,16 @@ The type of the `sendfile` function in `Network.Sendfile` is as follows:
 
 `FileRange` has two constructors: `EntireFile` and `PartOfFile`.
 
-Let's consider the case where we send the entire of a file
+Let's consider the case where we send the entire file
 by specifying `EntireFile` to the `sendfile` function.
-Unfortunately, the function has to call the stat() system call
-to know the size of the file because the sendfile() system call on Linux
-requires to specify how many bytes to be sent
-(sendfile() on BSD has magic number '0' which indicates
+Unfortunately, the function has to call the `stat()` system call
+to know the size of the file because the `sendfile()` system call on Linux
+requires the caller to specify how many bytes to be sent
+(`sendfile()` on BSD has magic number '0' which indicates
 the end of file).
 
-If WAI applications know file size, they can specify
-PartOfFile to avoid the stat() system call.
+If WAI applications know the file size, they can specify
+`PartOfFile` to avoid the stat() system call.
 It is easy for WAI applications to cache file information
 such as size and modification time.
 If cache timeout is fast enough (say 10 seconds),
@@ -35,50 +35,50 @@ we don't have to worry about leakage.
 ## open() and close()
 
 If `PartOfFile` is specified,
-the `sendfile` function calls open(), sendfile() repeatedly if necessary, and close().
+the `sendfile` function calls `open()`, `sendfile()` repeatedly if necessary, and `close()`.
 When I implemented the simple-sendfile package,
-I noticed that open() and close() should also be eliminated.
+I noticed that `open()` and `close()` should also be eliminated.
 For this, we should cache file descriptors.
 
-Caching file descriptors should work as follows:
-If a client requests to send a file, a file descriptor
-is opened. And if another client requests the same file shortly,
+Caching file descriptors works as follows:
+If a client requests that a file be sent, a file descriptor
+is opened. And if another client requests the same file shortly thereafter,
 the file descriptor is reused.
 At a later time, the file descriptor is closed
 if no Haskell thread uses it.
 
-Sounds easy? Unfortunately I had no idea on how to safely cache file descriptors.
+Sound easy? Unfortunately, I had no idea on how to safely cache file descriptors.
 It seems to me that it is difficult to ensure that
 no Haskell thread uses a file descriptor when closing it.
 
-Typical tactics for this case is reference counter.
-But I was not sure that I could implement robust mechanism
-for reference counter. What happens if a Haskell thread is
+A typical tactic for this case is reference counter.
+But I was not sure that I could implement a robust mechanism
+for a reference counter. What happens if a Haskell thread is
 killed for unexpected reasons?
-If we fails to decrement its reference counter,
+If we fail to decrement its reference counter,
 the file descriptor leaks.
 
 Andreas motivated me to consider this issue again
 by pointing out that the performance bottleneck of Warp is
-open()/close(). I have thought this over one month and
-all necessary pieces got together suddenly.
+`open()`/`close()`. I thought this over for a month and
+all the necessary pieces came together suddenly.
 
 ## The timeout manager of Warp
 
 I implemented a cache mechanism for file descriptor based on
-Warp's timeout.
-So, let me explain Warp's timeout first.
+Warp's timeout system.
+So, let me explain how Warp's timeouts work first.
 For security reasons, Warp kills a Haskell thread,
 which communicates with a client,
-if the client keeps quiet for a while (30 seconds by default).
-I think that the hearts of Warp's timeout are two:
+if the client does not send a significant amount of data for a specified period (30 seconds by default).
+I think that the heart of Warp's timeout system is the following two points:
 
 - Double `IORef`s
 - Safe swap and merge algorithm
 
 Suppose that status of connections is described as `Active` and `Inactive`.
 To clean up inactive connections,
-a dedicated Haskell thread, say timeout manager, repeatedly looks into status of each connection.
+a dedicated Haskell thread, called the timeout manager, repeatedly inspects the status of each connection.
 If status is `Active`, the timeout manager turns it to `Inactive`.
 If `Inactive`, the timeout manager kills its associated Haskell thread.
 
@@ -88,11 +88,11 @@ atomicity is not necessary because status is just overwritten.
 In addition to the timeout manager,
 each Haskell thread repeatedly turns its status to `Active` through its own `IORef` if its connection actively continues.
 
-To check all status easily,
+To check all statuses easily,
 the timeout manager uses a list of the `IORef` to status.
-A Haskell thread spawn for a new connection
+A Haskell thread spawned for a new connection
 tries to 'cons' its new `IORef` for an `Active` status to the list.
-So, the list is critical section and we needs atomicity to keep
+So, the list is a critical section and we need atomicity to keep
 the list consistent.
 
 A standard way to keep consistency in Haskell is `MVar`.
@@ -100,7 +100,7 @@ But as Michael Snoyman pointed out in "[Warp: A Haskell Web Server](http://steve
 This is because each `MVar` is protected with a home-brewed spin lock.
 So, he used another `IORef` to refer the list and `atomicModifyIORef`
 to manipulate it.
-`atomicModifyIORef` is implemented on CAS(Compare-and-Swap),
+`atomicModifyIORef` is implemented via CAS (Compare-and-Swap),
 which is much faster than spin locks.
 
 The following is the outline of the safe swap and merge algorithm:
@@ -120,9 +120,9 @@ the pruned list and the new list.
 
 ## The algorithm to cache file descriptors
 
-Warp's timeout is safe to implement a cache mechanism for
+Warp's timeout approach is safe to reuse as a cache mechanism for
 file descriptors because it does not use reference counters.
-However, we cannot simply reuse Warp's timeout for some reasons:
+However, we cannot simply reuse Warp's timeout code for some reasons:
 
 Each Haskell thread has its own status. So, status is not shared.
 But we would like to cache file descriptors to avoid open() and
@@ -132,21 +132,22 @@ cached ones. Since this look-up should be fast, we should not use a list.
 You may think `Data.Map` can be used.
 Yes, its look-up is O(log N) but there are two reasons why we cannot use it:
 
-1. `Data.Map` is a finite map which cannot contains multiple values
-   for a single key.
-2. `Data.Map` does not provide a fast pruning method.
+1.  `Data.Map` is a finite map which cannot contain multiple values
+    for a single key.
 
-Problem 1: because requests come concurrently,
+2.  `Data.Map` does not provide a fast pruning method.
+
+Problem 1: because requests are received concurrently,
 two or more file descriptors for the same file may be opened.
 So, we need to store multiple file descriptors for a single file name.
 We can solve this by re-implementing `Data.Map` to
 hold a non-empty list.
-This is technically called "multimap".
+This is technically called a "multimap".
 
 Problem 2: `Data.Map` is based on a binary search tree called "weight
-balanced tree". To my best knowledge, there is no way to prune the tree
+balanced tree". To the best of my best knowledge, there is no way to prune the tree
 directly. You may also think that we can convert the tree to a list (`toList`),
-then prone it, and converts the list back to a new tree (`fromList`).
+then prune it, and convert the list back to a new tree (`fromList`).
 The cost of the first two operations is O(N) but
 that of the last one is O(N log N) unfortunately.
 
@@ -167,23 +168,27 @@ red-black tree.
 Now we have a multimap whose look-up is O(log N) and
 pruning is O(N).
 
-The cache mechanism has been already merged to the master branch of
-Warp waiting for releasing.
+The cache mechanism has already been merged into the master branch of
+Warp, and is awaiting release.
 
 ## New functions in simple-sendfile
 
 I explained the `sendfile` function and
-the sendfileWithHeader function in
+the `sendfileWithHeader` function in
 this article and the previous one, respectively:
 
-    sendfile :: Socket -> FilePath -> FileRange -> IO () -> IO ()
-    sendfileWithHeader :: Socket -> FilePath -> FileRange -> IO () -> [ByteString] -> IO ()
+```haskell
+sendfile :: Socket -> FilePath -> FileRange -> IO () -> IO ()
+sendfileWithHeader :: Socket -> FilePath -> FileRange -> IO () -> [ByteString] -> IO ()
+```
 
-To avoid the open()/close() system call, I added two more functions
+To avoid the `open()`/`close()` system call, I added two more functions
 to the simple-sendfile package:
 
-    sendfileFd :: Socket -> Fd -> FileRange -> IO () -> IO ()
-    sendfileFdWithHeader :: Socket -> Fd -> FileRange -> IO () -> [ByteString] -> IO ()
+```haskell
+sendfileFd :: Socket -> Fd -> FileRange -> IO () -> IO ()
+sendfileFdWithHeader :: Socket -> Fd -> FileRange -> IO () -> [ByteString] -> IO ()
+```
 
 Of course, the master branch of Warp uses the last one.
 
