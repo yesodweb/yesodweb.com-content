@@ -132,8 +132,7 @@ cached ones. Since this look-up should be fast, we should not use a list.
 You may think `Data.Map` can be used.
 Yes, its look-up is O(log N) but there are two reasons why we cannot use it:
 
-1. `Data.Map` is a finite map which cannot contains multiple values
-   for a single key.
+1. `Data.Map` is a finite map which cannot contains multiple values for a single key.
 2. `Data.Map` does not provide a fast pruning method.
 
 Problem 1: because requests come concurrently,
