@@ -1,5 +1,5 @@
 This is the third article for the series of "[Improving the performance of Warp](improving-warp)".
-As I wrote in "[Sending header and body at once](header-body)", I will explain how to avoid the open()/close() system
+As I wrote in "[Sending header and body at once](header-body)", I will explain how to avoid the `open()`/`close()` system
 calls in this article.
 
 ## simple-sendfile basis
@@ -24,7 +24,7 @@ requires the caller to specify how many bytes to be sent
 the end of file).
 
 If WAI applications know the file size, they can specify
-`PartOfFile` to avoid the stat() system call.
+`PartOfFile` to avoid the `stat()` system call.
 It is easy for WAI applications to cache file information
 such as size and modification time.
 If cache timeout is fast enough (say 10 seconds),
@@ -125,8 +125,8 @@ file descriptors because it does not use reference counters.
 However, we cannot simply reuse Warp's timeout code for some reasons:
 
 Each Haskell thread has its own status. So, status is not shared.
-But we would like to cache file descriptors to avoid open() and
-close() by sharing.
+But we would like to cache file descriptors to avoid `open()` and
+`close()` by sharing.
 So, we need to search a file descriptor for a requested file from
 cached ones. Since this look-up should be fast, we should not use a list.
 You may think `Data.Map` can be used.
@@ -168,6 +168,8 @@ pruning is O(N).
 
 The cache mechanism has already been merged into the master branch of
 Warp, and is awaiting release.
+
+UPDATE: Discussion here is based on my ignorance. Please read also comments.
 
 ## New functions in simple-sendfile
 
