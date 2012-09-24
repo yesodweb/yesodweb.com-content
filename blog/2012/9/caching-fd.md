@@ -20,7 +20,7 @@ by specifying `EntireFile` to the `sendfile` function.
 Unfortunately, the function has to call the `stat()` system call
 to know the size of the file because the `sendfile()` system call on Linux
 requires the caller to specify how many bytes to be sent
-(`sendfile()` on BSD has magic number '0' which indicates
+(`sendfile()` on FreeBSD/MacOS has magic number '0' which indicates
 the end of file).
 
 If WAI applications know the file size, they can specify
