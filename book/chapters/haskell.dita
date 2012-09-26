@@ -230,6 +230,7 @@ myThCode</codeblock>
    should use the <codeph id="14-x-16">-ddump-splices</codeph> GHC option.</p>
   <note id="14-x-17">There are many other features of Template Haskell not covered here. For more information,
    see the <xref id="14-x-18" href="http://www.haskell.org/haskellwiki/Template_Haskell" format="html" scope="external">Haskell wiki page</xref>.</note>
+  <p>One final note: Template Haskell introduces something called the stage restriction, which essentially means that code before a Template Haskell splice cannot refer to code in the Template Haskell, or what follows. This will sometimes require you to rearrange your code a bit. The same restriction applies to QuasiQuotes.</p>
  </conbody></concept><concept id="quasi-quotes-15"><title>QuasiQuotes</title><conbody>
   <p id="15-x-3">QuasiQuotes (QQ) are a minor extension of Template Haskell that let us embed arbitrary content
    within our Haskell source files. For example, we mentioned previously the
