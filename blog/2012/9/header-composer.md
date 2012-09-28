@@ -27,7 +27,7 @@ As you can see, each constructor includes both `Status` and `ResponseHeaders`, w
     data Status = Status {
         statusCode :: Int
       , statusMessage :: ByteString
-    }
+      }
 
 The followings are the definitions of the latter:
 
