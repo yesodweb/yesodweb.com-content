@@ -51,7 +51,7 @@ So, I tried two methods.
 
 The first method: create a list of `ByteString`s without packing
 and send the list with `writev()`. Since the header and its body
-should be squeezed into a single TCP package (if possible),
+should be squeezed into a single TCP packet (if possible),
 I set the `TCP_CORK` socket option before calling `writev()`
 and reset it after calling `sendfile()`.
 But this method is no better than the old composer.
