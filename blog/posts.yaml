@@ -1,3 +1,7 @@
+- 'time': '2012-09-28T16:01:00Z'
+  'author': 'kazu'
+  'title': 'Composing HTTP response headers'
+  'path': '2012/9/header-composer.md'
 - 'time': '2012-09-21T16:01:00Z'
   'author': 'kazu'
   'title': 'Caching file descriptors'
