@@ -5,42 +5,42 @@ Readers are supposed to read the following articles:
 2. [Sending header and body at once](header-body)
 3. [Caching file descriptors](caching-fd)
 
-Note that new versions of Warp have already released,
+Note that new versions of Warp have already been released,
 which contain the cache mechanism of file descriptors
-described in the 3rd article.
+described in the third article.
 
 ## The old composer for HTTP response header
 
 Andreas pointed out that the code to compose HTTP response header
 may be another performance bottleneck.
 So, I tackled this problem.
-Let's me explain how the old composer for HTTP response header
-works. Recall that the `Response` data type has
+Let me explain how the old composer for HTTP response header
+worked. Recall that the `Response` data type has
 three constructors:
 
     ResponseBuilder Status ResponseHeaders Builder
     ResponseSource Status ResponseHeaders (Source (ResourceT IO) (Flush Builder))
     ResponseFile Status ResponseHeaders FilePath (Maybe FilePart)
 
-As you can see, each constructor includes both `Status` and `ResponseHeaders`, which are defined in the http-types package. The former is defined as follows:
+As you can see, each constructor includes both `Status` and `ResponseHeaders`, which are defined in the `http-types` package. The former is defined as follows:
 
     data Status = Status {
         statusCode :: Int
       , statusMessage :: ByteString
       }
 
-The followings are the definitions of the latter:
+The following are the definitions of the latter:
 
     type ResponseHeaders = [Header]
     type Header = (HeaderName, ByteString)
     type HeaderName = CI ByteString
 
-That is, `ResponseHeaders` is a pair of case-insensitive `ByteString` (for field keys) and `ByteString` (for field values).
+That is, `ResponseHeaders` is a list of pairs of case-insensitive `ByteString` (for field keys) and `ByteString` (for field values).
 
-The old composer for HTTP response header creates a `Builder` of the blaze-builder package by appending `Bytestring`s in `Status` and `ResponseHeaders`. Each append operation runs in O(1).
-To make a story simple, I will only talk about the `ResponseFile` case on Linux. The `Builder` is converted a list of *packed* `ByteString` and sent with the `writev()` system call. And then a file (HTTP response body) is sent with the `sendfile()` systam call.
+The old composer for HTTP response header creates a `Builder` of the blaze-builder package by appending the `Bytestring`s in the `Status` and the `ResponseHeaders`. Each append operation runs in O(1).
+To simpify, I will only talk about the `ResponseFile` case on Linux. The `Builder` is converted to a list of *packed* `ByteString`s and sent with the `writev()` system call. And then a file (HTTP response body) is sent with the `sendfile()` systam call.
 
-As I described in [Sending header and body at once](header-body), this code was changed. The list of *packed* `ByteString` is stored to the socket buffer by using `send()` with the `MSG_MORE` flag and then a file is sent with `sendfile()`. At this point, I received the comments from Andreas.
+As I described in [Sending header and body at once](header-body), this code was changed. The list of *packed* `ByteString`s is stored to the socket buffer by using `send()` with the `MSG_MORE` flag and then a file is sent with `sendfile()`. At this point, I received Andreas's comments.
 
 ## The new composer for HTTP response header
 
@@ -49,9 +49,9 @@ But I suspected that it is not fast enough for
 high performance servers.
 So, I tried two methods.
 
-The first method: create a list of `ByteString` without packing
-and sent the list by `writev()`. Since the header and its body
-should be squeezed in a single TCP package (if possible),
+The first method: create a list of `ByteString`s without packing
+and send the list with `writev()`. Since the header and its body
+should be squeezed into a single TCP package (if possible),
 I set the `TCP_CORK` socket option before calling `writev()`
 and reset it after calling `sendfile()`.
 But this method is no better than the old composer.
@@ -69,9 +69,9 @@ functions. Here is the most fundamental copy function:
         memcpy ptr (p `plusPtr` o) (fromIntegral l)
         return $! ptr `plusPtr` l
 
-This copy sequence of `Word8` from `ByteString` of the second argument
-to `Ptr Word8` (extracted from `ByteString`) of the first argument.
-This new *packed* `ByteString` is stored by using `send()` with the `MSG_MORE` flag and a file is sent with `sendfile()`. This improved the performance. So, I adopted this method.
+This copies a sequence of `Word8`s from the `ByteString` in the second argument
+to the `Ptr Word8` (extracted from `ByteString`) in the first argument.
+This new *packed* `ByteString` is sent by using `send()` with the `MSG_MORE` flag and a file is sent with `sendfile()`. This improved the performance. So, I adopted this method.
 
 Readers may notice that calculating length of an HTTP header is redundant.
 If we design better WAI having APIs to manipulate header fields,
@@ -123,6 +123,6 @@ but breaks backword compatibilities.
 To my experience,
 http-conduit, wai-app-file-cgi and (of course) warp have to be fixed.
 Aristid Breitkreuz, the author of http-types, agreed
-to adopt method B but does not released new version at this moment.
+to adopt method B but has not yet released a new version.
 
 That's all about what I have done to the composer for HTTP response header.
