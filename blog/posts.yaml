@@ -1,3 +1,7 @@
+- 'time': '2012-10-01T16:01:00Z'
+  'author': 'kazu'
+  'title': 'Avoiding system calls'
+  'path': '2012/10/avoid-syscall.md'
 - 'time': '2012-09-28T16:01:00Z'
   'author': 'kazu'
   'title': 'Composing HTTP response headers'
