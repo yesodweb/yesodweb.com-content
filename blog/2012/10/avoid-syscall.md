@@ -11,11 +11,11 @@ and the `gettimeofday()` vsyscall.
 
 ## Avoiding `fcntl()`
 
-I sometime compare Mighttpd and nginx with the results of `strace`
+I sometimes compare Mighttpd and nginx with the results of `strace`
 on Linux and/or `ktrace` on BSD variants.
-One day, I noticed that nginx is using the `accept4()` system call which I did not know
+One day, I noticed that nginx uses the `accept4()` system call, which I did not know about
 at that moment.
-(I used to be an export of BSD variants but am a newbie for Linux.)
+(I used to be an expert of BSD variants but am a newbie to Linux.)
 
 In the low level of GHC, file/socket operations are basically implemented as non-blocking.
 If the `network` package is used,
@@ -55,14 +55,14 @@ For logging, a local date string in the Apache style would be convenient:
 
 It is known that `formatTime` in the `Data.Time.Format` module is too
 slow for high performance servers.
-Years ago, I have implemented faster format packages: `http-date`
+Years ago, I implemented faster format packages: `http-date`
 for the former and `unix-time` for the latter.
 Unfortunately, they are still slow for high performance servers.
-And if an HTTP server accepts more than one requests in a second,
+And if an HTTP server accepts more than one request per second,
 the server repeats the same formatting again and again.
 So, formatted date strings should be cached.
 
-The members of the `web-devel` mailing-list discussed this issues
+The members of the `web-devel` mailing-list discussed these issues
 with the following assumption:
 
 1. Formatting time to date string is a heavy job
@@ -82,7 +82,7 @@ calling `gettimeofday()` is a light job on both old and new Linux.
 
 So, I implemented a new algorithm:
 
-- Designated Haskell thread issues gettimeofday() every second, formats the result time to a date, and cache it.
+- Designated Haskell thread issues gettimeofday() every second, formats the result time to a date, and caches it.
 - When a formatted date is required, the cached formatted date is simply returned.
 
 Only end HTTP servers should return the Date: header field.
@@ -92,7 +92,7 @@ Also, logging is not warp's job, either.
 WAI applications should take care of
 both adding Date: and logging.
 
-Yesod and Mighttpd are using the `fast-logger` package for logging.
+Yesod and Mighttpd both use the `fast-logger` package for logging.
 I modified it so that it provides both algorithms above.
 Also, I changed Mighttpd to use the new algorithm
 to generate Date:.
