@@ -60,7 +60,7 @@ class GMonoid f where
 
 This looks very similar to our standard `Monoid` typeclass. One tweak is the
 fact that the instance of the typeclass now takes an argument (a.k.a., it's of
-kind `\* -> \*` instead of `\*`). The reason is that the Generics datatypes all
+kind `* -> *` instead of `*`). The reason is that the Generics datatypes all
 have a phantom type variable. My understanding is that this type variable is
 currently unused.
 
@@ -151,7 +151,7 @@ def_mappend x y = to $ from x `gmappend` from y
 If we had control of the `Monoid` typeclass ourselves, we could also use the
 DefaultSignatures extension right now to bake this directly into the `Monoid`
 typeclass. Then, any time we wrote `instance Monoid Foo`, it would use
-`def\_mempty` and `def\_mappend`. However, in our case, we have to do it
+`def_mempty` and `def_mappend`. However, in our case, we have to do it
 manually:
 
 ```haskell
