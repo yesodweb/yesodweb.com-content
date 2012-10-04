@@ -1,3 +1,7 @@
+- 'time': '2012-10-04T20:54:00Z'
+  'author': 'michael'
+  'title': 'Announcing: http-reverse-proxy, unix-process-conduit, and more'
+  'path': '2012/10/announcing-http-reverse-proxy.md'
 - 'time': '2012-10-04T16:01:00Z'
   'author': 'michael'
   'title': 'Yesod composability: a jqPlot widget'
