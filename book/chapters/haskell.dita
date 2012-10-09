@@ -207,7 +207,7 @@ main = do
    already existing functions. For example, to include an externally defined Hamlet template, you
    can write:</p>
   <codeblock id="14-x-7" outputclass="haskell">$(hamletFile "myfile.hamlet")</codeblock>
-  <p id="14-x-8">(Hamlet is discussed in the <xref id="14-x-9" href="shakespearean-templates.dita#shakespearean-templates-27" format="dita">Shakespeare chapter</xref>.) The dollar sign immediately followed by parantheses
+  <p id="14-x-8">(Hamlet is discussed in the <xref id="14-x-9" href="shakespearean-templates.dita#shakespearean-templates-27" format="dita">Shakespeare chapter</xref>.) The dollar sign immediately followed by parentheses
    tell GHC that what follows is a Template Haskell function. The code inside is then run by the
    compiler and generates a Haskell AST, which is then compiled. And yes, it's even possible to
     <xref id="14-x-10" href="http://www.yesodweb.com/blog/2010/09/yo-dawg-template-haskell" format="html" scope="external">go meta with this</xref>.</p>
