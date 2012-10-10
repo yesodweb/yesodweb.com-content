@@ -1,3 +1,7 @@
+- 'time': '2012-10-10T09:00:00Z'
+  'author': 'michael'
+  'title': 'Yesod User Survey 2012'
+  'path': '2012/10/yesod-user-survey-2012.md'
 - 'time': '2012-10-04T20:54:00Z'
   'author': 'michael'
   'title': 'Announcing: http-reverse-proxy, unix-process-conduit, and more'
