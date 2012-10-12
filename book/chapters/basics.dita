@@ -196,7 +196,7 @@ main :: IO ()
 main = return ()</codeblock>
         <p id="23-x-21">In the <codeph id="23-x-22">Route</codeph> associated type for <codeph id="23-x-23">Links</codeph>, we have
             additional constructors for <codeph id="23-x-24">Page1R</codeph> and <codeph id="23-x-25">Page2R</codeph>. We also
-            now have a better glimpse of the return values for <codeph id="23-x-26">returnRoute</codeph>. The
+            now have a better glimpse of the return values for <codeph id="23-x-26">renderRoute</codeph>. The
             first part of the tuple gives the <term id="23-x-27">path pieces</term> for the given route. The
             second part gives the query string parameters; for almost all use cases, this will be an
             empty list.</p>
