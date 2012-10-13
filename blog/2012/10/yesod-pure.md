@@ -16,6 +16,9 @@ describe a [new, slightly experimental package called
 yesod-pure](http://hackage.haskell.org/package/yesod-pure) that allows you to
 use Yesod without any code generation.
 
+(__Note__: The name yesod-pure is open for discussion, it's the first one I
+came up with, but if people have suggestions, I'd love to hear them.)
+
 Note: I'm trying a slightly new format for displaying this information. All of
 the code is in a [Github
 gist](https://gist.github.com/3870834/b272e9c3a31ddc5b2ddddb0ccbf1849551e46f2b),
@@ -314,6 +317,17 @@ but now it's just a list of texts. `fibR` attempts to recapture some of the
 safety of having dedicated constructors like `FibR`. If your app uses such
 wrapper functions exclusively, then you can minimize the potential for invalid
 URLs to just those wrapper functions.
+
+## Step 5 (there is no step 5)
+
+Another approach I didn't cover here is keeping the Template Haskell but
+dropping the QuasiQuoted syntax. You can see an example of that in [this
+gist](https://gist.github.com/3835314).
+
+Another alternative would be to use a system like Boomerang, which still uses
+Template Haskell but grants you more control. I'm not an expert in Boomerang at
+all, but if someone would like to contribute an example of how to get this app
+to work with it, I'd be very interested.
 
 ## Conclusion
 
