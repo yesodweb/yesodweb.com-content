@@ -33,7 +33,7 @@ This means that 1,000 HTTP connections are established and each connection sends
 
 For all requests, the same `index.html` file is returned. I used `nginx`'s `index.html` whose size is 151 bytes. As "127.0.0.1" suggests, I measured web servers locally. I should have measured from a remote machine but I don't have suitable environment at this moment.
 
-`httperf` is a single process program using the `select()` system calls. So, if target web servers can utilize multi cores, it reaches its performance boundary. Andreas suggested me `weighttp` as alternative. It is based on the `epoll` system call families and can use multiple native threads. I used `weighttp` as follows:
+`httperf` is a single process program using the `select()` system calls. So, if target web servers can utilize multi cores, it reaches its performance boundary. Andreas suggested `weighttp` to me as an alternative. It is based on the `epoll` system call family and can use multiple native threads. I used `weighttp` as follows:
 
     weighttp -n 100000 -c 1000 -t 3 -k http://127.0.0.1:8000/
 
@@ -49,7 +49,7 @@ I carefully configured both Mighty and `nginx` as follows:
 
 Here is the result of benchmarks for *one* worker:
 
-![Fig1: throughput for one worker](measuring-warp-graph-1.png)
+![Fig1: throughput for one worker](/assets/measuring-warp/measuring-warp-graph-1.png)
 
 Y-axis means throughput whose unit is requests per second. Of course, the larger, the better. What I can see from this results are:
 
@@ -61,7 +61,7 @@ Y-axis means throughput whose unit is requests per second. Of course, the larger
 
 Since multi-cores is getting more popular, benchmarks for multiple workers would be interesting. Due to the performance limitation, we cannot use `httperf` for this purpose. Since my machine has 12 cores and `weighttp` uses three native threads, I measured web servers from one worker to eight workers(to my experience, three native thread is enough to measure 8 workers). Here is the result:
 
-![Fig2: throughput for multiple workers](measuring-warp-graph-2.png)
+![Fig2: throughput for multiple workers](/assets/measuring-warp/measuring-warp-graph-2.png)
 
 X-axis is the number of workers and y-axis means throughput whose unit is requests per second. "mighty 2.8.2" (blue) increases workers using the prefork technique while "mighty 2.8.2 -Nx" (orange) increases capabilities with the "-RTS -Nx" option. My observations are:
 
@@ -69,4 +69,4 @@ X-axis is the number of workers and y-axis means throughput whose unit is reques
 - Mighty 2.8.2 with the prefork technique does scale at least for 8 workers
 - Increasing capabilities of GHC's threaded RTS cannot utilize multi cores if the number of capabilities is larger than 3.
 
-Also, Andreas and I measured Mighty 2.8.2 with Andreas's parallel IO manager. We had very good results but I don't think it is not proper time to show the results now. I hope we can open our results in the future.
+Also, Andreas and I measured Mighty 2.8.2 with Andreas's parallel IO manager. We had very good results but I don't think it is the proper time to show the results. I hope we can open our results in the future.
