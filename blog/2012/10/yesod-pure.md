@@ -1,5 +1,5 @@
 Thank you very much to everyone who has participated so far in the [Yesod User
-Sruvey 2012](http://www.yesodweb.com/blog/2012/10/yesod-user-survey-2012), the
+Survey 2012](http://www.yesodweb.com/blog/2012/10/yesod-user-survey-2012), the
 response was even stronger than I'd hoped for, and the feedback has been very
 helpful.
 
