@@ -1,3 +1,7 @@
+- 'time': '2012-10-15T09:00:00Z'
+  'author': 'michael'
+  'title': 'yesod-pure: Use Yesod without Template Haskell'
+  'path': '2012/10/yesod-pure.md'
 - 'time': '2012-10-10T09:00:00Z'
   'author': 'michael'
   'title': 'Yesod User Survey 2012'
