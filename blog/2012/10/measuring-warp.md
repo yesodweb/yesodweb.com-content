@@ -5,7 +5,7 @@ Readers are supposed to read the following articles:
 2. [Sending header and body at once](../9/header-body)
 3. [Caching file descriptors](../9/caching-fd)
 4. [Composing HTTP response headers](../9/header-composer)
-5. [Avoiding system calls](../9/avoid-syscall)
+5. [Avoiding system calls](../10/avoid-syscall)
 
 In this article, I will finally show you the results of "ping-pong" benchmarks.
 
