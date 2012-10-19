@@ -1,10 +1,10 @@
 This is fifth article for the series of "Improving the performance of Warp".
 Readers are supposed to read the following articles:
 
-1. [Improving the performance of Warp](../9/improving-warp)
-2. [Sending header and body at once](../9/header-body)
-3. [Caching file descriptors](../9/caching-fd)
-4. [Composing HTTP response headers](../9/header-composer)
+1. [Improving the performance of Warp](../09/improving-warp)
+2. [Sending header and body at once](../09/header-body)
+3. [Caching file descriptors](../09/caching-fd)
+4. [Composing HTTP response headers](../09/header-composer)
 
 In this article, I will explain how to avoid the `fcntl()` system call
 and the `gettimeofday()` vsyscall.
