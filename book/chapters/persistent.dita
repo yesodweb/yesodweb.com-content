@@ -406,8 +406,8 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
    found. Fortunately, the <apiname id="121-x7">yesod-persistent:Yesod.Persist:get404</apiname> function
    helps us out here. We'll go into more details when we see integration with Yesod.</p>
  </conbody></concept><concept id="fetching-by-unique-constraint-122"><title>Fetching by unique constraint</title><conbody>
-  <p id="122-x1"><codeph id="122-x-3">getBy</codeph> is almost identical to <codeph id="122-x-4">get</codeph>, except it takes a
-            uniqueness constraint instead of an ID it takes a Unique value.</p>
+  <p id="122-x1"><codeph id="122-x-3">getBy</codeph> is almost identical to <codeph id="122-x-4">get</codeph>, except
+            instead of an ID it takes a Unique value.</p>
   <fig id="122-x2">
    <title id="122-x3">Using getBy</title>
    <codeblock id="122-x4" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
