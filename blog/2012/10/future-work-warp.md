@@ -27,7 +27,7 @@ If N is larger than or equal to 2, Mighty creates N child processes
 and the parent process just works to deliver signals.
 However, if N is 1, Mighty does not creates one child process.
 The executed process itself works for HTTP.
-So, we can take right profile for Mighty if N is equal to 1.
+So, we can get the correct profile for Mighty if N is equal to 1.
 
 Here is a profile of Mighty 2.8.2 against the `httperf` benchmark:
 
@@ -67,7 +67,7 @@ In the HTTP response composer of Warp, `lookup` is used to look up:
 These header fields are added to `ResponseHeader` in `Response` by WAI applications.
 If `Response` has dedicated fields for them, we can directly obtain its value.
 And if there is API to add these special fields and other fields,
-we can calculate the total the length of HTTP response header incrementally.
+we can calculate the total length of HTTP response header incrementally.
 So, we can eliminate the current method to calculate the length by
 traversing `ResponseHeader`.
 
@@ -95,7 +95,7 @@ Michael, Andreas and I are now discussing how to reduce this overhead.
 
 ## Char8
 
-`ByteString` is an array of `Word8`, non-negative 8bit digit. As many know, there are two sets of API for `ByteString`:
+`ByteString` is an array of `Word8`, non-negative 8bit digits. As many know, there are two sets of API for `ByteString`:
 
 1. `Data.ByteString` directly provides `Word8` API
 2. `Data.ByteString.Char8` provides API based on `Char`.
@@ -110,7 +110,7 @@ Let's consider what kind of steps are necessary:
 Haskell's `Char` is Unicode (UTF-32 or UCS-4). 
 The functions of `Data.ByteString.Char8` are using the `w2c` and `c2w` functions
 to convert `Word8` to `Char` and `Char` to `Word8`, respectively.
-Since `Word8` is hold in 32/64 bit registers, 
+Since `Word8` is held in 32/64 bit registers,
 `w2c` and `c2w` do *nothing* in assembler level.
 The functions of `Data.ByteString.Char8` themselves have no performance penalty.
 
@@ -165,7 +165,7 @@ By way of experiment, pessimistic `recv()` is enabled in Warp by default.
 
 Thundering herd is an old but new problem. 
 If a process/OS-thread pool is used to implement a network server, 
-the processes/OS-thread are typically shared a listen socket.
+the processes/OS-thread typically share a listening socket.
 They call `accept()` on the socket.
 When a connection is created, old Linux and FreeBSD
 wakes up all of them. And only one can accept it and
@@ -180,7 +180,7 @@ Recent network servers tend to use the `epoll`/`kqueue` family.
 If worker processes share a listen socket and they
 manipulate accept connections through the `epoll`/`kqueue` family,
 thundering herd appears again.
-This is because that 
+This is because
 the semantics of the `epoll`/`kqueue` family is to notify
 all processes/OS-threads. 
 I wrote [code to demonstrate new thundering herd](https://gist.github.com/3302049). If you are interested in, please check it out.
