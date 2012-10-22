@@ -108,7 +108,7 @@
    <li id="171-x-7">Dispatch function</li>
   </ul>
   <p id="171-x-8">The dispatch function refers to all of the handler functions, and therefore all of those must
-   either be defined in the same file as the dispatch function, or be imported by the dispatch
+   either be defined in the same file as the dispatch function, or be imported into the module containing the dispatch
    function.</p>
   <p id="171-x-9">Meanwhile, the handler functions will almost certainly refer to the route type. Therefore,
     <i id="171-x-10">they</i> must be either in the same file where the route type is defined, or must import that
