@@ -12,7 +12,7 @@ I will explain possible items to improve the performance of Warp.
 
 ## Conduit
 
-I have special `cabal` program which automatically specify the
+I have special `cabal` program which automatically specifies the
 `-fprof-auto` (aka `-auto-all`) and `-fprof-cafs` (aka `-caf-all`) flags
 to libraries to be installed. 
 So, I can take profile of all top level functions.
