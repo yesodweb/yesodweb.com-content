@@ -1,5 +1,3 @@
-# Future work to improve the performance of Warp (FIXME: to be deleted)
-
 This is the last article for the series of "Improving the performance of Warp".
 Readers are supposed to read the following articles:
 

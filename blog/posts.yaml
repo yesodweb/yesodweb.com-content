@@ -1,3 +1,7 @@
+- 'time': '2012-10-22T09:00:00Z'
+  'author': 'kazu'
+  'title': 'Future work to improve the performance of Warp'
+  'path': '2012/10/future-work-warp.md'
 - 'time': '2012-10-19T09:00:00Z'
   'author': 'arash'
   'title': 'Haskell and Continuous Integration'
