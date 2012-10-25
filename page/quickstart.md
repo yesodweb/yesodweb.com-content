@@ -18,6 +18,8 @@ Make sure to add `$HOME/.cabal/bin` to your `PATH`. Once you're set up, run
     
 to download a list of available packages. For more information on Haskell tools, see the [tools chapter of the Mezzo Haskell book](https://github.com/mezzohaskell/mezzohaskell/blob/master/chapters/tools.md).
 
+__Note__: There is a bug in the 64-bit GHC 7.4 for Mac which prevents `yesod devel` from working correctly. This bug has been corrected in 7.6. However, as 7.4 is still the recommended platform for development, it is advisable to install the 32-bit version of GHC.
+
 ## Install Yesod
 
 Building Yesod and all of its dependencies is a simple procedure. Just run:
