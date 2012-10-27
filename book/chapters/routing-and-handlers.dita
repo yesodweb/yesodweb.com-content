@@ -201,13 +201,13 @@ main = warpDebug 3000 Args
                 for your convenience.</li>
             <li id="84-x7">Like <codeph id="84-x-6">Widget</codeph>, <codeph id="84-x-7">Handler</codeph> is a
                 fake-monad-transformer. It wraps around a <codeph id="84-x-8">ResourceT IO</codeph> monad. We
-                discuss this type at length in the <xref id="84-x-9" href="conduits.dita#conduits-208" format="dita">conduits appendix</xref>, but for now, we'll just say it let's you
+                discuss this type at length in the <xref id="84-x-9" href="conduits.dita#conduits-208" format="dita">conduits appendix</xref>, but for now, we'll just say it lets you
                 safely allocate resources.</li>
             <li id="84-x-10">By "fake", I mean you can't use the standard <codeph id="84-x-11">lift</codeph> function
                 provided by the <apiname id="84-x-12">transformers</apiname> package, you must use the
                 Yesod-supplied one (just like with widgets).</li>
             <li id="84-x9"><codeph id="84-x-13">Handler</codeph> is just a type synonym around
-                    <codeph id="84-x-14">GHandler</codeph>. <codeph id="84-x-15">GHandler</codeph> let's you specify exactly
+                    <codeph id="84-x-14">GHandler</codeph>. <codeph id="84-x-15">GHandler</codeph> lets you specify exactly
                 which subsite and master site you're using. The <codeph id="84-x-16">Handler</codeph> synonym
                 says that the sub and master sites are your application's type.</li>
             <li id="84-x-17"><codeph id="84-x-18">Handler</codeph> provides a lot of different functionality, such as:<ul id="84-ul_sid_fwy_ze">
