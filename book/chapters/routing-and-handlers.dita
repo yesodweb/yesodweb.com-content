@@ -125,7 +125,7 @@ main = return ()</codeblock></conbody></concept></concept><concept id="resource-
                  structure to serve the static files from. There is nothing
                  magical about the word static, you could easily replace it
                  with <codeph id="80-x16">/my/non-dynamic/files</codeph>.</p><p id="80-rn12">The next word, <codeph id="80-x-3">StaticR</codeph>, gives the resource name. The next two words
-            are what specify that we are using a subsite. <codeph id="80-x17">Static</codeph> is the
+            specify that we are using a subsite. <codeph id="80-x17">Static</codeph> is the
             name of the <term id="80-x18">subsite foundation datatype</term>, and <codeph id="80-x19">getStatic</codeph> is a function that gets a <codeph id="80-x20">Static</codeph> value
             from a value of your master foundation datatype.</p><p id="80-rn13">Let's not get too caught up in the details of subsites now. We
                  will look more closely at the static subsite in the <xref id="80-x21" href="scaffolding-and-the-site-template.dita#scaffolding-and-the-site-template-166">scaffolded site chapter</xref>.</p></conbody></concept></concept><concept id="dispatch-81"><title>Dispatch</title><conbody><p id="81-dispatch1">Once you have specified your routes, Yesod will take care of all the pesky details
