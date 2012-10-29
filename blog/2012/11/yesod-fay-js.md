@@ -87,9 +87,10 @@ Note, however, that there is no type safety in this approach.
 I would classify AngularJS as giving us some level of reactive programming. We
 update variables, and the views update themselves automatically. It doesn't
 have all the power of a proper FRP solution (like reactive-banana or netwires),
-and it uses some ugly hacks to get it working. So for a long time I was opposed
-to using Angular: why use a hacky, suboptimal solution to a problem when we
-have a beautiful solution just waiting to be refined?
+and it uses a bit of a hack- efficient dirty checking- to get it working. So
+for a long time I was opposed to using Angular: why use a hacky, suboptimal
+solution to a problem when we have a beautiful solution just waiting to be
+refined?
 
 And the answer is simple: Angular is ready to be used now. I still believe that
 FRP will give us a better result in the end, and I hope the Haskell community
@@ -237,6 +238,17 @@ the right solution today, but it might be soon." It's a truly amazing effort,
 and I'm looking forward to where it heads. I think there's a lot of room for
 Fay and ghcjs to complement each other: Fay being a simpler tool for simple
 tasks, and ghcjs being the "big guns" when you need more power.
+
+## And Elm?
+
+Another solution in this space which is developing nicely is
+[Elm](http://elm-lang.org/). It provides a client-side FRP solution, and with
+[elm-yesod](http://hackage.haskell.org/package/elm-yesod) there's already the
+ability to integrate nicely with Yesod.
+
+However, as much as Elm is influenced by Haskell, it's still a separate
+language. This may not be a problem for many cases, and if you think Elm would
+be the right fit, you should definitely give it a shot.
 
 ## Next steps
 
