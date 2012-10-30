@@ -27,6 +27,10 @@ boils down to:
     great if it's almost transparent to the client-side code if we're calling a
     function locally or remotely.
 
+    By "almost transparent", I mean we should still keep asynchronous calls
+    asynchronous. In an ideal world, we could have a powerful multithreaded runtime
+    like GHC provides. But dealing with explicit callbacks is acceptable IMO.
+
 3.  We need to solve the big problems in client-side development as well. In
     other words: even if we could use GHC on the client side and compile any
     arbitrary piece of Haskell, we'd *still* have problems to solve: the DOM API is
@@ -35,7 +39,7 @@ boils down to:
 4.  We should not reinvent the wheel; we can use existing Javascript libraries
     when they're available. This might sound obvious, but I don't think it is
     (I'll give a concrete example later). There is a huge amount of effort going on
-    into making client-side development better, and by simply barracading ourselves
+    into making client-side development better, and by simply barricading ourselves
     in our Haskell bubble, we'll be missing out on a lot of improvements out there.
 
     This is actually a more general Yesod philosophy: we should stick to
@@ -57,8 +61,7 @@ problems in an elegant manner.
 
 You can see my [sample code on
 Github](https://github.com/snoyberg/yesod-js/blob/master/yesod-angular/angular.hs).
-For this demo, I wrote the Javascript code as simple Javascript (e.g.,
-[people.julius](https://github.com/snoyberg/yesod-js/blob/master/yesod-angular/angular/people.julius)).
+For this demo, I wrote the Javascript code as simple Javascript.
 One important trick I used here is providing a set of __commands__. For
 example:
 
@@ -71,7 +74,7 @@ cmdGetPeople <- addCommand $ \() -> do
 Each command takes a single JSON value as input, and returns a single JSON
 value as output. This is an important simplification over the standard approach
 of passing separate parameters: we can more clearly define our API, as will
-become important when coming to type safety. Calling this from Javascript is
+become important when coming to type safety. [Calling this from Javascript](https://github.com/snoyberg/yesod-js/blob/master/yesod-angular/angular/people.julius) is
 simple:
 
 ```javascript
@@ -81,6 +84,10 @@ function($scope, $http) {
     });
 }
 ```
+
+__Note__: If you don't have experience with AngularJS, some of the code in here may not make much sense. Don't worry too much about that for now, I'm hoping to give more information about Angular in future blog posts, as the Yesod solutions for interacting with it mature.
+
+The `addCtrl` Template Haskell function automatically includes the `people.hamlet` and `people.julius` files. `cmdGetPeople` is an automatically generated unique textual identifier given for the command defined.
 
 Note, however, that there is no type safety in this approach.
 
@@ -129,8 +136,8 @@ sort our family photos. It's never seen the light of day before.)
 
 You can [view the commit in
 question](https://github.com/snoyberg/photosorter/commit/f7527feab714a90a0b9a28c5eef81e5e43361d8b)
-to see exactly what I did. The goal was to replace one Julius file with a Fay
-file.
+to see exactly what I did. The goal was to replace one Julius file ([incoming.julius](https://github.com/snoyberg/photosorter/commit/f7527feab714a90a0b9a28c5eef81e5e43361d8b#L13L1)) with a Fay
+file ([Incoming.hs](https://github.com/snoyberg/photosorter/commit/f7527feab714a90a0b9a28c5eef81e5e43361d8b#L9R1)).
 
 ### Build Process
 
