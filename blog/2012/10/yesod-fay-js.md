@@ -138,6 +138,34 @@ You can [view the commit in
 question](https://github.com/snoyberg/photosorter/commit/f7527feab714a90a0b9a28c5eef81e5e43361d8b)
 to see exactly what I did. The goal was to replace one Julius file ([incoming.julius](https://github.com/snoyberg/photosorter/commit/f7527feab714a90a0b9a28c5eef81e5e43361d8b#L13L1)) with a Fay
 file ([Incoming.hs](https://github.com/snoyberg/photosorter/commit/f7527feab714a90a0b9a28c5eef81e5e43361d8b#L9R1)).
+Just to give a small test of the advantages of such a switch, compare this AJAX Javascript call:
+
+```javascript
+$.ajax({
+    url: "@{AddPostR}",
+    data: {
+        date: $(this).parent().children("input[type=date]").val(),
+        slug: $(this).parent().children("input[type=text]").val()
+    },
+    dataType: "json",
+    success: function() {
+        window.location.reload();
+    },
+    error: function () {
+        alert("Some error occurred");
+    },
+    type: 'POST'
+});
+```
+
+With this Fay type-safe callback:
+
+```haskell
+t <- eventSource e
+date <- parent t >>= childrenMatching "input[type=date]" >>= getVal
+slug <- parent t >>= childrenMatching "input[type=text]" >>= getVal
+call (AddPost date slug) $ const reload
+```
 
 ### Build Process
 
