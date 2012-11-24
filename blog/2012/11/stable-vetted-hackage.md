@@ -19,13 +19,13 @@ Let me summarise some main points of my proposal:
 I received a lot of very positive feedback, and so I'd like to get things
 rolling. To that end, I've [created a Github
 repo](https://github.com/snoyberg/stackage) for this project. (Note: I've
-called is "Stackage" == Stable Hackage for now, but I don't really like that
+called it "Stackage" == Stable Hackage for now, but I don't really like that
 name at all. If someone can come up with a better name, please let me know.)
 
 The most important file is
 [Stackage.Config](https://github.com/snoyberg/stackage/blob/master/Stackage/Config.hs),
 and in particular the `stablePackages` value. This is where we would specify
-which packages should be included in the package. My theory is that
+which packages should be included in the package set. My theory is that
 collaboration on this project would work as pull requests: if someone wants to
 add a package to the repo, they submit a pull request that adds the new
 package, along with a comment saying who will be maintaining that package.
