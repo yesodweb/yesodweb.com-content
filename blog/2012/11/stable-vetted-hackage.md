@@ -51,6 +51,7 @@ If you want to get started with trying out the code, you can try the following:
 cabal update
 cabal install cabal-dev
 git clone https://github.com/snoyberg/stackage
+cd stackage
 git submodule update --init # get the Haskell Platform files
 runghc app/stackage.hs build # takes a *long* time
 runghc app/stackage.hs init # modifies your ~/.cabal/config file
