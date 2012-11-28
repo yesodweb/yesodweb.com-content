@@ -25,10 +25,10 @@ name at all. If someone can come up with a better name, please let me know.)
 The most important file is
 [Stackage.Config](https://github.com/snoyberg/stackage/blob/master/Stackage/Config.hs),
 and in particular the `stablePackages` value. This is where we would specify
-which packages should be included in the package set. My theory is that
-collaboration on this project would work as pull requests: if someone wants to
-add a package to the repo, they submit a pull request that adds the new
-package, along with a comment saying who will be maintaining that package.
+which packages should be included in the package set. If you look in that file,
+you'll see that there are already a number of people who have signed up as
+maintainers for various packages. I hope this number will increase as the
+community gets more involved; more on this below.
 
 There are really two aspects to using Stackage: building the repos, and using a
 set of built repos. The idea is that we'll do the former as a community process
@@ -76,11 +76,12 @@ A few other minor details:
 
 So how can we move forward on this? There are a few important ways:
 
-*   Add more packages. I've included Yesod and all its dependencies. As Yesod
-    users know, that already encompasses a lot of the most commonly used
-    packages out there. But having wider coverage is even better. I have a feeling
-    adding in Snap and Happstack should be relatively painless, since we overlap
-    quite a bit in library usage.
+*   Add more packages. I've included Yesod and all its dependencies, and a
+    number of others (Neil Mitchell, Alan Zimmerman, Jasper Van der Jeugt and
+    Antoine Latter) have added their packages as well. Among all of these packages
+    and their dependencies, we already cover a lot of the most commonly used
+    packages out there. But having wider coverage is even better. If you'd like to
+    add your code, just send a pull request.
 
 *   Start hosting prepared repositories somewhere, and then release `stackage`
     onto Hackage. We clearly need to have some more testing done before this
@@ -90,21 +91,24 @@ So how can we move forward on this? There are a few important ways:
     each release, every package was compiled and tested on all the major
     operating systems and versions of GHC.
 
-*   Running the build procedure still reports errors for a number of packages.
-    I've been sending a lot of pull requests over the past few days to try and
-    get those corrected, but there are still some more out there. I'm hoping that
-    by having this kind of automated tool running regularly, we'll be able to spot
-    problems in packages quickly and alert the maintainers. To make the system
-    great, I'm hoping that maintainers will be able to help out by making necessary
-    changes to their packages.
+*   Initially, the build procedure reported errors for a number of packages.
+    I've sent a lot of pull requests over the past few weeks to try and get
+    those corrected, and Stackage now builds cleanly. I'm hoping that by having
+    this kind of automated tool running regularly, we'll be able to spot problems
+    in packages quickly and alert the maintainers. To make the system great, I'm
+    hoping that maintainers will be able to help out by making necessary changes to
+    their packages.
 
 *   It would be great to have Linux distribution maintainers on board with this
     initiative. Having the same set of stable packages available on multiple
-    platforms would be great, and hopefully this project will allow us all to pool
-    resources.
+    platforms would be great, and hopefully this project will allow us all to
+    pool resources. I've been in touch with maintainers for Debian, Fedora, and
+    Nix, and we're trying to coordinate how such a system would work. If there are
+    other distributions I missed that want to be part of this process, please be in
+    touch!
 
 But I want to make one thing clear. For this project to succeed, it has to have
-wide-spread community support. It's possible to make a tool that solves the
-dependency problem for just the Yesod world, but that's much less valuable than
-something the whole community participates in. I'm looking forward to getting
-input from the community at large.
+wide-spread community support. There's been a great response from those I've
+contacted already, and I'm hoping this will continue after this blog post. The
+more of the community gets involved in the process, the greater the benefits
+for everyone.
