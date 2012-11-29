@@ -26,10 +26,10 @@ the Haskell ecosystem, and we believe that this project is one means of doing
 so.
 
 The code base I'm working on is available [as a Github
-repo](https://github.com/snoyberg/stackage). (Note: I've called it "Stackage"
+repo](https://github.com/fpco/stackage). (Note: I've called it "Stackage"
 == Stable Hackage for now, but I don't really like that name at all. If someone
 can come up with a better name, please let me know.) The most important file is
-[Stackage.Config](https://github.com/snoyberg/stackage/blob/master/Stackage/Config.hs),
+[Stackage.Config](https://github.com/fpco/stackage/blob/master/Stackage/Config.hs),
 and in particular the `stablePackages` value. This is where we would specify
 which packages should be included in the package set. If you look in that file,
 you'll see that there are already a number of people who have signed up as
@@ -56,7 +56,7 @@ If you want to get started with trying out the code, you can try the following:
 ```bash
 cabal update
 cabal install cabal-dev
-git clone https://github.com/snoyberg/stackage
+git clone https://github.com/fpco/stackage
 cd stackage
 git submodule update --init # get the Haskell Platform files
 runghc app/stackage.hs build # takes a *long* time
