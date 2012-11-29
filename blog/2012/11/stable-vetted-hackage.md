@@ -3,7 +3,8 @@ hell](http://www.yesodweb.com/blog/2012/11/solving-cabal-hell) for end users.
 Let me summarise some main points of my proposal:
 
 * Cabal isn't really the problem at this point (so Cabal hell is really a
-  misnomer). The problem is that Hackage itself is unstable.
+  misnomer; let's agree to start calling it *version hell*). The problem is
+  that Hackage itself is unstable.
 
 * Hackage *should* be unstable, that's its purpose.
 
@@ -16,13 +17,18 @@ Let me summarise some main points of my proposal:
 
 * In other words, we need a level between Hackage and the Haskell Platform.
 
-I received a lot of very positive feedback, and so I'd like to get things
-rolling. To that end, I've [created a Github
-repo](https://github.com/snoyberg/stackage) for this project. (Note: I've
-called it "Stackage" == Stable Hackage for now, but I don't really like that
-name at all. If someone can come up with a better name, please let me know.)
+I received a lot of very positive feedback, and have therefore started work on
+a project to implement this idea.  This project has the full support of FP
+Complete, who is sponsoring my time to get this project rolling. I'll be
+writing a more thorough blog post on FP Complete's involvement, but in sum it
+is our goal to help the community create an even greater level of stability for
+the Haskell ecosystem, and we believe that this project is one means of doing
+so.
 
-The most important file is
+The code base I'm working on is available [as a Github
+repo](https://github.com/snoyberg/stackage). (Note: I've called it "Stackage"
+== Stable Hackage for now, but I don't really like that name at all. If someone
+can come up with a better name, please let me know.) The most important file is
 [Stackage.Config](https://github.com/snoyberg/stackage/blob/master/Stackage/Config.hs),
 and in particular the `stablePackages` value. This is where we would specify
 which packages should be included in the package set. If you look in that file,
@@ -77,7 +83,7 @@ A few other minor details:
 So how can we move forward on this? There are a few important ways:
 
 *   Add more packages. I've included Yesod and all its dependencies, and a
-    number of others (Neil Mitchell, Alan Zimmerman, Jasper Van der Jeugt and
+    number of other developerss (Neil Mitchell, Alan Zimmerman, Jasper Van der Jeugt and
     Antoine Latter) have added their packages as well. Among all of these packages
     and their dependencies, we already cover a lot of the most commonly used
     packages out there. But having wider coverage is even better. If you'd like to
