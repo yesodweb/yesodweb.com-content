@@ -86,8 +86,9 @@ So how can we move forward on this? There are a few important ways:
     number of other developerss (Neil Mitchell, Alan Zimmerman, Jasper Van der Jeugt and
     Antoine Latter) have added their packages as well. Among all of these packages
     and their dependencies, we already cover a lot of the most commonly used
-    packages out there. But having wider coverage is even better. If you'd like to
-    add your code, just send a pull request.
+    packages out there. But having wider coverage is even better. If you'd like
+    to add your code, just send a pull request. (For more details, [see the
+    README](https://github.com/fpco/stackage#get-your-package-included).)
 
 *   Start hosting prepared repositories somewhere, and then release `stackage`
     onto Hackage. We clearly need to have some more testing done before this
