@@ -21,6 +21,7 @@ import Network.Wai.EventSource (ServerEvent (..), eventSourceAppChan)
 import Language.Haskell.TH.Syntax (Type (VarT), Pred (ClassP), mkName)
 import Blaze.ByteString.Builder.Char.Utf8 (fromText)
 import Data.Monoid (mappend)
+import Data.Aeson (toJSON)
 
 -- | Our subsite foundation. We keep a channel of events that all connections
 -- will share.
@@ -127,7 +128,7 @@ chatWidget toMaster = do
             -- And now that Javascript
             toWidgetBody [julius|
 // Set up the receiving end
-var output = document.getElementById("#{output}");
+var output = document.getElementById(#{toJSON output});
 var src = new EventSource("@{toMaster ReceiveR}");
 src.onmessage = function(msg) {
     // This function will be called for each new message.
@@ -142,7 +143,7 @@ src.onmessage = function(msg) {
 
 // Set up the sending end: send a message via Ajax whenever the user hits
 // enter.
-var input = document.getElementById("#{input}");
+var input = document.getElementById(#{toJSON input});
 input.onkeyup = function(event) {
     var keycode = (event.keyCode ? event.keyCode : event.which);
     if (keycode == '13') {

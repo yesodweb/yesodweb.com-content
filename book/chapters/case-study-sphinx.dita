@@ -61,7 +61,7 @@ index searcher
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
-import Data.Text (Text, unpack)
+import Data.Text (Text)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 import Database.Persist.Sqlite
 import Database.Persist.Query.GenericSql (selectSourceConn)
@@ -178,12 +178,12 @@ getResult :: DocId -&gt; Doc -&gt; Text -&gt; IO Result
 getResult docid doc qstring = do
     excerpt' &lt;- S.buildExcerpts
         excerptConfig
-        [T.unpack $ escape $ docContent doc]
+        [escape $ docContent doc]
         "searcher"
-        (unpack qstring)
+        qstring
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok t -&gt; preEscapedToMarkup $ T.concat t
                 _ -&gt; return ()
     return Result
         { resultId = docid
@@ -204,7 +204,7 @@ escape =
 
 getResults :: Text -&gt; Handler [Result]
 getResults qstring = do
-    sphinxRes' &lt;- liftIO $ S.query config "searcher" (unpack qstring)
+    sphinxRes' &lt;- liftIO $ S.query config "searcher" qstring
     case sphinxRes' of
         ST.Ok sphinxRes -&gt; do
             let docids = map (Key . PersistInt64 . ST.documentId) $ ST.matches sphinxRes
@@ -312,7 +312,7 @@ main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
-import Data.Text (Text, unpack)
+import Data.Text (Text)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 import Database.Persist.Sqlite
 import Database.Persist.Query.GenericSql (selectSourceConn)
@@ -429,12 +429,12 @@ getResult :: DocId -&gt; Doc -&gt; Text -&gt; IO Result
 getResult docid doc qstring = do
     excerpt' &lt;- S.buildExcerpts
         excerptConfig
-        [T.unpack $ escape $ docContent doc]
+        [escape $ docContent doc]
         "searcher"
-        (unpack qstring)
+        qstring
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok t -&gt; preEscapedToMarkup $ T.concat t
                 _ -&gt; return ()
     return Result
         { resultId = docid
@@ -455,7 +455,7 @@ escape =
 
 getResults :: Text -&gt; Handler [Result]
 getResults qstring = do
-    sphinxRes' &lt;- liftIO $ S.query config "searcher" (unpack qstring)
+    sphinxRes' &lt;- liftIO $ S.query config "searcher" qstring
     case sphinxRes' of
         ST.Ok sphinxRes -&gt; do
             let docids = map (Key . PersistInt64 . ST.documentId) $ ST.matches sphinxRes
@@ -564,7 +564,7 @@ main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
-import Data.Text (Text, unpack)
+import Data.Text (Text)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 import Database.Persist.Sqlite
 import Database.Persist.Query.GenericSql (selectSourceConn)
@@ -681,12 +681,12 @@ getResult :: DocId -&gt; Doc -&gt; Text -&gt; IO Result
 getResult docid doc qstring = do
     excerpt' &lt;- S.buildExcerpts
         excerptConfig
-        [T.unpack $ escape $ docContent doc]
+        [escape $ docContent doc]
         "searcher"
-        (unpack qstring)
+        qstring
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok t -&gt; preEscapedToMarkup $ T.concat t
                 _ -&gt; return ()
     return Result
         { resultId = docid
@@ -707,7 +707,7 @@ escape =
 
 getResults :: Text -&gt; Handler [Result]
 getResults qstring = do
-    sphinxRes' &lt;- liftIO $ S.query config "searcher" (unpack qstring)
+    sphinxRes' &lt;- liftIO $ S.query config "searcher" qstring
     case sphinxRes' of
         ST.Ok sphinxRes -&gt; do
             let docids = map (Key . PersistInt64 . ST.documentId) $ ST.matches sphinxRes
@@ -829,7 +829,7 @@ main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
-import Data.Text (Text, unpack)
+import Data.Text (Text)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 import Database.Persist.Sqlite
 import Database.Persist.Query.GenericSql (selectSourceConn)
@@ -946,12 +946,12 @@ getResult :: DocId -&gt; Doc -&gt; Text -&gt; IO Result
 getResult docid doc qstring = do
     excerpt' &lt;- S.buildExcerpts
         excerptConfig
-        [T.unpack $ escape $ docContent doc]
+        [escape $ docContent doc]
         "searcher"
-        (unpack qstring)
+        qstring
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok t -&gt; preEscapedToMarkup $ T.concat t
                 _ -&gt; ""
     return Result
         { resultId = docid
@@ -972,7 +972,7 @@ escape =
 
 getResults :: Text -&gt; Handler [Result]
 getResults qstring = do
-    sphinxRes' &lt;- liftIO $ S.query config "searcher" (unpack qstring)
+    sphinxRes' &lt;- liftIO $ S.query config "searcher" qstring
     case sphinxRes' of
         ST.Ok sphinxRes -&gt; do
             let docids = map (Key . PersistInt64 . ST.documentId) $ ST.matches sphinxRes
@@ -1086,7 +1086,7 @@ main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
-import Data.Text (Text, unpack)
+import Data.Text (Text)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 import Database.Persist.Sqlite
 import Database.Persist.Query.GenericSql (selectSourceConn)
@@ -1203,12 +1203,12 @@ getResult :: DocId -&gt; Doc -&gt; Text -&gt; IO Result
 getResult docid doc qstring = do
     excerpt' &lt;- S.buildExcerpts
         excerptConfig
-        [T.unpack $ escape $ docContent doc]
+        [escape $ docContent doc]
         "searcher"
-        (unpack qstring)
+        qstring
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok t -&gt; preEscapedToMarkup $ T.concat t
                 _ -&gt; ""
     return Result
         { resultId = docid
@@ -1230,7 +1230,7 @@ escape =
 -- START
 getResults :: Text -&gt; Handler [Result]
 getResults qstring = do
-    sphinxRes' &lt;- liftIO $ S.query config "searcher" (unpack qstring)
+    sphinxRes' &lt;- liftIO $ S.query config "searcher" qstring
     case sphinxRes' of
         ST.Ok sphinxRes -&gt; do
             let docids = map (Key . PersistInt64 . ST.documentId) $ ST.matches sphinxRes
@@ -1351,12 +1351,12 @@ main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
 getResult docid doc qstring = do
     excerpt' &lt;- S.buildExcerpts
         excerptConfig
-        [T.unpack $ escape $ docContent doc]
+        [escape $ docContent doc]
         "searcher"
-        (unpack qstring)
+        qstring
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok t -&gt; preEscapedToMarkup t
                 _ -&gt; ""
     return Result
         { resultId = docid
@@ -1517,7 +1517,7 @@ getXmlpipeR = do
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
-import Data.Text (Text, unpack)
+import Data.Text (Text)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 import Database.Persist.Sqlite
 import Database.Persist.Query.GenericSql (selectSourceConn)
@@ -1634,12 +1634,12 @@ getResult :: DocId -&gt; Doc -&gt; Text -&gt; IO Result
 getResult docid doc qstring = do
     excerpt' &lt;- S.buildExcerpts
         excerptConfig
-        [T.unpack $ escape $ docContent doc]
+        [escape $ docContent doc]
         "searcher"
-        (unpack qstring)
+        qstring
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedToMarkup $ decodeUtf8With ignore $ L.concat bss
+                ST.Ok t -&gt; preEscapedToMarkup $ T.concat t
                 _ -&gt; ""
     return Result
         { resultId = docid
@@ -1660,7 +1660,7 @@ escape =
 
 getResults :: Text -&gt; Handler [Result]
 getResults qstring = do
-    sphinxRes' &lt;- liftIO $ S.query config "searcher" (unpack qstring)
+    sphinxRes' &lt;- liftIO $ S.query config "searcher" qstring
     case sphinxRes' of
         ST.Ok sphinxRes -&gt; do
             let docids = map (Key . PersistInt64 . ST.documentId) $ ST.matches sphinxRes

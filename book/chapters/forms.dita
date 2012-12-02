@@ -1232,7 +1232,7 @@ instance RenderMessage Password FormMessage where
 -- START
 passwordConfirmField :: Field sub master Text
 passwordConfirmField = Field
-    { fieldParse = \rawVals -&gt;
+    { fieldParse = \rawVals _ -&gt;
         case rawVals of
             [a, b]
                 | a == b -&gt; return $ Right $ Just a
@@ -1244,6 +1244,7 @@ passwordConfirmField = Field
 &lt;div&gt;Confirm:
 &lt;input id=#{idAttr}-confirm name=#{nameAttr} type=password&gt;
 |]
+    , fieldEnctype = UrlEncoded
     }
 
 getRootR :: Handler RepHtml
