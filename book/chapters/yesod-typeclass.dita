@@ -336,12 +336,6 @@ main = warpDebug 4000 Layout
     <dt id="73-x-9">clientSessionDuration</dt>
     <dd id="73-x-10">How long a session should last for. By default, this is two hours.</dd>
    </dlentry>
-   <dlentry id="73-x-11">
-    <dt id="73-x-12">sessionIpAddress</dt>
-    <dd id="73-x-13">By default, sessions are tied to an individual IP address. If your users are sitting behind
-     a proxy server, this can cause trouble when their IP suddenly changes. This setting lets you
-     disable this security feature.</dd>
-   </dlentry>
    <dlentry id="73-x-14">
     <dt id="73-x-15">cookiePath</dt>
     <dd id="73-x-16">What paths within your current domain to set cookies for. The default is "/", and will

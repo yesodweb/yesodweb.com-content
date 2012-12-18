@@ -42,14 +42,11 @@
                 sends an updated session cookie with a new expire date. This
                 way, even if you do not change the session values themselves, a
                 session will not time out if the user continues to browse your
-                site.</p></note><p id="107-c6">And this leads very nicely to the last function: <apiname id="107-x-5">yesod-core:Yesod.Core:sessionIpAddress</apiname>. By default, Yesod also encodes
-            the client's IP address inside the cookie to prevent session hijacking. In general, this
-            is a good thing. However, some ISPs are known for putting their users behind proxies
-            that rewrite their IP addresses, sometimes changing the source IP in the middle of the
-            session. If this happens, and you have <codeph id="107-x-6">sessionIpAddress</codeph> enabled, the
-            user's session will be reset. Turning this setting to <codeph id="107-x-7">False</codeph> will allow
-            a session to continue under such circumstances, at the cost of exposing a user to
-            session hijacking.</p></conbody></concept><concept id="session-operations-108"><title>Session Operations</title><conbody><p id="108-o1">Like most frameworks, a session in Yesod is a key-value store. The base session API boils
+                site.</p></note>
+
+        <note>Previous versions of Yesod provided a <codeph>sessionIpAddress</codeph> method, which was documented here. That method has since been removed.</note>
+
+            </conbody></concept><concept id="session-operations-108"><title>Session Operations</title><conbody><p id="108-o1">Like most frameworks, a session in Yesod is a key-value store. The base session API boils
             down to four functions: <codeph id="108-x1">lookupSession</codeph> gets a value for a key
             (if available), <codeph>getSession</codeph> returns all of the key/value pairs, <codeph id="108-x2">setSession</codeph> sets a value for a key, and <codeph id="108-x3">deleteSession</codeph> clears a value for a key.</p><codeblock id="108-x4" outputclass="haskell">{-# LANGUAGE TypeFamilies, QuasiQuotes, TemplateHaskell, MultiParamTypeClasses, OverloadedStrings #-}
 import Yesod
