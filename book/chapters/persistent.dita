@@ -28,6 +28,7 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
@@ -41,7 +42,7 @@ BlogPost
 |]
 
 main :: IO ()
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
 
     johnId &lt;- insert $ Person "John Doe" $ Just 35
@@ -137,6 +138,7 @@ main = return ()
 import Database.Persist
 import Database.Persist.Store
 import Database.Persist.Sqlite
+import Database.Persist.GenericSql.Raw (SqlBackend)
 import Database.Persist.EntityDef
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative
@@ -147,7 +149,7 @@ data Person = Person
     }
   deriving (Show, Read, Eq)
 
-type PersonId = Key SqlPersist Person
+type PersonId = Key Person
 
 instance PersistEntity Person where
     -- A Generalized Algebraic Datatype (GADT).
@@ -158,7 +160,7 @@ instance PersistEntity Person where
         PersonName :: EntityField Person String
         PersonAge  :: EntityField Person Int
 
-    type PersistEntityBackend Person = SqlPersist
+    type PersistEntityBackend Person = SqlBackend
 
     toPersistFields (Person name age) =
         [ SomePersistField name
@@ -187,7 +189,7 @@ instance PersistEntity Person where
         (FTTypeCon Nothing "Int")
         []
 -- STOP
-    data Unique Person typ = IgnoreThis
+    data Unique Person = IgnoreThis
     entityDef = undefined
     halfDefined = undefined
     persistUniqueToFieldNames = undefined
@@ -207,6 +209,7 @@ import Database.Persist
 import Database.Persist.TH
 import Database.Persist.Sqlite
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 mkPersist sqlSettings [persist|
 Person
@@ -215,7 +218,7 @@ Person
     deriving Show
 |]
 -- START
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     michaelId &lt;- insert $ Person "Michael" 26
     michael &lt;- get michaelId
     liftIO $ print michael
@@ -257,6 +260,7 @@ import Database.Persist
 import Database.Persist.TH
 import Database.Persist.Sqlite
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkSave "entityDefs"] [persist|
 Person
@@ -265,7 +269,7 @@ Person
     deriving Show
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration $ migrate entityDefs (undefined :: Person) -- this line added: that's it!
     michaelId &lt;- insert $ Person "Michael" 26
     michael &lt;- get michaelId
@@ -282,6 +286,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
@@ -295,7 +300,7 @@ Car
     deriving Show
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
 -- STOP
 </codeblock><p id="118-m5"><codeph id="118-x-7">mkMigrate</codeph> is a Template Haskell function which creates a new function
@@ -335,6 +340,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
@@ -345,7 +351,7 @@ Person
     deriving Show
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
     insert $ Person "Michael" "Snoyman" 26
     michael &lt;- getBy $ UniqueName "Michael" "Snoyman"
@@ -382,6 +388,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
@@ -391,7 +398,7 @@ Person
     deriving Show
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
 -- START
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
@@ -417,6 +424,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
@@ -427,7 +435,7 @@ Person
     deriving Show
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigrationSilent migrateAll
 -- START
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
@@ -489,6 +497,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
@@ -499,7 +508,7 @@ Person
     deriving Show
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
 -- START
@@ -530,6 +539,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
@@ -540,7 +550,7 @@ Person
     deriving Show
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
 -- START
@@ -589,6 +599,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
@@ -613,7 +624,7 @@ resultsForPage pageNumber = do
         ]
 -- STOP
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     resultsForPage 1 &gt;&gt;= liftIO . print</codeblock>
@@ -681,6 +692,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
@@ -703,7 +715,7 @@ resultsForPage pageNumber = do
         , OffsetBy $ (pageNumber - 1) * resultsPerPage
         ]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigrationSilent migrateAll
 -- START
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
@@ -720,6 +732,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
@@ -746,7 +759,7 @@ resultsForPage pageNumber = do
 haveBirthday personId = update personId [PersonAge +=. 1]
 -- STOP
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     update personId [PersonAge =. 27]
@@ -769,6 +782,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
@@ -793,7 +807,7 @@ resultsForPage pageNumber = do
 
 haveBirthday personId = update personId [PersonAge +=. 1]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     update personId [PersonAge =. 27]
@@ -811,6 +825,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
@@ -835,7 +850,7 @@ resultsForPage pageNumber = do
 
 haveBirthday personId = update personId [PersonAge +=. 1]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigrationSilent migrateAll
 -- START
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
@@ -869,6 +884,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
@@ -893,7 +909,7 @@ resultsForPage pageNumber = do
 
 haveBirthday personId = update personId [PersonAge +=. 1]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     replace personId $ Person "John" "Doe" 20
@@ -916,6 +932,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person sql=the-person-table
@@ -940,7 +957,7 @@ resultsForPage pageNumber = do
 
 haveBirthday personId = update personId [PersonAge +=. 1]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     replace personId $ Person "John" "Doe" 20
@@ -968,6 +985,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
@@ -977,7 +995,7 @@ Person
     deriving Show
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     time &lt;- liftIO getCurrentTime
     runMigration migrateAll
     insert $ Person "Michael" (Just 26) time
@@ -996,6 +1014,7 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
@@ -1006,7 +1025,7 @@ Person
     deriving Show
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
 -- STOP
 </codeblock>
@@ -1020,6 +1039,7 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
@@ -1031,7 +1051,7 @@ Person
     deriving Show
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
 -- STOP</codeblock>
         <p id="129-x9">One last trick you can do with attributes is to specify the names to be used for
@@ -1044,6 +1064,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 -- START
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
@@ -1068,7 +1089,7 @@ resultsForPage pageNumber = do
         , OffsetBy $ (pageNumber - 1) * resultsPerPage
         ]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     resultsForPage 1 &gt;&gt;= liftIO . print</codeblock></conbody></concept><concept id="relations-130"><title>Relations</title><conbody><p id="130-r1">Persistent allows references between your data types in a manner that is consistent with
@@ -1080,6 +1101,7 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 import Data.Time
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
@@ -1092,7 +1114,7 @@ Car
     deriving Show
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
     bruce &lt;- insert $ Person "Bruce Wayne"
     insert $ Car bruce "Bat Mobile"
@@ -1112,6 +1134,7 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Time
+import Control.Monad.Trans.Resource (runResourceT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Person
@@ -1124,7 +1147,7 @@ PersonStore
     UniquePersonStore personId storeId
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
 
     bruce &lt;- insert $ Person "Bruce Wayne"
@@ -1225,6 +1248,7 @@ type PostId = Key SqlPersist Post</codeblock>
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
+import Control.Monad.Trans.Resource (runResourceT)
 
 data Employment = Employed | Unemployed | Retired
     deriving (Show, Read, Eq)
@@ -1236,7 +1260,7 @@ Person
     employment Employment
 |]
 
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
 
     insert $ Person "Bruce Wayne" Retired
@@ -1267,6 +1291,7 @@ import Data.Text (Text)
 import Database.Persist
 import Database.Persist.Store (PersistValue)
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
 
@@ -1276,7 +1301,7 @@ Person
 |]
 
 main :: IO ()
-main = withSqliteConn ":memory:" $ runSqlConn $ do
+main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     runMigration migrateAll
     insert $ Person "Michael Snoyman"
     insert $ Person "Miriam Snoyman"
@@ -1304,6 +1329,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
 {-# LANGUAGE TemplateHaskell, OverloadedStrings, GADTs, MultiParamTypeClasses #-}
 import Yesod
 import Database.Persist.Sqlite
+import Control.Monad.Trans.Resource (runResourceT)
 
 -- Define our entities as usual
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
@@ -1348,10 +1374,10 @@ openConnectionCount :: Int
 openConnectionCount = 10
 
 main :: IO ()
-main = withSqlitePool "test.db3" openConnectionCount $ \pool -&gt; do
+main = runResourceT $ withSqlitePool "test.db3" openConnectionCount $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
     runSqlPool (insert $ Person "Michael" "Snoyman" 26) pool
-    warpDebug 3000 $ PersistTest pool</codeblock>
+    liftIO $ warpDebug 3000 $ PersistTest pool</codeblock>
   <p id="134-x5">There are two important pieces here for general use. <codeph id="134-x-5">runDB</codeph> is used to
             run a DB action from within a <codeph id="134-x-6">Handler</codeph>. Within the
                 <codeph id="134-x-7">runDB</codeph>, you can use any of the functions we've spoken about so far,
