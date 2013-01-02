@@ -42,7 +42,7 @@ often. You can see the same thing with `Map` versus associated lists, `Vector`
 and lists, and so on.
 
 __Note__: As Herbert pointed out to me, with GHC 7.4 and up, you could just use
-the \<\> operator provided by `Data.Monoid` instance of \`T.append\`. So
+the `<>` operator provided by `Data.Monoid` instance of <code>\`T.append\`</code>. So
 consider the case where you need to use some `Prelude` functions that require a
 `String`.
 
