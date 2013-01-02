@@ -367,7 +367,11 @@ main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
             within your Haskell code, like the <codeph id="119-x-8">getBy</codeph> demonstrated above.
             This happens via the <codeph id="119-x-9">Unique</codeph> associated type. In the example
             above, we end up with a new constructor:</p>
-        <codeblock outputclass="haskell" id="119-x8">UniqueName :: String -&gt; String -&gt; Unique Person</codeblock></conbody></concept><concept id="queries-120"><title>Queries</title><conbody>
+        <codeblock outputclass="haskell" id="119-x8">UniqueName :: String -&gt; String -&gt; Unique Person</codeblock>
+
+        <note>With the MongoDB backend, a uniqueness constraint cannot be created: you must place a unique index on the field.</note>
+
+        </conbody></concept><concept id="queries-120"><title>Queries</title><conbody>
         <p id="120-x-3">Depending on what your goal is, there are different approaches to querying the database.
             Some commands query based on a numeric ID, while others will filter. Queries also differ
             in the number of results they return: some lookups should return no more than one result
