@@ -41,6 +41,29 @@ less convenient. And due to that extra bit of work, `Text` gets used less
 often. You can see the same thing with `Map` versus associated lists, `Vector`
 and lists, and so on.
 
+__Note__: As Herbert pointed out to me, with GHC 7.4 and up, you could just use
+the `\<\>` operator provided by `Data.Monoid` instance of `\`T.append\``. So
+consider the case where you need to use some `Prelude` functions that require a
+`String`.
+
+```haskell
+-- String version
+main = putStrLn $ "Invalid name: " ++ name
+
+-- Text version
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
+import Data.Monoid ((<>))
+main = TIO.putStrLn $ "Invalid name: " <> name
+```
+
+By comparison, in `classy-prelude` this becomes:
+
+```haskell
+import ClassyPrelude
+main = putStrLn $ "Invalid name: " ++ name
+```
+
 If you think that my assessment so far doesn't warrant any changes to our
 tooling, turn back now, this blog post isn't for you. If you *are* interested
 in some kind of a solution to this issue, I have two options for you.
