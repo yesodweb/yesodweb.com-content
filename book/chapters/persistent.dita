@@ -819,7 +819,7 @@ main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
 -- START
     updateWhere [PersonFirstName ==. "Michael"] [PersonAge *=. 2] -- it's been a long day
 -- STOP</codeblock>
-  <p id="127-x11">Occassionally, you'll just want to completely replace the value in a database with a
+  <p id="127-x11">Occasionally, you'll just want to completely replace the value in a database with a
             different value. For that, you use (surprise) the <codeph id="127-x-13">replace</codeph> function.</p>
   <codeblock id="127-x12" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
