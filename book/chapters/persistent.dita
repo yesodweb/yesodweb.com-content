@@ -685,8 +685,7 @@ main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
     michaelAfterBirthday = michael { personAge = 27 }</codeblock>But
             that's not actually updating anything, it's just creating a new <codeph id="127-x-3">Person</codeph>
             value based on the old one. When we say update, we're <i id="127-x3">not</i> talking about
-            modifications to the values in Haskell. (We better not be of course, since Haskell data
-            types are immutable.)</p>
+            modifications to the values in Haskell. (We better not be of course, since data in Haskell is immutable.)</p>
   <p id="127-x4">Instead, we're looking at ways of modifying rows in a table. And the simplest way to do
             that is with the <codeph id="127-x-4">update</codeph> function.</p>
   <codeblock id="127-x5" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
