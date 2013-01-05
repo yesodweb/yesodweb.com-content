@@ -363,7 +363,7 @@
    apply.</p>
   <pre class="codeblock"><pre style="padding: 0;margin: 0;">updateWhere [<span style="color: blue;">PersonFirstName</span> ==. <span style="color: green;">&quot;Michael&quot;</span>] [<span style="color: blue;">PersonAge</span> *=. <span style="color: teal;">2</span>] <span style="color: gray;">-- it&#39;s been a long day</span>
 </pre></pre>
-  <p class="hascomments" id="file816-update-x11">Occassionally, you&#39;ll just want to completely replace the value in a database with a different
+  <p class="hascomments" id="file816-update-x11">Occasionally, you&#39;ll just want to completely replace the value in a database with a different
    value. For that, you use (surprise) the replace function.</p>
   <pre class="codeblock"><pre style="padding: 0;margin: 0;">personId &lt;- insert $ <span style="color: blue;">Person</span> <span style="color: green;">&quot;Michael&quot;</span> <span style="color: green;">&quot;Snoyman&quot;</span> <span style="color: teal;">26</span>
     replace personId $ <span style="color: blue;">Person</span> <span style="color: green;">&quot;John&quot;</span> <span style="color: green;">&quot;Doe&quot;</span> <span style="color: teal;">20</span>
@@ -589,7 +589,7 @@ Post
    back through this whole chapter: not once did we need to deal with the Key or Generic stuff
    directly. The most common place for it to pop up is in compiler error messages. So it&#39;s important
    to be aware that this exists, but it shouldn&#39;t affect you on a day-to-day basis.</p>
- </section><section .subtopic=""><h1>Custom Fields</h1><p class="hascomments" id="file822-custom-fields-cf1">Occassionally, you will want to define a custom field to be used in your datastore. The most common case is an enumeration, such as employment status. For this, Persistent provides a helper Template Haskell function:</p><pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell, OverloadedStrings, GADTs #-}</span>
+ </section><section .subtopic=""><h1>Custom Fields</h1><p class="hascomments" id="file822-custom-fields-cf1">Occasionally, you will want to define a custom field to be used in your datastore. The most common case is an enumeration, such as employment status. For this, Persistent provides a helper Template Haskell function:</p><pre class="codeblock"><pre style="padding: 0;margin: 0;"><span style="color: gray;">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell, OverloadedStrings, GADTs #-}</span>
 <span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist</span>
 <span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.Sqlite</span>
 <span style="color: green;font-weight: bold;">import</span> <span style="color: blue;">Database.Persist.TH</span>
@@ -614,7 +614,7 @@ Post
             backend-agnostic, such as not relying on relational features of SQL. My experience has
             been you can easily perform 95% of what you need to do with the high-level interface.
             (In fact, most of my web apps use the high level interface exclusively.)</p>
-  <p class="hascomments" id="file823-persistent-raw-sql-x2">But occassionally you&#39;ll want to use a feature that&#39;s specific to a backend. One feature I&#39;ve
+  <p class="hascomments" id="file823-persistent-raw-sql-x2">But occasionally you&#39;ll want to use a feature that&#39;s specific to a backend. One feature I&#39;ve
    used in the past is full text search. In this case, we&#39;ll use the SQL &quot;LIKE&quot; operator, which is
    not modeled in Persistent. We&#39;ll get all people with the last name &quot;Snoyman&quot; and print the
    records out.</p>
