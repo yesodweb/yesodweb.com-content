@@ -170,7 +170,7 @@ main = do
    <image href="../images/after-login.png" id="162-image_gz2_v3f_p2"/>
   </fig>
  </conbody></concept><concept id="email-163"><title>Email</title><conbody>
-  <p id="163-x-3">For many use cases, third-party authentication of email will be sufficient. Occassionally,
+  <p id="163-x-3">For many use cases, third-party authentication of email will be sufficient. Occasionally,
    you'll want users to actual create passwords on your site. The scaffolded site does not include
    this setup, because:</p>
   <ul id="163-ul_mmf_nsk_pe">
