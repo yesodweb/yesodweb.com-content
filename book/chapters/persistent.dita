@@ -775,7 +775,7 @@ main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
             pull out a <codeph id="127-x-11">Person</codeph>, increment the age, and update the new value. If you
             have two threads/processes working on this database at the same time, you're in for a
             world of hurt (hint: race conditions).</p>
-  <p id="127-x9">Sometimes you'll want to update many fields at once (give all your employees a 5% pay
+  <p id="127-x9">Sometimes you'll want to update many rows at once (give all your employees a 5% pay
             increase, for example). <codeph id="127-x-12">updateWhere</codeph> takes two parameters: a list of
             filters, and a list of updates to apply.</p>
   <codeblock id="127-x10" outputclass="haskell">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
