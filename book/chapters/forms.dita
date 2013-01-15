@@ -1002,7 +1002,7 @@ getCarR = do
   <ul id="100-ul_pgx_iyg_md">
    <li id="100-x2">There is an automatic instance of <codeph id="100-x-6">RenderMessage</codeph> for
      <codeph id="100-x-7">Text</codeph> in every site, so you can just use plain strings if you don't care about
-    i18n support. However, you may need to use explicit type signatures occassionally.</li>
+    i18n support. However, you may need to use explicit type signatures occasionally.</li>
    <li id="100-x3"><codeph id="100-x-8">yesod-form</codeph> expresses all of its messages in terms of the
      <codeph id="100-x-9">FormMessage</codeph> datatype. Therefore, to use <codeph id="100-x-10">yesod-form</codeph>, you'll
     need to have an appropriate <codeph id="100-x-11">RenderMessage</codeph> instance. A simple one that uses the
@@ -1011,7 +1011,7 @@ getCarR = do
     renderMessage _ _ = defaultFormMessage</codeblock>This
     is provided automatically by the scaffolded site.</li>
    <!-- Perhaps include this later? <li id="x5">In order to allow multiple different message types to co-exist, we use an existential
-    type called <codeph id="x-12">SomeMessage</codeph>. You will occassionally need to wrap your values inside
+    type called <codeph id="x-12">SomeMessage</codeph>. You will occasionally need to wrap your values inside
     of it, though this is not common in normal library use.</li>-->
   </ul>
  </conbody></concept><concept id="monadic-101"><title>Monadic Forms</title><conbody>
@@ -1184,7 +1184,7 @@ main :: IO ()
 main = warpDebug 3000 Input</codeblock>
  </conbody></concept><concept id="custom-103"><title>Custom fields</title><conbody>
   <p id="103-x-3">The fields that come built-in with Yesod will likely cover the vast majority of your
-   form needs. But occassionally, you'll need something more specialized. Fortunately, you can
+   form needs. But occasionally, you'll need something more specialized. Fortunately, you can
    create new forms in Yesod yourself. The <codeph id="103-x-19">Field</codeph> datatype has two records:
     <codeph id="103-x-20">fieldParse</codeph> takes a list of values submitted by the user and returns one of
    three results:</p>
