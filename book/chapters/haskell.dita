@@ -95,7 +95,7 @@
   <note id="10-x-25">Many people in the community prefer to perform sandboxed builds of their Haskell
    packages, which prevents your install Yesod from breaking existing packages, or packages you
    install in the future from breaking your Yesod install. I won't go into details on how to use
-   these in the book, but the two most commonly used tools are <xref id="10-x-26" href="http://hackage.haskell.org/package/cabal-dev" format="html" scope="external">cabal-dev</xref> and <xref id="10-x-27" href="http://hackage.haskell.org/package/virthualenv" format="html" scope="external">virthualenv</xref>.</note>
+   these in the book, but the two most commonly used tools are <xref id="10-x-26" href="http://hackage.haskell.org/package/cabal-dev" format="html" scope="external">cabal-dev</xref> and <xref id="10-x-27" href="http://hackage.haskell.org/package/hsenv" format="html" scope="external">hsenv</xref>.</note>
  </conbody></concept><concept id="language-pragmas-11"><title>Language Pragmas</title><conbody>
   <p id="11-x-3">GHC will run by default in something very close to Haskell98 mode. It also ships with a large
    number of language extensions, allowing more powerful type classes, syntax changes, and more.
