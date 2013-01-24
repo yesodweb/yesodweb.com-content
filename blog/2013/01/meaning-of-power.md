@@ -27,7 +27,7 @@ One approach would be that my library provides you with the means to generate a
 stream of bytes. This approach is incredibly flexible. You can generate any
 character encoding you want. You can optimize your HTML by leaving off some
 closing tags if you wanted. You can use single or double quotes for attributes
-values. You can use decimal or hexidecimal numerical entities. And for that
+values. You can use decimal or hexadecimal numerical entities. And for that
 matter, you could forget about HTML entirely, and just generate PNG or PDF
 files if you wanted.
 
@@ -144,7 +144,7 @@ optimize our solution based on the four points from the previous section:
 *   We need to make sure that we have the *flexibility* to solve the entire
     problem. If `network-conduit` only allowed textual data, this would not be
     flexible enough, since many network protocols require binary data. On the flip
-    side, we don't need to provde full flexibility higher up. The scaffolded site
+    side, we don't need to provide full flexibility higher up. The scaffolded site
     includes Persistent, it doesn't need to provide five other data storage
     mechanisms as well. If you want to use a different data model, go down a layer
     of abstraction. (Or in reality, use the scaffolding that doesn't include
@@ -264,7 +264,7 @@ all of these. When you run the scaffolding, you have a fully functional
 authentication system, and can quite trivially add in new authentication
 options like OpenID.
 
-What we have here is a very clear dilineation of simplicity versus flexibility.
+What we have here is a very clear delineation of simplicity versus flexibility.
 There are many use cases for which the scaffolding's authentication system
 would not be appropriate, but for which you'd still want to have OpenID logins.
 If you're using Yesod, you can stick with yesod-auth and still get a level of
