@@ -80,38 +80,38 @@ adopt, as I think it will prove to be more complicated than it initially looks.
 
 ### io-streams
 
-I'll admit, this one baffled me a bit. When I started getting asked how conduit
-and io-streams compares, I couldn't really understand why someone would be
-comparing a streaming data abstraction to a I/O abstraction. I believe the
-question came about because Gregory Collins announced that Snap would be using
-io-streams in place of a streaming data abstraction. So let me try and clarify.
+I'd initially written a comparison to io-streams based on the publicly stated
+information I'd seen about it so far. However, when I showed that to Gregory
+Collins, he said my understanding of the situation was incorrect. So given that
+this is an unreleased package without much code to compare against, I'm going
+to admit that I really don't have a very good idea of what this comparison
+looks like.
 
-conduit is at an entirely different level of abstraction from io-streams.
-io-streams is much more set as a replacement to `Handle` than to conduit. It's
-certainly possible for a library to elect to use io-streams instead of conduit,
-but what that's really doing is choosing to swap out I/O systems and
-*simultaenously* choose an entirely different level of abstraction.
+One thing which is (almost) certainly true is that conduit works for more than
+just I/O. conduit is designed as a general streaming abstraction, whereas
+io-streams has a distinct I/O bias. This is not a criticism; picking a goal to
+target and focusing on that is a great technique. But it does clarify one of
+conduit's goals: work for more than just I/O, even if I/O is our main
+motivating case.
 
-Personally, I think streaming data abstractions are a good thing. I don't want
-to go back to explicit reads and writes. I believe something like io-streams as
-the user-facing abstraction falls into the trap of pretending that a simple API
-means simple usage. It's true that learning the conduit API will take longer
-than learning the io-streams API, but once you've learned it, code becomes much
-easier to understand. For example, copying a file in conduit is `runResourceT $
-sourceFile src $$ sinkFile dst`. From what I understand, the io-streams result
-will be much longer and less declarative.
+So practically speaking, it seems like io-streams would not be a library that
+would address the needs of something like xml-conduit. (I could be mistaken
+here, but I have a hard time seeing it happen.)
 
-There are also entire use cases which don't seem addressed by io-streams. It
-has chosen not to abstract over the monad for actions, meaning it can neither
-be used in pure contexts or with monad transformer stacks. It also seems
-ill-suited for cases such as xml-conduit. That's not to say that the library is
-badly designed- on the contrary. It seems to be designed perfectly for the use
-case its targeting. My point is that that use case is *different* than the
-conduit use case.
+In the same vein, conduit was designed from the ground up to work with
+arbitrary monad transformer stacks. Again, this is an intentional design
+decision on both the parts of conduit and io-streams; Gregory explained to me
+that they purposely avoided supporting transformer stacks. While I understand
+his motivations, it's simply not an option for supporting the use cases we want
+to support it conduit. Handling streaming database responses in persistent, for
+example, would not be possible with such an approach.
 
-conduit currently builds its I/O system on top of `Handle`s. Depending on how
-things progress with io-streams, I could certainly picture either replacing
-that with io-streams, or making io-streams an optional replacement.
+Additionally, a fairly substantial part of the io-streams codebase is a
+replacement for `Handle`s, not streaming data abstractions. In that sense, I
+don't see conduit and io-streams in conflict. conduit currently uses `Handle`s
+for low-level I/O primitives, but could certainly switch to io-streams instead,
+or use the package as an optional replacement. So in my opinion, the window
+for comparison between the two is actually fairly narrow.
 
 Simply because they came up in the context of io-streams, I wanted to discuss
 two criticisms leveled against conduit.
