@@ -95,8 +95,9 @@ conduit's goals: work for more than just I/O, even if I/O is our main
 motivating case.
 
 So practically speaking, it seems like io-streams would not be a library that
-would address the needs of something like xml-conduit. (I could be mistaken
-here, but I have a hard time seeing it happen.)
+would address the needs of something like xml-conduit, which requires both pure
+and impure interfaces. (I could be mistaken here, but I have a hard time seeing
+it happen.)
 
 In the same vein, conduit was designed from the ground up to work with
 arbitrary monad transformer stacks. Again, this is an intentional design
