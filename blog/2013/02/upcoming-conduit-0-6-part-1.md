@@ -17,6 +17,12 @@ since that discussion has happened quite a bit.) Let me address each one in
 turn to hopefully paint a picture of what conduit hopes to be- in my mind at
 least.
 
+This isn't a question about superiority of one library over another; instead, I
+believe each of the four libraries has a distinct purpose, and this purpose
+directs its development. By analyzing the differences between conduit and the
+other package, we can help to better clarify what conduit's purpose is, and
+therefore create a better end product.
+
 ### enumerator
 
 conduit came out in a direct response to issues we were facing with enumerator.
@@ -78,21 +84,27 @@ experience with failed attempts. I'm actively interested in seeing how this
 approach works out for pipes. But for now it's not a feature I think we should
 adopt, as I think it will prove to be more complicated than it initially looks.
 
+Gabriel pointed out to me another very good example: bidirectionality. It's a
+very interesting feature in pipes, and could be used for a lot of purposes.
+However, it also adds in extra complexity, and is not a feature necessary to
+implement our current conduit use cases. It might be that it will turn out to
+be such an incredibly useful feature in the future that conduit may wish to
+adopt it, but for now I think it makes more sense to leave it out.
+
 ### io-streams
 
-I'd initially written a comparison to io-streams based on the publicly stated
-information I'd seen about it so far. However, when I showed that to Gregory
-Collins, he said my understanding of the situation was incorrect. So given that
-this is an unreleased package without much code to compare against, I'm going
-to admit that I really don't have a very good idea of what this comparison
-looks like.
+_Note_: I'll admit from the start that I am no expert on io-streams. I had to go
+to Gregory for a few clarifications, and it's possible I'm still incorrect on
+some of the details. My point here is *not* to create an exhaustive comparison
+between the libraries, but rather at a high level point out the differences in
+approach.
 
-One thing which is (almost) certainly true is that conduit works for more than
-just I/O. conduit is designed as a general streaming abstraction, whereas
-io-streams has a distinct I/O bias. This is not a criticism; picking a goal to
-target and focusing on that is a great technique. But it does clarify one of
-conduit's goals: work for more than just I/O, even if I/O is our main
-motivating case.
+Probably the biggest distinction between these packages is that- while conduit
+was designed primarily to solve I/O issues- it aims to work in an entirely pure
+context as well.  io-streams, on the other hand, has a distinct I/O bias. This
+is not a criticism; picking a goal to target and focusing on that is a great
+technique. But it does clarify one of conduit's goals: work for more than just
+I/O, even if I/O is our main motivating case.
 
 So practically speaking, it seems like io-streams would not be a library that
 would address the needs of something like xml-conduit, which requires both pure
@@ -105,7 +117,8 @@ decision on both the parts of conduit and io-streams; Gregory explained to me
 that they purposely avoided supporting transformer stacks. While I understand
 his motivations, it's simply not an option for supporting the use cases we want
 to support it conduit. Handling streaming database responses in persistent, for
-example, would not be possible with such an approach.
+example, would not be possible with such an approach (or without significantly
+rewriting the persistent API).
 
 Additionally, a fairly substantial part of the io-streams codebase is a
 replacement for `Handle`s, not streaming data abstractions. In that sense, I
@@ -160,7 +173,7 @@ conduit itself.
 
 ## Conclusion
 
-conduit has a while defined set of use cases it's trying to solve, and is
+conduit has a well defined set of use cases it's trying to solve, and is
 unapologetic about not fitting other use cases. It fits a certain level of
 abstraction, and doesn't attempt to shoe-horn itself into a different level as
 well. In my opinion, this produces a high quality, user friendly, and
