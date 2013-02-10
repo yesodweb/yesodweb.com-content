@@ -53,7 +53,7 @@ that the core distinction is a strong philosophical difference: conduit is
 designed first and foremost to solve problems in the real world, whereas pipes
 is designed to find the most elegant solution to the problem. I believe each
 approach has its place, but this leads to some important differences, some of
-which will be very relevant for the 0.6 discussion.
+which will be very relevant for the 1.0 discussion.
 
 Let's take the issue of guaranteed resource finalization. Gabriel [recently
 explained](http://www.haskellforall.com/2013/01/pipes-safe-10-resource-management-and.html)
