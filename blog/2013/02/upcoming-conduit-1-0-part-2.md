@@ -150,6 +150,9 @@ sourceFile :: MonadResource m
 
 The only change in type signature is swapping `MonadSource` for `Source`.
 
+(Note: a big thanks to Felipe for keeping me honest about this point, and
+recommending this solution.)
+
 As far as end users go, there's no need to ever deal directly with the Monad*
 variants of the types, they are only necessary for creating general-purpose
 libraries. If you want to just use conduit for your own application, you can
