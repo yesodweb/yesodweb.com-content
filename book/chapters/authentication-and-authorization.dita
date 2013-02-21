@@ -206,6 +206,7 @@ import Text.Blaze.Html.Renderer.Utf8 (renderHtml)
 import Text.Hamlet (shamlet)
 import Data.Maybe (isJust)
 import Control.Monad (join)
+import Control.Monad.Logger (runStderrLoggingT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 User
@@ -334,7 +335,7 @@ $nothing
 
 main :: IO ()
 main = withSqliteConn "email.db3" $ \conn -&gt; do
-    runSqlConn (runMigration migrateAll) conn
+    runStderrLoggingT $ runSqlConn (runMigration migrateAll) conn
     warpDebug 3000 $ MyEmailApp conn</codeblock>
  </conbody></concept><concept id="authorization-164"><title>Authorization</title><conbody>
   <p id="164-x-3">Once you can authenticate your users, you can use their credentials to <i id="164-x-4">authorize</i> requests. Authorization in Yesod is simple and declarative: most of

@@ -61,6 +61,7 @@ index searcher
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
+import Control.Monad.Logger (runStderrLoggingT)
 import Data.Text (Text)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 import Database.Persist.Sqlite
@@ -276,7 +277,7 @@ fullDocSource conn = mconcat
     ]
 
 docSource :: Connection -&gt; C.Source (C.ResourceT IO) X.Event
-docSource conn = selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents
+docSource conn = C.transPipe runStderrLoggingT $ selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents
 
 toName :: Text -&gt; X.Name
 toName x = X.Name x (Just "http://sphinxsearch.com/") (Just "sphinx")
@@ -304,7 +305,7 @@ endEvents =
 
 main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
-    runSqlPool (runMigration migrateAll) pool
+    runStderrLoggingT $ runSqlPool (runMigration migrateAll) pool
     warpDebug 3000 $ Searcher pool</codeblock>
   <p id="195-x-5">Hopefully all of this looks pretty familiar by now. Next we'll define some forms: one for
    creating documents, and one for searching:</p>
@@ -312,6 +313,7 @@ main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
+import Control.Monad.Logger (runStderrLoggingT)
 import Data.Text (Text)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 import Database.Persist.Sqlite
@@ -527,7 +529,7 @@ fullDocSource conn = mconcat
     ]
 
 docSource :: Connection -&gt; C.Source (C.ResourceT IO) X.Event
-docSource conn = selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents
+docSource conn = C.transPipe runStderrLoggingT $ selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents
 
 toName :: Text -&gt; X.Name
 toName x = X.Name x (Just "http://sphinxsearch.com/") (Just "sphinx")
@@ -555,7 +557,7 @@ endEvents =
 
 main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
-    runSqlPool (runMigration migrateAll) pool
+    runStderrLoggingT $ runSqlPool (runMigration migrateAll) pool
     warpDebug 3000 $ Searcher pool</codeblock>
   <p id="195-x-7">The <codeph id="195-x-8">True</codeph> parameter to searchField makes the field auto-focus on page load.
    Finally, we have some standard handlers for the homepage (shows the add document form and the
@@ -564,6 +566,7 @@ main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
+import Control.Monad.Logger (runStderrLoggingT)
 import Data.Text (Text)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 import Database.Persist.Sqlite
@@ -779,7 +782,7 @@ fullDocSource conn = mconcat
     ]
 
 docSource :: Connection -&gt; C.Source (C.ResourceT IO) X.Event
-docSource conn = selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents
+docSource conn = C.transPipe runStderrLoggingT $ selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents
 
 toName :: Text -&gt; X.Name
 toName x = X.Name x (Just "http://sphinxsearch.com/") (Just "sphinx")
@@ -807,7 +810,7 @@ endEvents =
 
 main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
-    runSqlPool (runMigration migrateAll) pool
+    runStderrLoggingT $ runSqlPool (runMigration migrateAll) pool
     warpDebug 3000 $ Searcher pool</codeblock>
  </conbody></concept><concept id="searching-196"><title>Searching</title><conbody>
         <p id="196-x-3">Now that we've got the boring stuff out of the way, let's jump into the actual
@@ -829,6 +832,7 @@ main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
+import Control.Monad.Logger (runStderrLoggingT)
 import Data.Text (Text)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 import Database.Persist.Sqlite
@@ -1046,7 +1050,7 @@ fullDocSource conn = mconcat
     ]
 
 docSource :: Connection -&gt; C.Source (C.ResourceT IO) X.Event
-docSource conn = selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents
+docSource conn = C.transPipe runStderrLoggingT $ selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents
 
 toName :: Text -&gt; X.Name
 toName x = X.Name x (Just "http://sphinxsearch.com/") (Just "sphinx")
@@ -1074,7 +1078,7 @@ endEvents =
 
 main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
-    runSqlPool (runMigration migrateAll) pool
+    runStderrLoggingT $ runSqlPool (runMigration migrateAll) pool
     warpDebug 3000 $ Searcher pool</codeblock>
         <p id="196-x-11">Nothing magical here, we're just relying on the <codeph id="196-x-27">searchForm</codeph> defined above, and the <codeph id="196-x-28">getResults</codeph>
             function which hasn't been defined yet. This function just takes a search string, and
@@ -1086,6 +1090,7 @@ main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
+import Control.Monad.Logger (runStderrLoggingT)
 import Data.Text (Text)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 import Database.Persist.Sqlite
@@ -1303,7 +1308,7 @@ fullDocSource conn = mconcat
     ]
 
 docSource :: Connection -&gt; C.Source (C.ResourceT IO) X.Event
-docSource conn = selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents
+docSource conn = C.transPipe runStderrLoggingT $ selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents
 
 toName :: Text -&gt; X.Name
 toName x = X.Name x (Just "http://sphinxsearch.com/") (Just "sphinx")
@@ -1331,7 +1336,7 @@ endEvents =
 
 main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
-    runSqlPool (runMigration migrateAll) pool
+    runStderrLoggingT $ runSqlPool (runMigration migrateAll) pool
     warpDebug 3000 $ Searcher pool</codeblock>
         <p id="196-x-13"><codeph id="196-x-32">query</codeph> takes three parameters: the configuration
             options, the index to search against (searcher in this case) and the search string. It
@@ -1517,6 +1522,7 @@ getXmlpipeR = do
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
 import Yesod
+import Control.Monad.Logger (runStderrLoggingT)
 import Data.Text (Text)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;))
 import Database.Persist.Sqlite
@@ -1732,7 +1738,7 @@ fullDocSource conn = mconcat
     ]
 
 docSource :: Connection -&gt; C.Source (C.ResourceT IO) X.Event
-docSource conn = selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents
+docSource conn = C.transPipe runStderrLoggingT $ selectSourceConn conn [] [] C.$= CL.concatMap entityToEvents
 
 toName :: Text -&gt; X.Name
 toName x = X.Name x (Just "http://sphinxsearch.com/") (Just "sphinx")
@@ -1760,6 +1766,6 @@ endEvents =
 
 main :: IO ()
 main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
-    runSqlPool (runMigration migrateAll) pool
+    runStderrLoggingT $ runSqlPool (runMigration migrateAll) pool
     warpDebug 3000 $ Searcher pool</codeblock>
  </conbody></concept></concept>

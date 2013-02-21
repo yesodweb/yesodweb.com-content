@@ -32,6 +32,7 @@ Now our imports.
 &gt;     )
 &gt; import Data.Time (UTCTime, getCurrentTime)
 &gt; import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;), pure)
+&gt; import Control.Monad.Logger (runNoLoggingT)
 
 First we'll set up our Persistent entities. We're going to both create our data
 types (via mkPersist) and create a migration function, which will automatically
@@ -446,7 +447,7 @@ Finally our main function.
 &gt; main = do
 &gt;     pool &lt;- createSqlitePool "blog.db3" 10 -- create a new pool
 &gt;     -- perform any necessary migration
-&gt;     runSqlPool (runMigration migrateAll) pool
+&gt;     runNoLoggingT $ runSqlPool (runMigration migrateAll) pool
 &gt;     manager &lt;- newManager def -- create a new HTTP manager
 &gt;     warpDebug 3000 $ Blog pool manager -- start our server</codeblock>
  </conbody></concept>

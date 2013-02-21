@@ -83,7 +83,8 @@ instance Yesod SessionExample where
     -- Make the session timeout 1 minute so that it's easier to play with
     makeSessionBackend _ = do
         key &lt;- CS.getKey CS.defaultKeyFile
-        return $ Just $ clientSessionBackend key 1
+        (cacher, _) &lt;- clientSessionDateCacher 60
+        return $ Just $ clientSessionBackend2 key cacher
 
 instance RenderMessage SessionExample FormMessage where
     renderMessage _ _ = defaultFormMessage

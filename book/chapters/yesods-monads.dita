@@ -107,6 +107,7 @@ import Yesod
 import Database.Persist.Sqlite
 import Data.Text (Text)
 import Data.Time
+import Control.Monad.Logger (runStderrLoggingT)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
 Link
@@ -168,7 +169,7 @@ postAddLinkR = do
 
 main :: IO ()
 main = withSqlitePool "links.db3" 10 $ \pool -&gt; do
-    runSqlPool (runMigration migrateAll) pool
+    runStderrLoggingT $ runSqlPool (runMigration migrateAll) pool
     warpDebug 3000 $ LinksExample pool</codeblock>
   <p id="157-x-5">Pay attention in particular to the <codeph id="157-x-6">existingLinks</codeph> function.
             Notice how all we needed to do was apply <codeph id="157-x-7">lift</codeph> to a normal

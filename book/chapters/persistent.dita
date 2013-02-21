@@ -42,7 +42,7 @@ BlogPost
 |]
 
 main :: IO ()
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigration migrateAll
 
     johnId &lt;- insert $ Person "John Doe" $ Just 35
@@ -218,7 +218,7 @@ Person
     deriving Show
 |]
 -- START
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     michaelId &lt;- insert $ Person "Michael" 26
     michael &lt;- get michaelId
     liftIO $ print michael
@@ -232,19 +232,23 @@ main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
             the database using an <codeph id="116-x11">Id</codeph>. In Persistent, you never need to
             worry that you are using the key from the wrong table: trying to load up a different
             entity (like <codeph id="116-x-6">House</codeph>) using a <codeph id="116-x12">PersonId</codeph> will
-            never compile.</p></conbody></concept><concept id="persistbackend-117"><title>PersistStore</title><conbody><p id="117-bc1">One last detail is left unexplained from the previous example: what are those
-                <codeph id="117-x-3">withSqliteConn</codeph> and <codeph id="117-x-4">runSqlConn</codeph> functions doing, and
-            what is that monad that our database actions are running in?</p><p id="117-bc2">All database actions need to occur within an instance of <codeph id="117-x1">PersistStore</codeph>. As its name implies, every data store (PostgreSQL, SQLite,
+            never compile.</p></conbody></concept>
+<concept id="persistbackend-117">
+    <title>PersistStore</title>
+    <conbody>
+        <p id="117-bc1">One last detail is left unexplained from the previous example: what is the
+                <codeph id="117-x-3">runSqlite</codeph> function doing, and
+                what is that monad that our database actions are running in?</p>
+            <p id="117-bc2">All database actions need to occur within an instance of <codeph id="117-x1">PersistStore</codeph>. As its name implies, every data store (PostgreSQL, SQLite,
             MongoDB) has an instance of <codeph id="117-x-5">PersistStore</codeph>. This is where all the
             translations from <codeph id="117-x2">PersistValue</codeph> to database-specific values
             occur, where SQL query generation happens, and so on.</p><note id="117-x3" type="other" othertype="advanced"><p id="117-bc3">As you can imagine, even though <codeph id="117-x-6">PersistStore</codeph> provides a safe,
                 well-typed interface to the outside world, there are a lot of database interactions
                 that could go wrong. However, by testing this code automatically and thoroughly in a
                 single location, we can centralize our error-prone code and make sure it is as
-                bug-free as possible.</p></note><p id="117-bc4"><codeph id="117-x-7">withSqliteConn</codeph> creates a single connection to a database using its
+                bug-free as possible.</p></note><p id="117-bc4"><codeph id="117-x-7">runSqlite</codeph> creates a single connection to a database using its
             supplied connection string. For our test cases, we will use <codeph id="117-x-8">:memory:</codeph>,
-            which uses an in-memory database. <codeph id="117-x-9">runSqlConn</codeph> uses that connection to
-            run the inner action. Both SQLite and PostgreSQL share the same instance of
+            which uses an in-memory database. Both SQLite and PostgreSQL share the same instance of
                 <codeph id="117-x-10">PersistStore</codeph>: <codeph id="117-x-11">SqlPersist</codeph>.</p>
         <note id="117-x-12">There are actually a few other typeclasses: <codeph id="117-x-13">PersistUpdate</codeph> and
                 <codeph id="117-x-14">PersistQuery</codeph>. Different typeclasses provide different
@@ -269,7 +273,7 @@ Person
     deriving Show
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigration $ migrate entityDefs (undefined :: Person) -- this line added: that's it!
     michaelId &lt;- insert $ Person "Michael" 26
     michael &lt;- get michaelId
@@ -300,7 +304,7 @@ Car
     deriving Show
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigration migrateAll
 -- STOP
 </codeblock><p id="118-m5"><codeph id="118-x-7">mkMigrate</codeph> is a Template Haskell function which creates a new function
@@ -351,7 +355,7 @@ Person
     deriving Show
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigration migrateAll
     insert $ Person "Michael" "Snoyman" 26
     michael &lt;- getBy $ UniqueName "Michael" "Snoyman"
@@ -402,7 +406,7 @@ Person
     deriving Show
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigration migrateAll
 -- START
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
@@ -439,7 +443,7 @@ Person
     deriving Show
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigrationSilent migrateAll
 -- START
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
@@ -512,7 +516,7 @@ Person
     deriving Show
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
 -- START
@@ -554,7 +558,7 @@ Person
     deriving Show
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
 -- START
@@ -628,7 +632,7 @@ resultsForPage pageNumber = do
         ]
 -- STOP
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     resultsForPage 1 &gt;&gt;= liftIO . print</codeblock>
@@ -718,7 +722,7 @@ resultsForPage pageNumber = do
         , OffsetBy $ (pageNumber - 1) * resultsPerPage
         ]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigrationSilent migrateAll
 -- START
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
@@ -762,7 +766,7 @@ resultsForPage pageNumber = do
 haveBirthday personId = update personId [PersonAge +=. 1]
 -- STOP
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     update personId [PersonAge =. 27]
@@ -810,7 +814,7 @@ resultsForPage pageNumber = do
 
 haveBirthday personId = update personId [PersonAge +=. 1]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     update personId [PersonAge =. 27]
@@ -853,7 +857,7 @@ resultsForPage pageNumber = do
 
 haveBirthday personId = update personId [PersonAge +=. 1]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigrationSilent migrateAll
 -- START
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
@@ -912,7 +916,7 @@ resultsForPage pageNumber = do
 
 haveBirthday personId = update personId [PersonAge +=. 1]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     replace personId $ Person "John" "Doe" 20
@@ -960,7 +964,7 @@ resultsForPage pageNumber = do
 
 haveBirthday personId = update personId [PersonAge +=. 1]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigrationSilent migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     replace personId $ Person "John" "Doe" 20
@@ -998,7 +1002,7 @@ Person
     deriving Show
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     time &lt;- liftIO getCurrentTime
     runMigration migrateAll
     insert $ Person "Michael" (Just 26) time
@@ -1028,7 +1032,7 @@ Person
     deriving Show
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigration migrateAll
 -- STOP
 </codeblock>
@@ -1054,7 +1058,7 @@ Person
     deriving Show
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigration migrateAll
 -- STOP</codeblock>
         <p id="129-x9">One last trick you can do with attributes is to specify the names to be used for
@@ -1092,7 +1096,7 @@ resultsForPage pageNumber = do
         , OffsetBy $ (pageNumber - 1) * resultsPerPage
         ]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigration migrateAll
     personId &lt;- insert $ Person "Michael" "Snoyman" 26
     resultsForPage 1 &gt;&gt;= liftIO . print</codeblock></conbody></concept><concept id="relations-130"><title>Relations</title><conbody><p id="130-r1">Persistent allows references between your data types in a manner that is consistent with
@@ -1117,7 +1121,7 @@ Car
     deriving Show
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigration migrateAll
     bruce &lt;- insert $ Person "Bruce Wayne"
     insert $ Car bruce "Bat Mobile"
@@ -1150,7 +1154,7 @@ PersonStore
     UniquePersonStore personId storeId
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigration migrateAll
 
     bruce &lt;- insert $ Person "Bruce Wayne"
@@ -1263,7 +1267,7 @@ Person
     employment Employment
 |]
 
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigration migrateAll
 
     insert $ Person "Bruce Wayne" Retired
@@ -1286,7 +1290,7 @@ main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
             operators. But this is still a good example, so let's roll with it.</note>
   <codeblock id="133-x3" outputclass="haskell">{-# LANGUAGE OverloadedStrings, TemplateHaskell, QuasiQuotes, TypeFamilies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving, GADTs, FlexibleContexts #-}
-import Database.Persist.Sqlite (withSqliteConn)
+import Database.Persist.Sqlite (runSqlite)
 import Database.Persist.TH (mkPersist, persist, share, mkMigrate, sqlSettings)
 import Database.Persist.GenericSql (runSqlConn, runMigration, SqlPersist)
 import Database.Persist.GenericSql.Raw (withStmt)
@@ -1304,7 +1308,7 @@ Person
 |]
 
 main :: IO ()
-main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
+main = runSqlite ":memory:" $ do
     runMigration migrateAll
     insert $ Person "Michael Snoyman"
     insert $ Person "Miriam Snoyman"
@@ -1333,6 +1337,7 @@ main = runResourceT $ withSqliteConn ":memory:" $ runSqlConn $ do
 import Yesod
 import Database.Persist.Sqlite
 import Control.Monad.Trans.Resource (runResourceT)
+import Control.Monad.Logger (runNoLoggingT)
 
 -- Define our entities as usual
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
@@ -1377,7 +1382,7 @@ openConnectionCount :: Int
 openConnectionCount = 10
 
 main :: IO ()
-main = runResourceT $ withSqlitePool "test.db3" openConnectionCount $ \pool -&gt; do
+main = runNoLoggingT $ runResourceT $ withSqlitePool "test.db3" openConnectionCount $ \pool -&gt; do
     runSqlPool (runMigration migrateAll) pool
     runSqlPool (insert $ Person "Michael" "Snoyman" 26) pool
     liftIO $ warpDebug 3000 $ PersistTest pool</codeblock>

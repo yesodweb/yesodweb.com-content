@@ -125,7 +125,7 @@ instance Yesod Layout where
     width: 760px
     margin: 0 auto
 |]
-            addWidget contents
+            contents
         hamletToRepHtml [hamlet|
 $doctype 5
 
