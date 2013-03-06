@@ -280,7 +280,7 @@ the solution we ultimately came up with. I still think this is a good
 contender, however, and can actually be achieved fully by just ignoring the
 five type synonyms. I'd be interested what people think of this approach.
 
-## conduit's niche
+<h2 id="conduit-niche">conduit's niche</h2>
 
 I actually wrote most of the ideas for this section in [its own blog
 post](https://github.com/yesodweb/yesodweb.com-content/blob/master/blog/2013/02/upcoming-conduit-1-0-part-1.md),
