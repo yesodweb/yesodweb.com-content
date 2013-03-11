@@ -48,7 +48,7 @@ main = do
         let req2 = req
                 { method = "POST"
                 , redirectCount = 0
-                , checkStatus = \_ _ -&gt; Nothing
+                , checkStatus = \_ _ _ -&gt; Nothing
                 }
         res2 &lt;- http req2 manager
         responseBody res2 $$+- sinkFile "post-foo.txt"</codeblock>
@@ -90,8 +90,8 @@ main = do
             case parseUrl urlString of
                 Nothing -&gt; putStrLn "Sorry, invalid URL"
                 Just req -&gt; withManager $ \manager -&gt; do
-                    Response _ _ _ lbs &lt;- httpLbs req manager
-                    liftIO $ L.putStr lbs
+                    res &lt;- httpLbs req manager
+                    liftIO $ L.putStr $ responseBody res
         _ -&gt; putStrLn "Sorry, please provide exactly one URL"</codeblock>
   <p id="252-x-10">The <codeph id="252-x-11">Request</codeph> type is abstract so that <codeph id="252-x-12">http-conduit</codeph> can add new
    settings in the future without breaking the API (see the <xref id="252-x-13" href="settings-types.dita#settings-types-248" format="dita">Settings Type</xref>
@@ -113,10 +113,10 @@ main = do
                 Nothing -&gt; putStrLn "Sorry, invalid URL"
                 Just req -&gt; withManager $ \manager -&gt; do
                     let reqHead = req { method = "HEAD" }
-                    Response status _ headers _ &lt;- http reqHead manager
+                    res &lt;- http reqHead manager
                     liftIO $ do
-                        print status
-                        mapM_ print headers
+                        print $ responseStatus res
+                        mapM_ print $ responseHeaders res
         _ -&gt; putStrLn "Sorry, please provide example one URL"</codeblock>
   <p id="252-x-16">There are a number of different configuration settings in the API, some noteworthy ones
    are:</p>

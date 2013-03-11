@@ -83,8 +83,8 @@ main = withManager $ \manager -&gt; do
     let valueBS = encode value
     req' &lt;- liftIO $ parseUrl "http://localhost:3000/"
     let req = req' { method = "POST", requestBody = RequestBodyLBS valueBS }
-    Response status version headers body &lt;- http req manager
-    resValue &lt;- body $$+- sinkParser json
+    res &lt;- http req manager
+    resValue &lt;- responseBody res $$+- sinkParser json
     liftIO $ handleResponse resValue
 
 -- Application-specific function to make the request value
