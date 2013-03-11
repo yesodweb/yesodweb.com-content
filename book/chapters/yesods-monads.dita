@@ -102,7 +102,7 @@ lift . throwError :: errValue -&gt; ReaderT Error</codeblock>
                 <codeph id="157-x-17">Handler</codeph> we want, without any need to pass in the database
             contents.</p>
   <codeblock id="157-x-4" outputclass="haskell">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell, FlexibleContexts,
-             QuasiQuotes, TypeFamilies, MultiParamTypeClasses, GADTs #-}
+             QuasiQuotes, MultiParamTypeClasses, GADTs #-}
 import Yesod
 import Database.Persist.Sqlite
 import Data.Text (Text)
@@ -183,7 +183,7 @@ main = withSqlitePool "links.db3" 10 $ \pool -&gt; do
   <p id="158-x-3">Likewise, you can get request information inside a <codeph id="158-x-7">Widget</codeph>. Here we
             can determine the sort order of a list based on a GET parameter.</p>
   <codeblock id="158-x-4" outputclass="haskell">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
-             QuasiQuotes, TypeFamilies, MultiParamTypeClasses, GADTs #-}
+             QuasiQuotes, MultiParamTypeClasses, GADTs #-}
 import Yesod
 import Data.Text (Text)
 import Data.List (sortBy)
