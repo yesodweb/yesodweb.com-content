@@ -36,9 +36,11 @@ main = warpDebug 3000 HelloWorld</codeblock><p id="18-hw2">If you save that code
         <p id="19-x-5">In English, all this means is: <q id="19-x-6">In the HelloWorld application, create
                 one route. I'd like to call it <codeph id="19-x-13">HomeR</codeph>, it should listen for requests
                 to <codeph id="19-x-7">/</codeph> (the root of the application), and should answer
-                    <codeph id="19-x-14">GET</codeph> requests</q>. We call <codeph id="19-x-15">HomeR</codeph> a <term id="19-x-8">resource</term>, which is where the "R" suffix comes from.<note id="19-x-9">The R suffix on resource names is simply convention, but it's a fairly universally
+                <codeph id="19-x-14">GET</codeph> requests</q>. We call <codeph id="19-x-15">HomeR</codeph> a <term id="19-x-8">resource</term>, which is where the "R" suffix comes from.</p>
+        
+        <note id="19-x-9">The R suffix on resource names is simply convention, but it's a fairly universally
                 followed convention. It makes it just a bit easier to read and understand
-                code.</note></p>
+                code.</note>
         <p id="19-x-16">The <codeph id="19-x-17">mkYesod</codeph> TH function generates quite a bit of code here: a route data
             type, a dispatch function, and a render function. We'll look at this in more detail in
                 <xref id="19-x-18" href="routing-and-handlers.dita#routing-and-handlers-75" format="dita">the routing chapter</xref>. But by using the
