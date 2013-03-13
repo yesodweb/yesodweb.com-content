@@ -25,6 +25,7 @@ data Block = BlockText Text
            | BlockPara [Inline]
            | BlockTitle Int [Inline]
            | BlockHtml Text [Block]
+           | BlockImage Text
 
 data Inline = InlineText Text
             | InlineCode Text
@@ -35,16 +36,18 @@ data Inline = InlineText Text
 renderBlock :: Block -> Builder
 renderBlock (BlockText t) = "\n\n" ++ fromText t ++ "\n\n"
 renderBlock (BlockLiterate t) = "\n\n```haskell active\n{-# START_FILE main.lhs #-}\n" ++ fromText t ++ "\n```\n\n"
-renderBlock (BlockHaskell t) = "\n\n```haskell active" ++ web ++ "\n" ++ fromText t' ++ "\n```\n\n"
+renderBlock (BlockHaskell t) = "\n\n```haskell" ++ active ++ web ++ "\n" ++ fromText t' ++ "\n```\n\n"
   where
     t' = T.replace "warpDebug 3000" "warpEnv" t
     web = if t /= t' then " web" else ""
+    active = if "\nmain " `isInfixOf` t then " active" else ""
 renderBlock (BlockCode t) = "\n\n```\n" ++ fromText t ++ "\n```\n\n"
 renderBlock (BlockPara inlines) = "\n\n" ++ strip' (renderInlines inlines) ++ "\n\n"
   where
     strip' = fromLazyText . TL.strip . toLazyText
 renderBlock (BlockTitle 1 _) = ""
 renderBlock (BlockTitle depth inlines) = "\n\n" ++ fromText (replicate depth "#") ++ " " ++ renderInlines inlines ++ "\n"
+renderBlock (BlockImage href) = "\n\n![](" ++ fromText href ++ ")\n\n"
 renderBlock (BlockHtml tag blocks) = concat
     [ "\n\n<"
     , fromText tag
@@ -104,6 +107,7 @@ main = do
     goInlineE (Element "xref" as cs) = [goXref as cs]
     goInlineE (Element "term" as cs) = [InlineWrap "__" $ concatMap goInline cs]
     goInlineE (Element "i" as cs) = [InlineWrap "*" $ concatMap goInline cs]
+    goInlineE (Element "cite" as cs) = [InlineWrap "_" $ concatMap goInline cs]
     goInlineE (Element "b" as cs) = [InlineWrap "**" $ concatMap goInline cs]
     goInlineE (Element "apiname" as [NodeContent t]) = [goApiname t]
     goInlineE (Element n as cs)
@@ -118,10 +122,14 @@ main = do
     goBlock d (Element n as cs) | Just wrapper <- lookup n (containers d) = [wrapper $ concatMap goInline cs]
     goBlock d (Element "concept" _ cs) = concatMap (goNode $ d + 1) cs
     goBlock d (Element "ul" _ cs) = concatMap (goList "* ") cs
+    goBlock d (Element "ol" _ cs) = concatMap (goList "1. ") cs
     goBlock d (Element "note" _ cs) = [BlockPara $ concatMap goInline (concatMap stripParas cs)]
     goBlock d (Element "dl" _ cs) = [BlockHtml "dl" $ concatMap (goNode d) cs]
     goBlock d (Element "dt" _ cs) = [BlockHtml "dt" [BlockPara $ concatMap goInline cs]]
     goBlock d (Element "dd" _ cs) = [BlockHtml "dd" [BlockPara $ concatMap goInline cs]]
+    goBlock d (Element "lq" _ cs) = [BlockHtml "blockquote" [BlockPara $ concatMap goInline cs]]
+    goBlock d (Element "fig" _ cs) = concatMap (goNode d) $ filter (not . isTitle) cs
+    goBlock d (Element "image" as cs) = [goImage as cs]
     goBlock d (Element n as cs) | n `elem` stripped = concatMap (goNode d) cs
     goBlock _ e@(Element n as cs) =
         case n of
@@ -143,6 +151,9 @@ main = do
 
     stripParas (NodeElement (Element "p" _ cs)) = cs
     stripParas x = [x]
+
+    isTitle (NodeElement (Element "title" _ _)) = True
+    isTitle _ = False
 
     containers depth = Map.fromList
         [ ("p", BlockPara)
@@ -231,13 +242,13 @@ main = do
         go t = t
 
     goImage as cs =
-        [NodeElement $ Element "img" (Map.singleton "src" href') cs]
+        BlockImage href'
       where
         href' =
             case Map.lookup "href" as of
                 Just href ->
                     let name = either id id $ F.toText $ F.basename $ F.fromText href
-                     in T.append "image/" name
+                     in T.append "http://www.yesodweb.com/book/image/" name
                 Nothing -> error "image without href"
 
 data LHask t = LHCode t | LHText t
