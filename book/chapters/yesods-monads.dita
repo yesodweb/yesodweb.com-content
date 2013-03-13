@@ -52,9 +52,9 @@ lift . throwError :: errValue -&gt; ReaderT Error</codeblock>
    transformers:</p>
   <ol id="156-ol_izz_wma_af">
    <li id="156-x-22">In order to simplify error messages, they are not actual transformers. Instead, they are
-    newtypes that hard-code their inner monads.<note id="156-x-23">Remember, this is why Yesod provides a
+    newtypes that hard-code their inner monads. This is why Yesod provides a
      specialized <codeph id="156-x-24">lift</codeph> function, which works for <codeph id="156-x-25">Handler</codeph> and
-      <codeph id="156-x-26">Widget</codeph>.</note></li>
+      <codeph id="156-x-26">Widget</codeph>.</li>
    <li id="156-x-27">In reality they have extra type parameters for the sub and master site. As a result, the
     Yesod libraries provide <codeph id="156-x-28">GHandler sub master a</codeph> and <codeph id="156-x-29">GWidget sub master
      a</codeph>, and each site gets a pair of type synonyms <codeph id="156-x-30">type Handler = GHandler MyApp
