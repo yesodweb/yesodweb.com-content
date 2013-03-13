@@ -24,6 +24,7 @@ data Block = BlockText Text
            | BlockCode Text
            | BlockPara [Inline]
            | BlockTitle Int [Inline]
+           | BlockHtml Text [Block]
 
 data Inline = InlineText Text
             | InlineCode Text
@@ -44,6 +45,15 @@ renderBlock (BlockPara inlines) = "\n\n" ++ strip' (renderInlines inlines) ++ "\
     strip' = fromLazyText . TL.strip . toLazyText
 renderBlock (BlockTitle 1 _) = ""
 renderBlock (BlockTitle depth inlines) = "\n\n" ++ fromText (replicate depth "#") ++ " " ++ renderInlines inlines ++ "\n"
+renderBlock (BlockHtml tag blocks) = concat
+    [ "\n\n<"
+    , fromText tag
+    , ">\n\n"
+    , concat $ map renderBlock blocks
+    , "\n\n</"
+    , fromText tag
+    , ">\n\n"
+    ]
 
 renderInlines = concat . map renderInline
 
@@ -109,6 +119,9 @@ main = do
     goBlock d (Element "concept" _ cs) = concatMap (goNode $ d + 1) cs
     goBlock d (Element "ul" _ cs) = concatMap (goList "* ") cs
     goBlock d (Element "note" _ cs) = [BlockPara $ concatMap goInline (concatMap stripParas cs)]
+    goBlock d (Element "dl" _ cs) = [BlockHtml "dl" $ concatMap (goNode d) cs]
+    goBlock d (Element "dt" _ cs) = [BlockHtml "dt" [BlockPara $ concatMap goInline cs]]
+    goBlock d (Element "dd" _ cs) = [BlockHtml "dd" [BlockPara $ concatMap goInline cs]]
     goBlock d (Element n as cs) | n `elem` stripped = concatMap (goNode d) cs
     goBlock _ e@(Element n as cs) =
         case n of
