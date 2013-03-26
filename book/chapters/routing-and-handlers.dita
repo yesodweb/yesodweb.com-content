@@ -111,7 +111,7 @@ main = return ()</codeblock></conbody></concept></concept><concept id="resource-
                  <codeph id="79-x19">/person/michael/snoyman</codeph> and
                  <codeph id="79-x20">/page/FAQ</codeph> would all result in 404 errors without
                  ever seeing your code.</p></conbody></concept><concept id="handler-specification-80"><title>Handler specification</title><conbody><p id="80-rn7">The last piece of the puzzle when declaring your resources is how they will be handled. There are three options in Yesod:</p><ul id="80-x1"><li id="80-x2">A single handler function for all request methods on a given route.</li><li id="80-x3">A separate handler function for each request method on a given route. Any other request
-                method will generate a 405 Bad Method response.</li><li id="80-x4">You want to pass off to a <term id="80-x5">subsite</term>.</li></ul><p id="80-rn8">The first two can be easily specified. A single handler function will be a line with
+                method will generate a 405 Method Not Allowed response.</li><li id="80-x4">You want to pass off to a <term id="80-x5">subsite</term>.</li></ul><p id="80-rn8">The first two can be easily specified. A single handler function will be a line with
             just a resource pattern and the resource name, such as <codeph id="80-x6">/page/faq
                 FaqR</codeph>. In this case, the handler function must be named <codeph id="80-x7">handleFaqR</codeph>.</p><p id="80-rn9">A separate handler for each request method will be the same, plus a list of request
             methods. The request methods must be all capital letters. For example, <codeph id="80-x8">/person/#String PersonR GET POST DELETE</codeph>. In this case, you would need to
