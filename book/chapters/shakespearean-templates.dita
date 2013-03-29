@@ -402,6 +402,7 @@ article a { text-decoration: none; }</codeblock>In
     code { background-color: grey; }
     p { text-indent: 2em; }
     a { text-decoration: none; }
+    &gt; h1 { color: green; }
 }</codeblock></p>
   <p id="47-x-4">Having Lucius variables allows you to avoid repeating yourself. A simple example would be to
    define a commonly used color:</p>
