@@ -1085,7 +1085,7 @@ main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
             returns a list of results. This is where we first interact with the Sphinx API. We'll be
             using two functions: <codeph id="196-x-29">query</codeph> will return a list of matches, and
                 <codeph id="196-x-30">buildExcerpts</codeph> will return the highlighted excerpts. Let's
-            first look at <codeph id="196-x-31">query</codeph>:</p>
+            first look at <codeph id="196-x-31">getResults</codeph>:</p>
         <codeblock id="196-x-12" outputclass="haskell">{-# LANGUAGE OverloadedStrings, TypeFamilies, TemplateHaskell,
     QuasiQuotes, MultiParamTypeClasses, GADTs, FlexibleContexts
   #-}
