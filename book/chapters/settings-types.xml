@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><chapter>
+   <title>Settings Types</title>
+   <para/>
+   <para/>
+   <para>Let's say you're writing a webserver. You want the server to take a port to listen on, and an
+   application to run. So you create the following function:</para>
+   <programlisting language="haskell">run :: Int -&gt; Application -&gt; IO ()</programlisting>
+   <para>But suddenly you realize that some people will want to customize their timeout durations. So
+   you modify your API:</para>
+   <programlisting language="haskell">run :: Int -&gt; Int -&gt; Application -&gt; IO ()</programlisting>
+   <para>So, which <literal>Int</literal> is the timeout, and which is the port? Well, you could create
+   some type aliases, or comment your code. But there's another problem creeping into our code: this
+    <literal>run</literal> function is getting unmanageable. Soon we'll need to take an extra
+   parameter to indicate how exceptions should be handled, and then another one to control which
+   host to bind to, and so on.</para>
+   <para>So a more extensible solution is to introduce a settings datatype:</para>
+   <programlisting language="haskell">data Settings = Settings
+    { settingsPort :: Int
+    , settingsHost :: String
+    , settingsTimeout :: Int
+    }</programlisting>
+   <para>And this makes the calling code almost self-documenting:</para>
+   <programlisting language="haskell">run Settings
+    { settingsPort = 8080
+    , settingsHost = "127.0.0.1"
+    , settingsTimeout = 30
+    } myApp</programlisting>
+   <para>Great, couldn't be clearer, right? True, but what happens when you have 50 settings to your
+   webserver. Do you really want to have to specify all of those each time? Of course not. So
+   instead, the webserver should provide a set of defaults:</para>
+   <programlisting language="haskell">defaultSettings = Settings 3000 "127.0.0.1" 30</programlisting>
+   <para>And now, instead of needing to write that long bit of code above, we can get away with:</para>
+   <programlisting language="haskell">run defaultSettings { settingsPort = 8080 } myApp -- (1)</programlisting>
+   <para>This is great, except for one minor hitch. Let's say we now decide to add an extra record to
+    <literal>Settings</literal>. Any code out in the wild looking like
+   this:<programlisting language="haskell">run (Settings 8080 "127.0.0.1" 30) myApp -- (2)</programlisting>will
+   be broken, since the <literal>Settings</literal> constructor now takes 4 arguments. The proper
+   thing to do would be to bump the major version number so that dependent packages don't get
+   broken. But having to change major versions for every minor setting you add is a nuisance. The
+   solution? Don't export the <literal>Settings</literal> constructor:</para>
+   <programlisting language="haskell">module MyServer
+    ( Settings
+    , settingsPort
+    , settingsHost
+    , settingsTimeout
+    , run
+    , defaultSettings
+    ) where</programlisting>
+   <para>With this approach, no one can write code like (2), so you can freely add new records without
+   any fear of code breaking.</para>
+   <para>The one downside of this approach is that it's not immediately obvious from the Haddocks that
+   you can actually change the settings via record syntax. That's the point of this chapter: to
+   clarify what's going on in the libraries that use this technique.</para>
+   <para>I personally use this technique in a few places, feel free to have a look at the Haddocks to
+   see what I mean.</para>
+   <itemizedlist>
+    <listitem>
+     <para>Warp: <function>Settings</function>
+     </para>
+    </listitem>
+    <listitem>
+     <para>http-conduit: <function>Request</function> and
+     <function>ManagerSettings</function>
+     </para>
+    </listitem>
+    <listitem>
+     <para>xml-conduit<itemizedlist>
+       <listitem>
+        <para>Parsing: <function>ParseSettings</function>
+        </para>
+       </listitem>
+       <listitem>
+        <para>Rendering: <function>RenderSettings</function>
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
+   </itemizedlist>
+   <para>As a tangential issue, <literal>http-conduit</literal> and <literal>xml-conduit</literal> actually
+   create instances of the <function>Default</function> typeclass instead of
+   declaring a brand new identifier. This means you can just type <literal>def</literal> instead of
+    <literal>defaultParserSettings</literal>.</para>
+  </chapter>

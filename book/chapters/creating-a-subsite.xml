@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><chapter>
+   <title>Creating a Subsite</title>
+   <para/>
+   <para/>
+   <para>How many sites provide authentication systems? Or need to provide CRUD (CRUD) management of some objects? Or a blog? Or a wiki?</para>
+   <para>The theme here is that many websites include common components that can be reused throughout multiple sites. However, it is often quite difficult to get code to be modular enough to be truly plug-and-play: a component will require hooks into the routing system, usually for multiple routes, and will need some way of sharing styling information with the master site.</para>
+   <para>In Yesod, the solution is subsites. A subsite is a collection of routes and their handlers that can be easily inserted into a master site. By using type classes, it is easy to ensure that the master site provides certain capabilities, and to access the default site layout. And with type-safe URLs, it's easy to link from the master site to subsites.</para>
+   <section>
+    <title>Hello World</title>
+    <para/>
+    <para>Writing subsites is a little bit tricky, involving a number of different types. Let's start off with a simple Hello World subsite:</para>
+    <programlisting language="haskell">{-# LANGUAGE QuasiQuotes, TypeFamilies, MultiParamTypeClasses #-}
+{-# LANGUAGE TemplateHaskell, FlexibleInstances, OverloadedStrings #-}
+import Yesod
+
+-- Subsites have foundations just like master sites.
+data HelloSub = HelloSub
+
+-- We have a familiar analogue from mkYesod, with just one extra parameter.
+-- We'll discuss that later.
+mkYesodSub "HelloSub" [] [parseRoutes|
+/ SubRootR GET
+|]
+
+-- And we'll spell out the handler type signature.
+getSubRootR :: Yesod master =&gt; GHandler HelloSub master RepHtml
+getSubRootR = defaultLayout [whamlet|Welcome to the subsite!|]
+
+-- And let's create a master site that calls it.
+data Master = Master
+    { getHelloSub :: HelloSub
+    }
+
+mkYesod "Master" [parseRoutes|
+/ RootR GET
+/subsite SubsiteR HelloSub getHelloSub
+|]
+
+instance Yesod Master
+
+-- Spelling out type signature again.
+getRootR :: GHandler sub Master RepHtml -- could also replace sub with Master
+getRootR = defaultLayout [whamlet|
+&lt;h1&gt;Welcome to the homepage
+&lt;p&gt;
+    Feel free to visit the #
+    &lt;a href=@{SubsiteR SubRootR}&gt;subsite
+    \ as well.
+|]
+
+main = warpDebug 3000 $ Master HelloSub
+</programlisting>
+    <para>This very simple example actually shows most of the complications involved in creating a subsite. Like a normal Yesod application, everything in a subsite is centered around a foundation datatype, <literal>HelloSub</literal> in our case. We then use <literal>mkYesodSub</literal>, in much the same way that we use <literal>mkYesod</literal>, to create the route datatype and the dispatch/render functions. (We'll come back to that extra parameter in a second.)</para>
+    <para>What's interesting is the type signature of <literal>getSubRootR</literal>. Up until now, we have tried to ignore the <literal>GHandler</literal> datatype, or <emphasis>if</emphasis> we need to acknowledge its existence, pretend like the first two type arguments are always the same. Now we get to finally acknowledge the truth about this funny datatype.</para>
+    <para>A handler function always has two foundation types associated with it: the subsite and the master site. When you write a normal application, <emphasis role="bold">those two datatypes are the same</emphasis>. However, when you are working in a subsite, they will necessarily be different. So the type signature for <literal>getSubRootR</literal> uses <literal>HelloSub</literal> for the first argument and <literal>master</literal> for the second.</para>
+    <para>The <literal>defaultLayout</literal> function is part of the Yesod typeclass. Therefore, in order to call it, the <literal>master</literal> type argument must be an instance of <literal>Yesod</literal>. The advantage of this approach is that any modifications to the master site's <literal>defaultLayout</literal> method will automatically be reflected in subsites.</para>
+    <para>When we embed a subsite in our master site route definition, we need to specify four pieces of information: the route to use as the base of the subsite (in this case, <literal>/subsite</literal>), the constructor for the subsite routes (<literal>SubsiteR</literal>), the subsite foundation data type (<literal>HelloSub</literal>) and a function that takes a master foundation value and returns a subsite foundation value (<literal>getHelloSub</literal>).</para>
+    <para>In the definition of getRootR, we can see how the route constructor gets used. In a sense, <literal>SubsiteR</literal> promotes any subsite route to a master site route, making it possible to safely link to it from any master site template.</para>
+   </section>
+  </chapter>

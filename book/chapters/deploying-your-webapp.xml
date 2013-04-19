@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?><chapter>
+   <title>Deploying your Webapp</title>
+   <para/>
+   <para/>
+   <para>I can't speak for others, but I personally prefer programming to system administration. But the fact is that, eventually, you need to serve your app somehow, and odds are that you'll need to be the one to set it up.</para>
+   <para>There are some promising initiatives in the Haskell web community towards making deployment easier. In the future, we may even have a service that allows you to deploy your app with a single command.</para>
+   <para>But we're not there yet. And even if we were, such a solution will never work for everyone. This chapter covers the different options you have for deployment, and gives some general recommendations on what you should choose in different situations.</para>
+   <section>
+    <title>Compiling</title>
+    <para/>
+    <para>First things first: how do you build your production application? If you're using the
+   scaffolded site, it's as simple as <literal>cabal build</literal>. I also recommend cleaning
+   beforehand to make sure there is no cached information, so a simple combination to build your
+   executable is:</para>
+    <programlisting>cabal clean &amp;&amp; cabal configure &amp;&amp; cabal build</programlisting>
+   </section>
+   <section>
+    <title>Warp</title>
+    <para/>
+    <para>As we have mentioned before, Yesod is built on the Web Application Interface (WAI), allowing it to run on any WAI backend. At the time of writing, the following backends are available:</para>
+    <itemizedlist>
+     <listitem>
+      <para>Warp</para>
+     </listitem>
+     <listitem>
+      <para>FastCGI</para>
+     </listitem>
+     <listitem>
+      <para>SCGI</para>
+     </listitem>
+     <listitem>
+      <para>CGI</para>
+     </listitem>
+     <listitem>
+      <para>Webkit</para>
+     </listitem>
+     <listitem>
+      <para>Development server</para>
+     </listitem>
+    </itemizedlist>
+    <para>The last two are not intended for production deployments. Of the remaining four, all
+            can be used for production deployment in theory. In practice, a CGI backend will likely
+            be horribly inefficient, since a new process must be spawned for each connection. And
+            SCGI is not nearly as well supported by frontend web servers as Warp (via reverse
+            proxying) or FastCGI.</para>
+    <para>So between the two remaining choices, Warp gets a very strong recommendation because:</para>
+    <itemizedlist>
+     <listitem>
+      <para>It is significantly faster.</para>
+     </listitem>
+     <listitem>
+      <para>Like FastCGI, it can run behind a frontend server like Nginx, using reverse HTTP proxy.</para>
+     </listitem>
+     <listitem>
+      <para>In addition, it is a fully capable server of its own accord, and can therefore be used without any frontend server.</para>
+     </listitem>
+    </itemizedlist>
+    <para>So that leaves one last question: should Warp run on its own, or via reverse proxy behind
+            a frontend server? For most use cases, I recommend the latter, because:</para>
+    <itemizedlist>
+     <listitem>
+      <para>As fast as Warp is, it is still optimized as an application server, not a static
+                file server.</para>
+     </listitem>
+     <listitem>
+      <para>Using Nginx, you can set up virtual hosting to serve your static contents from a
+                separate domain. (It's possible to do this with Warp, but a bit more involved).</para>
+     </listitem>
+     <listitem>
+      <para>You can use Nginx as either a load balancer or a SSL proxy. (Though with
+                    <function>warp-tls</function> it's entirely possible to run an https site on Warp
+                alone.)</para>
+     </listitem>
+    </itemizedlist>
+    <para>So my final recommendation is: set up Nginx to reverse proxy to Warp.</para>
+    <note>
+     <para>A number of people in the Yesod community disagree with me here, and believe that the
+            increased performance and decreased complexity of skipping the Nginx step make
+            standalone Warp a better choice. Feel free to follow either approach, they are both
+            perfectly valid.</para>
+    </note>
+    <section>
+     <title>Configuration</title>
+     <para/>
+     <para>In general, Nginx will listen on port 80 and your Yesod/Warp app will listen on some unprivileged port (lets say 4321). You will then need to provide a nginx.conf file, such as:</para>
+     <programlisting>daemon off; # Don't run nginx in the background, good for monitoring apps
+events {
+    worker_connections 4096;
+}
+
+http {
+    server {
+        listen 80; # Incoming port for Nginx
+        server_name www.myserver.com;
+        location / {
+            proxy_pass http://127.0.0.1:4321; # Reverse proxy to your Yesod app
+        }
+    }
+}</programlisting>
+     <para>You can add as many server blocks as you like. A common addition is to ensure users always access your pages with the www prefix on the domain name, ensuring the RESTful principle of canonical URLs. (You could just as easily do the opposite and always strip the www, just make sure that your choice is reflected in both the nginx config and the approot of your site.) In this case, we would add the block:</para>
+     <programlisting>server {
+    listen 80;
+    server_name myserver.com;
+    rewrite ^/(.*) http://www.myserver.com/$1 permanent;
+}</programlisting>
+     <para>A highly recommended optimization is to serve static files from a separate domain
+            name, therefore bypassing the cookie transfer overhead. Assuming that our static files
+            are stored in the <literal>static</literal> folder within our site folder, and the
+            site folder is located at <literal>/home/michael/sites/mysite</literal>, this
+            would look like:</para>
+     <programlisting>server {
+    listen 80;
+    server_name static.myserver.com;
+    root /home/michael/sites/mysite/static;
+    # Since yesod-static appends a content hash in the query string,
+    # we are free to set expiration dates far in the future without
+    # concerns of stale content.
+    expires max;
+}</programlisting>
+     <para>In order for this to work, your site must properly rewrite static URLs to this
+            alternate domain name. The scaffolded site is set up to make this fairly simple via the
+                <literal>Settings.staticRoot</literal> function and the definition of
+                <literal>urlRenderOverride</literal>. However, if you just want to get the benefit of
+            nginx's faster static file serving without dealing with separate domain names, you can
+            instead modify your original server block like so:</para>
+     <programlisting>server {
+    listen 80; # Incoming port for Nginx
+    server_name www.myserver.com;
+    location / {
+        proxy_pass http://127.0.0.1:4321; # Reverse proxy to your Yesod app
+    }
+    location /static {
+        root /home/michael/sites/mysite; # Notice that we do *not* include /static
+        expires max;
+    }
+}</programlisting>
+    </section>
+    <section>
+     <title>Server Process</title>
+     <para/>
+     <para>Many people are familiar with an Apache/mod_php or Lighttpd/FastCGI kind of setup,
+            where the web server automatically spawns the web application. With nginx, either for
+            reverse proxying or FastCGI, this is not the case: you are responsible to run your own
+            process. I strongly recommend a monitoring utility which will automatically restart your
+            application in case it crashes. There are many great options out there, such as
+                <function>angel</function> or daemontools.</para>
+     <para>To give a concrete example, here is an Upstart config file. The file must be placed in <literal>/etc/init/mysite.conf</literal>:</para>
+     <programlisting>description "My awesome Yesod application"
+start on runlevel [2345];
+stop on runlevel [!2345];
+respawn
+chdir /home/michael/sites/mysite
+exec /home/michael/sites/mysite/dist/build/mysite/mysite</programlisting>
+     <para>Once this is in place, bringing up your application is as simple as <literal>sudo start mysite</literal>.</para>
+    </section>
+   </section>
+   <section>
+    <title>FastCGI</title>
+    <para/>
+    <para>Some people may prefer using FastCGI for deployment. In this case, you'll need to add an extra tool to the mix. FastCGI works by receiving new connection from a file descriptor. The C library assumes that this file descriptor will be 0 (standard input), so you need to use the spawn-fcgi program to bind your application's standard input to the correct socket.</para>
+    <para>It can be very convenient to use Unix named sockets for this instead of binding to a port, especially when hosting multiple applications on a single host. A possible script to load up your app could be:</para>
+    <programlisting>spawn-fcgi \
+    -d /home/michael/sites/mysite \
+    -s /tmp/mysite.socket \
+    -n \
+    -M 511 \
+    -u michael \
+    -- /home/michael/sites/mysite/dist/build/mysite-fastcgi/mysite-fastcgi</programlisting>
+    <para>You will also need to configure your frontend server to speak to your app over FastCGI. This is relatively painless in Nginx:</para>
+    <programlisting>server {
+    listen 80;
+    server_name www.myserver.com;
+    location / {
+        fastcgi_pass unix:/tmp/mysite.socket;
+    }
+}</programlisting>
+    <para>That should look pretty familiar from above. The only last trick is that, with Nginx, you need to manually specify all of the FastCGI variables. It is recommended to store these in a separate file (say, fastcgi.conf) and then add <literal>include fastcgi.conf;</literal> to the end of your http block. The contents of the file, to work with WAI, should be:</para>
+    <programlisting>fastcgi_param  QUERY_STRING       $query_string;
+fastcgi_param  REQUEST_METHOD     $request_method;
+fastcgi_param  CONTENT_TYPE       $content_type;
+fastcgi_param  CONTENT_LENGTH     $content_length;
+fastcgi_param  PATH_INFO          $fastcgi_script_name;
+fastcgi_param  SERVER_PROTOCOL    $server_protocol;
+fastcgi_param  GATEWAY_INTERFACE  CGI/1.1;
+fastcgi_param  SERVER_SOFTWARE    nginx/$nginx_version;
+fastcgi_param  REMOTE_ADDR        $remote_addr;
+fastcgi_param  SERVER_ADDR        $server_addr;
+fastcgi_param  SERVER_PORT        $server_port;
+fastcgi_param  SERVER_NAME        $server_name;
+</programlisting>
+   </section>
+   <section>
+    <title>Desktop</title>
+    <para/>
+    <para>Another nifty backend is <function>wai-handler-webkit</function>. This backend combines Warp and QtWebkit to create an executable that a user simply double-clicks. This can be a convenient way to provide an offline version of your application.</para>
+    <para>One of the very nice conveniences of Yesod for this is that your templates are all compiled into the executable, and thus do not need to be distributed with your application. Static files do, however.</para>
+    <note>
+     <para>There's actually support for embedding your static files directly in the executable as
+            well, see the <function>yesod-static</function> docs for more details.</para>
+    </note>
+    <para>A similar approach, without requiring the QtWebkit library, is
+                <function>wai-handler-launch</function>, which launches a Warp server and then opens
+            up the user's default web browser. There's a little trickery involved here: in order to
+            know that the user is still using the site, <literal>wai-handler-launch</literal>  inserts
+            a "ping" Javascript snippet to every HTML page it serves. It
+                <literal>wai-handler-launch</literal> doesn't receive a ping for two minutes, it shuts
+            down.</para>
+   </section>
+   <section>
+    <title>CGI on Apache</title>
+    <para/>
+    <para>CGI and FastCGI work almost identically on Apache, so it should be fairly straight-forward to port this configuration. You essentially need to accomplish two goals:</para>
+    <orderedlist>
+     <listitem>
+      <para>Get the server to serve your file as (Fast)CGI.</para>
+     </listitem>
+     <listitem>
+      <para>Rewrite all requests to your site to go through the (Fast)CGI executable.</para>
+     </listitem>
+    </orderedlist>
+    <para>Here is a configuration file for serving a blog application, with an executable named "bloggy.cgi", living in a subfolder named "blog" of the document root. This example was taken from an application living in the path <literal>/f5/snoyman/public/blog</literal>.</para>
+    <programlisting>Options +ExecCGI
+AddHandler cgi-script .cgi
+Options +FollowSymlinks
+
+RewriteEngine On
+RewriteRule ^/f5/snoyman/public/blog$ /blog/ [R=301,S=1]
+RewriteCond $1 !^bloggy.cgi
+RewriteCond $1 !^static/
+RewriteRule ^(.*) bloggy.cgi/$1 [L]</programlisting>
+    <para>The first RewriteRule is to deal with subfolders. In particular, it redirects a request for <literal>/blog</literal> to <literal>/blog/</literal>. The first RewriteCond prevents directly requesting the executable, the second allows Apache to serve the static files, and the last line does the actual rewriting.</para>
+   </section>
+   <section>
+    <title>FastCGI on lighttpd</title>
+    <para/>
+    <para>For this example, I've left off some of the basic FastCGI settings like mime-types. I also have a more complex file in production that prepends "www." when absent and serves static files from a separate domain. However, this should serve to show the basics.</para>
+    <para>Here, "/home/michael/fastcgi" is the fastcgi application. The idea is to rewrite all requests to start with "/app", and then serve everything beginning with "/app" via the FastCGI executable.</para>
+    <programlisting>server.port = 3000
+server.document-root = "/home/michael"
+server.modules = ("mod_fastcgi", "mod_rewrite")
+
+url.rewrite-once = (
+  "(.*)" =&gt; "/app/$1"
+)
+
+fastcgi.server = (
+    "/app" =&gt; ((
+        "socket" =&gt; "/tmp/test.fastcgi.socket",
+        "check-local" =&gt; "disable",
+        "bin-path" =&gt; "/home/michael/fastcgi", # full path to executable
+        "min-procs" =&gt; 1,
+        "max-procs" =&gt; 30,
+        "idle-timeout" =&gt; 30
+    ))
+)</programlisting>
+   </section>
+   <section>
+    <title>CGI on lighttpd</title>
+    <para/>
+    <para>This is basically the same as the FastCGI version, but tells lighttpd to run a file ending in ".cgi" as a CGI executable. In this case, the file lives at "/home/michael/myapp.cgi".</para>
+    <programlisting>server.port = 3000
+server.document-root = "/home/michael"
+server.modules = ("mod_cgi", "mod_rewrite")
+
+url.rewrite-once = (
+    "(.*)" =&gt; "/myapp.cgi/$1"
+)
+
+cgi.assign = (".cgi" =&gt; "")</programlisting>
+   </section>
+  </chapter>

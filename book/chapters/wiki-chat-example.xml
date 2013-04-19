@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?><chapter>
+   <title>Wiki: markdown, chat subsite, event source</title>
+   <para/>
+   <para/>
+   <para>This example will tie together a few different ideas. We'll start with a chat subsite, which
+   allows us to embed a chat widget on any page. We'll use the HTML 5 event source API to handle
+   sending events from the server to the client.</para>
+   <programlisting language="haskell">-- @Chat.hs
+{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
+             TemplateHaskell, FlexibleInstances, MultiParamTypeClasses,
+             FlexibleContexts
+  #-}
+-- | This modules defines a subsite that allows you to insert a chat box on
+-- any page of your site. It uses eventsource for sending the messages from
+-- the server to the browser.
+module Chat where
+
+import Yesod
+import Control.Concurrent.Chan (Chan, dupChan, writeChan)
+import Data.Text (Text)
+import Network.Wai.EventSource (ServerEvent (..), eventSourceAppChan)
+import Language.Haskell.TH.Syntax (Type (VarT), Pred (ClassP), mkName)
+import Blaze.ByteString.Builder.Char.Utf8 (fromText)
+import Data.Monoid (mappend)
+
+-- | Our subsite foundation. We keep a channel of events that all connections
+-- will share.
+data Chat = Chat (Chan ServerEvent)
+
+-- | We need to know how to check if a user is logged in and how to get
+-- his/her username (for printing messages).
+class (Yesod master, RenderMessage master FormMessage)
+        =&gt; YesodChat master where
+    getUserName :: GHandler sub master Text
+    isLoggedIn :: GHandler sub master Bool
+
+-- Now we set up our subsite. The first argument is the subsite, very similar
+-- to how we've used mkYesod in the past. The second argument is specific to
+-- subsites. What it means here is "the master site must be an instance of
+-- YesodChat".
+--
+-- We define two routes: a route for sending messages from the client to the
+-- server, and one for opening up the event stream to receive messages from
+-- the server.
+mkYesodSub "Chat"
+    [ ClassP ''YesodChat [VarT $ mkName "master"]
+    ] [parseRoutes|
+/send SendR POST
+/recv ReceiveR GET
+|]
+
+-- | Get a message from the user and send it to all listeners.
+postSendR :: YesodChat master =&gt; GHandler Chat master ()
+postSendR = do
+    from &lt;- getUserName
+
+    -- Note that we're using GET parameters for simplicity of the Ajax code.
+    -- This could easily be switched to POST. Nonetheless, our overall
+    -- approach is still RESTful since this route can only be accessed via a
+    -- POST request.
+    body &lt;- runInputGet $ ireq textField "message"
+
+    -- Get the channel
+    Chat chan &lt;- getYesodSub
+
+    -- Send an event to all listeners with the user's name and message.
+    liftIO $ writeChan chan $ ServerEvent Nothing Nothing $ return $
+        fromText from `mappend` fromText ": " `mappend` fromText body
+
+-- | Send an eventstream response with all messages streamed in.
+getReceiveR :: GHandler Chat master ()
+getReceiveR = do
+    -- First we get the main channel
+    Chat chan0 &lt;- getYesodSub
+
+    -- We duplicated the channel, which allows us to create broadcast
+    -- channels.
+    chan &lt;- liftIO $ dupChan chan0
+
+    -- Now we use the event source API. eventSourceAppChan takes two parameters:
+    -- the channel of events to read from, and the WAI request. It returns a
+    -- WAI response, which we can return with sendWaiResponse.
+    req &lt;- waiRequest
+    res &lt;- lift $ eventSourceAppChan chan req
+    sendWaiResponse res
+
+-- | Provide a widget that the master site can embed on any page.
+chatWidget :: YesodChat master
+           =&gt; (Route Chat -&gt; Route master)
+           -&gt; GWidget sub master ()
+-- This toMaster argument tells us how to convert a Route Chat into a master
+-- route. You might think this is redundant information, but taking this
+-- approach means we can have multiple chat subsites in a single site.
+chatWidget toMaster = do
+    -- Get some unique identifiers to help in creating our HTML/CSS. Remember,
+    -- we have no idea what the master site's HTML will look like, so we
+    -- should not assume we can make up identifiers that won't be reused.
+    -- Also, it's possible that multiple chatWidgets could be embedded in the
+    -- same page.
+    chat &lt;- lift newIdent   -- the containing div
+    output &lt;- lift newIdent -- the box containing the messages
+    input &lt;- lift newIdent  -- input field from the user
+
+    ili &lt;- lift isLoggedIn  -- check if we're already logged in
+    if ili
+        then do
+            -- Logged in: show the widget
+            [whamlet|
+&lt;div ##{chat}&gt;
+    &lt;h2&gt;Chat
+    &lt;div ##{output}&gt;
+    &lt;input ##{input} type=text placeholder="Enter Message"&gt;
+|]
+            -- Just some CSS
+            toWidget [lucius|
+##{chat} {
+    position: absolute;
+    top: 2em;
+    right: 2em;
+}
+##{output} {
+    width: 200px;
+    height: 300px;
+    border: 1px solid #999;
+    overflow: auto;
+}
+|]
+            -- And now that Javascript
+            toWidgetBody [julius|
+// Set up the receiving end
+var output = document.getElementById("#{output}");
+var src = new EventSource("@{toMaster ReceiveR}");
+src.onmessage = function(msg) {
+    // This function will be called for each new message.
+    var p = document.createElement("p");
+    p.appendChild(document.createTextNode(msg.data));
+    output.appendChild(p);
+
+    // And now scroll down within the output div so the most recent message
+    // is displayed.
+    output.scrollTop = output.scrollHeight;
+};
+
+// Set up the sending end: send a message via Ajax whenever the user hits
+// enter.
+var input = document.getElementById("#{input}");
+input.onkeyup = function(event) {
+    var keycode = (event.keyCode ? event.keyCode : event.which);
+    if (keycode == '13') {
+        var xhr = new XMLHttpRequest();
+        var val = input.value;
+        input.value = "";
+        var params = "?message=" + encodeURI(val);
+        xhr.open("POST", "@{toMaster SendR}" + params);
+        xhr.send(null);
+    }
+}
+|]
+        else do
+            -- User isn't logged in, give a not-logged-in message.
+            master &lt;- lift getYesod
+            [whamlet|
+&lt;p&gt;
+    You must be #
+    $maybe ar &lt;- authRoute master
+        &lt;a href=@{ar}&gt;logged in
+    $nothing
+        logged in
+    \ to chat.
+|]</programlisting>
+   <para>This module stands on its own, and can be used in any application. Next we'll provide such a
+   driver application: a wiki. Our wiki will have a hard-coded homepage, and then a wiki section of
+   the site. We'll be using <glossterm>multiple dynamic pieces</glossterm> to allow an arbitrary hierarchy of
+   pages within the Wiki.</para>
+   <para>For storage, we'll just use a mutable reference to a <literal>Map</literal>. For a production
+   application, this should be replaced with a proper database. The content will be stored and
+   served as Markdown. <literal>yesod-auth</literal>'s dummy plugin will provide us with (fake)
+   authentication.</para>
+   <programlisting language="haskell">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
+             TemplateHaskell, FlexibleInstances, MultiParamTypeClasses,
+             FlexibleContexts
+  #-}
+import Yesod
+import Yesod.Auth
+import Yesod.Auth.Dummy (authDummy)
+import Chat
+import Control.Concurrent.Chan (Chan, newChan)
+import Network.Wai.Handler.Warp (run)
+import Data.Text (Text)
+import qualified Data.Text.Lazy as TL
+import qualified Data.IORef as I
+import qualified Data.Map as Map
+import Text.Markdown (markdown, def)
+
+-- | Our foundation type has both the chat subsite and a mutable reference to
+-- a map of all our wiki contents. Note that the key is a list of Texts, since
+-- a wiki can have an arbitrary hierarchy.
+--
+-- In a real application, we would want to store this information in a
+-- database of some sort.
+data Wiki = Wiki
+    { getChat :: Chat
+    , wikiContent :: I.IORef (Map.Map [Text] Text)
+    }
+
+-- Set up our routes as usual.
+mkYesod "Wiki" [parseRoutes|
+/ RootR GET                 -- the homepage
+/wiki/*Texts WikiR GET POST -- note the multipiece for the wiki hierarchy
+/chat ChatR Chat getChat    -- the chat subsite
+/auth AuthR Auth getAuth    -- the auth subsite
+|]
+
+instance Yesod Wiki where
+    authRoute _ = Just $ AuthR LoginR -- get a working login link
+
+    -- Our custom defaultLayout will add the chat widget to every page.
+    -- We'll also add login and logout links to the top.
+    defaultLayout widget = do
+        pc &lt;- widgetToPageContent $ widget &gt;&gt; chatWidget ChatR
+        mmsg &lt;- getMessage
+        hamletToRepHtml [hamlet|
+$doctype 5
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;#{pageTitle pc}
+        ^{pageHead pc}
+    &lt;body&gt;
+        $maybe msg &lt;- mmsg
+            &lt;div .message&gt;#{msg}
+        &lt;nav&gt;
+            &lt;a href=@{AuthR LoginR}&gt;Login
+            \ | #
+            &lt;a href=@{AuthR LogoutR}&gt;Logout
+        ^{pageBody pc}
+|]
+
+-- Fairly standard YesodAuth instance. We'll use the dummy plugin so that you
+-- can create any name you want, and store the login name as the AuthId.
+instance YesodAuth Wiki where
+    type AuthId Wiki = Text
+    authPlugins _ = [authDummy]
+    loginDest _ = RootR
+    logoutDest _ = RootR
+    getAuthId = return . Just . credsIdent
+    authHttpManager = error "authHttpManager" -- not used by authDummy
+
+-- Just implement authentication based on our yesod-auth usage.
+instance YesodChat Wiki where
+    getUserName = requireAuthId
+    isLoggedIn = do
+        ma &lt;- maybeAuthId
+        return $ maybe False (const True) ma
+
+instance RenderMessage Wiki FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+-- Nothing special here, just giving a link to the root of the wiki.
+getRootR :: Handler RepHtml
+getRootR = defaultLayout [whamlet|
+&lt;p&gt;Welcome to the Wiki!
+&lt;p&gt;
+    &lt;a href=@{wikiRoot}&gt;Wiki root
+|]
+  where
+    wikiRoot = WikiR []
+
+-- A form for getting wiki content
+wikiForm mtext = renderDivs $ areq textareaField "Page body" mtext
+
+-- Show a wiki page and an edit form
+getWikiR :: [Text] -&gt; Handler RepHtml
+getWikiR page = do
+    -- Get the reference to the contents map
+    icontent &lt;- fmap wikiContent getYesod
+
+    -- And read the map from inside the reference
+    content &lt;- liftIO $ I.readIORef icontent
+
+    -- Lookup the contents of the current page, if available
+    let mtext = Map.lookup page content
+
+    -- Generate a form with the current contents as the default value.
+    -- Note that we use the Textarea wrapper to get a &lt;textarea&gt;.
+    (form, _) &lt;- generateFormPost $ wikiForm $ fmap Textarea mtext
+    defaultLayout $ do
+        case mtext of
+            -- We're treating the input as markdown. The markdown package
+            -- automatically handles XSS protection for us.
+            Just text -&gt; toWidget $ markdown def $ TL.fromStrict text
+            Nothing -&gt; [whamlet|&lt;p&gt;Page does not yet exist|]
+        [whamlet|
+&lt;h2&gt;Edit page
+&lt;form method=post&gt;
+    ^{form}
+    &lt;div&gt;
+        &lt;input type=submit&gt;
+|]
+
+-- Get a submitted wiki page and updated the contents.
+postWikiR :: [Text] -&gt; Handler RepHtml
+postWikiR page = do
+    icontent &lt;- fmap wikiContent getYesod
+    content &lt;- liftIO $ I.readIORef icontent
+    let mtext = Map.lookup page content
+    ((res, form), _) &lt;- runFormPost $ wikiForm $ fmap Textarea mtext
+    case res of
+        FormSuccess (Textarea t) -&gt; do
+            liftIO $ I.atomicModifyIORef icontent $
+                \m -&gt; (Map.insert page t m, ())
+            setMessage "Page updated"
+            redirect $ WikiR page
+        _ -&gt; defaultLayout [whamlet|
+&lt;form method=post&gt;
+    ^{form}
+    &lt;div&gt;
+        &lt;input type=submit&gt;
+|]
+
+main :: IO ()
+main = do
+    -- Create our server event channel
+    chan &lt;- newChan
+
+    -- Initially have a blank database of wiki pages
+    icontent &lt;- I.newIORef Map.empty
+
+    -- Run our app
+    warpDebug 3000 $ Wiki (Chat chan) icontent</programlisting>
+  </chapter>
