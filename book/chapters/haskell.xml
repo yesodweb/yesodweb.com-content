@@ -1,193 +1,267 @@
-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN" "http://www.oasis-open.org/docbook/xml/5.0/docbook.dtd"><chapter>
-   <title>Haskell</title>
-   <para/>
-   <para/>
-   <para>In order to use Yesod, you're going to have to know at least the basics of Haskell.
-   Additionally, Yesod uses some features of Haskell that aren't covered in most introductory texts.
-   While this book assumes the reader has a basic familiarity with Haskell, this chapter is intended
-   to fill in the gaps.</para>
-   <para>If you are already fluent in Haskell, feel free to completely skip this chapter. Also, if you
-   would prefer to start off by getting your feet wet with Yesod, you can always come back to this
-   chapter later as a reference.</para>
-   <para>If you are looking for a more thorough introduction to Haskell, I would recommend either Real
-   World Haskell or Learn You a Haskell.</para>
-   <section>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<chapter>
+  <title>Haskell</title>
+
+  <para>In order to use Yesod, you're going to have to know at least the
+  basics of Haskell. Additionally, Yesod uses some features of Haskell that
+  aren't covered in most introductory texts. While this book assumes the
+  reader has a basic familiarity with Haskell, this chapter is intended to
+  fill in the gaps.</para>
+
+  <para>If you are already fluent in Haskell, feel free to completely skip
+  this chapter. Also, if you would prefer to start off by getting your feet
+  wet with Yesod, you can always come back to this chapter later as a
+  reference.</para>
+
+  <para>If you are looking for a more thorough introduction to Haskell, I
+  would recommend either Real World Haskell or Learn You a Haskell.</para>
+
+  <section>
     <title>Terminology</title>
-    <para/>
-    <para>Even for those familiar with Haskell as a language, there can sometimes be some
-   confusion about terminology. Let's establish some base terms that we can use throughout this
-   book.</para>
+
+    <para>Even for those familiar with Haskell as a language, there can
+    sometimes be some confusion about terminology. Let's establish some base
+    terms that we can use throughout this book.</para>
+
     <variablelist>
-     <varlistentry>
-      <term>Data type</term>
-      <listitem>
-       <para>This is one of the core building blocks for a strongly typed language like Haskell. Some
-     data types, like <literal>Int</literal>, can be treated as primitive values, while other data
-     types will build on top of these to create more complicated values. For example, you might
-     represent a person
-     with:<programlisting language="haskell">data Person = Person Text Int</programlisting>Here, the
-      <literal>Text</literal> would give the person's name, and the <literal>Int</literal> would give
-     the person's age. Due to its simplicity, this specific example type will recur throughout the
-     book. There are essentially three ways you can create a new data type:<itemizedlist>
-         <listitem>
-          <para>A <literal>type</literal> declaration such as <literal>type GearCount = Int</literal> merely
-       creates a synonym for an existing type. The type system will do nothing to prevent you from
-       using an <literal>Int</literal> where you asked for a <literal>GearCount</literal>. Using this
-       can make your code more self-documenting.</para>
-         </listitem>
-         <listitem>
-          <para>A <literal>newtype</literal> declaration such as <literal>newtype Make = Make Text</literal>.
-       In this case, you cannot accidently use a <literal>Text</literal> in place of a
-        <literal>Make</literal>; the compiler will stop you. The newtype wrapper always disappears
-       during compilation, and will introduce no overhead.</para>
-         </listitem>
-         <listitem>
-          <para>A <literal>data</literal> declaration, such as <literal>Person</literal> above. You can also
-       create Algebraic Data Types (ADTs), such as <literal>data Vehicle = Bicycle GearCount | Car
-        Make Model</literal>.</para>
-         </listitem>
-        </itemizedlist>
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>Data constructor</term>
-      <listitem>
-       <para>In our examples above, <literal>Person</literal>, <literal>Make</literal>,
-      <literal>Bicycle</literal>, and <literal>Car</literal> are all data constructors.</para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>Type constructor</term>
-      <listitem>
-       <para>In our examples above, <literal>Person</literal>, <literal>Make</literal>, and
-      <literal>Vehicle</literal> are all type constructors.</para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>Type variables</term>
-      <listitem>
-       <para>Consider the data type <literal>data Maybe a = Just a | Nothing</literal>. In this case,
-      <literal>a</literal> is a type variable.</para>
-      </listitem>
-     </varlistentry>
+      <varlistentry>
+        <term>Data type</term>
+
+        <listitem>
+          <para>This is one of the core building blocks for a strongly typed
+          language like Haskell. Some data types, like <literal>Int</literal>,
+          can be treated as primitive values, while other data types will
+          build on top of these to create more complicated values. For
+          example, you might represent a person with:<programlisting
+          language="haskell">data Person = Person Text Int</programlisting>Here,
+          the <literal>Text</literal> would give the person's name, and the
+          <literal>Int</literal> would give the person's age. Due to its
+          simplicity, this specific example type will recur throughout the
+          book. There are essentially three ways you can create a new data
+          type:<itemizedlist>
+              <listitem>
+                <para>A <literal>type</literal> declaration such as
+                <literal>type GearCount = Int</literal> merely creates a
+                synonym for an existing type. The type system will do nothing
+                to prevent you from using an <literal>Int</literal> where you
+                asked for a <literal>GearCount</literal>. Using this can make
+                your code more self-documenting.</para>
+              </listitem>
+
+              <listitem>
+                <para>A <literal>newtype</literal> declaration such as
+                <literal>newtype Make = Make Text</literal>. In this case, you
+                cannot accidently use a <literal>Text</literal> in place of a
+                <literal>Make</literal>; the compiler will stop you. The
+                newtype wrapper always disappears during compilation, and will
+                introduce no overhead.</para>
+              </listitem>
+
+              <listitem>
+                <para>A <literal>data</literal> declaration, such as
+                <literal>Person</literal> above. You can also create Algebraic
+                Data Types (ADTs), such as <literal>data Vehicle = Bicycle
+                GearCount | Car Make Model</literal>.</para>
+              </listitem>
+            </itemizedlist></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Data constructor</term>
+
+        <listitem>
+          <para>In our examples above, <literal>Person</literal>,
+          <literal>Make</literal>, <literal>Bicycle</literal>, and
+          <literal>Car</literal> are all data constructors.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Type constructor</term>
+
+        <listitem>
+          <para>In our examples above, <literal>Person</literal>,
+          <literal>Make</literal>, and <literal>Vehicle</literal> are all type
+          constructors.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Type variables</term>
+
+        <listitem>
+          <para>Consider the data type <literal>data Maybe a = Just a |
+          Nothing</literal>. In this case, <literal>a</literal> is a type
+          variable.</para>
+        </listitem>
+      </varlistentry>
     </variablelist>
-   </section>
-   <section>
+  </section>
+
+  <section>
     <title>Tools</title>
-    <para/>
-    <para>There are two main tools you'll need to Haskell development. The Glasgow Haskell Compiler (GHC)
-   is the standard Haskell compiler, and the only one officially supported by Yesod. You'll also
-   need Cabal, which is the standard Haskell build tool. Not only do we use Cabal for building our
-   local code, but it can automatically download and install dependencies from Hackage, the Haskell
-   package repository.</para>
-    <para>If you're on Windows or Mac, it is strongly recommended to download the <link href="http://hackage.haskell.org/platform/">Haskell
-    Platform</link>. On Linux, many distributions include the Haskell Platform in their
-   repositories. On Debian-based systems, for example, you can get started by running <literal>sudo
-    apt-get install haskell-platform</literal>. If your distribution does not include the Haskell
-   Platform, you can install it manually by following the instructions on the Haskell Platform's
-   page.</para>
-    <para>One important tool you'll need to update is <command>alex</command>. The Haskell Platform
-   includes version 2, while the Javascript minifier Yesod uses, <function>hjsmin</function>, requires
-   version three. Be sure to <command>cabal install alex</command> after getting set up with the
-   Haskell Platform, or you'll run into error messages about the
+
+    <para>There are two main tools you'll need to Haskell development. The
+    Glasgow Haskell Compiler (GHC) is the standard Haskell compiler, and the
+    only one officially supported by Yesod. You'll also need Cabal, which is
+    the standard Haskell build tool. Not only do we use Cabal for building our
+    local code, but it can automatically download and install dependencies
+    from Hackage, the Haskell package repository.</para>
+
+    <para>If you're on Windows or Mac, it is strongly recommended to download
+    the <link href="http://hackage.haskell.org/platform/">Haskell
+    Platform</link>. On Linux, many distributions include the Haskell Platform
+    in their repositories. On Debian-based systems, for example, you can get
+    started by running <literal>sudo apt-get install
+    haskell-platform</literal>. If your distribution does not include the
+    Haskell Platform, you can install it manually by following the
+    instructions on the Haskell Platform's page.</para>
+
+    <para>One important tool you'll need to update is <command>alex</command>.
+    The Haskell Platform includes version 2, while the Javascript minifier
+    Yesod uses, <function>hjsmin</function>, requires version three. Be sure
+    to <command>cabal install alex</command> after getting set up with the
+    Haskell Platform, or you'll run into error messages about the
     <function>language-javascript</function> package.</para>
+
     <note>
-     <para>Some people like to live in the bleeding edge and install the latest version of GHC before
-   it is available in the Haskell Platform. We try to keep Yesod up-to-date with all current
-   versions of GHC, but we only officially support the Haskell Platform. If you do go the route of
-   manually install GHC, here are a few notes:<itemizedlist>
-       <listitem>
-        <para>You'll need to install some additional build tools, <command>alex</command> and
-      <command>happy</command> in particular.</para>
-       </listitem>
-       <listitem>
-        <para>Make sure to install all of the <link href="http://www.vex.net/%7Etrebla/haskell/haskell-platform.xhtml">required C libraries</link>. On Debian-based systems, you would need to
-     run:<programlisting>sudo apt-get install libedit-dev libbsd-dev libgmp3-dev zlib1g-dev freeglut3-dev</programlisting>
-        </para>
-       </listitem>
-      </itemizedlist>
-     </para>
+      <para>Some people like to live in the bleeding edge and install the
+      latest version of GHC before it is available in the Haskell Platform. We
+      try to keep Yesod up-to-date with all current versions of GHC, but we
+      only officially support the Haskell Platform. If you do go the route of
+      manually install GHC, here are a few notes:<itemizedlist>
+          <listitem>
+            <para>You'll need to install some additional build tools,
+            <command>alex</command> and <command>happy</command> in
+            particular.</para>
+          </listitem>
+
+          <listitem>
+            <para>Make sure to install all of the <link
+            href="http://www.vex.net/%7Etrebla/haskell/haskell-platform.xhtml">required
+            C libraries</link>. On Debian-based systems, you would need to
+            run:<programlisting>sudo apt-get install libedit-dev libbsd-dev libgmp3-dev zlib1g-dev freeglut3-dev</programlisting></para>
+          </listitem>
+        </itemizedlist></para>
     </note>
-    <para>Regardless of how you've installed your tools, you should sure to put <literal>cabal</literal>'s
-   bin folder in your <literal>PATH</literal> variable. On Mac and Linux, this will be
+
+    <para>Regardless of how you've installed your tools, you should sure to
+    put <literal>cabal</literal>'s bin folder in your <literal>PATH</literal>
+    variable. On Mac and Linux, this will be
     <literal>$HOME/.cabal/bin</literal> and on Windows it will be
-   <literal>%APPDATA%\cabal\bin</literal>.</para>
-    <para>
-     <literal>cabal</literal> has lots of different options available, but for now, just try out two
-   commands:</para>
+    <literal>%APPDATA%\cabal\bin</literal>.</para>
+
+    <para><literal>cabal</literal> has lots of different options available,
+    but for now, just try out two commands:</para>
+
     <itemizedlist>
-     <listitem>
-      <para>
-       <command>cabal update</command> will download the most recent list of packages from
-    Hackage.</para>
-     </listitem>
-     <listitem>
-      <para>
-       <command>cabal install yesod</command> will install Yesod and all its dependencies.</para>
-     </listitem>
+      <listitem>
+        <para><command>cabal update</command> will download the most recent
+        list of packages from Hackage.</para>
+      </listitem>
+
+      <listitem>
+        <para><command>cabal install yesod</command> will install Yesod and
+        all its dependencies.</para>
+      </listitem>
     </itemizedlist>
+
     <note>
-     <para>Many people in the community prefer to perform sandboxed builds of their Haskell
-   packages, which prevents your install Yesod from breaking existing packages, or packages you
-   install in the future from breaking your Yesod install. I won't go into details on how to use
-   these in the book, but the two most commonly used tools are <link href="http://hackage.haskell.org/package/cabal-dev">cabal-dev</link> and <link href="http://hackage.haskell.org/package/virthualenv">virthualenv</link>.</para>
+      <para>Many people in the community prefer to perform sandboxed builds of
+      their Haskell packages, which prevents your install Yesod from breaking
+      existing packages, or packages you install in the future from breaking
+      your Yesod install. I won't go into details on how to use these in the
+      book, but the two most commonly used tools are <link
+      href="http://hackage.haskell.org/package/cabal-dev">cabal-dev</link> and
+      <link
+      href="http://hackage.haskell.org/package/virthualenv">virthualenv</link>.</para>
     </note>
-   </section>
-   <section>
+  </section>
+
+  <section>
     <title>Language Pragmas</title>
-    <para/>
-    <para>GHC will run by default in something very close to Haskell98 mode. It also ships with a large
-   number of language extensions, allowing more powerful type classes, syntax changes, and more.
-   There are multiple ways to tell GHC to turn on these extensions. For most of the code snippets in
-   this book, you'll see <glossterm>language pragmas</glossterm>, which look like this:</para>
+
+    <para>GHC will run by default in something very close to Haskell98 mode.
+    It also ships with a large number of language extensions, allowing more
+    powerful type classes, syntax changes, and more. There are multiple ways
+    to tell GHC to turn on these extensions. For most of the code snippets in
+    this book, you'll see <glossterm>language pragmas</glossterm>, which look
+    like this:</para>
+
     <programlisting language="haskell">{-# LANGUAGE MyLanguageExtension #-}</programlisting>
-    <para>These should always appear at the top of your source file. Additionally, there are two
-   other common approaches:</para>
+
+    <para>These should always appear at the top of your source file.
+    Additionally, there are two other common approaches:</para>
+
     <itemizedlist>
-     <listitem>
-      <para>On the GHC command line, pass an extra argument
-    <userinput>-XMyLanguageExtension</userinput>.</para>
-     </listitem>
-     <listitem>
-      <para>In your <literal>cabal</literal> file, add an <literal>extensions</literal> block.</para>
-     </listitem>
+      <listitem>
+        <para>On the GHC command line, pass an extra argument
+        <userinput>-XMyLanguageExtension</userinput>.</para>
+      </listitem>
+
+      <listitem>
+        <para>In your <literal>cabal</literal> file, add an
+        <literal>extensions</literal> block.</para>
+      </listitem>
     </itemizedlist>
-    <para>I personally never use the GHC command line argument approach. It's a personal preference, but
-   I like to have my settings clearly stated in a file. In general it's recommended to avoid putting
-   extensions in your <literal>cabal</literal> file; however, in the Yesod scaffolded site we specifically use this approach to avoid the
-   boilerplate of specifying the same language pragmas in every source file.</para>
-    <para>We'll end up using quite a few language extensions in this book (the scaffolding uses 11). We
-   will not cover the meaning of all of them. Instead, please see the <link href="http://www.haskell.org/ghc/docs/latest/html/users_guide/ghc-language-features.html">GHC documentation</link>.</para>
-   </section>
-   <section>
+
+    <para>I personally never use the GHC command line argument approach. It's
+    a personal preference, but I like to have my settings clearly stated in a
+    file. In general it's recommended to avoid putting extensions in your
+    <literal>cabal</literal> file; however, in the Yesod scaffolded site we
+    specifically use this approach to avoid the boilerplate of specifying the
+    same language pragmas in every source file.</para>
+
+    <para>We'll end up using quite a few language extensions in this book (the
+    scaffolding uses 11). We will not cover the meaning of all of them.
+    Instead, please see the <link
+    href="http://www.haskell.org/ghc/docs/latest/html/users_guide/ghc-language-features.html">GHC
+    documentation</link>.</para>
+  </section>
+
+  <section>
     <title>Overloaded Strings</title>
-    <para/>
-    <para>What's the type of <literal>"hello"</literal>? Traditionally, it's <literal>String</literal>, which
-   is defined as <literal>type String = [Char]</literal>. Unfortunately, there are a number of
-   limitations with this:</para>
+
+    <para>What's the type of <literal>"hello"</literal>? Traditionally, it's
+    <literal>String</literal>, which is defined as <literal>type String =
+    [Char]</literal>. Unfortunately, there are a number of limitations with
+    this:</para>
+
     <itemizedlist>
-     <listitem>
-      <para>It's a very inefficient implementation of textual data. We need to allocate extra memory for
-    each cons cell, plus the characters themselves each take up a full machine word.</para>
-     </listitem>
-     <listitem>
-      <para>Sometimes we have string-like data that's not actually text, such as
-     <literal>ByteString</literal>s and HTML.</para>
-     </listitem>
+      <listitem>
+        <para>It's a very inefficient implementation of textual data. We need
+        to allocate extra memory for each cons cell, plus the characters
+        themselves each take up a full machine word.</para>
+      </listitem>
+
+      <listitem>
+        <para>Sometimes we have string-like data that's not actually text,
+        such as <literal>ByteString</literal>s and HTML.</para>
+      </listitem>
     </itemizedlist>
-    <para>To work around these limitations, GHC has a language extension called
-    <literal>OverloadedStrings</literal>. When enabled, literal strings no longer have the monomorphic
-   type <literal>String</literal>; instead, they have the type <literal>IsString a =&gt; a</literal>, where
+
+    <para>To work around these limitations, GHC has a language extension
+    called <literal>OverloadedStrings</literal>. When enabled, literal strings
+    no longer have the monomorphic type <literal>String</literal>; instead,
+    they have the type <literal>IsString a =&gt; a</literal>, where
     <literal>IsString</literal> is defined as:</para>
+
     <programlisting language="haskell">class IsString a where
     fromString :: String -&gt; a</programlisting>
-    <para>There are <literal>IsString</literal> instances available for a number of types in Haskell, such
-   as <literal>Text</literal> (a much more efficient packed <literal>String</literal> type),
-    <literal>ByteString</literal>, and <literal>Html</literal>. Virtually every example in this book
-   will assume that this language extension is turned on.</para>
-    <para>Unfortunately, there is one drawback to this extension: it can sometimes confuse GHC's type
-   checker. Imagine we have:</para>
+
+    <para>There are <literal>IsString</literal> instances available for a
+    number of types in Haskell, such as <literal>Text</literal> (a much more
+    efficient packed <literal>String</literal> type),
+    <literal>ByteString</literal>, and <literal>Html</literal>. Virtually
+    every example in this book will assume that this language extension is
+    turned on.</para>
+
+    <para>Unfortunately, there is one drawback to this extension: it can
+    sometimes confuse GHC's type checker. Imagine we have:</para>
+
     <programlisting language="haskell">{-# LANGUAGE OverloadedStrings, TypeSynonymInstances, FlexibleInstances #-}
 import Data.Text (Text)
 
@@ -202,19 +276,25 @@ instance DoSomething Text where
 
 myFunc :: IO ()
 myFunc = something "hello"</programlisting>
-    <para>Will the program print out <literal>String</literal> or <literal>Text</literal>? It's not clear. So
-   instead, you'll need to give an explicit type annotation to specify whether
-    <literal>"hello"</literal> should be treated as a <literal>String</literal> or
-   <literal>Text</literal>.</para>
-   </section>
-   <section>
+
+    <para>Will the program print out <literal>String</literal> or
+    <literal>Text</literal>? It's not clear. So instead, you'll need to give
+    an explicit type annotation to specify whether <literal>"hello"</literal>
+    should be treated as a <literal>String</literal> or
+    <literal>Text</literal>.</para>
+  </section>
+
+  <section>
     <title>Type Families</title>
-    <para/>
-    <para>The basic idea of a type family is to state some association between two different types.
-   Suppose we want to write a function that will safely take the first element of a list. But we
-   don't want it to work just on lists; we'd like it to treat a <literal>ByteString</literal> like a
-   list of <literal>Word8</literal>s. To do so, we need to introduce some <glossterm>associated type</glossterm>
-   to specify what the contents of a certain type are.</para>
+
+    <para>The basic idea of a type family is to state some association between
+    two different types. Suppose we want to write a function that will safely
+    take the first element of a list. But we don't want it to work just on
+    lists; we'd like it to treat a <literal>ByteString</literal> like a list
+    of <literal>Word8</literal>s. To do so, we need to introduce some
+    <glossterm>associated type</glossterm> to specify what the contents of a
+    certain type are.</para>
+
     <programlisting language="haskell">{-# LANGUAGE TypeFamilies, OverloadedStrings #-}
 import Data.Word (Word8)
 import qualified Data.ByteString as S
@@ -242,41 +322,64 @@ main = do
 
     print $ safeHead ("" :: S.ByteString)
     print $ safeHead ("hello" :: S.ByteString)</programlisting>
-    <para>The new syntax is the ability to place a <literal>type</literal> inside of a
-    <literal>class</literal> and <literal>instance</literal>. We can also use <literal>data</literal>
-   instead, which will create a new datatype instead of reference an existing one.</para>
+
+    <para>The new syntax is the ability to place a <literal>type</literal>
+    inside of a <literal>class</literal> and <literal>instance</literal>. We
+    can also use <literal>data</literal> instead, which will create a new
+    datatype instead of reference an existing one.</para>
+
     <note>
-     <para>There are other ways to use associated types outside the context of a typeclass. However, in
-   Yesod, all of our associated types are in fact part of a type class. For more information on type
-   families, see <link href="http://www.haskell.org/haskellwiki/GHC/Type_families">the Haskell wiki page</link>.</para>
+      <para>There are other ways to use associated types outside the context
+      of a typeclass. However, in Yesod, all of our associated types are in
+      fact part of a type class. For more information on type families, see
+      <link href="http://www.haskell.org/haskellwiki/GHC/Type_families">the
+      Haskell wiki page</link>.</para>
     </note>
-   </section>
-   <section>
+  </section>
+
+  <section>
     <title>Template Haskell</title>
-    <para/>
-    <para>Template Haskell (TH) is an approach to <emphasis>code generation</emphasis>. We use it in Yesod in a number
-   of places to reduce boilerplate, and to ensure that the generated code is correct. Template
-   Haskell is essentially Haskell which generates a Haskell Abstract Syntax Tree (AST).</para>
+
+    <para></para>
+
+    <para>Template Haskell (TH) is an approach to <emphasis>code
+    generation</emphasis>. We use it in Yesod in a number of places to reduce
+    boilerplate, and to ensure that the generated code is correct. Template
+    Haskell is essentially Haskell which generates a Haskell Abstract Syntax
+    Tree (AST).</para>
+
     <note>
-     <para>There's actually more power in TH than that, as it can actually introspect code. We don't
-   use these facilities in Yesod, however.</para>
+      <para>There's actually more power in TH than that, as it can actually
+      introspect code. We don't use these facilities in Yesod, however.</para>
     </note>
-    <para>Writing TH code can be tricky, and unfortunately there isn't very much type safety involved.
-   You can easily write TH that will generate code that won't compile. This is only an issue for the
-   developers of Yesod, not for its users. During development, we use a large collection of unit
-   tests to ensure that the generated code is correct. As a user, all you need to do is call these
-   already existing functions. For example, to include an externally defined Hamlet template, you
-   can write:</para>
+
+    <para>Writing TH code can be tricky, and unfortunately there isn't very
+    much type safety involved. You can easily write TH that will generate code
+    that won't compile. This is only an issue for the developers of Yesod, not
+    for its users. During development, we use a large collection of unit tests
+    to ensure that the generated code is correct. As a user, all you need to
+    do is call these already existing functions. For example, to include an
+    externally defined Hamlet template, you can write:</para>
+
     <programlisting language="haskell">$(hamletFile "myfile.hamlet")</programlisting>
-    <para>(Hamlet is discussed in the Shakespeare chapter.) The dollar sign immediately followed by parantheses
-   tell GHC that what follows is a Template Haskell function. The code inside is then run by the
-   compiler and generates a Haskell AST, which is then compiled. And yes, it's even possible to
-    <link href="http://www.yesodweb.com/blog/2010/09/yo-dawg-template-haskell">go meta with this</link>.</para>
-    <para>A nice trick is that TH code is allowed to perform arbitrary <literal>IO</literal> actions, and
-   therefore we can place some input in external files and have it parsed at compile time. One
-   example usage is to have compile-time checked HTML, CSS, and Javascript templates.</para>
-    <para>If your Template Haskell code is being used to generate declarations, and is being placed at
-   the top level of our file, we can leave off the dollar sign and parentheses. In other words:</para>
+
+    <para>(Hamlet is discussed in the Shakespeare chapter.) The dollar sign
+    immediately followed by parantheses tell GHC that what follows is a
+    Template Haskell function. The code inside is then run by the compiler and
+    generates a Haskell AST, which is then compiled. And yes, it's even
+    possible to <link
+    href="http://www.yesodweb.com/blog/2010/09/yo-dawg-template-haskell">go
+    meta with this</link>.</para>
+
+    <para>A nice trick is that TH code is allowed to perform arbitrary
+    <literal>IO</literal> actions, and therefore we can place some input in
+    external files and have it parsed at compile time. One example usage is to
+    have compile-time checked HTML, CSS, and Javascript templates.</para>
+
+    <para>If your Template Haskell code is being used to generate
+    declarations, and is being placed at the top level of our file, we can
+    leave off the dollar sign and parentheses. In other words:</para>
+
     <programlisting language="haskell">{-# LANGUAGE TemplateHaskell #-}
 
 -- Normal function declaration, nothing special
@@ -287,36 +390,54 @@ $(myThCode)
 
 -- Or equivalently
 myThCode</programlisting>
-    <para>It can be useful to see what code is being generated by Template Haskell for you. To do so, you
-   should use the <literal>-ddump-splices</literal> GHC option.</para>
+
+    <para>It can be useful to see what code is being generated by Template
+    Haskell for you. To do so, you should use the
+    <literal>-ddump-splices</literal> GHC option.</para>
+
     <note>
-     <para>There are many other features of Template Haskell not covered here. For more information,
-   see the <link href="http://www.haskell.org/haskellwiki/Template_Haskell">Haskell wiki page</link>.</para>
+      <para>There are many other features of Template Haskell not covered
+      here. For more information, see the <link
+      href="http://www.haskell.org/haskellwiki/Template_Haskell">Haskell wiki
+      page</link>.</para>
     </note>
-   </section>
-   <section>
+  </section>
+
+  <section>
     <title>QuasiQuotes</title>
-    <para/>
-    <para>QuasiQuotes (QQ) are a minor extension of Template Haskell that let us embed arbitrary content
-   within our Haskell source files. For example, we mentioned previously the
-    <literal>hamletFile</literal> TH function, which reads the template contents from an external
-   file. We also have a quasi-quoter named <literal>hamlet</literal> that takes the content
-   inline:</para>
+
+    <para></para>
+
+    <para>QuasiQuotes (QQ) are a minor extension of Template Haskell that let
+    us embed arbitrary content within our Haskell source files. For example,
+    we mentioned previously the <literal>hamletFile</literal> TH function,
+    which reads the template contents from an external file. We also have a
+    quasi-quoter named <literal>hamlet</literal> that takes the content
+    inline:</para>
+
     <programlisting language="haskell">{-# LANGUAGE QuasiQuotes #-}
 
 [hamlet|&lt;p&gt;This is quasi-quoted Hamlet.|]</programlisting>
-    <para>The syntax is set off using square brackets and pipes. The name of the quasi-quoter is given
-   between the opening bracket and the first pipe, and the content is given between the pipes.</para>
-    <para>Throughout the book, we will often times use the QQ-approach over a TH-powered external file
-   since the former is simpler to copy-and-paste. However, in production, external files are
-   recommended for all but the shortest of inputs as it gives a nice separation of the non-Haskell
-   syntax from your Haskell code.</para>
-   </section>
-   <section>
+
+    <para>The syntax is set off using square brackets and pipes. The name of
+    the quasi-quoter is given between the opening bracket and the first pipe,
+    and the content is given between the pipes.</para>
+
+    <para>Throughout the book, we will often times use the QQ-approach over a
+    TH-powered external file since the former is simpler to copy-and-paste.
+    However, in production, external files are recommended for all but the
+    shortest of inputs as it gives a nice separation of the non-Haskell syntax
+    from your Haskell code.</para>
+  </section>
+
+  <section>
     <title>Summary</title>
-    <para/>
-    <para>You don't need to be an expert in Haskell to use Yesod, a basic familiarity will suffice. This
-   chapter hopefully gave you just enough extra information to feel more comfortable following the
-   rest of the book.</para>
-   </section>
-  </chapter>
+
+    <para></para>
+
+    <para>You don't need to be an expert in Haskell to use Yesod, a basic
+    familiarity will suffice. This chapter hopefully gave you just enough
+    extra information to feel more comfortable following the rest of the
+    book.</para>
+  </section>
+</chapter>
