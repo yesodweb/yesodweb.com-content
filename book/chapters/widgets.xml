@@ -384,7 +384,7 @@ instance Yesod MyApp where
     </itemizedlist>
     <para>We have one more trick in our bag to address this: we apply some last-minute
             adjustments to the widget itself before calling <literal>widgetToPageContent</literal>. It's actually very easy to do: we just use
-            do-notation again, as in <xref linkend="using-widgets-last-minute-widget-adjustment"/>.</para>
+            do-notation again, as in Last-Minute Widget Adjustment.</para>
     <figure xml:id="using-widgets-last-minute-widget-adjustment">
      <title>Last-Minute Widget Adjustment</title>
      <programlisting language="haskell">myLayout :: GWidget s MyApp () -&gt; GHandler s MyApp RepHtml
