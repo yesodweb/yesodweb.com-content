@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><chapter>
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN" "http://www.oasis-open.org/docbook/xml/5.0/docbook.dtd"><chapter>
    <title>Sessions</title>
    <para/>
    <para/>
@@ -200,7 +200,7 @@ main = warpDebug 3000 Messages</programlisting>
      <title>Initial page load, no message</title>
      <mediaobject>
       <imageobject>
-       <imagedata fileref="images/sessions/messages-1.png"/>
+       <imagedata fileref="../images/messages-1.png"/>
       </imageobject>
      </mediaobject>
     </figure>
@@ -208,7 +208,7 @@ main = warpDebug 3000 Messages</programlisting>
      <title>New message entered in text box</title>
      <mediaobject>
       <imageobject>
-       <imagedata fileref="images/sessions/messages-2.png"/>
+       <imagedata fileref="../images/messages-2.png"/>
       </imageobject>
      </mediaobject>
     </figure>
@@ -216,7 +216,7 @@ main = warpDebug 3000 Messages</programlisting>
      <title>After form submit, message appears at top of page</title>
      <mediaobject>
       <imageobject>
-       <imagedata fileref="images/sessions/messages-3.png"/>
+       <imagedata fileref="../images/messages-3.png"/>
       </imageobject>
      </mediaobject>
     </figure>
@@ -224,7 +224,7 @@ main = warpDebug 3000 Messages</programlisting>
      <title>After refresh, the message is cleared</title>
      <mediaobject>
       <imageobject>
-       <imagedata fileref="images/sessions/messages-4.png"/>
+       <imagedata fileref="../images/messages-4.png"/>
       </imageobject>
      </mediaobject>
     </figure>

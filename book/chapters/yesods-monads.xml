@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><chapter>
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML 5.0//EN" "http://www.oasis-open.org/docbook/xml/5.0/docbook.dtd"><chapter>
    <title>Yesod's Monads</title>
    <para/>
    <para/>
@@ -205,7 +205,7 @@ main = withSqlitePool "links.db3" 10 $ \pool -&gt; do
      <title>Screenshot of the navbar</title>
      <mediaobject>
       <imageobject>
-       <imagedata fileref="images/yesods-monads/navbar.png"/>
+       <imagedata fileref="../images/navbar.png"/>
       </imageobject>
      </mediaobject>
     </figure>
