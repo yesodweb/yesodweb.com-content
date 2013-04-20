@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<chapter>
+  <title>Understanding a Request</title>
+
+  <para>You can often times get away with using Yesod for quite a while
+  without needing to understand its internal workings. However, such an
+  understanding is often times advantageous. This chapter will walk you
+  through the request handling process for a fairly typical Yesod application.
+  Note that a fair amount of this discussion involves code changes in Yesod
+  1.2. Most of the concepts are the same in previous versions, though the data
+  types involved were a bit messier.</para>
+
+  <para>Yesod’s usage of Template Haskell to bypass boilerplate code can make
+  it a bit difficult to understand this process sometimes. If beyond the
+  information in this chapter you wish to further analyze things, it can be
+  useful to view GHC’s generated code using
+  <code>-ddump-splices</code>.</para>
+
+  <note>
+    <para>A lot of this information was originally published as a blog series
+    on the 1.2 release. You can see the blog posts at:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="http://www.yesodweb.com/blog/2013/03/yesod-1-2-cleaner-internals">Yesod
+        1.2’s cleaner internals</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="http://www.yesodweb.com/blog/2013/03/big-subsite-rewrite">Big
+        Subsite Rewrite</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink
+        url="http://www.yesodweb.com/blog/2013/03/yesod-dispatch-version-1-2">Yesod
+        dispatch, version 1.2</ulink></para>
+      </listitem>
+    </itemizedlist>
+  </note>
+
+  <section>
+    <title>Sample Program</title>
+
+    <para>Let’s consider a fairly simple site. The only real twist is that
+    we’re using a WAI subsite, but that will be clarified soon.</para>
+
+    <programlisting language="haskell">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import qualified Data.ByteString.Lazy.Char8 as L8
+import           Network.HTTP.Types         (status200)
+import           Network.Wai                (pathInfo, rawPathInfo,
+                                             requestMethod, responseLBS)
+import           Yesod
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/only-get   OnlyGetR   GET
+/any-method AnyMethodR
+/my-subsite MySubsiteR WaiSubsite getMySubsite
+|]
+
+instance Yesod App
+
+getOnlyGetR :: Handler Html
+getOnlyGetR = defaultLayout
+    [whamlet|
+        &lt;p&gt;Accessed via GET method
+        &lt;form method=post action=@{AnyMethodR}&gt;
+            &lt;button&gt;POST to /any-method
+    |]
+
+handleAnyMethodR :: Handler Html
+handleAnyMethodR = do
+    req &lt;- waiRequest
+    defaultLayout
+        [whamlet|
+            &lt;p&gt;In any-method, method == #{show $ requestMethod req}
+        |]
+
+getMySubsite :: App -&gt; WaiSubsite
+getMySubsite _ =
+    WaiSubsite app
+  where
+    app req = return $ responseLBS
+        status200
+        [("Content-Type", "text/plain")]
+        $ L8.pack $ concat
+            [ "pathInfo == "
+            , show $ pathInfo req
+            , ", rawPathInfo == "
+            , show $ rawPathInfo req
+            ]
+
+main :: IO ()
+main = warp 3001 App</programlisting>
+
+    <para>We define three different routes: one responds exclusively to GET
+    requests, one to any request method, and the final one delegates handling
+    to a subsite. The subsite in this case is a <code>WaiSubsite</code>, which
+    passes off handling to a WAI application.</para>
+  </section>
+
+  <section>
+    <title>Handlers</title>
+
+    <para>When trying to understand Yesod request handling, we need to look at
+    two components: how a request is dispatched to the appropriate handler
+    code, and how handler functions are processed. We’ll start off with the
+    latter, and then circle back to understanding the dispatch process
+    itself.</para>
+
+    <section>
+      <title>Layers</title>
+
+      <para>Yesod builds itself on top of WAI, which provides a protocol for
+      web servers (or, more generally, <emphasis>handlers</emphasis>) and
+      applications to communicate with each other. This is expressed through
+      two datatypes: <code>Request</code> and <code>Response</code>. Then, an
+      <code>Application</code> is defined as <code>type Application = Request
+      -&gt; ResourceT IO Response</code>. A WAI handler will take an
+      application and run it.</para>
+
+      <para><code>Request</code> and <code>Response</code> are both very
+      low-level, trying to represent the HTTP protocol without too much
+      embellishment. This keeps WAI as a generic tool, but also leaves out a
+      lot of the information we need in order to implement a web framework.
+      For example, WAI will provide us with the raw data for all request
+      headers. But Yesod needs to parse that to get cookie information, and
+      then parse the cookies in order to extract session information.</para>
+
+      <para>To deal with this dichotomy, Yesod introduces two new data types:
+      <code>YesodRequest</code> and <code>YesodResponse</code>.
+      <code>YesodRequest</code> contains a WAI <code>Request</code>, and also
+      adds in such request information as cookies and session variables, and
+      on the response side can either be a standard WAI <code>Response</code>,
+      or be a higher-level representation of such a response including such
+      things as updated session information and extra response headers. To
+      parallel WAI’s <code>Application</code>, we have <code>type YesodApp =
+      YesodRequest -&gt; ResourceT IO YesodResponse</code>.</para>
+
+      <para>But as a Yesod user, you never really see <code>YesodApp</code>.
+      There’s another layer on top of that which you are used to dealing with:
+      <code>Handler</code>. When you write handler functions, you need to have
+      access to three different things:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>The <code>YesodRequest</code> value for the current
+          request.</para>
+        </listitem>
+
+        <listitem>
+          <para>Some basic environment information, like how to log messages
+          or handle error conditions. This is provided by the datatype
+          <code>RunHandlerEnv</code>.</para>
+        </listitem>
+
+        <listitem>
+          <para>A mutable variable to keep track of updateable information,
+          such as the headers to be returned and the user session state. This
+          is called <code>GHState</code>.</para>
+
+          <note>
+            <para>I know that’s not a great name, but it’s there for
+            historical reasons.</para>
+          </note>
+        </listitem>
+      </itemizedlist>
+
+      <para>So when you’re writing a handler function, you’re essentially just
+      writing in a <code>Reader</code> monad that has access to all of this
+      information. The <code>runHandler</code> function will turn a
+      <code>Handler</code> into a <code>YesodApp</code>.
+      <code>yesodRunner</code> takes this a step further and converts all the
+      way to a WAI <code>Application</code>.</para>
+    </section>
+
+    <section>
+      <title>Content</title>
+
+      <para>Our example above, and many others you’ve already seen, give a
+      handler with a type of <code>Handler Html</code>. We’ve just described
+      what the <code>Handler</code> means, but how does Yesod know how to deal
+      with <code>Html</code>? The answer lies in the
+      <code>ToTypedContent</code> typeclass. The relevants bit of code
+      are:</para>
+
+      <programlisting language="haskell">data Content = ContentBuilder !BBuilder.Builder !(Maybe Int) -- ^ The content and optional content length.
+             | ContentSource !(Source (ResourceT IO) (Flush BBuilder.Builder))
+             | ContentFile !FilePath !(Maybe FilePart)
+             | ContentDontEvaluate !Content
+data TypedContent = TypedContent !ContentType !Content
+
+class ToContent a where
+    toContent :: a -&gt; Content
+class ToContent a =&gt; ToTypedContent a where
+    toTypedContent :: a -&gt; TypedContent</programlisting>
+
+      <para>The <code>Content</code> datatype represents the different ways
+      you can provide a response body. The first three mirror WAI’s
+      representation directly. The fourth (<code>ContentDontEvaluate</code>)
+      is used to indicate to Yesod whether response bodies should be fully
+      evaluated before being returned to users. The advantage to fully
+      evaluating is that we can provide meaningful error messages if an
+      exception is thrown from pure code. The downside is possibly increased
+      time and memory usage.</para>
+
+      <para>In any event, Yesod knows how to turn a <code>Content</code> into
+      a response body. The <code>ToContent</code> typeclass provides a way to
+      allow many different datatypes to be converted into response bodies.
+      Many commonly used types are already instances of
+      <code>ToContent</code>, including strict and lazy
+      <code>ByteString</code> and <code>Text</code>, and of course
+      <code>Html</code>.</para>
+
+      <para><code>TypedContent</code> adds an extra piece of information: the
+      content type of the value. As you might expect, there are
+      <code>ToTypedContent</code> instances for a number of common datatypes,
+      including HTML, JSON, and plain text.</para>
+
+      <programlisting>instance ToTypedContent J.Value where
+    toTypedContent v = TypedContent typeJson (toContent v)
+instance ToTypedContent Html where
+    toTypedContent h = TypedContent typeHtml (toContent h)
+instance ToTypedContent T.Text where
+    toTypedContent t = TypedContent typePlain (toContent t)</programlisting>
+
+      <para>Putting this all together: a <code>Handler</code> is able to
+      return any value which is an instance of <code>ToTypedContent</code>,
+      and Yesod will handle turning it into an appropriate representation and
+      setting the <code>Content-Type</code> response header.</para>
+    </section>
+
+    <section>
+      <title>Short-circuit responses</title>
+
+      <para>One other oddity is how short-circuiting works. For example, you
+      can call <code>redirect</code> in the middle of a handler function, and
+      the rest of the function will not be called. The mechanism we use is
+      standard Haskell exceptions. Calling <code>redirect</code> just throws
+      an exception of type <code>HandlerContents</code>. The
+      <code>runHandler</code> function will catch any exceptions thrown and
+      produce an appropriate response. For <code>HandlerContents</code>, each
+      constructor gives a clear action to perform, be it redirecting or
+      sending a file. For all other exception types, an error message is
+      displayed to the user.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Dispatch</title>
+
+    <para>Dispatch is where the Template Haskell “magic” of Yesod occurs.
+    Dispatch is a tedious, error-prone process which involves synchronization
+    of three different components: route parsing, route rendering, and
+    choosing an appropriate handler function. <emphasis>FIXME:
+    INCOMPLETE</emphasis></para>
+  </section>
+</chapter>

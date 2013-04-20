@@ -63,6 +63,9 @@
 
     <xi:include href="chapters/creating-a-subsite.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/understanding-request.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
   </part>
 
   <part>
