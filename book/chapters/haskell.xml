@@ -112,10 +112,10 @@
     from Hackage, the Haskell package repository.</para>
 
     <para>If you're on Windows or Mac, it is strongly recommended to download
-    the <link href="http://hackage.haskell.org/platform/">Haskell
-    Platform</link>. On Linux, many distributions include the Haskell Platform
-    in their repositories. On Debian-based systems, for example, you can get
-    started by running <literal>sudo apt-get install
+    the <ulink url="http://hackage.haskell.org/platform/">Haskell
+    Platform</ulink>. On Linux, many distributions include the Haskell
+    Platform in their repositories. On Debian-based systems, for example, you
+    can get started by running <literal>sudo apt-get install
     haskell-platform</literal>. If your distribution does not include the
     Haskell Platform, you can install it manually by following the
     instructions on the Haskell Platform's page.</para>
