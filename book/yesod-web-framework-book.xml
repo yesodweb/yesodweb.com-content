@@ -2,45 +2,104 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <book>
- <title>Yesod Web Framework Book</title>
- <part>
-  <title>Basics</title>
-  <xi:include href="ch00.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/introduction.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/haskell.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/basics.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/shakespearean-templates.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/widgets.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/yesod-typeclass.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/routing-and-handlers.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/forms.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/sessions.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/persistent.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/deploying-your-webapp.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
- </part>
- <part>
-  <title>Advanced</title>
-  <xi:include href="chapters/restful-content.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/yesods-monads.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/authentication-and-authorization.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/scaffolding-and-the-site-template.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/internationalization.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/creating-a-subsite.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
- </part>
- <part>
-  <title>Examples</title>
-  <xi:include href="chapters/blog-example-advanced.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/wiki-chat-example.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/json-web-service.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/case-study-sphinx.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
- </part>
- <part>
-  <title>Appendices</title>
-  <xi:include href="chapters/monad-control.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/conduits.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/web-application-interface.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/settings-types.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/http-conduit.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-  <xi:include href="chapters/xml.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
- </part>
+  <title>Yesod Web Framework Book</title>
+
+  <part>
+    <title>Basics</title>
+
+    <xi:include href="ch00.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/introduction.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/haskell.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/basics.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/shakespearean-templates.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/widgets.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/yesod-typeclass.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/routing-and-handlers.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/forms.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/sessions.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/persistent.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/deploying-your-webapp.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+  </part>
+
+  <part>
+    <title>Advanced</title>
+
+    <xi:include href="chapters/restful-content.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/yesods-monads.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/authentication-and-authorization.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/scaffolding-and-the-site-template.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/internationalization.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/creating-a-subsite.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+  </part>
+
+  <part>
+    <title>Examples</title>
+
+    <xi:include href="chapters/blog-example-advanced.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/wiki-chat-example.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/json-web-service.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/case-study-sphinx.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+  </part>
+
+  <part>
+    <title>Appendices</title>
+
+    <xi:include href="chapters/monad-control.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/conduits.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/web-application-interface.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/settings-types.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/http-conduit.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+    <xi:include href="chapters/xml.xml"
+                xmlns:xi="http://www.w3.org/2001/XInclude" />
+  </part>
 </book>
