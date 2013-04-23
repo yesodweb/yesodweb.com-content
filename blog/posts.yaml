@@ -1,3 +1,7 @@
+- time: 2013-04-23T12:00:00Z
+  author: michael
+  title: 'New chapter: Understanding a Request'
+  path: 2013/04/new-chapter.md
 - time: 2013-04-22T19:00:00Z
   author: greg
   title: Shakespeare templating updates and TypeScript support
