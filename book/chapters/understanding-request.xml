@@ -527,13 +527,11 @@ main = warp 3000 App</programlisting>
       <figure>
         <title>Path info in subsite</title>
 
-        <screenshot>
           <mediaobject>
             <imageobject>
               <imagedata fileref="../images/subsite-path-info.png" />
             </imageobject>
           </mediaobject>
-        </screenshot>
       </figure>
 
       <para>And finally, not all requests will be valid routes. For those
