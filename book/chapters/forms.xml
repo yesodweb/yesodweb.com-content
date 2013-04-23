@@ -576,15 +576,15 @@ carAForm mcar = Car
        <para>This will run your form against any submitted <literal>POST</literal>
      parameters. If this is not a <literal>POST</literal> submission, it will return a
       <literal>FormMissing</literal>. This automatically inserts a security token as a hidden
-     form field to avoid <link href="http://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF</link> attacks.</para>
+     form field to avoid <ulink url="http://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF</ulink> attacks.</para>
       </listitem>
      </varlistentry>
      <varlistentry>
       <term>runFormGet</term>
       <listitem>
-       <para>Same as <literal>runFormPost</literal>, for GET parameters. In order to
+       <para>The equivalent of <literal>runFormPost</literal> for GET parameters. In order to
      distinguish a normal <literal>GET</literal> page load from a <literal>GET</literal> submission, it includes an extra <literal>_hasdata</literal> hidden field
-     in the form.</para>
+     in the form. Also, unlike <code>runFormPost</code>, it does not include CSRF protection.</para>
       </listitem>
      </varlistentry>
      <varlistentry>
