@@ -541,6 +541,119 @@ main = warp 3000 App</programlisting>
 
       <programlisting>            _ -&gt; yesodRunner (notFound &gt;&gt; return ()) env Nothing req</programlisting>
     </section>
+
+    <section>
+      <title>Complete code</title>
+
+      <para>Following is the full code for the non-Template Haskell
+      approach.</para>
+
+      <programlisting language="haskell">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import qualified Data.ByteString.Lazy.Char8 as L8
+import           Network.HTTP.Types         (status200)
+import           Network.Wai                (pathInfo, rawPathInfo,
+                                             requestMethod, responseLBS)
+import           Yesod
+import           Yesod.Core.Types           (YesodSubRunnerEnv (..))
+
+data App = App
+
+instance RenderRoute App where
+    data Route App = OnlyGetR
+                   | AnyMethodR
+                   | HasParamR Int
+                   | MySubsiteR (Route WaiSubsite)
+        deriving (Show, Read, Eq)
+
+    renderRoute OnlyGetR = (["only-get"], [])
+    renderRoute AnyMethodR = (["any-method"], [])
+    renderRoute (HasParamR i) = (["has-param", toPathPiece i], [])
+    renderRoute (MySubsiteR subRoute) =
+        let (ps, qs) = renderRoute subRoute
+         in ("my-subsite" : ps, qs)
+
+type Handler = HandlerT App IO
+
+instance Yesod App
+
+instance YesodDispatch App where
+    yesodDispatch env req =
+        case pathInfo req of
+            ["only-get"] -&gt;
+                case requestMethod req of
+                    "GET" -&gt; yesodRunner
+                        getOnlyGetR
+                        env
+                        (Just OnlyGetR)
+                        req
+                    _ -&gt; yesodRunner
+                        (badMethod &gt;&gt; return ())
+                        env
+                        (Just OnlyGetR)
+                        req
+            ["any-method"] -&gt;
+                yesodRunner handleAnyMethodR env (Just AnyMethodR) req
+            ["has-param", t] | Just i &lt;- fromPathPiece t -&gt;
+                case requestMethod req of
+                    "GET" -&gt; yesodRunner
+                        (getHasParamR i)
+                        env
+                        (Just $ HasParamR i)
+                        req
+                    _ -&gt; yesodRunner
+                        (badMethod &gt;&gt; return ())
+                        env
+                        (Just $ HasParamR i)
+                        req
+            ("my-subsite":rest) -&gt; yesodSubDispatch
+                YesodSubRunnerEnv
+                    { ysreGetSub = getMySubsite
+                    , ysreParentRunner = yesodRunner
+                    , ysreToParentRoute = MySubsiteR
+                    , ysreParentEnv = env
+                    }
+                req { pathInfo = rest }
+            _ -&gt; yesodRunner (notFound &gt;&gt; return ()) env Nothing req
+
+getOnlyGetR :: Handler Html
+getOnlyGetR = defaultLayout
+    [whamlet|
+        &lt;p&gt;Accessed via GET method
+        &lt;form method=post action=@{AnyMethodR}&gt;
+            &lt;button&gt;POST to /any-method
+    |]
+
+handleAnyMethodR :: Handler Html
+handleAnyMethodR = do
+    req &lt;- waiRequest
+    defaultLayout
+        [whamlet|
+            &lt;p&gt;In any-method, method == #{show $ requestMethod req}
+        |]
+
+getHasParamR :: Int -&gt; Handler String
+getHasParamR i = return $ show i
+
+getMySubsite :: App -&gt; WaiSubsite
+getMySubsite _ =
+    WaiSubsite app
+  where
+    app req = return $ responseLBS
+        status200
+        [("Content-Type", "text/plain")]
+        $ L8.pack $ concat
+            [ "pathInfo == "
+            , show $ pathInfo req
+            , ", rawPathInfo == "
+            , show $ rawPathInfo req
+            ]
+
+main :: IO ()
+main = warp 3000 App</programlisting>
+    </section>
   </section>
 
   <section>
