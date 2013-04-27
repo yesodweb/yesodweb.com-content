@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "concept.dtd">
-<concept id="conduits-208">
-    <title>Conduit</title>
-    <conbody>
-        <p>This chapter is no longer the location for conduit documentation. If you're looking for a tutorial, you should check out <xref href="https://www.fpcomplete.com/user/snoyberg/library-documentation/conduit-overview">the School of Haskell overview</xref>. For reference documentation, please see the <apiname>conduit</apiname> package on Hackage.</p>
-    </conbody>
-</concept>
