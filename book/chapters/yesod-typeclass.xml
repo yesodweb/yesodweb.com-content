@@ -218,7 +218,7 @@ $doctype 5
                 <literal>POST</literal>s a form, you may want to redirect him/her to another page
             along with a "Form submission complete" message.</para>
      <note>
-      <para>This is commonly known as <link href="http://en.wikipedia.org/wiki/Post/Redirect/Get">Post/Redirect/Get</link>.</para>
+      <para>This is commonly known as <ulink url="http://en.wikipedia.org/wiki/Post/Redirect/Get">Post/Redirect/Get</ulink>.</para>
      </note>
      <para>To facilitate this, Yesod comes built in with a pair of functions:
                 <literal>setMessage</literal> sets a message in the user session, and
@@ -345,7 +345,7 @@ $doctype 5
    <section>
     <title>Smarter Static Files</title>
     <para/>
-    <para>Google recommends an important optimization: <link href="http://code.google.com/speed/page-speed/docs/request.html#ServeFromCookielessDomain">serve static files from a separate domain</link>. The advantage
+    <para>Google recommends an important optimization: <ulink url="http://code.google.com/speed/page-speed/docs/request.html#ServeFromCookielessDomain">serve static files from a separate domain</ulink>. The advantage
    to this approach is that cookies set on your main domain are not sent when retrieving static
    files, thus saving on a bit of bandwidth.</para>
     <para>To facilitate this, we have the <literal>urlRenderOverride</literal> method. This method
@@ -469,7 +469,7 @@ $doctype 5
      <varlistentry>
       <term>yepnopeJs</term>
       <listitem>
-       <para>You can specify the location of the <link href="http://yepnopejs.com/">yepnope</link> Javascript library. If this is given, then yepnope will be
+       <para>You can specify the location of the <ulink url="http://yepnopejs.com/">yepnope</ulink> Javascript library. If this is given, then yepnope will be
      used to asynchronously load all of the Javascript on your page.</para>
       </listitem>
      </varlistentry>

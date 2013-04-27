@@ -99,7 +99,7 @@ instance PathPiece Natural where
       <note>
        <para>In a real life application, we would also want to ensure we never accidently
             constructed an invalid <literal>Natural</literal> value internally to our app. To do so,
-            we could use an approach like <link href="http://www.haskell.org/haskellwiki/Smart_constructors">smart constructors</link>. For the purposes of this example, we've
+            we could use an approach like <ulink url="http://www.haskell.org/haskellwiki/Smart_constructors">smart constructors</ulink>. For the purposes of this example, we've
             kept the code simple.</para>
       </note>
       <para>Defining a <literal>PathMultiPiece</literal> is just as simple. Let's say we want to
@@ -447,7 +447,7 @@ getWikiR = return . RepPlain . toContent . T.unwords
       <varlistentry>
        <term>cacheSeconds</term>
        <listitem>
-        <para>Set a Cache-Control header to indicate how many seconds this response can be cached. This can be particularly useful if you are using <link href="http://www.varnish-cache.org">varnish on your server</link>.</para>
+        <para>Set a Cache-Control header to indicate how many seconds this response can be cached. This can be particularly useful if you are using <ulink url="http://www.varnish-cache.org">varnish on your server</ulink>.</para>
        </listitem>
       </varlistentry>
       <varlistentry>

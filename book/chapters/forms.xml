@@ -142,7 +142,7 @@ main = warpDebug 3000 Synopsis</programlisting>
       <listitem>
        <para>These are the most commonly used (it's what appeared in the synopsis). Applicative
      gives us some nice properties of letting error messages coallesce together and keep a very
-     high-level, declarative approach. (For more information on applicative code, see <link href="http://www.haskell.org/haskellwiki/Applicative_functor">the Haskell wiki</link>.)</para>
+     high-level, declarative approach. (For more information on applicative code, see <ulink url="http://www.haskell.org/haskellwiki/Applicative_functor">the Haskell wiki</ulink>.)</para>
       </listitem>
      </varlistentry>
      <varlistentry>
@@ -359,7 +359,7 @@ carForm = renderTable carAForm
             would use <literal>areq intField "Year" (Just 2007)</literal>. We can even take
             this to the next level, and have a form that takes an optional parameter giving the
             default values.</para>
-    <figure xml:id="create-aforms-x9">
+    <figure id="create-aforms-x9">
      <title>Form with default values</title>
      <programlisting language="haskell">carAForm :: Maybe Car -&gt; AForm Synopsis Synopsis Car
 carAForm mcar = Car
@@ -372,7 +372,7 @@ carAForm mcar = Car
      <para/>
      <para>Suppose we wanted to have an optional field (like the car color). All we do instead is
             use the <literal>aopt</literal> function.</para>
-     <figure xml:id="optional-fields-x2">
+     <figure id="optional-fields-x2">
       <title>Optional fields</title>
       <programlisting language="haskell">data Car = Car
     { carModel :: Text
@@ -392,7 +392,7 @@ carAForm = Car
             this has two layers of Maybe wrapping. This may seem redundant (and it is), but it makes
             it much easier to write code that takes an optional default form parameter, such as in
             the next example.</para>
-     <figure xml:id="optional-fields-x6">
+     <figure id="optional-fields-x6">
       <title>Default optional fields</title>
       <programlisting language="haskell">data Car = Car
     { carModel :: Text
@@ -486,7 +486,7 @@ getCurrentYear = do
     <para/>
     <para>Our color entry field is nice, but it's not exactly user-friendly. What we really want
             is a drop-down list.</para>
-    <figure xml:id="more-sophiticated-fields-x2">
+    <figure id="more-sophiticated-fields-x2">
      <title>Drop-down lists</title>
      <programlisting language="haskell">data Car = Car
     { carModel :: Text
@@ -513,7 +513,7 @@ carAForm mcar = Car
             the text displayed to the user in the drop-down list, and the second item is the actual
             Haskell value. Of course, the code above looks really repetitive; we can get the same
             result using the Enum and Bounded instance GHC automatically derives for us.</para>
-    <figure xml:id="more-sophiticated-fields-x6">
+    <figure id="more-sophiticated-fields-x6">
      <title>Uses Enum and Bounded</title>
      <programlisting language="haskell">data Car = Car
     { carModel :: Text
@@ -541,7 +541,7 @@ carAForm mcar = Car
             list of pairs.</para>
     <para>Some people prefer radio buttons to drop-down lists. Fortunately, this is just a
             one-word change. For example, see Radio buttons</para>
-    <figure xml:id="more-sophiticated-fields-radio-buttons">
+    <figure id="more-sophiticated-fields-radio-buttons">
      <title>Radio buttons</title>
      <programlisting language="haskell">data Car = Car
     { carModel :: Text
@@ -650,7 +650,7 @@ carAForm mcar = Car
     <para>Often times, a simple form layout is adequate, and applicative forms excel at
             this approach. Sometimes, however, you'll want to have a more customized look to your
             form.</para>
-    <figure xml:id="monadic-x-4">
+    <figure id="monadic-x-4">
      <title>A non-standard form layout</title>
      <mediaobject>
       <imageobject>

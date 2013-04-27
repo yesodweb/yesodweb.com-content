@@ -140,9 +140,9 @@
           </listitem>
 
           <listitem>
-            <para>Make sure to install all of the <link
-            href="http://www.vex.net/%7Etrebla/haskell/haskell-platform.xhtml">required
-            C libraries</link>. On Debian-based systems, you would need to
+            <para>Make sure to install all of the <ulink
+            url="http://www.vex.net/%7Etrebla/haskell/haskell-platform.xhtml">required
+            C libraries</ulink>. On Debian-based systems, you would need to
             run:<programlisting>sudo apt-get install libedit-dev libbsd-dev libgmp3-dev zlib1g-dev freeglut3-dev</programlisting></para>
           </listitem>
         </itemizedlist></para>
@@ -174,10 +174,10 @@
       their Haskell packages, which prevents your install Yesod from breaking
       existing packages, or packages you install in the future from breaking
       your Yesod install. I won't go into details on how to use these in the
-      book, but the two most commonly used tools are <link
-      href="http://hackage.haskell.org/package/cabal-dev">cabal-dev</link> and
-      <link
-      href="http://hackage.haskell.org/package/virthualenv">virthualenv</link>.</para>
+      book, but the two most commonly used tools are <ulink
+      url="http://hackage.haskell.org/package/cabal-dev">cabal-dev</ulink> and
+      <ulink
+      url="http://hackage.haskell.org/package/virthualenv">virthualenv</ulink>.</para>
     </note>
   </section>
 
@@ -217,9 +217,9 @@
 
     <para>We'll end up using quite a few language extensions in this book (the
     scaffolding uses 11). We will not cover the meaning of all of them.
-    Instead, please see the <link
-    href="http://www.haskell.org/ghc/docs/latest/html/users_guide/ghc-language-features.html">GHC
-    documentation</link>.</para>
+    Instead, please see the <ulink
+    url="http://www.haskell.org/ghc/docs/latest/html/users_guide/ghc-language-features.html">GHC
+    documentation</ulink>.</para>
   </section>
 
   <section>
@@ -332,8 +332,8 @@ main = do
       <para>There are other ways to use associated types outside the context
       of a typeclass. However, in Yesod, all of our associated types are in
       fact part of a type class. For more information on type families, see
-      <link href="http://www.haskell.org/haskellwiki/GHC/Type_families">the
-      Haskell wiki page</link>.</para>
+      <ulink url="http://www.haskell.org/haskellwiki/GHC/Type_families">the
+      Haskell wiki page</ulink>.</para>
     </note>
   </section>
 
@@ -367,9 +367,9 @@ main = do
     immediately followed by parantheses tell GHC that what follows is a
     Template Haskell function. The code inside is then run by the compiler and
     generates a Haskell AST, which is then compiled. And yes, it's even
-    possible to <link
-    href="http://www.yesodweb.com/blog/2010/09/yo-dawg-template-haskell">go
-    meta with this</link>.</para>
+    possible to <ulink
+    url="http://www.yesodweb.com/blog/2010/09/yo-dawg-template-haskell">go
+    meta with this</ulink>.</para>
 
     <para>A nice trick is that TH code is allowed to perform arbitrary
     <literal>IO</literal> actions, and therefore we can place some input in
@@ -397,9 +397,9 @@ myThCode</programlisting>
 
     <note>
       <para>There are many other features of Template Haskell not covered
-      here. For more information, see the <link
-      href="http://www.haskell.org/haskellwiki/Template_Haskell">Haskell wiki
-      page</link>.</para>
+      here. For more information, see the <ulink
+      url="http://www.haskell.org/haskellwiki/Template_Haskell">Haskell wiki
+      page</ulink>.</para>
     </note>
   </section>
 

@@ -24,14 +24,14 @@
    <section>
     <title>Synopsis</title>
     <para/>
-    <figure xml:id="conceptId-x-3">
+    <figure id="conceptId-x-3">
      <title>Input XML file</title>
      <programlisting>&lt;document title="My Title"&gt;
     &lt;para&gt;This is a paragraph. It has &lt;em&gt;emphasized&lt;/em&gt; and &lt;strong&gt;strong&lt;/strong&gt; words.&lt;/para&gt;
     &lt;image href="myimage.png"/&gt;
 &lt;/document&gt;</programlisting>
     </figure>
-    <figure xml:id="conceptId-x-6">
+    <figure id="conceptId-x-6">
      <title>Haskell code</title>
      <programlisting language="haskell">{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -90,7 +90,7 @@ goElem (Element name attrs children) =
     -- don't know what to do, just pass it through...
     Element name attrs $ concatMap goNode children</programlisting>
     </figure>
-    <figure xml:id="conceptId-x-9">
+    <figure id="conceptId-x-9">
      <title>Output XHTML</title>
      <programlisting>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;html&gt;
@@ -340,8 +340,8 @@ writeFile :: RenderSettings -&gt; FilePath -&gt; Document -&gt; IO ()</programli
    children of elements. But that would get very tedious, very quickly. Probably the gold standard
    for these kinds of lookups is XPath, where you would be able to write <literal>/html/head/title</literal>. And that's exactly what inspired the design of the <function>Text.XML.Cursor</function> combinators.</para>
     <para>A cursor is an XML node that knows its location in the tree; it's able to traverse
-   upwards, sideways, and downwards. (Under the surface, this is achieved by <link href="http://www.haskell.org/haskellwiki/Tying_the_Knot">tying
-    the knot</link>.) There are two functions available for creating cursors from
+   upwards, sideways, and downwards. (Under the surface, this is achieved by <ulink url="http://www.haskell.org/haskellwiki/Tying_the_Knot">tying
+    the knot</ulink>.) There are two functions available for creating cursors from
     <literal>Text.XML</literal> types: <literal>fromDocument</literal> and
    <literal>fromNode</literal>.</para>
     <para>We also have the concept of an <glossterm>Axis</glossterm>, defined as <literal>type Axis = Cursor -&gt; [Cursor]</literal>. It's easiest to get started by looking at

@@ -13,8 +13,8 @@
       <para>Compile-time guarantees on well-formed content.</para>
      </listitem>
      <listitem>
-      <para>Static type safety, greatly helping the prevention of <link href="http://en.wikipedia.org/wiki/Cross-site_scripting">XSS
-      (cross-site scripting)</link> attacks.</para>
+      <para>Static type safety, greatly helping the prevention of <ulink url="http://en.wikipedia.org/wiki/Cross-site_scripting">XSS
+      (cross-site scripting)</ulink> attacks.</para>
      </listitem>
      <listitem>
       <para>Automated checking of valid URLs, whenever possible, through <glossterm>type-safe
@@ -565,7 +565,7 @@ a:link, a:visited { color: #{textcolor} }</programlisting>
     <para>Since these are special QuasiQuoters and Template Haskell functions, you need to be
    sure to enable the appropriate language extensions and use correct syntax. You can see a simple
    example of each in the figures.</para>
-    <figure xml:id="calling-shakespeare-x17">
+    <figure id="calling-shakespeare-x17">
      <title>Quasiquoter</title>
      <programlisting language="haskell">{-# LANGUAGE OverloadedStrings #-} -- we're using Text below
 {-# LANGUAGE QuasiQuotes #-}
@@ -594,7 +594,7 @@ $doctype 5
 main :: IO ()
 main = putStrLn $ renderHtml $ template "My Title" render</programlisting>
     </figure>
-    <figure xml:id="calling-shakespeare-x20">
+    <figure id="calling-shakespeare-x20">
      <title>External file</title>
      <programlisting language="haskell">{-# LANGUAGE OverloadedStrings #-} -- we're using Text below
 {-# LANGUAGE TemplateHaskell #-}
@@ -832,8 +832,8 @@ main = forM_ items $ \item -&gt; TLIO.putStrLn
       <para>For actual sites, use external files. For libraries, it's OK to use quasiquoters, assuming they aren't too long.</para>
      </listitem>
      <listitem>
-      <para>Patrick Brisbin has put together a <link href="https://github.com/pbrisbin/html-template-syntax">Vim code
-                    highlighter</link> that can help out immensely.</para>
+      <para>Patrick Brisbin has put together a <ulink url="https://github.com/pbrisbin/html-template-syntax">Vim code
+                    highlighter</ulink> that can help out immensely.</para>
      </listitem>
      <listitem>
       <para>You should almost always start Hamlet tags on their own line instead of embedding

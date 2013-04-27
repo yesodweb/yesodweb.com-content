@@ -34,8 +34,8 @@ main = warpDebug 3000 HelloWorld</programlisting>
 
     <para>If you save that code in <literal>helloworld.hs</literal> and run it
     with <literal>runhaskell helloworld.hs</literal>, you'll get a web server
-    running on port 3000. If you point your browser to <link
-    href="http://localhost:3000">http://localhost:3000</link>, you'll get the
+    running on port 3000. If you point your browser to <ulink
+    url="http://localhost:3000">http://localhost:3000</ulink>, you'll get the
     following HTML:</para>
 
     <programlisting>&lt;!DOCTYPE html&gt;
@@ -48,9 +48,9 @@ main = warpDebug 3000 HelloWorld</programlisting>
   <section>
     <title>Routing</title>
 
-    <para>Like most modern web frameworks, Yesod follows a <link
-    href="http://en.wikipedia.org/wiki/Front_Controller_pattern">front
-    controller pattern</link>. This means that every request to a Yesod
+    <para>Like most modern web frameworks, Yesod follows a <ulink
+    url="http://en.wikipedia.org/wiki/Front_Controller_pattern">front
+    controller pattern</ulink>. This means that every request to a Yesod
     application enters at the same point and is routed from there. As a
     contrast, in systems like PHP and ASP you usually create a number of
     different files, and the web server automatically directs requests to the

@@ -196,7 +196,7 @@ postSetMessageR = do
 
 main :: IO ()
 main = warpDebug 3000 Messages</programlisting>
-    <figure xml:id="messages-x-4">
+    <figure id="messages-x-4">
      <title>Initial page load, no message</title>
      <mediaobject>
       <imageobject>
@@ -204,7 +204,7 @@ main = warpDebug 3000 Messages</programlisting>
       </imageobject>
      </mediaobject>
     </figure>
-    <figure xml:id="messages-x-6">
+    <figure id="messages-x-6">
      <title>New message entered in text box</title>
      <mediaobject>
       <imageobject>
@@ -212,7 +212,7 @@ main = warpDebug 3000 Messages</programlisting>
       </imageobject>
      </mediaobject>
     </figure>
-    <figure xml:id="messages-x-8">
+    <figure id="messages-x-8">
      <title>After form submit, message appears at top of page</title>
      <mediaobject>
       <imageobject>
@@ -220,7 +220,7 @@ main = warpDebug 3000 Messages</programlisting>
       </imageobject>
      </mediaobject>
     </figure>
-    <figure xml:id="messages-x-10">
+    <figure id="messages-x-10">
      <title>After refresh, the message is cleared</title>
      <mediaobject>
       <imageobject>

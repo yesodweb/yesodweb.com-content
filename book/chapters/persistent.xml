@@ -429,7 +429,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
     <para/>
     <para>In addition to declaring fields within an entity, you can also declare uniqueness
             constraints. A typical example would be requiring that a username be unique.</para>
-    <figure xml:id="uniqueness-x1">
+    <figure id="uniqueness-x1">
      <title>Unique Username</title>
      <programlisting>User
     username Text
@@ -490,7 +490,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
      <para/>
      <para>The simplest query you can perform in Persistent is getting based on an ID. Since this
    value may or may not exist, its return type is wrapped in a <literal>Maybe</literal>.</para>
-     <figure xml:id="fetching-by-id-x2">
+     <figure id="fetching-by-id-x2">
       <title>Using get</title>
       <programlisting language="haskell">    personId &lt;- insert $ Person "Michael" "Snoyman" 26
     maybePerson &lt;- get personId
@@ -510,7 +510,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
      <para>
       <literal>getBy</literal> is almost identical to <literal>get</literal>, except it takes a
             uniqueness constraint instead of an ID it takes a Unique value.</para>
-     <figure xml:id="fetching-by-unique-constraint-x2">
+     <figure id="fetching-by-unique-constraint-x2">
       <title>Using getBy</title>
       <programlisting language="haskell">    personId &lt;- insert $ Person "Michael" "Snoyman" 26
     maybePerson &lt;- getBy $ UniqueName "Michael" "Snoyman"

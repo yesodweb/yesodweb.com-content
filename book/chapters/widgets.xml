@@ -172,7 +172,7 @@ $(function() {
    then combine these larger entities into complete pages. This all works naturally through the
     <literal>Monad</literal> instance of <literal>Widget</literal>, meaning you can use do-notation to
    compose pieces together.</para>
-    <figure xml:id="combining-widgets-x2">
+    <figure id="combining-widgets-x2">
      <title>Combining Widgets</title>
      <programlisting language="haskell">myWidget1 = do
     toWidget [hamlet|&lt;h1&gt;My Title|]
@@ -204,7 +204,7 @@ myWidget' = myWidget1 &gt;&gt; myWidget2</programlisting>
    affect styling. We want to avoid such a possibility. Therefore, we have the
     <literal>newIdent</literal> function. This function automatically generates a word that is unique
    for this handler.</para>
-    <figure xml:id="generate-ids-x2">
+    <figure id="generate-ids-x2">
      <title>Using newIdent</title>
      <programlisting language="haskell">getRootR = defaultLayout $ do
     headerClass &lt;- lift newIdent
@@ -337,7 +337,7 @@ data PageContent url = PageContent
             them all together into a single document, along with our site layout, and we use
                 <literal>hamletToRepHtml</literal> to render that Hamlet result into actual HTML
             that's ready to be shown to the user. The next figure demonstrates this process.</para>
-    <figure xml:id="using-widgets-x6">
+    <figure id="using-widgets-x6">
      <title>Using widgetToPageContent</title>
      <programlisting language="haskell">myLayout :: GWidget s MyApp () -&gt; GHandler s MyApp RepHtml
 myLayout widget = do
@@ -385,7 +385,7 @@ instance Yesod MyApp where
     <para>We have one more trick in our bag to address this: we apply some last-minute
             adjustments to the widget itself before calling <literal>widgetToPageContent</literal>. It's actually very easy to do: we just use
             do-notation again, as in Last-Minute Widget Adjustment.</para>
-    <figure xml:id="using-widgets-last-minute-widget-adjustment">
+    <figure id="using-widgets-last-minute-widget-adjustment">
      <title>Last-Minute Widget Adjustment</title>
      <programlisting language="haskell">myLayout :: GWidget s MyApp () -&gt; GHandler s MyApp RepHtml
 myLayout widget = do

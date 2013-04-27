@@ -190,7 +190,7 @@ main = do
    subsite links: first we give the subsite route name (<literal>AuthR</literal>), followed by the
    route within the subsite (<literal>LoginR</literal> and <literal>LogoutR</literal>).</para>
     <para>The figures below show what the login process looks like from a user perspective.</para>
-    <figure xml:id="concept_d1y_t2f_p2-x-26">
+    <figure id="concept_d1y_t2f_p2-x-26">
      <title>Initial page load</title>
      <mediaobject>
       <imageobject>
@@ -198,7 +198,7 @@ main = do
       </imageobject>
      </mediaobject>
     </figure>
-    <figure xml:id="concept_d1y_t2f_p2-x-28">
+    <figure id="concept_d1y_t2f_p2-x-28">
      <title>BrowserID login screen</title>
      <mediaobject>
       <imageobject>
@@ -206,7 +206,7 @@ main = do
       </imageobject>
      </mediaobject>
     </figure>
-    <figure xml:id="concept_d1y_t2f_p2-x-30">
+    <figure id="concept_d1y_t2f_p2-x-30">
      <title>Homepage after logging in</title>
      <mediaobject>
       <imageobject>

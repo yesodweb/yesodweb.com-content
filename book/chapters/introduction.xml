@@ -1,4 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"><chapter>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<chapter>
   <title>Introduction</title>
 
   <para>Since web programming began, people have been trying to make the
@@ -148,13 +151,13 @@
 
     <itemizedlist>
       <listitem>
-        <para><link href="http://learnyouahaskell.com">Learn You a Haskell for
-        Great Good!</link></para>
+        <para><ulink url="http://learnyouahaskell.com">Learn You a Haskell for
+        Great Good!</ulink></para>
       </listitem>
 
       <listitem>
-        <para><link href="http://book.realworldhaskell.org/read">Real World
-        Haskell</link></para>
+        <para><ulink url="http://book.realworldhaskell.org/read">Real World
+        Haskell</ulink></para>
       </listitem>
     </itemizedlist>
 

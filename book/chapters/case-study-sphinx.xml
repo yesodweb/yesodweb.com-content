@@ -3,7 +3,7 @@
    <para/>
    <para/>
    <para>
-    <link href="http://sphinxsearch.com/">Sphinx</link> is a search
+    <ulink url="http://sphinxsearch.com/">Sphinx</ulink> is a search
    server, and powers the search feature on many sites, including Yesod's own site. While the actual
    code necessary to integrate Yesod with Sphinx is relatively short, it touches on a number of
    complicated topics, and is therefore a great case study in how to play with some of the
@@ -166,7 +166,7 @@ getDocR docid = do
             searching. We're going to need three pieces of information for displaying a result: the
             document ID it comes from, the title of that document, and the <glossterm>excerpts</glossterm>. Excerpts are the highlighted portions of the document which
             contain the search term.</para>
-    <figure xml:id="searching-x-5">
+    <figure id="searching-x-5">
      <title>Search Result</title>
      <mediaobject>
       <imageobject>
@@ -329,7 +329,7 @@ escape =
    (which defines the content field), and then a <literal>sphinx:document</literal> for each
    document in our database. That last element will have an <literal>id</literal> attribute and a
    child <literal>content</literal> element.</para>
-    <figure xml:id="conceptId-x-20">
+    <figure id="conceptId-x-20">
      <title>Sample xmlpipe document</title>
      <programlisting>&lt;sphinx:docset xmlns:sphinx="http://sphinxsearch.com/"&gt;
     &lt;sphinx:schema&gt;

@@ -201,7 +201,7 @@ main = withSqlitePool "links.db3" 10 $ \pool -&gt; do
             Notice how all we needed to do was apply <literal>lift</literal> to a normal
             database action. And from within <literal>getRootR</literal>, we treated <literal>existingLinks</literal> like any ordinary <literal>Widget</literal>,
             no special parameters at all. See the figure for the output of this app.</para>
-    <figure xml:id="navbar-x-14">
+    <figure id="navbar-x-14">
      <title>Screenshot of the navbar</title>
      <mediaobject>
       <imageobject>
