@@ -346,8 +346,6 @@ external file since the former is simpler to copy-and-paste. However, in
 production, external files are recommended for all but the shortest of inputs
 as it gives a nice separation of the non-Haskell syntax from your Haskell code.
 
-
-
 === Summary
 
 You don't need to be an expert in Haskell to use Yesod, a basic familiarity
