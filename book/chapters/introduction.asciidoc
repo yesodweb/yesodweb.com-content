@@ -40,13 +40,10 @@ We all know that there is a lot of boilerplate coding involved in web
 applications. Wherever possible, Yesod tries to use Haskell's features to save
 your fingers the work:
 
-
 * The forms library reduces the amount of code used for common cases by
   leveraging the Applicative type class.
 
-
 * Routes are declared in a very terse format, without sacrificing type safety.
-
 
 * Serializing your data to and from a database is handled automatically via
   code generation.
@@ -122,7 +119,6 @@ basics of Haskell. There are two wonderful books for learning Haskell, both of
 which are available for reading online:
 
 * link:$$http://learnyouahaskell.com$$[Learn You a Haskell for Great Good!]
-
 
 * link:$$http://book.realworldhaskell.org/read$$[Real World Haskell]
 
