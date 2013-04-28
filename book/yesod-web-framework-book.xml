@@ -15,7 +15,7 @@
     <xi:include href="chapters/haskell.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/basics.xml"
+    <xi:include href="chapters/basics.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/shakespearean-templates.xml"
