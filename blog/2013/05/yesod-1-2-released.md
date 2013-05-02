@@ -13,10 +13,10 @@ Yesod [1.1 was released](http://www.yesodweb.com/blog/2012/08/announcing-yesod-1
 * [yesod-pure](http://www.yesodweb.com/blog/2012/10/yesod-pure) was released for those who want less Template Haskell and type-safety.
 * [Conduit 1.0 and Wai 1.4 were released](http://www.yesodweb.com/blog/2013/02/announce-conduit-1-0-wai-1-4)
 * Javascript templates were [revised to insert JSON](http://www.yesodweb.com/blog/2012/11/updates-julius-interpolation) instead of text.
-* [TypeScript templates support was added](http://www.yesodweb.com/blog/2013/04/shakespeare-typescript)
-* CSS templates [support mixinx](http://www.yesodweb.com/blog/2013/04/mixin-support-in-lucius)
+* [TypeScript template support was added](http://www.yesodweb.com/blog/2013/04/shakespeare-typescript)
+* CSS templates [support mixins](http://www.yesodweb.com/blog/2013/04/mixin-support-in-lucius)
 * [Persistent 1.2 was released](http://www.yesodweb.com/blog/2013/04/persistent-1-2-out)
-* The Warp web server has been continually [sped up](http://www.yesodweb.com/blog/2012/10/measuring-warp). These kinds of efforts make Yesod look pretty good in a recently created [benchmark](http://www.techempower.com/benchmarks/) suite. There is no a WAI entry in addition to the Yesod entries.
+* The Warp web server has been continually [sped up](http://www.yesodweb.com/blog/2012/10/measuring-warp). These kinds of efforts make Yesod look pretty good in a recently created [benchmark](http://www.techempower.com/benchmarks/) suite. There is now a WAI entry in addition to the Yesod entries.
 
 
 ## Yesod 1.2
@@ -80,4 +80,4 @@ The book documentation for [1.2](http://www.yesodweb.com/book-1.2) has been star
 
 Most of the changes to upgrade your site to 1.2 should be fairly mechanical. I started a [wiki page for the upgrade](https://github.com/yesodweb/yesod/wiki/1.2-upgrade). If you have any issues, please note them there or on the mail list.
 
-We hope you enjoy using 1.2
+We hope you enjoy using Yesod 1.2
