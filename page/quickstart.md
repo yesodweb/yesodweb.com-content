@@ -16,7 +16,12 @@ Make sure to add `$HOME/.cabal/bin` to your `PATH`. Once you're set up, run
 
     cabal update
     
-to download a list of available packages. For more information on Haskell tools, see the [tools chapter of the Mezzo Haskell book](https://github.com/mezzohaskell/mezzohaskell/blob/master/chapters/tools.md).
+to download a list of available packages. For more information on Haskell
+tools, see the
+[tools chapter of the Mezzo Haskell book](https://github.com/mezzohaskell/mezzohaskell/blob/master/chapters/tools.md).
+Mac users may also want to see
+[this page](http://www.haskell.org/haskellwiki/Mac_OS_X_Common_Installation_Paths)
+for help with their `PATH` setting.
 
 __Note__: There is a bug in the 64-bit GHC 7.4 for Mac which prevents `yesod devel` from working correctly. This bug has been corrected in 7.6. However, as 7.4 is still the recommended platform for development, it is advisable to install the 32-bit version of GHC.
 
@@ -31,10 +36,15 @@ while. (15 minutes on modern systems, up to 40 minutes on older systems.) This
 is a one time setup, and will have no impact on normal development or
 runtime performance.
 
+As of Yesod 1.2, you will also need to run:
+
+    cabal install yesod-bin
+
+to get the executable.
+
 ## Start a new site
 
-Now I'm sure you want to test this out! Installing Yesod also provided you with
-a `yesod` executable, which has two important commands.
+Now I'm sure you want to test this out! The `yesod` executable has two important commands.
 
     yesod init
     
