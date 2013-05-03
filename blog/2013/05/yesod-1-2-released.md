@@ -4,7 +4,7 @@ The Yesod team is pleased to announce the release of Yesod 1.2. You can get it w
 
 The yesod binary is now a separate package which helps manage dependencies, but it does mean you need to remember to install 2 separate packages.
 
-Yesod [1.1 was released](http://www.yesodweb.com/blog/2012/08/announcing-yesod-1-1) in August. A lot has happened since then. Shortly after, Michael [started working for FP Complete](http://www.yesodweb.com/blog/2012/08/joining-forces-advance-haskell). A lot has happened since then!
+Yesod [1.1 was released](http://www.yesodweb.com/blog/2012/08/announcing-yesod-1-1) in August. Shortly after, Michael [started working for FP Complete](http://www.yesodweb.com/blog/2012/08/joining-forces-advance-haskell). A lot has happened since then!
 
 
 ## Yesod ecosystem
