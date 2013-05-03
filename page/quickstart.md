@@ -36,10 +36,15 @@ while. (15 minutes on modern systems, up to 40 minutes on older systems.) This
 is a one time setup, and will have no impact on normal development or
 runtime performance.
 
+As of Yesod 1.2, you will also need to run:
+
+    cabal install yesod-bin
+
+to get the executable.
+
 ## Start a new site
 
-Now I'm sure you want to test this out! Installing Yesod also provided you with
-a `yesod` executable, which has two important commands.
+Now I'm sure you want to test this out! The `yesod` executable has two important commands.
 
     yesod init
     
