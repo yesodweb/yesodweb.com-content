@@ -1,0 +1,74 @@
+Developing Web Applications with Haskell and Yesod, 1E / 9781449316976 ["Realtime"]
+RT # 106366
+https://prod.oreilly.com/internal/books/9781449316976/current/tools/dbintakereport.txt
+
+The submitted XML files have been processed and imported to SVN as valid DocBook 4.5:
+
+    https://prod.oreilly.com/internal/books/9781449316976/current/
+
+(paths below are relative to this URL)
+
+Preliminary pagecount (with figs): xiv + 286 = 300
+
+Stylesheet: orm:series = realtime
+
+Incoming format: DocBook
+Outgoing format: DocBook
+
+PDFs for review are here:
+
+    pdf/drafts/intake_print.pdf
+    pdf/drafts/intake_web.pdf
+
+Notes: 
+
+** MS snapshot here, if needed for reference:
+https://prod.oreilly.com/internal/books/9781449316976/snapshots/manuscript_to_prod/
+
+** 10 figs: 
+  
+  /work/isbn13s/9781449316976/figs/print/
+
+** AU occasionally used figure element to wrap programlistings. Changed those figure elements to example elements.
+
+** There's a note in a table entry element in ch10.xml
+
+** We've turned on the authors' access to the repo. If you share the repo with them during production, please point them to the README:
+https://prod.oreilly.com/internal/books/9781449316976/current/README.txt
+
+** If you want to turn on email notifications in the repo, you can do so via this command:
+$ svn pset orm:commitemails [username]@oreilly.com ./
+
+** Please let Tools know ASAP if there are any other global problems for which we can help automate a fix.
+
+** Notes from Dan:
+==================
+
+Tools
+* Please update the title to match the PDB. [DONE AT INTAKE. --TOOLS]
+* Please add the boilerplate Preface. [DONE AT INTAKE. --TOOLS]
+* please convert straight quotes to curlies. [DONE AT INTAKE. --TOOLS]
+
+
+Production
+* This will be released under a Creative Commons license. I'll write to Cali to get direction on the language that should
+appear on the copyright page. --Dan
+* Note from the editor: This should just need a proofread, not a full copyedit. The author works for a documentation
+company and this has had many readers.
+* Tools noticed that the author used figure elements to wrap some programlistings and changed those to example
+elements.
+* I noticed lowercase "web" and a lack of serial commas. Probably not big deals, given how nice the writing is in general.
+Please watch for typos though.
+* There's a bit of code on page 9 inside a Note. It doesn't run off the page, but looks like it should be broken to align with
+the borders of the note instead of the page.
+
+
+Illustrations
+* Draft figures posted here: /work/eans/9781449316976/figs/incoming/
+==================
+
+Please let me know about any other issues.
+
+Thanks,
+Jess
+

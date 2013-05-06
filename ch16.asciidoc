@@ -1,0 +1,316 @@
+[[I_chapter5_d1e7879]]
+
+== Internationalization
+
+Users expect our software to speak their language. Unfortunately for us, there will likely be more than one language involved. While doing simple string replacement isn&rsquo;t too involved, correctly dealing with all the grammar issues can be tricky. After all, who wants to see &ldquo;List 1 file(s)&rdquo; from a program output?
+
+But a real i18n solution needs to do more than just provide a means of achieving the correct output. It needs to make this process easy for both the programmer and the translator, and be relatively error-proof. Yesod&rsquo;s answer to the problem gives you:
+
+
+* Intelligent guessing of the user&rsquo;s desired language based on request headers, with the ability to override.
+
+
+* A simple syntax for giving translations, which requires no Haskell knowledge. (After all, most translators aren&rsquo;t programmers.)
+
+
+* The ability to bring in the full power of Haskell for tricky grammar issues as necessary, along with a default selection of helper functions to cover most needs.
+
+
+* Absolutely no issues at all with word order.
+
+[[I_sect15_d1e7905]]
+
+=== Synopsis
+
+
+
+
+----
+-- @messages/en.msg
+Hello: Hello
+EnterItemCount: I would like to buy: 
+Purchase: Purchase
+ItemCount count@Int: You have purchased #{showInt count} #{plural count "item" "items"}.
+SwitchLanguage: Switch language to: 
+Switch: Switch
+----
+
+
+----
+-- @messages/he.msg
+Hello: שלום
+EnterItemCount: אני רוצה לקנות: 
+Purchase: קנה
+ItemCount count: קנית #{showInt count} #{plural count "דבר" "דברים"}.
+SwitchLanguage: החלף שפה ל:
+Switch: החלף
+----
+
+
+[source, haskell]
+----
+-- @i18n-synopsis.hs
+{-# LANGUAGE OverloadedStrings, QuasiQuotes, TemplateHaskell, TypeFamilies,
+    MultiParamTypeClasses #-}
+import Yesod
+
+data I18N = I18N
+
+mkMessage "I18N" "messages" "en"
+
+plural :: Int -> String -> String -> String
+plural 1 x _ = x
+plural _ _ y = y
+
+showInt :: Int -> String
+showInt = show
+
+instance Yesod I18N
+
+instance RenderMessage I18N FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+mkYesod "I18N" [parseRoutes|
+/ RootR GET
+/buy BuyR GET
+/lang LangR POST
+|]
+
+getRootR :: Handler RepHtml
+getRootR = defaultLayout [whamlet|
+<h1>_{MsgHello}
+<form action=@{BuyR}>
+    _{MsgEnterItemCount}
+    <input type=text name=count>
+    <input type=submit value=_{MsgPurchase}>
+<form action=@{LangR} method=post>
+    _{MsgSwitchLanguage}
+    <select name=lang>
+        <option value=en>English
+        <option value=he>Hebrew
+    <input type=submit value=_{MsgSwitch}>
+|]
+
+getBuyR :: Handler RepHtml
+getBuyR = do
+    count <- runInputGet $ ireq intField "count"
+    defaultLayout [whamlet|
+<p>_{MsgItemCount count}
+|]
+
+postLangR :: Handler ()
+postLangR = do
+    lang <- runInputPost $ ireq textField "lang"
+    setLanguage lang
+    redirect RootR
+
+main :: IO ()
+main = warpDebug 3000 I18N
+----
+
+[[I_sect15_d1e7915]]
+
+=== Overview
+
+
+
+Most existing i18n solutions out there, like gettext or Java message bundles, work on the principle of string lookups. Usually some form of printf-interpolation is used to interpolate variables into the strings. In Yesod, as you might guess, we instead rely on types. This gives us all of our normal advantages, such as the compiler automatically catching mistakes.
+
+Let&rsquo;s take a concrete example. Suppose our application has two things it wants to say to a user: say hello, and state how many users are logged into the system. This can be modeled with a sum type:
+
+
+[source, haskell]
+----
+data MyMessage = MsgHello | MsgUsersLoggedIn Int
+----
+
+I can also write a function to turn this data type into an English representation:
+
+
+[source, haskell]
+----
+toEnglish :: MyMessage -> String
+toEnglish MsgHello = "Hello there!"
+toEnglish (MsgUsersLoggedIn 1) = "There is 1 user logged in."
+toEnglish (MsgUsersLoggedIn i) = "There are " ++ show i ++ " users logged in."
+----
+
+We can also write similar functions for other languages. The advantage to this inside-Haskell approach is that we have the full power of Haskell for addressing tricky grammar issues, especially pluralization.
+
+
+[NOTE]
+====
+You may think pluralization isn&rsquo;t so complicated: you have one version for 1 item, and another for any other count. That might be true in English, but it&rsquo;s not true for every language. Russian, for example, has six different forms, and you need to use some modulus logic to determine which one to use.
+
+
+====
+
+
+The downside, however, is that you have to write all of this inside of Haskell, which won&rsquo;t be very translator-friendly. To solve this, Yesod introduces the concept of message files. We&rsquo;ll cover that in a little bit.
+
+Assuming we have this full set of translation functions, how do we go about using them? What we need is a new function to wrap them all up together, and then choose the appropriate translation function based on the user&rsquo;s selected language. Once we have that, Yesod can automatically choose the most relevant render function and call it on the values you provide.
+
+In order to simplify things a bit, Hamlet has a special interpolation syntax, +_{...}+, which handles all the calls to the render functions. And in order to associate a render function with your application, you use the +YesodMessage+ typeclass.
+
+[[I_sect15_d1e7953]]
+
+=== Message Files
+
+
+
+The simplest approach to creating translations is via message
+      files. The setup is simple: there is a single folder containing all of your translation files, with a single file for each language. Each file is named based on its language code, e.g., _en.msg_. And each line in a file handles one phrase, which correlates to a single constructor in your message data type.
+
+
+[NOTE]
+====
+The scaffolded site already includes a fully configured message folder.
+
+
+====
+
+
+So firstly, a word about language codes. There are really two choices available: using a two-letter language code, or a language-LOCALE code. For example, when I load up a page in my web browser, it sends two language codes: en-US and en. What my browser is saying is &ldquo;if you have American English, I like that the most. If you have English, I&rsquo;ll take that instead.&rdquo;
+
+So which format should you use in your application? Most likely two-letter codes, unless you are actually creating separate translations by locale. This ensures that someone asking for Canadian English will still see your English. Behind the scenes, Yesod will add the two-letter codes where relevant. For example, suppose a user has the following language list:
+----
+pt-BR, es, he
+----
+
+What this means is &ldquo;I like Brazilian Portuguese, then Spanish, and then Hebrew.&rdquo; Suppose your application provides the languages pt (general Portuguese) and English, with English as the default. Strictly following the user&rsquo;s language list would result in the user being served English. Instead, Yesod translates that list into:
+----
+pt-BR, es, he, pt
+----
+
+In other words: unless you&rsquo;re giving different translations based on locale, just stick to the two-letter language codes.
+
+Now what about these message files? The syntax should be very familiar after your work with Hamlet and Persistent. The line starts off with the name of the message. Since this is a data constructor, it must start with a capital letter. Next, you can have individual parameters, which must be given in lowercase. These will be arguments to the data constructor.
+
+The argument list is terminated by a colon, and then followed by the translated string, which allows usage of our typical variable interpolation syntax +#{myVar}+. By referring to the parameters defined before the colon, and using translation helper functions to deal with issues like pluralization, you can create all the translated messages you need.
+
+
+==== Specifying Types
+
+
+
+Since we will be creating a data type out of our message specifications, each parameter to a data constructor must be given a data type. We use a @-syntax for this. For example, to create the data type +data MyMessage = MsgHello | MsgSayAge
+          Int+, we would write:
+
+
+----
+Hello: Hi there!
+SayAge age@Int: Your age is: #{show age}
+----
+
+But there are two problems with this:
+
+
+. It&rsquo;s not very DRY (don&rsquo;t repeat yourself) to have to specify this data type in every file.
+
+
+. Translators will be confused having to specify these data types.
+
+So instead, the type specification is only required in the main language file. This is specified as the third argument in the +mkMessage+ function. This also specifies what the backup language will be, to be used when none of the languages provided by your application match the user&rsquo;s language list.
+
+[[I_sect15_d1e8019]]
+
+=== RenderMessage Typeclass
+
+
+
+Your call to +mkMessage+ creates an instance of the +RenderMessage+ typeclass, which is the core of Yesod&rsquo;s i18n. It is defined as:
+
+
+[source, haskell]
+----
+class RenderMessage master message where
+    renderMessage :: master
+                  -> [Text] -- ^ languages
+                  -> message
+                  -> Text
+----
+
+Notice that there are two parameters to the +RenderMessage+ class: the master site and the message type. In theory, we could skip the master type here, but that would mean that every site would need to have the same set of translations for each message type. When it comes to shared libraries like forms, that would not be a workable solution.
+
+The +renderMessage+ function takes a parameter for each of the class&rsquo;s type parameters: master and message. The extra parameter is a list of languages the user will accept, in descending order of priority. The method then returns a user-ready +Text+ that can be displayed.
+
+A simple instance of +RenderMessage+ may involve no actual translation of strings; instead, it will just display the same value for every language. For example:
+
+
+[source, haskell]
+----
+data MyMessage = Hello | Greet Text
+instance RenderMessage MyApp MyMessage where
+    renderMessage _ _ Hello = "Hello"
+    renderMessage _ _ (Greet name) = "Welcome, " <> name <> "!"
+----
+
+Notice how we ignore the first two parameters to +renderMessage+. We can now extend this to support multiple languages:
+
+
+[source, haskell]
+----
+renderEn Hello = "Hello"
+renderEn (Greet name) = "Welcome, " <> name <> "!"
+renderHe Hello = "שלום"
+renderHe (Greet name) = "ברוכים הבאים, " <> name <> "!"
+instance RenderMessage MyApp MyMessage where
+    renderMessage _ ("en":_) = renderEn
+    renderMessage _ ("he":_) = renderHe
+    renderMessage master (_:langs) = renderMessage master langs
+    renderMessage _ [] = renderEn
+----
+
+The idea here is fairly straightforward: we define helper functions to support each language. We then add a clause to catch each of those languages in the renderMessage definition. We then have two final cases: if no languages matched, continue checking with the next language in the user&rsquo;s priority list. If we&rsquo;ve exhausted all languages the user specified, then use the default language (in our case, English).
+
+But odds are that you will never need to worry about writing this stuff manually, as the message file interface does all this for you. But it&rsquo;s always a good idea to have an understanding of what&rsquo;s going on under the surface.
+
+[[I_sect15_d1e8068]]
+
+=== Interpolation
+
+
+
+One way to use your new +RenderMessage+ instance would be to directly call the +renderMessage+ function. This would work, but it&rsquo;s a bit tedious: you need to pass in the foundation value and the language list manually. Instead, Hamlet provides a specialized i18n interpolation, which looks like +_{...}+.
+
+
+[NOTE]
+====
+Why the underscore? Underscore is already a well-established character for i18n, as it is used in the gettext library.
+
+
+====
+
+
+Hamlet will then automatically translate that to a call to +renderMessage+. Once Hamlet gets the output +Text+ value, it uses the +toHtml+ function to produce an +Html+ value, meaning that any special characters (&lt;, &amp;, &gt;) will be automatically escaped.
+
+[[I_sect15_d1e8101]]
+
+=== Phrases, Not Words
+
+
+
+As a final note, I&rsquo;d just like to give some general i18n advice. Let&rsquo;s say you have an application for selling turtles. You&rsquo;re going to use the word &ldquo;turtle&rdquo; in multiple places, like &ldquo;You have added 4 turtles to your cart.&rdquo; and &ldquo;You have purchased 4 turtles, congratulations!&rdquo; As a programmer, you&rsquo;ll immediately notice the code reuse potential: we have the phrase &ldquo;4 turtles&rdquo; twice. So you might structure your message file as:
+
+
+----
+AddStart: You have added
+AddEnd: to your cart.
+PurchaseStart: You have purchased
+PurchaseEnd: , congratulations!
+Turtles count@Int: #{show count} #{plural "turtle" "turtles"}
+----
+
+STOP RIGHT THERE! This is all well and good from a programming perspective, but translations are _not_ programming. There are a many things that could go wrong with this, such as:
+
+
+* Some languages might put &ldquo;to your cart&rdquo; before &ldquo;You have added.&rdquo;
+
+
+* Maybe &ldquo;added&rdquo; will be constructed differently depending whether you added 1 or more turtles.
+
+
+* There are a bunch of whitespace issues as well.
+
+So the general rule is: translate entire phrases, not just words.
+
