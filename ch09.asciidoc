@@ -172,22 +172,22 @@ main = warpDebug 3000 Messages
 [[messages-x-4]]
 
 .Initial page load, no message
-image::figs/web/dwhy_0901.png[]
+image::figs/dwhy_0901.png[]
 
 [[messages-x-6]]
 
 .New message entered in text box
-image::figs/web/dwhy_0902.png[]
+image::figs/dwhy_0902.png[]
 
 [[messages-x-8]]
 
 .After form submit, message appears at top of page
-image::figs/web/dwhy_0903.png[]
+image::figs/dwhy_0903.png[]
 
 [[messages-x-10]]
 
 .After refresh, the message is cleared
-image::figs/web/dwhy_0904.png[]
+image::figs/dwhy_0904.png[]
 
 [[I_sect19_d1e4748]]
 

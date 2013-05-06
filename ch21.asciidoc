@@ -168,7 +168,7 @@ Now that we&rsquo;ve got the boring stuff out of the way, let&rsquo;s jump into 
 [[searching-x-5]]
 
 .Search Result
-image::figs/web/dwhy_2101.png[]
+image::figs/dwhy_2101.png[]
 
 So let&rsquo;s start off by defining a Result data type:
 

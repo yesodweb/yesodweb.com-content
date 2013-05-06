@@ -181,7 +181,7 @@ Pay attention in particular to the +existingLinks+ function. Notice how all we n
 [[navbar-x-14]]
 
 .Screenshot of the navbar
-image::figs/web/dwhy_1301.png[]
+image::figs/dwhy_1301.png[]
 
 [[I_sect12_d1e6892]]
 

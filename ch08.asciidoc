@@ -540,7 +540,7 @@ Oftentimes, a simple form layout is adequate, and applicative forms excel at thi
 [[monadic-x-4]]
 
 .A non-standard form layout
-image::figs/web/dwhy_0801.png[]
+image::figs/dwhy_0801.png[]
 
 For these use cases, monadic forms fit the bill. They are a bit more verbose than their applicative cousins, but this verbosity allows you to have complete control over what the form will look like. In order to generate the form above, we could code something like this.
 

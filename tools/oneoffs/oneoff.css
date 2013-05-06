@@ -4,6 +4,18 @@
 
 /*--------Put Your Custom CSS Rules Below--------*/
 
+pre.programlisting, pre.screen, pre.literallayout{
+  font-family: "Ubuntu Mono", "ArialUnicodeMS";
+}
+
+code {
+  font-family: "Ubuntu Mono", "ArialUnicodeMS";
+}
+
+p {
+  font-family: "MinionPro-Regular", "Symbola", "ArialUnicodeMS";
+}
+
 /*----Uncomment to turn on automatic code wrapping----*/
 
 pre.programlisting, pre.screen, pre.literallayout {

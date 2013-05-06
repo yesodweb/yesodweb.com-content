@@ -156,17 +156,17 @@ The figures below show what the login process looks like from a user perspective
 [[concept_d1y_t2f_p2-x-26]]
 
 .Initial page load
-image::figs/web/dwhy_1401.png[]
+image::figs/dwhy_1401.png[]
 
 [[concept_d1y_t2f_p2-x-28]]
 
 .BrowserID login screen
-image::figs/web/dwhy_1402.png[]
+image::figs/dwhy_1402.png[]
 
 [[concept_d1y_t2f_p2-x-30]]
 
 .Homepage after logging in
-image::figs/web/dwhy_1403.png[]
+image::figs/dwhy_1403.png[]
 
 [[I_sect13_d1e7146]]
 
