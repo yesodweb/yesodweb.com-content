@@ -1,3 +1,5 @@
+[[I_chapter1_d1e308]]
+
 == Introduction
 
 Since web programming began, people have been trying to make the development
@@ -7,19 +9,21 @@ threats, the stateless nature of HTTP, the multiple languages (HTML, CSS,
 Javascript) necessary to create a powerful web application, and more.
 
 Yesod attempts to ease the web development process by playing to the strengths
-of the Haskell programming language. Haskell's strong compile-time guarantees
+of the Haskell programming language. Haskell&rsquo;s strong compile-time guarantees
 of correctness not only encompass types; referential transparency ensures that
-we don't have any unintended side effects. Pattern matching on algebraic data
-types can help guarantee we've accounted for every possible case. By building
+we don&rsquo;t have any unintended side effects. Pattern matching on algebraic data
+types can help guarantee we&rsquo;ve accounted for every possible case. By building
 upon Haskell, entire classes of bugs disappear.
 
-Unfortunately, using Haskell isn't enough. The web, by its very nature, is
+Unfortunately, using Haskell isn&rsquo;t enough. The web, by its very nature, is
 _not_ type safe. Even the simplest case of distinguishing between an integer
 and string is impossible: all data on the web is transferred as raw bytes,
 evading our best efforts at type safety. Every app writer is left with the task
 of validating all input. I call this problem the boundary issue: as much as
 your application is type safe on the inside, every boundary with the outside
 world still needs to be sanitized.
+
+[[I_sect11_d1e325]]
 
 === Type Safety
 
@@ -33,6 +37,8 @@ problem exists when persisting and loading data. Once again, Yesod saves you on
 the boundary by performing the marshaling of data for you. You can specify your
 entities in a high-level definition and remain blissfully ignorant of the
 details.
+
+[[I_sect11_d1e332]]
 
 === Concise
 
@@ -58,6 +64,8 @@ But for those who like to stay in control, and know exactly what their code is
 doing, you can always run closer to the compiler and write all your code
 yourself.
 
+[[I_sect11_d1e351]]
+
 === Performance
 
 Haskell's main compiler, the GHC, has amazing performance characteristics, and
@@ -78,6 +86,8 @@ Yesod's flagship web server, Warp, is the fastest Haskell web server around.
 When these two pieces of technology are combined, it produces one of the
 fastest web application deployment solutions available.
 
+[[I_sect11_d1e363]]
+
 === Modular
 
 Yesod has spawned the creation of dozens of packages, most of which are usable
@@ -89,6 +99,8 @@ may still be relevant for your needs.
 Of course, these libraries have all been designed to integrate well together.
 Using the Yesod Framework should give you a strong feeling of consistency
 throughout the various APIs.
+
+[[I_sect11_d1e373]]
 
 === A solid foundation
 
@@ -111,6 +123,8 @@ blaze provides the fastest interface for generating UTF-8 data. Anyone who
 wants to use one of the other great libraries out there, such as +text+, should
 have no problem dropping it in.
 
+[[I_sect11_d1e388]]
+
 === Introduction to Haskell
 
 Haskell is a powerful, fast, type-safe, functional programming language. This
@@ -118,9 +132,9 @@ book takes as an assumption that you are already familiar with most of the
 basics of Haskell. There are two wonderful books for learning Haskell, both of
 which are available for reading online:
 
-* link:$$http://learnyouahaskell.com$$[Learn You a Haskell for Great Good!]
+* link:http://learnyouahaskell.com[Learn You a Haskell for Great Good!]
 
-* link:$$http://book.realworldhaskell.org/read$$[Real World Haskell]
+* link:http://book.realworldhaskell.org/read[Real World Haskell]
 
 Yesod relies on a few features in Haskell that most introductory tutorials do
 not cover. Though you will rarely need to understand how these work, it's

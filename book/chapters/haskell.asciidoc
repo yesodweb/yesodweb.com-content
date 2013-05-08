@@ -1,3 +1,5 @@
+[[I_chapter2_d1e408]]
+
 == Haskell
 
 In order to use Yesod, you're going to have to know at least the basics of
@@ -11,6 +13,8 @@ Yesod, you can always come back to this chapter later as a reference.
 
 If you are looking for a more thorough introduction to Haskell, I would
 recommend either Real World Haskell or Learn You a Haskell.
+
+[[I_sect12_d1e423]]
 
 === Terminology
 
@@ -56,7 +60,7 @@ all type constructors.
 Type variables:: Consider the data type +data Maybe a = Just a | Nothing+. In
 this case, +a+ is a type variable.
 
-
+[[I_sect12_d1e535]]
 
 === Tools
 
@@ -125,6 +129,8 @@ link:$$http://hackage.haskell.org/package/cabal-dev$$[cabal-dev] and
 link:$$http://hackage.haskell.org/package/hsenv$$[hsenv].
 ====
 
+[[I_sect12_d1e628]]
+
 === Language Pragmas
 
 GHC will run by default in something very close to Haskell98 mode. It also
@@ -154,6 +160,8 @@ scaffolding uses 11). We will not cover the meaning of all of them. Instead,
 please see the
 link:$$http://www.haskell.org/ghc/docs/latest/html/users_guide/ghc-language-features.html$$[GHC
 documentation].
+
+[[I_sect12_d1e671]]
 
 === Overloaded Strings
 
@@ -210,7 +218,7 @@ Will the program print out +String+ or +Text+? It's not clear. So instead,
 you'll need to give an explicit type annotation to specify whether +"hello"+
 should be treated as a +String+ or +Text+.
 
-
+[[I_sect12_d1e753]]
 
 === Type Families
 
@@ -259,6 +267,8 @@ instead of reference an existing one.
 
 
 NOTE: There are other ways to use associated types outside the context of a typeclass. However, in Yesod, all of our associated types are in fact part of a type class. For more information on type families, see link:$$http://www.haskell.org/haskellwiki/GHC/Type_families$$[the Haskell wiki page].
+
+[[I_sect12_d1e789]]
 
 === Template Haskell
 
@@ -321,6 +331,8 @@ NOTE: There are many other features of Template Haskell not covered here. For
 more information, see the
 link:http://www.haskell.org/haskellwiki/Template_Haskell[Haskell wiki page].
 
+[[I_sect12_d1e833]]
+
 === QuasiQuotes
 
 QuasiQuotes (QQ) are a minor extension of Template Haskell that let us embed
@@ -345,6 +357,8 @@ Throughout the book, we will often times use the QQ-approach over a TH-powered
 external file since the former is simpler to copy-and-paste. However, in
 production, external files are recommended for all but the shortest of inputs
 as it gives a nice separation of the non-Haskell syntax from your Haskell code.
+
+[[I_sect12_d1e851]]
 
 === Summary
 
