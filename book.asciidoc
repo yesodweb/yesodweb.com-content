@@ -13,9 +13,9 @@ include::introduction.asciidoc[]
 
 include::haskell.asciidoc[]
 
-include::ch03.asciidoc[]
+include::basics.asciidoc[]
 
-include::ch04.asciidoc[]
+include::shakespearean-templates.asciidoc[]
 
 include::ch05.asciidoc[]
 
