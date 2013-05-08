@@ -11,7 +11,7 @@ include::pr01.asciidoc[]
 
 include::introduction.asciidoc[]
 
-include::ch02.asciidoc[]
+include::haskell.asciidoc[]
 
 include::ch03.asciidoc[]
 
