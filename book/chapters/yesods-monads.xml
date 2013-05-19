@@ -7,7 +7,7 @@
     <literal>YesodDB</literal> (for Persistent). As with most monads, each one provides some specific
    functionality: <literal>Handler</literal> gives access to the request and allows you to
    send responses, a <literal>Widget</literal> contains HTML, CSS, and Javascript, and
-    <literal>YesodDB</literal> let's you make database queries. In Model-View-Controller
+    <literal>YesodDB</literal> lets you make database queries. In Model-View-Controller
    (MVC) terms, we could consider <literal>YesodDB</literal> to be the model, <literal>Widget</literal>
    to be the view, and <literal>Handler</literal> to be the controller.</para>
    <para>So far, we've presented some very straight-forward ways to use these monads: your main

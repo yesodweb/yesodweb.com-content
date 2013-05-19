@@ -509,7 +509,7 @@ main = withSqliteConn ":memory:" $ runSqlConn $ do
      <para/>
      <para>
       <literal>getBy</literal> is almost identical to <literal>get</literal>, except it takes a
-            uniqueness constraint instead of an ID it takes a Unique value.</para>
+            uniqueness constraint; that is, instead of an ID it takes a Unique value.</para>
      <figure id="fetching-by-unique-constraint-x2">
       <title>Using getBy</title>
       <programlisting language="haskell">    personId &lt;- insert $ Person "Michael" "Snoyman" 26
