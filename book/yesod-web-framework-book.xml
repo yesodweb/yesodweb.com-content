@@ -21,7 +21,7 @@
     <xi:include href="chapters/shakespearean-templates.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/widgets.xml"
+    <xi:include href="chapters/widgets.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/yesod-typeclass.xml"
