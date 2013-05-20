@@ -21,7 +21,7 @@ include::widgets.asciidoc[]
 
 include::yesod-typeclass.asciidoc[]
 
-include::ch07.asciidoc[]
+include::routing-and-handlers.asciidoc[]
 
 include::ch08.asciidoc[]
 
