@@ -17,9 +17,9 @@ include::basics.asciidoc[]
 
 include::shakespearean-templates.asciidoc[]
 
-include::ch05.asciidoc[]
+include::widgets.asciidoc[]
 
-include::ch06.asciidoc[]
+include::yesod-typeclass.asciidoc[]
 
 include::ch07.asciidoc[]
 
