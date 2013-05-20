@@ -417,7 +417,7 @@ The following functions immediately end execution of a handler function and
 return a result to the user.
 
 redirect:: Sends a redirect response to the user (a 303 response). If you want to use a different response code (e.g., a permanent 301 redirect), you can use +redirectWith+.
-NOTE:
+[NOTE]
 ====
 Yesod uses a 303 response for HTTP/1.1 clients, and a 302 response for HTTP/1.0
 clients. You can read up on this sordid saga in the HTTP spec.
