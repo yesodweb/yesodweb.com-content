@@ -479,5 +479,6 @@ getWikiR = return . RepPlain . toContent . T.unwords
                 <literal>Handler</literal> monad. This chapter covered some of the most important and
             central concepts of Yesod, so it is important that you properly digest it.</para>
     <para>This chapter also hinted at a number of more complex Yesod topics that we will be covering later. But you should be able to write some very sophisticated web applications with just the knowledge you have learned up until here.</para>
+    <para>FIXME: TypedContent</para>
    </section>
   </chapter>
