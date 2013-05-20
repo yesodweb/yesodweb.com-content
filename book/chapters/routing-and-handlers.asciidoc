@@ -1,0 +1,481 @@
+== Routing and Handlers
+
+If we look at Yesod as a Model-View-Controller framework, routing and handlers
+make up the controller. For contrast, let's describe two other routing
+approaches used in other web development environments:
+
+* Dispatch based on file name. This is how PHP and ASP work, for example.
+* Have a centralized routing function that parses routes based on regular
+  expressions. Django and Rails follow this approach.
+
+Yesod is closer in principle to the latter technique. Even so, there are
+significant differences. Instead of using regular expressions, Yesod matches on
+pieces of a route. Instead of having a one-way route-to-handler mapping, Yesod
+has an intermediate data type (called the route datatype, or a type-safe URL)
+and creates two-way conversion functions.
+
+Coding this more advanced system manually is tedious and error prone.
+Therefore, Yesod defines a Domain Specific Language (DSL) for specifying
+routes, and provides Template Haskell functions to convert this DSL to Haskell
+code. This chapter will explain the syntax of the routing declarations, give
+you a glimpse of what code is generated for you, and explain the interaction
+between routing and handler functions.
+
+=== Route Syntax
+
+Instead of trying to shoe-horn route declarations into an existing syntax,
+Yesod's approach is to use a simplified syntax designed just for routes. This
+has the advantage of making the code not only easy to write, but simple enough
+for someone with no Yesod experience to read and understand the sitemap of your
+application.
+
+A basic example of this syntax is:
+
+[source, routes]
+----
+/             HomeR     GET
+/blog         BlogR     GET POST
+/blog/#BlogId BlogPostR GET POST
+
+/static       StaticR   Static getStatic
+----
+
+The next few sections will explain the full details of what goes on in the
+route declaration.
+
+==== Pieces
+
+One of the first thing Yesod does when it gets a request is split up the
+requested path into pieces. The pieces are tokenized at all forward slashes.
+For example:
+
+[source, haskell]
+----
+toPieces "/" = []
+toPieces "/foo/bar/baz/" = ["foo", "bar", "baz", ""]
+----
+
+You may notice that there are some funny things going on with trailing slashes,
+or double slashes ("/foo//bar//"), or a few other things. Yesod believes in
+having canonical URLs; if users request a URL with a trailing slash, or with a
+double slash, they are automatically redirected to the canonical version.  This
+ensures you have one URL for one resource, and can help with your search
+rankings.
+
+What this means for you is that you needn't concern yourself with the exact
+structure of your URLs: you can safely think about pieces of a path, and Yesod
+automatically handles intercalating the slashes and escaping problematic
+characters.
+
+If, by the way, you want more fine-tuned control of how paths are split into
+pieces and joined together again, you'll want to look at the +cleanPath+ and
++joinPath+ methods in the Yesod typeclass chapter.
+
+===== Types of Pieces
+
+When you are declaring your routes, you have three types of pieces at your
+disposal:
+
+Static:: This is a plain string that must be matched against precisely in the URL.
+
+Dynamic single:: This is a single piece (ie, between two forward slashes), but
+represents a user-submitted value. This is the primary method of receiving
+extra user input on a page request. These pieces begin with a hash (#) and are
+followed by a data type. The datatype must be an instance of +PathPiece+.
+
+Dynamic multi:: The same as before, but can receive multiple pieces of the URL.
+This must always be the last piece in a resource pattern. It is specified by an
+asterisk (*) followed by a datatype, which must be an instance of
++PathMultiPiece+. Multi pieces are not as common as the other two, though they
+are very important for implementing features like static trees representing
+file structure or wikis with arbitrary hierarchies.
+
+Let us take a look at some standard kinds of resource patterns you may want to
+write. Starting simply, the root of an application will just be +/+. Similarly,
+you may want to place your FAQ at +/page/faq+.
+
+Now let's say you are going to write a Fibonacci website. You may construct
+your URLs like +/fib/#Int+. But there's a slight problem with this: we do not
+want to allow negative numbers or zero to be passed into our application.
+Fortunately, the type system can protect us:
+
+[source, haskell]
+----
+newtype Natural = Natural Int
+instance PathPiece Natural where
+    toPathPiece (Natural i) = T.pack $ show i
+    fromPathPiece s =
+        case reads $ T.unpack s of
+            (i, ""):_
+                | i < 1 -> Nothing
+                | otherwise -> Just $ Natural i
+            [] -> Nothing
+----
+
+On line 1 we define a simple newtype wrapper around Int to protect ourselves
+from invalid input. We can see that +PathPiece+ is a typeclass with two
+methods. +toPathPiece+ does nothing more than convert to a +Text+.
++fromPathPiece+ _attempts_ to convert a +Text+ to our datatype, returning
++Nothing+ when this conversion is impossible. By using this datatype, we can
+ensure that our handler function is only ever given natural numbers, allowing
+us to once again use the type system to battle the boundary issue.
+
+NOTE: In a real life application, we would also want to ensure we never
+accidently constructed an invalid +Natural+ value internally to our app. To do
+so, we could use an approach like
+link:http://www.haskell.org/haskellwiki/Smart_constructors[smart constructors].
+For the purposes of this example, we've kept the code simple.
+
+Defining a +PathMultiPiece+ is just as simple. Let's say we want to have a Wiki
+with at least two levels of hierarchy; we might define a datatype such as:
+
+[source, haskell]
+----
+data Page = Page Text Text [Text] -- 2 or more
+instance PathMultiPiece Page where
+    toPathMultiPiece (Page x y z) = x : y : z
+    fromPathMultiPiece (x:y:z) = Just $ Page x y z
+    fromPathMultiPiece _ = Nothing
+----
+
+==== Resource name
+
+Each resource pattern also has a name associated with it. That name will become
+the constructor for the type safe URL datatype associated with your
+application. Therefore, it has to start with a capital letter. By convention,
+these resource names all end with a capital R. There is nothing forcing you to
+do this, it is just common practice.
+
+The exact definition of our constructor depends upon the resource pattern it is
+attached to. Whatever datatypes are included in single and multi pieces of the
+pattern become arguments to the datatype. This gives us a 1-to-1 correspondence
+between our type-safe URL values and valid URLs in our application.
+
+NOTE: This doesn't necessarily mean that _every_ value is a working page, just
+that it is a potentially valid URL. As an example, the value +PersonR
+"Michael"+ may not resolve to a valid page if there is no Michael in the
+database.
+
+Let's get some real examples going here. If you had the resource patterns
++/person/#Text+ named +PersonR+, +/year/#Int+ named +YearR+ and +/page/faq+
+named +FaqR+, you would end up with a route data type roughly looking like:
+
+[source, haskell]
+----
+data MyRoute = PersonR Text
+             | YearR Int
+             | FaqR
+----
+
+If a user requests +/year/2009+, Yesod will convert it into the value +YearR
+2009+. +/person/Michael+ becomes +PersonR "Michael"+ and +/page/faq+ becomes
++FaqR+. On the other hand, +/year/two-thousand-nine+, +/person/michael/snoyman+
+and +/page/FAQ+ would all result in 404 errors without ever seeing your code.
+
+==== Handler specification
+
+The last piece of the puzzle when declaring your resources is how they will be
+handled. There are three options in Yesod:
+
+* A single handler function for all request methods on a given route.
+
+* A separate handler function for each request method on a given route. Any
+  other request method will generate a 405 Bad Method response.
+
+* You want to pass off to a subsite.
+
+The first two can be easily specified. A single handler function will be a line
+with just a resource pattern and the resource name, such as +/page/faq FaqR+.
+In this case, the handler function must be named +handleFaqR+.
+
+A separate handler for each request method will be the same, plus a list of
+request methods. The request methods must be all capital letters. For example,
++/person/#String PersonR GET POST DELETE+. In this case, you would need to
+define three handler functions: +getPersonR+, +postPersonR+ and
++deletePersonR+.
+
+Subsites are a very useful— but more complicated— topic in Yesod. We will cover
+writing subsites later, but using them is not too difficult. The most commonly
+used subsite is the static subsite, which serves static files for your
+application. In order to serve static files from +/static+, you would need a
+resource line like:
+
+[source, routes]
+----
+/static StaticR Static getStatic
+----
+
+In this line, +/static+ just says where in your URL structure to serve the
+static files from. There is nothing magical about the word static, you could
+easily replace it with +/my/non-dynamic/files+.
+
+The next word, +StaticR+, gives the resource name. The next two words are what
+specify that we are using a subsite. +Static+ is the name of the subsite
+foundation datatype, and +getStatic+ is a function that gets a +Static+ value
+from a value of your master foundation datatype.
+
+Let's not get too caught up in the details of subsites now. We will look more
+closely at the static subsite in the scaffolded site chapter.
+
+=== Dispatch
+
+Once you have specified your routes, Yesod will take care of all the pesky
+details of URL dispatch for you. You just need to make sure to provide the
+appropriate handler functions. For subsite routes, you do not need to write any
+handler functions, but you do for the other two. We mentioned the naming rules
+above (+MyHandlerR GET+ becomes +getMyHandlerR+, +MyOtherHandlerR+ becomes
++handleMyOtherHandlerR+).
+
+Now that we know which functions we need to write, let's figure out what their
+type signatures should be.
+
+==== Return Type
+
+Let's look at a simple handler function:
+
+[source, haskell]
+----
+mkYesod "Simple" [parseRoutes|
+/ HomeR GET
+|]
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout [whamlet|<h1>This is simple|]
+----
+
+There are two components to this returns type: +Handler+ and +Html+. Let's
+analyze each in more depth.
+
+===== Handler monad
+
+Like the +Widget+ type, the +Handler+ data type is not defined anywhere in the
+Yesod libraries. Instead, the libraries provide the data type:
+
+[source, haskell]
+----
+data HandlerT site m a
+----
+
+And like +WidgetT+, this has three arguments: a base monad +m+, a monadic value
++a+, and the foundation data type +site+. Each application defines a +Handler+
+synonym which constrains +site+ to that application's foundation data type, and
+sets +m+ to +IO+. If your foundation is +MyApp+, in other words, you'd have the
+synonym:
+
+[source, haskell]
+----
+type Handler = HandlerT MyApp IO
+----
+
+We need to be able to modify the underlying monad when writing subsites, but
+otherwise we'll use +IO+.
+
+The +HandlerT+ monad provides access to information about the user request
+(e.g. query-string parameters), allows modifying the response (e.g., response
+headers), and more. This is the monad that most of your Yesod code will live
+in.
+
+In addition, there's a type class called +MonadHandler+. Both +HandlerT+ and
++WidgetT+ are instances of this type class, allowing many common functions to
+be used in both monads. If you see +MonadHandler+ in any API documentation, you
+should remember that the function can be used in your +Handler+ functions.
+
+===== Html
+
+There's nothing too surprising about this type. This function returns some HTML
+content, represented by the +Html+ data type. But clearly Yesod would not be
+useful if it only allowed HTML responses to be generated. We want respond with
+CSS, Javascript, JSON, images, and more. So the question is: what data types
+can be returned?
+
+In order to generated a response, we need to know two pieces of information:
+the content type (e.g., +text/html+, +image/png+) and how to serialize it to a
+stream of bytes. This is represented by the +TypedContent+ data type:
+
+[source, haskell]
+----
+data TypedContent = TypedContent !ContentType !Content
+----
+
+We also have a type class for all data types which can be converted to a
++TypedContent+:
+
+[source, haskell]
+----
+class ToTypedContent a where
+    toTypedContent :: a -> TypedContent
+----
+
+Many common data types are instances of this type class, including +Html+,
++Value+ (from the aeson package, representing JSON), +Text+, and even +()+ (for
+representing an empty response).
+
+==== Arguments
+
+Let's return to our simple example from above:
+
+[source, haskell]
+----
+mkYesod "Simple" [parseRoutes|
+/ HomeR GET
+|]
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout [whamlet|<h1>This is simple|]
+----
+
+Not every route is as simple as this +HomeR+. Take for instance our +PersonR+
+route from earlier. The name of the person needs to be passed to the handler
+function. This translation is very straight-forward, and hopefully intuitive.
+For example:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Data.Text (Text)
+import qualified Data.Text as T
+import           Yesod
+
+data App = App
+instance Yesod App
+
+mkYesod "App" [parseRoutes|
+/person/#Text PersonR GET
+/year/#Integer/month/#Text/day/#Int DateR
+/wiki/*Texts WikiR GET
+|]
+
+getPersonR :: Text -> Handler Html
+getPersonR name = defaultLayout [whamlet|<h1>Hello #{name}!|]
+
+handleDateR :: Integer -> Text -> Int -> Handler Text -- text/plain
+handleDateR year month day =
+    return $
+        T.concat [month, " ", T.pack $ show day, ", ", T.pack $ show year]
+
+getWikiR :: [Text] -> Handler Text
+getWikiR = return . T.unwords
+
+main :: IO ()
+main = warp 3000 App
+----
+
+The arguments have the types of the dynamic pieces for each route, in the order
+specified. Also, notice how we are able to use both +Html+ and +Text+ return
+values.
+
+=== The Handler functions
+
+Since the majority of your code will live in the +Handler+ monad, it's
+important to invest some time in understanding it better. The remainder of this
+chapter will give a brief introduction to some of the most common functions
+living in the +Handler+ monad. I am specifically _not_ covering any of the
+session functions; that will be addressed in the sessions chapter.
+
+==== Application Information
+
+There are a number of functions that return information about your application
+as a whole, and give no information about individual requests. Some of these
+are:
+
+getYesod:: Returns your applicaton foundation value. If you store configuration
+values in your foundation, you will probably end up using this function a lot.
+
+getUrlRender:: Returns the URL rendering function, which converts a type-safe
+URL into a +Text+. Most of the time- like with Hamlet- Yesod calls this
+function for you, but you may occassionally need to call it directly.
+
+getUrlRenderParams:: A variant of +getUrlRender+ that converts both a type-safe
+URL and a list of query-string parameters. This function handles all
+percent-encoding necessary.
+
+==== Request Information
+
+The most common information you will want to get about the current request is
+the requested path, the query string parameters and ++POST++ed form data. The
+first of those is dealt with in the routing, as described above. The other two
+are best dealt with using the forms module.
+
+That said, you will sometimes need to get the data in a more raw format. For
+this purpose, Yesod exposes the +YesodRequest+ datatype along with the
++getRequest+ function to retrieve it. This gives you access to the full list of
+GET parameters, cookies, and preferred languages. There are some convenient
+functions to make these lookups easier, such as +lookupGetParam+,
++lookupCookie+ and +languages+. For raw access to the POST parameters, you
+should use +runRequestBody+.
+
+If you need even more raw data, like request headers, you can use +waiRequest+
+to access the Web Application Interface (WAI) request value. See the WAI
+appendix for more details.
+
+==== Short Circuiting
+
+The following functions immediately end execution of a handler function and
+return a result to the user.
+
+redirect:: Sends a redirect response to the user (a 303 response). If you want to use a different response code (e.g., a permanent 301 redirect), you can use +redirectWith+.
+NOTE:
+====
+Yesod uses a 303 response for HTTP/1.1 clients, and a 302 response for HTTP/1.0
+clients. You can read up on this sordid saga in the HTTP spec.
+====
+
+notFound:: Return a 404 response. This can be useful if a user requests a
+database value that doesn't exist.
+
+permissionDenied:: Return a 403 response with a specific error message.
+
+invalidArgs:: A 400 response with a list of invalid arguments.
+
+sendFile:: Sends a file from the filesystem with a specified content type. This
+is the preferred way to send static files, since the underlying WAI handler may
+be able to optimize this to a +sendfile+ system call. Using +readFile+ for
+sending static files should not be necessary.
+
+sendResponse:: Send a normal response with a 200 status code. This is really
+just a convenience for when you need to break out of some deeply nested code
+with an immediate response. Any instance of +ToTypedContent+ may be used.
+
+sendWaiResponse:: When you need to get low-level and send out a raw WAI
+response. This can be especially useful for creating streaming responses or a
+technique like server-sent events.
+
+==== Response Headers
+
+setCookie:: Set a cookie on the client. Instead of taking an expiration date,
+this function takes a cookie duration in minutes. Remember, you won't see this
+cookie using +lookupCookie+ until the _following_ request.
+
+deleteCookie:: Tells the client to remove a cookie. Once again, +lookupCookie+
+will not reflect this change until the next request.
+
+setHeader:: Set an arbitrary response header.
+
+setLanguage:: Set the preferred user language, which will show up in the result
+of the +languages+ function.
+
+cacheSeconds:: Set a Cache-Control header to indicate how many seconds this
+response can be cached. This can be particularly useful if you are using
+link:http://www.varnish-cache.org[varnish on your server].
+
+neverExpires:: Set the Expires header to the year 2037. You can use this with
+content which should never expire, such as when the request path has a hash
+value associated with it.
+
+alreadyExpired:: Sets the Expires header to the past.
+
+expiresAt:: Sets the Expires header to the specified date/time.
+
+=== Summary
+
+Routing and dispatch is arguably the core of Yesod: it is from here that our
+type-safe URLs are defined, and the majority of our code is written within the
++Handler+ monad. This chapter covered some of the most important and central
+concepts of Yesod, so it is important that you properly digest it.
+
+This chapter also hinted at a number of more complex Yesod topics that we will
+be covering later. But you should be able to write some very sophisticated web
+applications with just the knowledge you have learned up until here.
