@@ -70,7 +70,7 @@ index searcher
    holding documents, which consist of a title and content. We'll store this in a SQLite database,
    and provide routes for searching, adding documents, viewing documents and providing the xmlpipe
    file to Sphinx.</para>
-    <programlisting language="haskell">share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
+    <programlisting language="haskell">share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 Doc
     title Text
     content Textarea
@@ -455,7 +455,7 @@ import Text.XML.Stream.Render (renderBuilder, def)
 import Data.Monoid (mconcat)
 import Data.Conduit.Pool (takeResource, mrValue, mrReuse)
 
-share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 Doc
     title Text
     content Textarea
