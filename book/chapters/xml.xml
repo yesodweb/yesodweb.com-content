@@ -38,6 +38,7 @@
 import Prelude hiding (readFile, writeFile)
 import Text.XML
 import Text.Hamlet.XML
+import qualified Data.Map as M
 
 main :: IO ()
 main = do
@@ -55,10 +56,10 @@ main = do
 
 -- We'll turn out &lt;document&gt; into an XHTML document
 transform :: Element -&gt; Element
-transform (Element _name attrs children) = Element "html" [] [xml|
+transform (Element _name attrs children) = Element "html" M.empty [xml|
 &lt;head&gt;
     &lt;title&gt;
-        $maybe title &lt;- lookup "title" attrs
+        $maybe title &lt;- M.lookup "title" attrs
             \#{title}
         $nothing
             Untitled Document
@@ -82,10 +83,11 @@ goElem (Element "em" attrs children) =
 goElem (Element "strong" attrs children) =
     Element "b" attrs $ concatMap goNode children
 goElem (Element "image" attrs _children) =
-    Element "img" (map fixAttr attrs) [] -- images can't have children
+    Element "img" (fixAttr attrs) [] -- images can't have children
   where
-    fixAttr ("href", value) = ("src", value)
-    fixAttr x = x
+    fixAttr mattrs
+        | "href" `M.member` mattrs  = M.delete "href" $ M.insert "src" (mattrs M.! "href") mattrs
+        | otherwise                 = mattrs
 goElem (Element name attrs children) =
     -- don't know what to do, just pass it through...
     Element name attrs $ concatMap goNode children</programlisting>
@@ -481,22 +483,23 @@ main = do
     <programlisting language="haskell">{-# LANGUAGE OverloadedStrings #-}
 import Text.XML
 import Prelude hiding (writeFile)
+import Data.Map (empty)
 
 main :: IO ()
 main =
     writeFile def "test3.xml" $ Document (Prologue [] Nothing []) root []
   where
-    root = Element "html" []
-        [ NodeElement $ Element "head" []
-            [ NodeElement $ Element "title" []
+    root = Element "html" empty
+        [ NodeElement $ Element "head" empty
+            [ NodeElement $ Element "title" empty
                 [ NodeContent "My "
-                , NodeElement $ Element "b" []
+                , NodeElement $ Element "b" empty
                     [ NodeContent "Title"
                     ]
                 ]
             ]
-        , NodeElement $ Element "body" []
-            [ NodeElement $ Element "p" []
+        , NodeElement $ Element "body" empty
+            [ NodeElement $ Element "p" empty
                 [ NodeContent "foo bar baz"
                 ]
             ]
@@ -514,12 +517,13 @@ main =
 import Text.XML
 import Text.Hamlet.XML
 import Prelude hiding (writeFile)
+import Data.Map (empty)
 
 main :: IO ()
 main =
     writeFile def "test3.xml" $ Document (Prologue [] Nothing []) root []
   where
-    root = Element "html" [] [xml|
+    root = Element "html" empty [xml|
 &lt;head&gt;
     &lt;title&gt;
         My #
@@ -562,6 +566,7 @@ import Text.XML
 import Text.Hamlet.XML
 import Prelude hiding (writeFile)
 import Data.Text (Text, pack)
+import Data.Map (empty)
 
 data Person = Person
     { personName :: Text
@@ -580,7 +585,7 @@ main :: IO ()
 main =
     writeFile def "people.xml" $ Document (Prologue [] Nothing []) root []
   where
-    root = Element "html" [] [xml|
+    root = Element "html" empty [xml|
 &lt;head&gt;
     &lt;title&gt;Some People
 &lt;body&gt;
