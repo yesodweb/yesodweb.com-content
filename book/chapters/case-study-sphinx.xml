@@ -455,7 +455,7 @@ import Text.XML.Stream.Render (renderBuilder, def)
 import Data.Monoid (mconcat)
 import Data.Conduit.Pool (takeResource, mrValue, mrReuse)
 
-share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 Doc
     title Text
     content Textarea
