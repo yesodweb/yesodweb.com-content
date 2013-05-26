@@ -74,7 +74,7 @@ yesod-test was completely overhauled, making it easier to use and providing clea
 
 FPComplete's development of the [School of Haskell](https://www.fpcomplete.com/school/how-to-use-the-school-of-haskell) has been great for the Haskell community to keep spreading knowledge. It has also been running with the changes for 1.2 for quite a while which should contribute to making 1.2 a more stable release.
 
-[https://github.com/yesodweb/yesod/wiki/Changelog#yesod-12-not-yet-released](The high-level changelog) has been discussed in high-level here. [https://github.com/yesodweb/yesod/wiki/Detailed-change-list#not-yet-released-yesod-12](Detailed changes are here)
+[The high-level changelog](https://github.com/yesodweb/yesod/wiki/Changelog#yesod-12-not-yet-released) has been discussed in high-level here. [Detailed changes are here](https://github.com/yesodweb/yesod/wiki/Detailed-change-list#not-yet-released-yesod-12)
 
 The book documentation for [1.2](http://www.yesodweb.com/book-1.2) has been started, but still needs more work to get fully up to date.
 
