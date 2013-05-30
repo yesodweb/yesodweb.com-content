@@ -79,7 +79,7 @@ lift . throwError :: errValue -&gt; ReaderT Error</programlisting>
       <para>In reality they have extra type parameters for the sub and master site. As a result, the
     Yesod libraries provide <literal>GHandler sub master a</literal> and <literal>GWidget sub master
      a</literal>, and each site gets a pair of type synonyms <literal>type Handler = GHandler MyApp
-     MyApp</literal> and <literal>type Widget = GWidget MyApp My App ()</literal>.</para>
+     MyApp</literal> and <literal>type Widget = GWidget MyApp MyApp ()</literal>.</para>
      </listitem>
     </orderedlist>
     <para>In <function>persistent</function>, we have a typeclass called
