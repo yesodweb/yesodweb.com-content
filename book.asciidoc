@@ -23,7 +23,7 @@ include::yesod-typeclass.asciidoc[]
 
 include::routing-and-handlers.asciidoc[]
 
-include::ch08.asciidoc[]
+include::forms.asciidoc[]
 
 include::ch09.asciidoc[]
 
