@@ -44,17 +44,17 @@ main = do
         res &lt;- http req manager
 
         -- And finally stream the value to a file
-        responseBody res $$ sinkFile "foo.txt"
+        responseBody res $$+- sinkFile "foo.txt"
 
         -- Make it a POST request, don't follow redirects, and accept any
         -- status code.
         let req2 = req
                 { method = "POST"
                 , redirectCount = 0
-                , checkStatus = \_ _ -&gt; Nothing
+                , checkStatus = \_ _ _ -&gt; Nothing
                 }
         res2 &lt;- http req2 manager
-        responseBody res2 $$ sinkFile "post-foo.txt"</programlisting>
+        responseBody res2 $$+- sinkFile "post-foo.txt"</programlisting>
    </section>
    <section>
     <title>Concepts</title>
@@ -112,8 +112,8 @@ main = do
             case parseUrl urlString of
                 Nothing -&gt; putStrLn "Sorry, invalid URL"
                 Just req -&gt; withManager $ \manager -&gt; do
-                    Response _ _ _ lbs &lt;- httpLbs req manager
-                    liftIO $ L.putStr lbs
+                    res &lt;- httpLbs req manager
+                    liftIO $ L.putStr $ responseBody res
         _ -&gt; putStrLn "Sorry, please provide exactly one URL"</programlisting>
     <para>The <literal>Request</literal> type is abstract so that <literal>http-conduit</literal> can add new
    settings in the future without breaking the API (see the Settings Type
@@ -135,10 +135,10 @@ main = do
                 Nothing -&gt; putStrLn "Sorry, invalid URL"
                 Just req -&gt; withManager $ \manager -&gt; do
                     let reqHead = req { method = "HEAD" }
-                    Response status _ headers _ &lt;- http reqHead manager
+                    res &lt;- http reqHead manager
                     liftIO $ do
-                        print status
-                        mapM_ print headers
+                        print $ responseStatus res
+                        mapM_ print $ responseHeaders res
         _ -&gt; putStrLn "Sorry, please provide example one URL"</programlisting>
     <para>There are a number of different configuration settings in the API, some noteworthy ones
    are:</para>
