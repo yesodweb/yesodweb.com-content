@@ -1,0 +1,343 @@
+== Sessions
+
+HTTP is a stateless protocol. While some view this as a disadvantage, advocates
+of RESTful web development laud this as a plus. When state is removed from the
+picture, we get some automatic benefits, such as easier scalability and
+caching.  You can draw many parallels with the non-mutable nature of Haskell in
+general.
+
+As much as possible, RESTful applications should avoid storing state about an
+interaction with a client. However, it is sometimes unavoidable. Features like
+shopping carts are the classic example, but other more mundane interactions
+like proper login handling can be greatly enhanced by proper usage of sessions.
+
+This chapter will describe how Yesod stores session data, how you can access
+this data, and some special functions to help you make the most of sessions.
+
+=== Clientsession
+
+One of the earliest packages spun off from Yesod was clientsession. This
+package uses encryption and signatures to store data in a client-side cookie.
+The encryption prevents the user from inspecting the data, and the signature
+ensures that the session can be neither hijacked nor tampered with.
+
+It might sound like a bad idea from an efficiency standpoint to store data in a
+cookie. After all, this means that the data must be sent on every request.
+However, in practice, clientsession can be a great boon for performance.
+
+* No server side database lookup is required to service a request.
+* We can easily scale horizontally: each request contains all the information
+  we need to send a response.
+* To avoid undue bandwidth overhead, production sites can serve their static
+  content from a separate domain name, thereby skipping transmission of the
+  session cookie for each request.
+
+Storing megabytes of information in the session will be a bad idea. But for
+that matter, most session implementations recommend against such practices. If
+you really need massive storage for a user, it is best to store a lookup key in
+the session, and put the actual data in a database.
+
+All of the interaction with clientsession is handled by Yesod internally, but
+there are a few spots where you can tweak the behavior just a bit.
+
+=== Controlling sessions
+
+By default, your Yesod application will use clientsession for its session
+storage, getting the encryption key from the client +client-session-key.aes+
+and giving a session a two hour timeout. (Note: timeout is measured from the
+last time the client sent a request to the site, *not* from when then session
+was first created.) However, all of those points can be modified by overriding
+the +makeSessionBackend+ method in the Yesod typeclass.
+
+One simple way to override this method is to simply turn off session handling;
+to do so, return +Nothing+. If your app has absolutely no session needs,
+disabling them can give a bit of a performance increase. But be careful about
+disabling sessions: this will also disable such features as Cross-Site Request
+Forgery protection.
+
+[source, haskell]
+----
+instance Yesod App where
+    makeSessionBackend _ = return Nothing
+----
+
+Another common approach is to modify the filepath or timeout value, but
+continue using client-session. To do so, use the +defaultClientSessionBackend+
+helper function:
+
+[source, haskell]
+----
+instance Yesod App where
+    makeSessionBackend _ = do
+        let minutes = 24 * 60 -- 1 day
+            filepath = "mykey.aes"
+        backend <- defaultClientSessionBackend minutes filepath
+----
+
+There are a few other functions to grant you more fine-grained control of
+client-session, but they will rarely be necessary. Please see ++Yesod.Core++'s
+documentation if you are interested. It's also possible to implement some other
+form of session, such as a server side session. To my knowledge, at the time of
+writing, no other such implementations exist.
+
+NOTE: If the given key file does not exist, it will be created and populated
+with a randomly generated key. When you deploy your app to production, you
+should include a pregenerated key with it, otherwise all existing sessions will
+be invalidated when your new key file is generated. The scaffolding addresses
+this for you.
+
+=== Session Operations
+
+Like most frameworks, a session in Yesod is a key-value store. The base session
+API boils down to four functions: +lookupSession+ gets a value for a key (if
+available), +getSession+ returns all of the key/value pairs, +setSession+ sets
+a value for a key, and +deleteSession+ clears a value for a key.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+import           Control.Applicative ((<$>), (<*>))
+import qualified Web.ClientSession   as CS
+import           Yesod
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET POST
+|]
+
+getHomeR :: Handler Html
+getHomeR = do
+    sess <- getSession
+    defaultLayout
+        [whamlet|
+            <form method=post>
+                <input type=text name=key>
+                <input type=text name=val>
+                <input type=submit>
+            <h1>#{show sess}
+        |]
+
+postHomeR :: Handler ()
+postHomeR = do
+    (key, mval) <- runInputPost $ (,) <$> ireq textField "key" <*> iopt textField "val"
+    case mval of
+        Nothing -> deleteSession key
+        Just val -> setSession key val
+    liftIO $ print (key, mval)
+    redirect HomeR
+
+instance Yesod App where
+    -- Make the session timeout 1 minute so that it's easier to play with
+    makeSessionBackend _ = do
+        backend <- defaultClientSessionBackend 1 "keyfile.aes"
+        return $ Just backend
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+main :: IO ()
+main = warp 3000 App
+----
+
+=== Messages
+
+One usage of sessions previously alluded to is messages. They come to solve a
+common problem in web development: the user performs a +POST+ request, the web
+app makes a change, and then the web app wants to _simultaneously_ redirect the
+user to a new page and send the user a success message. (This is known as
+Post/Redirect/Get.)
+
+Yesod provides a pair of functions to enable this workflow: +setMessage+ stores
+a value in the session, and +getMessage+ both reads the value most recently put
+into the session, and clears the old value so it is not displayed twice.
+
+It is recommended to have a call to +getMessage+ in +defaultLayout+ so that any
+available message is shown to a user immediately, without having to add
++getMessage+ calls to every handler.
+
+[source, haskell]
+----
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+import           Yesod
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/            HomeR       GET
+/set-message SetMessageR POST
+|]
+
+instance Yesod App where
+    defaultLayout widget = do
+        pc <- widgetToPageContent widget
+        mmsg <- getMessage
+        giveUrlRenderer
+            [hamlet|
+                $doctype 5
+                <html>
+                    <head>
+                        <title>#{pageTitle pc}
+                        ^{pageHead pc}
+                    <body>
+                        $maybe msg <- mmsg
+                            <p>Your message was: #{msg}
+                        ^{pageBody pc}
+            |]
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout
+    [whamlet|
+        <form method=post action=@{SetMessageR}>
+            My message is: #
+            <input type=text name=message>
+            <button>Go
+    |]
+
+postSetMessageR :: Handler ()
+postSetMessageR = do
+    msg <- runInputPost $ ireq textField "message"
+    setMessage $ toHtml msg
+    redirect HomeR
+
+main :: IO ()
+main = warp 3000 App
+----
+
+.Initial page load, no message
+image::images/messages-1.png[]
+
+.New message entered in text box
+image::images/messages-1.png[]
+
+.After form submit, message appears at top of page
+image::images/messages-3.png[]
+
+.After refresh, the message is cleared
+image::images/messages-4.png[]
+
+=== Ultimate Destination
+
+Not to be confused with a horror film, ultimate destination is a technique
+originally developed for Yesod's authentication framework, but which has more
+general usefulness.  Suppose a user requests a page that requires
+authentication. If the user is not yet logged in, you need to send him/her to
+the login page. A well-designed web app will then _send them back to the first
+page they requested_. That's what we call the ultimate destination.
+
++redirectUltDest+ sends the user to the ultimate destination set in his/her
+session, clearing that value from the session. It takes a default destination
+as well, in case there is no destination set. For setting the session, there
+are three options:
+
+*  +setUltDest+ sets the destination to the given URL, which can be given
+   either as a textual URL or a type-safe URL.
+
+*  +setUltDestCurrent+ sets the destination to the currently requested URL.
+
+*  +setUltDestReferer+ sets the destination based on the +Referer+ header (the
+   page that led the user to the current page).
+
+Additionally, there is the +clearUltDest+ function, to drop the ultimate
+destination value from the session if present.
+
+Let's look at a small sample app. It will allow the user to set his/her name in
+the session, and then tell the user his/her name from another route. If the
+name hasn't been set yet, the user will be redirected to the set name page,
+with an ultimate destination set to come back to the current page.
+
+
+[source, haskell]
+----
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+import           Yesod
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/         HomeR     GET
+/setname  SetNameR  GET POST
+/sayhello SayHelloR GET
+|]
+
+instance Yesod App
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout
+    [whamlet|
+        <p>
+            <a href=@{SetNameR}>Set your name
+        <p>
+            <a href=@{SayHelloR}>Say hello
+    |]
+
+-- Display the set name form
+getSetNameR :: Handler Html
+getSetNameR = defaultLayout
+    [whamlet|
+        <form method=post>
+            My name is #
+            <input type=text name=name>
+            . #
+            <input type=submit value="Set name">
+    |]
+
+-- Retreive the submitted name from the user
+postSetNameR :: Handler ()
+postSetNameR = do
+    -- Get the submitted name and set it in the session
+    name <- runInputPost $ ireq textField "name"
+    setSession "name" name
+
+    -- After we get a name, redirect to the ultimate destination.
+    -- If no destination is set, default to the homepage
+    redirectUltDest HomeR
+
+getSayHelloR :: Handler Html
+getSayHelloR = do
+    -- Lookup the name value set in the session
+    mname <- lookupSession "name"
+    case mname of
+        Nothing -> do
+            -- No name in the session, set the current page as
+            -- the ultimate destination and redirect to the
+            -- SetName page
+            setUltDestCurrent
+            setMessage "Please tell me your name"
+            redirect SetNameR
+        Just name -> defaultLayout [whamlet|<p>Welcome #{name}|]
+
+main :: IO ()
+main = warp 3000 App
+----
+
+=== Summary
+
+Sessions are the primary means by which we bypass the statelessness imposed by
+HTTP. We shouldn't consider this an escape hatch to perform whatever actions we
+want: statelessness in web applications is a virtue, and we should respect it
+whenever possible. However, there are specific cases where it is vital to
+retain some state.
+
+The session API in Yesod is very simple. It provides a key-value store, and a
+few convenience functions built on top for common use cases. If used properly,
+with small payloads, sessions should be an unobtrusive part of your web
+development.

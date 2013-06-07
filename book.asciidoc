@@ -25,7 +25,7 @@ include::routing-and-handlers.asciidoc[]
 
 include::forms.asciidoc[]
 
-include::ch09.asciidoc[]
+include::sessions.asciidoc[]
 
 include::ch10.asciidoc[]
 
