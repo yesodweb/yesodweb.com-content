@@ -1,0 +1,8 @@
+== Changelog
+
+=== Second edition
+
+* Fully updated for Yesod 1.2.
+* New chapter: understanding a request.
+* Based on user comments, new formatting style for code samples (better
+  QuasiQuoter indentation).
