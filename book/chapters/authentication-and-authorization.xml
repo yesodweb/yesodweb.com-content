@@ -266,7 +266,7 @@ import Text.Hamlet (shamlet)
 import Data.Maybe (isJust)
 import Control.Monad (join)
 
-share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persist|
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 User
     email Text
     password Text Maybe -- Password may not be set yet
@@ -361,7 +361,7 @@ Thank you
         mu &lt;- get uid
         case mu of
             Nothing -&gt; return Nothing
-            Just u -&gt; do
+            Just _ -&gt; do
                 update uid [UserVerified =. True]
                 return $ Just uid
     getPassword = runDB . fmap (join . fmap userPassword) . get
