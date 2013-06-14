@@ -26,7 +26,7 @@ mkYesod "HelloWorld" [parseRoutes|
 
 instance Yesod HelloWorld
 
-getHomeR :: Handler RepHtml
+getHomeR :: Handler Html
 getHomeR = defaultLayout [whamlet|Hello World!|]
 
 main :: IO ()
