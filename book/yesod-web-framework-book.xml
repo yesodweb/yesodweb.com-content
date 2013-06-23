@@ -36,7 +36,7 @@
     <xi:include href="chapters/sessions.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/persistent.xml"
+    <xi:include href="chapters/persistent.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/deploying-your-webapp.xml"
