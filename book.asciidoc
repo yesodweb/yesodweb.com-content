@@ -27,7 +27,7 @@ include::forms.asciidoc[]
 
 include::sessions.asciidoc[]
 
-include::ch10.asciidoc[]
+include::persistent.asciidoc[]
 
 include::ch11.asciidoc[]
 
