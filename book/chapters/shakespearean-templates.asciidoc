@@ -944,5 +944,5 @@ of Shakespeare.
 
 
 * You should almost always start Hamlet tags on their own line instead of
-* embedding start/end tags after an existing tag. The only exception to this is
-* the occasional +<i>+ or +<b>+ tag inside a large block of text.
+  embedding start/end tags after an existing tag. The only exception to this is
+  the occasional +<i>+ or +<b>+ tag inside a large block of text.
