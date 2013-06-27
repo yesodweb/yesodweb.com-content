@@ -134,7 +134,7 @@ the appropriate handler function. The process is essentially:
 2. Choose a handler function.
 3. Run the handler function.
 
-The code generation follows a simply format for matching routes to handler
+The code generation follows a simple format for matching routes to handler
 function names, which we'll describe in the next section.
 
 Finally, we have a simple type synonym defining +Handler+ to make our code a
