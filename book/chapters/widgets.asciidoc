@@ -146,9 +146,7 @@ inside a +<script>+ tag in the head, and Cassius and Lucius in a
 
 NOTE: You can actually override the default behavior and have the script and
 style code appear in a separate file. The scaffolded site provides this for you
-automatically. Additionally, we'll see in the Yesod typeclass chapter how to
-turn on asynchronous script loading, which will place your script content at
-the end of the body.
+automatically.
 
 But what if you want to add some +<meta>+ tags, which need to appear in
 the head? Or if you want some Javascript to appear in the body instead of the
