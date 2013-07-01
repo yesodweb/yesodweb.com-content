@@ -61,35 +61,34 @@ getHomeR = defaultLayout $ do
         |]
 
 main = warp 3000 App
-|]
-    toWidgetHead [hamlet| <meta name=keywords content="some sample keywords">|]
-    toWidget [hamlet| <h1>Here's one way of including content |]
-    [whamlet| <h2>Here's another |]
-    toWidgetBody [julius| alert("This is included in the body itself"); |]
 ----
 
 This produces the following HTML (indentation added):
 
 [source, html]
 ----
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>My Page Title</title>
-        <style>h1 { color : green }</style>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
-        <script>
-$(function() {
-    $("h1").click(function(){ alert("You clicked on the heading!"); });
-});
-</script>
-        <meta name="keywords" content="some sample keywords">
-    </head>
-    <body>
-        <h1>Here's one way of including content </h1>
-        <h2>Here's another </h2>
-        <script> alert("This is included in the body itself"); </script>
-    </body>
+  <head>
+    <title>My Page Title</title>
+    <meta name="keywords" content="some sample keywords">
+    <style>h1{color:green}</style>
+  </head>
+  <body>
+    <h1>Here's one way of including content</h1>
+    <h2>Here's another</h2>
+    <script>
+      alert("This is included in the body itself");
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js">
+    </script><script>
+      $(function() {
+        $('h1').click(function() {
+          alert("You clicked on the heading!");
+        });
+      });
+    </script>
+  </body>
 </html>
 ----
 
@@ -147,9 +146,7 @@ inside a +<script>+ tag in the head, and Cassius and Lucius in a
 
 NOTE: You can actually override the default behavior and have the script and
 style code appear in a separate file. The scaffolded site provides this for you
-automatically. Additionally, we'll see in the Yesod typeclass chapter how to
-turn on asynchronous script loading, which will place your script content at
-the end of the body.
+automatically.
 
 But what if you want to add some +<meta>+ tags, which need to appear in
 the head? Or if you want some Javascript to appear in the body instead of the
