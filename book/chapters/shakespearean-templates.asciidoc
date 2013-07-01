@@ -363,7 +363,7 @@ the +toHtml+ function is applied to the result, meaning _any_ instance of
 -- It will be explained later.
 {-# LANGUAGE QuasiQuotes #-}
 import Text.Hamlet (shamlet)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 import Data.Char (toLower)
 import Data.List (sort)
 
@@ -395,7 +395,7 @@ of these.
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 import Text.Hamlet (HtmlUrl, hamlet)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 import Data.Text (Text)
 
 data MyRoute = Home
@@ -699,7 +699,7 @@ syntax. You can see a simple example of each in the following code snippets.
 {-# LANGUAGE QuasiQuotes #-}
 import Text.Hamlet (HtmlUrl, hamlet)
 import Data.Text (Text)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 
 data MyRoute = Home | Time | Stylesheet
 
@@ -853,7 +853,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Text.Hamlet (HtmlUrlI18n, ihamlet)
 import Text.Blaze (toHtml)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 
 data MyRoute = Home | Time | Stylesheet
 
