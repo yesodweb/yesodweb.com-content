@@ -99,7 +99,7 @@ personForm = renderDivs $ Person
     <*> aopt urlField "Website" Nothing
 
 -- The GET handler displays the form
-getHomeR :: Handler RepHtml
+getHomeR :: Handler Html
 getHomeR = do
     -- Generate the form to be displayed
     (widget, enctype) <- generateFormPost personForm
@@ -116,7 +116,7 @@ getHomeR = do
 
 -- The POST handler processes the form. If it is successful, it displays the
 -- parsed person. Otherwise, it displays the form again with error messages.
-postPersonR :: Handler RepHtml
+postPersonR :: Handler Html
 postPersonR = do
     ((result, widget), enctype) <- runFormPost personForm
     case result of
@@ -126,7 +126,7 @@ postPersonR = do
                 <p>Invalid input, let's try again.
                 <form method=post action=@{PersonR} enctype=#{enctype}>
                     ^{widget}
-                    <input type=submit>
+                    <button>Submit
             |]
 
 main :: IO ()
@@ -740,7 +740,7 @@ returns one of three results:
 
 That last case might sound surprising. It would seem that Yesod can
 automatically know that no information is supplied when the input list is
-empty. But in reality, so some field types the lack of any input is actually
+empty. But in reality, fomr some field types, the lack of any input is actually
 valid input. Checkboxes, for instance, indicate an unchecked state by sending
 in an empty list.
 
