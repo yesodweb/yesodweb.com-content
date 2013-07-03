@@ -740,7 +740,7 @@ returns one of three results:
 
 That last case might sound surprising. It would seem that Yesod can
 automatically know that no information is supplied when the input list is
-empty. But in reality, fomr some field types, the lack of any input is actually
+empty. But in reality, for some field types, the lack of any input is actually
 valid input. Checkboxes, for instance, indicate an unchecked state by sending
 in an empty list.
 
