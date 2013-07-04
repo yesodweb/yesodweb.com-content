@@ -1394,8 +1394,6 @@ There are two important pieces here for general use. +runDB+ is used to run a
 DB action from within a +Handler+. Within the +runDB+, you can use any of the
 functions we've spoken about so far, such as +insert+ and +selectList+.
 
-foo
-
 [NOTE]
 ====
 The type of +runDB+ is +YesodDB site a -> HandlerT site IO a+. +YesodDB+ is defined as:
