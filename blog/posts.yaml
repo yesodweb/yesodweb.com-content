@@ -1,3 +1,7 @@
+- time: 2013-07-12T13:00:00Z
+  author: michael
+  title: Catching all exceptions
+  path: 2013/07/catching-all-exceptions.md
 - time: 2013-07-01T13:00:00Z
   author: michael
   title: 'Runtime Lucius: now with mixins!'
