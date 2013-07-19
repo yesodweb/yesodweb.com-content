@@ -46,7 +46,7 @@
   <part>
     <title>Advanced</title>
 
-    <xi:include href="chapters/restful-content.xml"
+    <xi:include href="chapters/restful-content.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/yesods-monads.xml"
