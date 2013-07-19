@@ -1,0 +1,375 @@
+== Yesod's Monads
+
+As you've read through this book, there have been a number of monads which have
+appeared: +Handler+, +Widget+ and +YesodDB+ (for Persistent). As with most
+monads, each one provides some specific functionality: +Handler+ gives access
+to the request and allows you to send responses, a +Widget+ contains HTML, CSS,
+and Javascript, and +YesodDB+ lets you make database queries. In
+Model-View-Controller (MVC) terms, we could consider +YesodDB+ to be the model,
++Widget+ to be the view, and +Handler+ to be the controller.
+
+So far, we've presented some very straight-forward ways to use these monads:
+your main handler will run in +Handler+, using +runDB+ to execute a +YesodDB+
+query, and +defaultLayout+ to return a +Widget+, which in turn was created by
+calls to +toWidget+.
+
+However, if we have a deeper understanding of these types, we can achieve some
+fancier results.
+
+=== Monad Transformers
+
+[quote, Shrek- more or less]
+____
+Monads are like onions. Monads are _not_ like cakes.
+____
+
+Before we get into the heart of Yesod's monads, we need to understand a bit
+about monad transformers. (If you already know all about monad transformers,
+you can likely skip this section.) Different monads provide different
+functionality: +Reader+ allows read-only access to some piece of data
+throughout a computation, +Error+ allows you to short-circuit computations, and
+so on.
+
+Often times, however, you would like to be able to combine a few of these
+features together. After all, why not have a computation with read-only access
+to some settings variable, that could error out at any time? One approach to
+this would be to write a new monad like +ReaderError+, but this has the obvious
+downside of exponential complexity: you'll need to write a new monad for every
+single possible combination.
+
+Instead, we have monad transformers. In addition to +Reader+, we have
++ReaderT+, which adds reader functionality to any other monad. So we could
+represent our +ReaderError+ as (conceptually):
+
+[source, haskell]
+----
+type ReaderError = ReaderT Error
+----
+
+In order to access our settings variable, we can use the +ask+ function. But
+what about short-circuiting a computation? We'd like to use +throwError+, but
+that won't exactly work. Instead, we need to +lift+ our call into the next
+monad up. In other words:
+
+[source, haskell]
+----
+throwError :: errValue -> Error
+lift . throwError :: errValue -> ReaderT Error
+----
+
+There are a few things you should pick up here:
+
+* A transformer can be used to add functionality to an existing monad.
+* A transformer must always wrap around an existing monad.
+* The functionality available in a wrapped monad will be dependent not only on
+  the monad transformer, but also on the inner monad that is being wrapped.
+
+A great example of that last point is the +IO+ monad. No matter how many layers
+of transformers you have around an +IO+, there's still an +IO+ at the core,
+meaning you can perform I/O in any of these monad transformer stacks. You'll
+often see code that looks like +liftIO $ putStrLn "Hello There!"+.
+
+=== The Three Transformers
+
+NOTE: In previous versions of Yesod, +Handler+ and +Widget+ were far more
+magical and scary. Since version 1.2, things are much simplified. So if you
+remember reading some scary stuff about fake transformers and subsite
+parameters, rest assured: you haven't gone crazy, things have actually changed
+a bit. The story with persistent is likewise much simpler.
+
+We've already discussed two of our transformers previously: +Handler+ and
++Widget+. Remember that these are each application-specific synonyms for the
+more generic +HandlerT+ and +WidgetT+. Each of those transformers takes two
+type parameters: your foundation data type, and a base monad. The most commonly
+used base monad is +IO+.
+
+In persistent, we have a typeclass called +PersistStore+. This typeclass
+defines all of the primitive operations you can perform on a database, like
++get+. There are instances of this typeclass for each database backend
+supported by persistent. For example, for SQL databases, there is a monad
+transformer +SqlPersistT+.  This means that you can run a SQL database with any
+underlying monad. The takeaway here is that we can layer our Persistent
+transformer on top of +Handler+ or +Widget+.
+
+NOTE: There actually are two requirements for the base monad of +SqlPersistT+:
+it must be an instance of +MonadResource+ (to allow proper exception handling),
+and +MonadLogger+ (to allow logging of SQL queries). Fortunately, both
++Handler+ and +Widget+ fulfill both of these requirements.
+
+In order to make it simpler to refer to the relevant Persistent transformer,
+the yesod-persistent package defines the +YesodPersistBackend+ associated type.
+For example, if I have a site called +MyApp+ and it uses SQL, I would define
+something like +type instance YesodPersistBackend MyApp = SqlPersistT+. And for
+more convenience, we have a type synonym called +YesodDB+ which is defined as:
+
+[source, haskell]
+----
+type YesodDB site = YesodPersistBackend site (HandlerT site IO)
+----
+
+Our database actions will then have types that look like +YesodDB MyApp
+SomeResult+. In order to run these, we can use the standard Persistent unwrap
+functions (like +runSqlPool+) to run the action and get back a normal
++Handler+. To automate this, we provide the +runDB+ function. Putting it all
+together, we can now run database actions inside our handlers.
+
+Most of the time in Yesod code, and especially thus far in this book, widgets
+have been treated as actionless containers that simply combine together HTML,
+CSS and Javascript. But in reality, a +Widget+ can do anything that a +Handler+
+can do, by using the +widgetToHandler+ function. So for example, you can run
+database queries inside a +Widget+ by using something like +widgetToHandler .
+runDB+.
+
+=== Example: Database-driven navbar
+
+Let's put some of this new knowledge into action. We want to create a +Widget+
+that generates its output based on the contents of the database. Previously,
+our approach would have been to load up the data in a +Handler+, and then pass
+that data into a +Widget+. Now, we'll do the loading of data in the +Widget+
+itself. This is a boon for modularity, as this +Widget+ can be used in any
++Handler+ we want, without any need to pass in the database contents.
+
+[source, haskell]
+----
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+import           Data.Text               (Text)
+import           Data.Time
+import           Database.Persist.Sqlite
+import           Yesod
+
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+Link
+    title Text
+    url Text
+    added UTCTime
+|]
+
+data App = App ConnectionPool
+
+mkYesod "App" [parseRoutes|
+/         HomeR    GET
+/add-link AddLinkR POST
+|]
+
+instance Yesod App
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+instance YesodPersist App where
+    type YesodPersistBackend App = SqlPersistT
+    runDB db = do
+        App pool <- getYesod
+        runSqlPool db pool
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout
+    [whamlet|
+        <form method=post action=@{AddLinkR}>
+            <p>
+                Add a new link to
+                <input type=url name=url value=http://>
+                titled
+                <input type=text name=title>
+                <input type=submit value="Add link">
+        <h2>Existing links
+        ^{existingLinks}
+    |]
+
+existingLinks :: Widget
+existingLinks = do
+    links <- handlerToWidget $ runDB $ selectList [] [LimitTo 5, Desc LinkAdded]
+    [whamlet|
+        <ul>
+            $forall Entity _ link <- links
+                <li>
+                    <a href=#{linkUrl link}>#{linkTitle link}
+    |]
+
+postAddLinkR :: Handler ()
+postAddLinkR = do
+    url <- runInputPost $ ireq urlField "url"
+    title <- runInputPost $ ireq textField "title"
+    now <- liftIO getCurrentTime
+    runDB $ insert $ Link title url now
+    setMessage "Link added"
+    redirect HomeR
+
+main :: IO ()
+main = withSqlitePool "links.db3" 10 $ \pool -> do
+    runSqlPersistMPool (runMigration migrateAll) pool
+    warp 3000 $ App pool
+----
+
+Pay attention in particular to the +existingLinks+ function. Notice how all we
+needed to do was apply +handlerToWidget . runDB+ to a normal database action.
+And from within +getHomeR+, we treated +existingLinks+ like any ordinary
++Widget+, no special parameters at all. See the figure for the output of this
+app.
+
+[[navbar-x-14]]
+
+.Screenshot of the navbar
+image::images/navbar.png[]
+
+=== Example: Request information
+
+Likewise, you can get request information inside a +Widget+. Here we can determine the sort order of a list based on a GET parameter.
+
+
+[source, haskell]
+----
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+import           Data.List (sortBy)
+import           Data.Ord  (comparing)
+import           Data.Text (Text)
+import           Yesod
+
+data Person = Person
+    { personName :: Text
+    , personAge  :: Int
+    }
+
+people :: [Person]
+people =
+    [ Person "Miriam" 25
+    , Person "Eliezer" 3
+    , Person "Michael" 26
+    , Person "Gavriella" 1
+    ]
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+|]
+
+instance Yesod App
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout
+    [whamlet|
+        <p>
+            <a href="?sort=name">Sort by name
+            |
+            <a href="?sort=age">Sort by age
+            |
+            <a href="?">No sort
+        ^{showPeople}
+    |]
+
+showPeople :: Widget
+showPeople = do
+    msort <- runInputGet $ iopt textField "sort"
+    let people' =
+            case msort of
+                Just "name" -> sortBy (comparing personName) people
+                Just "age"  -> sortBy (comparing personAge)  people
+                _           -> people
+    [whamlet|
+        <dl>
+            $forall person <- people'
+                <dt>#{personName person}
+                <dd>#{show $ personAge person}
+    |]
+
+main :: IO ()
+main = warp 3000 App
+----
+
+Notice that in this case, we didn't even have to call +handlerToWidget+. The
+reason is that a number of the functions included in Yesod automatically work
+for both +Handler+ and +Widget+, by means of the +MonadHandler+ typeclass. In
+fact, +MonadHandler+ will allow these functions to be "autolifted" through
+many common monad transformers.
+
+But if you want to, you can wrap up the call to +runInputGet+ above using
++handlerToWidget+, and everything will work the same.
+
+=== Performance and error messages
+
+NOTE: You can consider this section extra credit. It gets into some of the
+design motivation behind Yesod, which isn't necessary for usage of Yesod.
+
+At this point, you may be just a bit confused. As I mentioned above, the
++Widget+ synonym uses +IO+ as its base monad, not +Handler+. So how can
++Widget+ perform +Handler+ actions? And why *not* just make +Widget+ a
+transformer on top of +Handler+, and then use +lift+ instead of this special
++handlerToWidget+? And finally, I mentioned that +Widget+ and +Handler+ were
+both instances of +MonadResource+. If you're familiar with +MonadResource+, you
+may be wondering why +ResourceT+ doesn't appear in the monad transformer stack.
+
+The fact of the matter is, there's a much simpler (in terms of implementation)
+approach we could take for all of these monad transformers. +Handler+ could be
+a transformer on top of +ResourceT IO+ instead of just +IO+, which would be a
+bit more accurate. And +Widget+ could be layered on top of +Handler+. The end
+result would look something like this:
+
+[source, haskell]
+----
+type Handler = HandlerT App (ResourceT IO)
+type Widget  = WidgetT  App (HandlerT App (ResourceT IO))
+----
+
+Doesn't look too bad, especially since you mostly deal with the more friendly
+type synonyms instead of directly with the transformer types. The problem is
+that any time those underlying transformers leak out, these larger type
+signatures can be incredibly confusing. And the most common time for them to
+leak out is in error messages, when you're probably already pretty confused!
+(Another time is when working on subsites, which happens to be confusing too.)
+
+One other concern is that each monad transformer layer does add some amount of
+a performance penalty. This will probably be negligible compared to the I/O
+you'll be performing, but the overhead is there.
+
+So instead of having properly layered transformers, we flatten out each of
++HandlerT+ and +WidgetT+ into a one-level transformer. Here's a high-level
+overview of the approach we use:
+
+* +HandlerT+ is really just a +ReaderT+ monad. (We give it a different name to
+  make error messages clearer.) This is a reader for the +HandlerData+ type,
+  which contains request information and some other immutable contents.
+
+* In addition, +HandlerData+ holds an +IORef+ to a +GHState+ (badly named for
+  historical reasons), which holds some data which can be mutated during the
+  course of a handler (e.g., session variables). The reason we use an +IORef+
+  instead of a +StateT+ kind of approach is that +IORef+ will maintain the
+  mutated state even if a runtime exception is thrown.
+
+* The +ResourceT+ monad transformer is essentially a +ReaderT+ holding onto an
+  +IORef+. This +IORef+ contains the information on all cleanup actions that
+  must be performed. (This is called +InternalState+.) Instead of having a
+  separate transformer layer to hold onto that reference, we hold onto the
+  reference ourself in +HandlerData+. (And yes, the reson for an +IORef+ here
+  is also for runtime exceptions.)
+
+* A +WidgetT+ is essentially just a +WriterT+ on top of everything that a
+  +HandlerT+ does. But since +HandlerT+ is just a +ReaderT+, we can easily
+  compress the two aspects into a single transformer, which looks something
+  like +newtype WidgetT site m a = WidgetT (HandlerData -> m (a, WidgetData))+.
+
+If you want to understand this more, please have a look at the definitions of
++HandlerT+ and +WidgetT+ in +Yesod.Core.Types+.
+
+=== Summary
+
+If you completely ignore this chapter, you'll still be able to use Yesod to
+great benefit. The advantage of understanding how Yesod's monads interact is to
+be able to produce cleaner, more modular code. Being able to perform arbitrary
+actions in a +Widget+ can be a powerful tool, and understanding how Persistent
+and your +Handler+ code interact can help you make more informed design
+decisions in your app.

@@ -36,7 +36,7 @@ include::deploying-your-webapp.asciidoc[]
 
 include::restful-content.asciidoc[]
 
-include::ch13.asciidoc[]
+include::yesods-monads.asciidoc[]
 
 include::ch14.asciidoc[]
 
