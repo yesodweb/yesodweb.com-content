@@ -71,7 +71,7 @@
   <part>
     <title>Examples</title>
 
-    <xi:include href="chapters/blog-example-advanced.xml"
+    <xi:include href="chapters/blog-example-advanced.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/wiki-chat-example.xml"
