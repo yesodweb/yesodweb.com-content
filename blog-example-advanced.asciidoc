@@ -1,0 +1,570 @@
+== Blog: i18n, authentication, authorization, and database
+
+This is a simple blog app. It allows an admin to add blog posts via a rich text
+editor (nicedit), allows logged-in users to comment, and has full i18n support.
+It is also a good example of using a Persistent database, leveraging Yesod's
+authorization system, and templates.
+
+While in general we recommend placing templates, Persist entity definitions,
+and routing in separate files, we'll keep it all in one file here for
+convenience. The one exception you'll see below will be i18n messages.
+
+We'll start off with our language extensions. In scaffolded code, the language
+extensions are specified in the cabal file, so you won't need to put this in
+your individual Haskell files.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
+             TemplateHaskell, GADTs, FlexibleContexts,
+             MultiParamTypeClasses, DeriveDataTypeable #-}
+----
+
+Now our imports.
+
+[source, haskell]
+----
+import Yesod
+import Yesod.Auth
+import Yesod.Form.Nic (YesodNic, nicHtmlField)
+import Yesod.Auth.BrowserId (authBrowserId)
+import Data.Text (Text)
+import Network.HTTP.Conduit (Manager, newManager, def)
+import Database.Persist.Sqlite
+    ( ConnectionPool, SqlPersistT, runSqlPool, runMigration
+    , createSqlitePool, runSqlPersistMPool
+    )
+import Data.Time (UTCTime, getCurrentTime)
+import Control.Applicative ((<$>), (<*>), pure)
+import Data.Typeable (Typeable)
+----
+
+First we'll set up our Persistent entities. We're going to both create our data
+types (via mkPersist) and create a migration function, which will automatically
+create and update our SQL schema. If you were using the MongoDB backend,
+migration would not be needed.
+
+[source, haskell]
+----
+share [mkPersist sqlOnlySettings, mkMigrate "migrateAll"] [persistLowerCase|
+----
+
+Keeps track of users. In a more robust application, we would also keep account
+creation date, display name, etc.
+
+[source, haskell]
+----
+User
+   email Text
+   UniqueUser email
+----
+
+In order to work with yesod-auth's caching, our +User+ type must be an instance
+of +Typeable+.
+
+[source, haskell]
+----
+   deriving Typeable
+----
+
+An individual blog entry (I've avoided using the word "post" due to the
+confusion with the request method POST).
+
+[source, haskell]
+----
+Entry
+   title Text
+   posted UTCTime
+   content Html
+----
+
+And a comment on the blog post.
+
+[source, haskell]
+----
+Comment
+   entry EntryId
+   posted UTCTime
+   user UserId
+   name Text
+   text Textarea
+|]
+----
+
+Every site has a foundation datatype. This value is initialized before
+launching your application, and is available throughout. We'll store a database
+connection pool and HTTP connection manager in ours. See the very end of this
+file for how those are initialized.
+
+[source, haskell]
+----
+data Blog = Blog
+   { connPool    :: ConnectionPool
+   , httpManager :: Manager
+   }
+----
+
+To make i18n easy and translator friendly, we have a special file format for
+translated messages. There is a single file for each language, and each file is
+named based on the language code (e.g., en, es, de-DE) and placed in that
+folder. We also specify the main language file (here, "en") as a default
+language.
+
+[source, haskell]
+----
+mkMessage "Blog" "messages" "en"
+----
+
+Our +messages/en.msg+ file contains the following content:
+
+[source, messages]
+----
+NotAnAdmin: You must be an administrator to access this page.
+
+WelcomeHomepage: Welcome to the homepage
+SeeArchive: See the archive
+
+NoEntries: There are no entries in the blog
+LoginToPost: Admins can login to post
+NewEntry: Post to blog
+NewEntryTitle: Title
+NewEntryContent: Content
+
+PleaseCorrectEntry: Your submitted entry had some errors, please correct and try again.
+EntryCreated title@Text: Your new blog post, #{title}, has been created
+
+EntryTitle title@Text: Blog post: #{title}
+CommentsHeading: Comments
+NoComments: There are no comments
+AddCommentHeading: Add a Comment
+LoginToComment: You must be logged in to comment
+AddCommentButton: Add comment
+
+CommentName: Your display name
+CommentText: Comment
+CommentAdded: Your comment has been added
+PleaseCorrectComment: Your submitted comment had some errors, please correct and try again.
+
+HomepageTitle: Yesod Blog Demo
+BlogArchiveTitle: Blog Archive
+----
+
+Now we're going to set up our routing table. We have four entries: a homepage,
+an entry list page (+BlogR+), an individual entry page (+EntryR+) and our
+authentication subsite. Note that +BlogR+ and +EntryR+ both accept GET and POST
+methods. The POST methods are for adding a new blog post and adding a new
+comment, respectively.
+
+[source, haskell]
+----
+mkYesod "Blog" [parseRoutes|
+/              HomeR  GET
+/blog          BlogR  GET POST
+/blog/#EntryId EntryR GET POST
+/auth          AuthR  Auth getAuth
+|]
+----
+
+Every foundation needs to be an instance of the Yesod typeclass. This is where
+we configure various settings.
+
+[source, haskell]
+----
+instance Yesod Blog where
+----
+
+The base of our application. Note that in order to make BrowserID work
+properly, this must be a valid URL.
+
+[source, haskell]
+----
+    approot = ApprootStatic "http://localhost:3000"
+----
+
+Our authorization scheme. We want to have the following rules:
+
+* Only admins can add a new entry.
+* Only logged in users can add a new comment.
+* All other pages can be accessed by anyone.
+
+We set up our routes in a RESTful way, where the actions that could make
+changes are always using a +POST+ method. As a result, we can simply check for
+whether or not a request is a write request, given by the +True+ in the second
+field.
+
+First, we'll authorize requests to add a new entry.
+
+[source, haskell]
+----
+    isAuthorized BlogR True = do
+        mauth <- maybeAuth
+        case mauth of
+            Nothing -> return AuthenticationRequired
+            Just (Entity _ user)
+                | isAdmin user -> return Authorized
+                | otherwise    -> unauthorizedI MsgNotAnAdmin
+----
+
+Now we'll authorize requests to add a new comment.
+
+[source, haskell]
+----
+    isAuthorized (EntryR _) True = do
+        mauth <- maybeAuth
+        case mauth of
+            Nothing -> return AuthenticationRequired
+            Just _  -> return Authorized
+----
+
+And for all other requests, the result is always authorized.
+
+[source, haskell]
+----
+    isAuthorized _ _ = return Authorized
+----
+
+Where a user should be redirected to if they get an AuthenticationRequired.
+
+[source, haskell]
+----
+    authRoute _ = Just (AuthR LoginR)
+----
+
+This is where we define our site look-and-feel. The function is given the
+content for the individual page, and wraps it up with a standard template.
+
+[source, haskell]
+----
+    defaultLayout inside = do
+----
+
+Yesod encourages the get-following-post pattern, where after a POST, the user
+is redirected to another page. In order to allow the POST page to give the user
+some kind of feedback, we have the +getMessage+ and +setMessage+ functions. It's a
+good idea to always check for pending messages in your defaultLayout function.
+
+[source, haskell]
+----
+        mmsg <- getMessage
+----
+
+We use widgets to compose together HTML, CSS and Javascript. At the end of the
+day, we need to unwrap all of that into simple HTML. That's what the
++widgetToPageContent+ function is for. We're going to give it a widget consisting
+of the content we received from the individual page (inside), plus a standard
+CSS for all pages. We'll use the Lucius template language to create the latter.
+
+[source, haskell]
+----
+        pc <- widgetToPageContent $ do
+            toWidget [lucius|
+body {
+    width: 760px;
+    margin: 1em auto;
+    font-family: sans-serif;
+}
+textarea {
+    width: 400px;
+    height: 200px;
+}
+#message {
+  color: #900;
+}
+|]
+            inside
+----
+
+And finally we'll use a new Hamlet template to wrap up the individual
+components (title, head data and body data) into the final output.
+
+[source, haskell]
+----
+        giveUrlRenderer [hamlet|
+$doctype 5
+<html>
+    <head>
+        <title>#{pageTitle pc}
+        ^{pageHead pc}
+    <body>
+        $maybe msg <- mmsg
+            <div #message>#{msg}
+        ^{pageBody pc}
+|]
+----
+
+This is a simple function to check if a user is the admin. In a real
+application, we would likely store the admin bit in the database itself, or
+check with some external system. For now, I've just hard-coded my own email
+address.
+
+[source, haskell]
+----
+isAdmin :: User -> Bool
+isAdmin user = userEmail user == "michael@snoyman.com"
+----
+
+In order to access the database, we need to create a YesodPersist instance,
+which says which backend we're using and how to run an action.
+
+[source, haskell]
+----
+instance YesodPersist Blog where
+   type YesodPersistBackend Blog = SqlPersistT
+   runDB f = do 
+       master <- getYesod
+       let pool = connPool master
+       runSqlPool f pool
+----
+
+This is a convenience synonym. It is defined automatically for you in the
+scaffolding.
+
+[source, haskell]
+----
+type Form x = Html -> MForm Handler (FormResult x, Widget)
+----
+
+In order to use yesod-form and yesod-auth, we need an instance of RenderMessage
+for FormMessage. This allows us to control the i18n of individual form
+messages.
+
+[source, haskell]
+----
+instance RenderMessage Blog FormMessage where
+    renderMessage _ _ = defaultFormMessage
+----
+
+In order to use the built-in nic HTML editor, we need this instance. We just
+take the default values, which use a CDN-hosted version of Nic.
+
+[source, haskell]
+----
+instance YesodNic Blog
+----
+
+In order to use yesod-auth, we need a YesodAuth instance.
+
+[source, haskell]
+----
+instance YesodAuth Blog where
+    type AuthId Blog = UserId
+    loginDest _ = HomeR
+    logoutDest _ = HomeR
+    authHttpManager = httpManager
+----
+
+We'll use link:https://browserid.org/[BrowserID] (a.k.a. Mozilla Persona),
+which is a third-party system using email addresses as your identifier. This
+makes it easy to switch to other systems in the future, locally authenticated
+email addresses (also included with yesod-auth).
+
+[source, haskell]
+----
+    authPlugins _ = [authBrowserId def]
+----
+
+This function takes someone's login credentials (i.e., his/her email address)
+and gives back a UserId.
+
+[source, haskell]
+----
+    getAuthId creds = do
+        let email = credsIdent creds
+            user = User email
+        res <- runDB $ insertBy user
+        return $ Just $ either entityKey id res
+----
+
+Homepage handler. The one important detail here is our usage of +setTitleI+,
+which allows us to use i18n messages for the title. We also use this message
+with a +_{Msg...}+ interpolation in Hamlet.
+
+[source, haskell]
+----
+getHomeR :: Handler Html
+getHomeR = defaultLayout $ do
+    setTitleI MsgHomepageTitle
+    [whamlet|
+<p>_{MsgWelcomeHomepage}
+<p>
+   <a href=@{BlogR}>_{MsgSeeArchive}
+|]
+----
+
+Define a form for adding new entries. We want the user to provide the title and
+content, and then fill in the post date automatically via +getCurrentTime+.
+
+Note that slightly strange +lift (liftIO getCurrentTime)+ manner of running an
++IO+ action. The reason is that applicative forms are not monads, and therefore
+cannot be instances of +MonadIO+. Instead, we use +lift+ to run the action in
+the underlying +Handler+ monad, and +liftIO+ to convert the +IO+ action into a
++Handler+ action.
+
+[source, haskell]
+----
+entryForm :: Form Entry
+entryForm = renderDivs $ Entry
+    <$> areq textField (fieldSettingsLabel MsgNewEntryTitle) Nothing
+    <*> lift (liftIO getCurrentTime)
+    <*> areq nicHtmlField (fieldSettingsLabel MsgNewEntryContent) Nothing
+----
+
+Get the list of all blog entries, and present an admin with a form to create a
+new entry.
+
+[source, haskell]
+----
+getBlogR :: Handler Html
+getBlogR = do
+    muser <- maybeAuth
+    entries <- runDB $ selectList [] [Desc EntryPosted]
+    (entryWidget, enctype) <- generateFormPost entryForm
+    defaultLayout $ do
+        setTitleI MsgBlogArchiveTitle
+        [whamlet|
+$if null entries
+    <p>_{MsgNoEntries}
+$else
+    <ul>
+        $forall Entity entryId entry <- entries
+            <li>
+                <a href=@{EntryR entryId}>#{entryTitle entry}
+----
+
+We have three possibilities: the user is logged in as an admin, the user is
+logged in and is not an admin, and the user is not logged in. In the first
+case, we should display the entry form. In the second, we'll do nothing. In the
+third, we'll provide a login link.
+
+[source, haskell]
+----
+$maybe Entity _ user <- muser
+    $if isAdmin user
+        <form method=post enctype=#{enctype}>
+            ^{entryWidget}
+            <div>
+                <input type=submit value=_{MsgNewEntry}>
+$nothing
+    <p>
+        <a href=@{AuthR LoginR}>_{MsgLoginToPost}
+|]
+----
+
+Process an incoming entry addition. We don't do any permissions checking, since
++isAuthorized+ handles it for us. If the form submission was valid, we add the
+entry to the database and redirect to the new entry. Otherwise, we ask the user
+to try again.
+
+[source, haskell]
+----
+postBlogR :: Handler Html
+postBlogR = do
+    ((res, entryWidget), enctype) <- runFormPost entryForm
+    case res of
+        FormSuccess entry -> do
+            entryId <- runDB $ insert entry
+            setMessageI $ MsgEntryCreated $ entryTitle entry
+            redirect $ EntryR entryId
+        _ -> defaultLayout $ do
+            setTitleI MsgPleaseCorrectEntry
+            [whamlet|
+<form method=post enctype=#{enctype}>
+    ^{entryWidget}
+    <div>
+        <input type=submit value=_{MsgNewEntry}>
+|]
+----
+
+A form for comments, very similar to our +entryForm+ above. It takes the
++EntryId+ of the entry the comment is attached to. By using pure, we embed
+this value in the resulting Comment output, without having it appear in the
+generated HTML.
+
+[source, haskell]
+----
+commentForm :: EntryId -> Form Comment
+commentForm entryId = renderDivs $ Comment
+    <$> pure entryId
+    <*> lift (liftIO getCurrentTime)
+    <*> lift requireAuthId
+    <*> areq textField (fieldSettingsLabel MsgCommentName) Nothing
+    <*> areq textareaField (fieldSettingsLabel MsgCommentText) Nothing
+----
+
+Show an individual entry, comments, and an add comment form if the user is
+logged in.
+
+[source, haskell]
+----
+getEntryR :: EntryId -> Handler Html
+getEntryR entryId = do
+    (entry, comments) <- runDB $ do
+        entry <- get404 entryId
+        comments <- selectList [] [Asc CommentPosted]
+        return (entry, map entityVal comments)
+    muser <- maybeAuth
+    (commentWidget, enctype) <-
+        generateFormPost (commentForm entryId)
+    defaultLayout $ do
+        setTitleI $ MsgEntryTitle $ entryTitle entry
+        [whamlet|
+<h1>#{entryTitle entry}
+<article>#{entryContent entry}
+    <section .comments>
+        <h1>_{MsgCommentsHeading}
+        $if null comments
+            <p>_{MsgNoComments}
+        $else
+            $forall Comment _entry posted _user name text <- comments
+                <div .comment>
+                    <span .by>#{name}
+                    <span .at>#{show posted}
+                    <div .content>#{text}
+        <section>
+            <h1>_{MsgAddCommentHeading}
+            $maybe _ <- muser
+                <form method=post enctype=#{enctype}>
+                    ^{commentWidget}
+                    <div>
+                        <input type=submit value=_{MsgAddCommentButton}>
+            $nothing
+                <p>
+                    <a href=@{AuthR LoginR}>_{MsgLoginToComment}
+|]
+----
+
+Receive an incoming comment submission.
+
+[source, haskell]
+----
+postEntryR :: EntryId -> Handler Html
+postEntryR entryId = do
+    ((res, commentWidget), enctype) <-
+        runFormPost (commentForm entryId)
+    case res of
+        FormSuccess comment -> do
+            _ <- runDB $ insert comment
+            setMessageI MsgCommentAdded
+            redirect $ EntryR entryId
+        _ -> defaultLayout $ do
+            setTitleI MsgPleaseCorrectComment
+            [whamlet|
+<form method=post enctype=#{enctype}>
+    ^{commentWidget}
+    <div>
+        <input type=submit value=_{MsgAddCommentButton}>
+|]
+----
+
+Finally our main function.
+
+[source, haskell]
+----
+main :: IO ()
+main = do
+    pool <- createSqlitePool "blog.db3" 10 -- create a new pool
+    -- perform any necessary migration
+    runSqlPersistMPool (runMigration migrateAll) pool
+    manager <- newManager def -- create a new HTTP manager
+    warp 3000 $ Blog pool manager -- start our server
+----

@@ -49,9 +49,7 @@ include::ch17.asciidoc[]
 [[I_part_d1e8222]]
 = Examples
 
-
-
-include::ch18.asciidoc[]
+include::blog-example-advanced.asciidoc[]
 
 include::ch19.asciidoc[]
 
