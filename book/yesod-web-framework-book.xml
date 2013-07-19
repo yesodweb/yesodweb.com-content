@@ -77,7 +77,7 @@
     <xi:include href="chapters/wiki-chat-example.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/json-web-service.xml"
+    <xi:include href="chapters/json-web-service.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/case-study-sphinx.xml"
