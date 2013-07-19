@@ -6,3 +6,5 @@
 * New chapter: understanding a request.
 * Based on user comments, new formatting style for code samples (better
   QuasiQuoter indentation).
+* Much cleaner formatting for the blog example.
+* Deeper explanation of Yesod's core monads.
