@@ -55,7 +55,7 @@ include::ch18.asciidoc[]
 
 include::ch19.asciidoc[]
 
-include::ch20.asciidoc[]
+include::json-web-service.asciidoc[]
 
 include::ch21.asciidoc[]
 

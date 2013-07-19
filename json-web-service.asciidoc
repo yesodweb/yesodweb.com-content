@@ -1,0 +1,112 @@
+== JSON Web Service
+
+Let's create a very simple web service: it takes a JSON request and returns a
+JSON response. We're going to write the server in WAI/Warp, and the client in
+http-conduit. We'll be using aeson for JSON parsing and rendering. We could
+also write the server in Yesod itself, but for such a simple example, the extra
+features of Yesod don't add much.
+
+=== Server
+
+WAI uses the conduit package to handle streaming request bodies, and
+efficiently generates responses using blaze-builder. aeson uses attoparsec for
+parsing; by using attoparsec-conduit we get easy interoperability with WAI.
+This plays out as:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import           Control.Exception        (SomeException)
+import           Control.Exception.Lifted (handle)
+import           Control.Monad.IO.Class   (liftIO)
+import           Data.Aeson               (Value, encode, object, (.=))
+import           Data.Aeson.Parser        (json)
+import           Data.ByteString          (ByteString)
+import           Data.Conduit             (ResourceT, ($$))
+import           Data.Conduit.Attoparsec  (sinkParser)
+import           Network.HTTP.Types       (status200, status400)
+import           Network.Wai              (Application, Response, requestBody,
+                                           responseLBS)
+import           Network.Wai.Handler.Warp (run)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app req = handle invalidJson $ do
+    value <- requestBody req $$ sinkParser json
+    newValue <- liftIO $ modValue value
+    return $ responseLBS
+        status200
+        [("Content-Type", "application/json")]
+        $ encode newValue
+
+invalidJson :: SomeException -> ResourceT IO Response
+invalidJson ex = return $ responseLBS
+    status400
+    [("Content-Type", "application/json")]
+    $ encode $ object
+        [ ("message" .= show ex)
+        ]
+
+-- Application-specific logic would go here.
+modValue :: Value -> IO Value
+modValue = return
+----
+
+=== Client
+
+http-conduit was written as a companion to WAI. It too uses +conduit+ and
++blaze-builder+ pervasively, meaning we once again get easy interop with
++aeson+. A few extra comments for those not familiar with +http-conduit+:
+
+* A +Manager+ is present to keep track of open connections, so that multiple
+  requests to the same server use the same connection. You usually want to use
+  the +withManager+ function to create and clean up this +Manager+, since it is
+  exception safe.
+
+* We need to know the size of our request body, which can't be determined
+  directly from a +Builder+. Instead, we convert the +Builder+ into a lazy
+  +ByteString+ and take the size from there.
+
+* There are a number of different functions for initiating a request. We use
+  +http+, which allows us to directly access the data stream. There are other
+  higher level functions (such as +httpLbs+) that let you ignore the issues of
+  sources and get the entire body directly.
+
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import           Control.Monad.IO.Class  (liftIO)
+import           Data.Aeson              (Value (Object, String))
+import           Data.Aeson              (encode, object, (.=))
+import           Data.Aeson.Parser       (json)
+import           Data.Conduit            (($$+-))
+import           Data.Conduit.Attoparsec (sinkParser)
+import           Network.HTTP.Conduit    (RequestBody (RequestBodyLBS),
+                                          Response (..), http, method, parseUrl,
+                                          requestBody, withManager)
+
+main :: IO ()
+main = withManager $ \manager -> do
+    value <- liftIO makeValue
+    -- We need to know the size of the request body, so we convert to a
+    -- ByteString
+    let valueBS = encode value
+    req' <- liftIO $ parseUrl "http://localhost:3000/"
+    let req = req' { method = "POST", requestBody = RequestBodyLBS valueBS }
+    res <- http req manager
+    resValue <- responseBody res $$+- sinkParser json
+    liftIO $ handleResponse resValue
+
+-- Application-specific function to make the request value
+makeValue :: IO Value
+makeValue = return $ object
+    [ ("foo" .= ("bar" :: String))
+    ]
+
+-- Application-specific function to handle the response from the server
+handleResponse :: Value -> IO ()
+handleResponse = print
+----
