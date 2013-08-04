@@ -116,8 +116,8 @@ together, we can now run database actions inside our handlers.
 Most of the time in Yesod code, and especially thus far in this book, widgets
 have been treated as actionless containers that simply combine together HTML,
 CSS and Javascript. But in reality, a +Widget+ can do anything that a +Handler+
-can do, by using the +widgetToHandler+ function. So for example, you can run
-database queries inside a +Widget+ by using something like +widgetToHandler .
+can do, by using the +handlerToWidget+ function. So for example, you can run
+database queries inside a +Widget+ by using something like +handlerToWidget .
 runDB+.
 
 === Example: Database-driven navbar
