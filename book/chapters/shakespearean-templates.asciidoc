@@ -565,7 +565,7 @@ in a few more features.
 * A set of CSS properties can be created as a mixin, and reused in multiple
   declarations. 
 
-Starting the with second point: let's say you want to have some special styling
+Starting with the second point: let's say you want to have some special styling
 for some tags within your +article+. In plain ol' CSS, you'd have to write:
 
 [source, css]
