@@ -262,7 +262,7 @@ instance Yesod App where
     defaultLayout contents = do
         PageContent title headTags bodyTags <- widgetToPageContent contents
         mmsg <- getMessage
-        hamletToRepHtml [hamlet|
+        giveUrlRenderer [hamlet|
             $doctype 5
 
             <html>
