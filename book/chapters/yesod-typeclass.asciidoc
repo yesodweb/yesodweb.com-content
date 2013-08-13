@@ -222,7 +222,7 @@ pages) automatically get this style.
 Overriding is very straight-forward: we use +widgetToPageContent+ to convert a
 +Widget+ to a title, head tags and body tags, and then use +giveUrlRenderer+ to
 convert a Hamlet template into an +Html+ value. We can even add extra widget
-components, like a Lucius template. from within +defaultLayout+. For more
+components, like a Lucius template, from within +defaultLayout+. For more
 information, see the previous chapter on widgets.
 
 If you are using the scaffolded site, you can modify the files
