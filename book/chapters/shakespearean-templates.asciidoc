@@ -817,6 +817,8 @@ renderEnglish (Apples i) = T.concat ["You bought ", T.pack $ show i, " apples."]
 ----
 
 Now we want to interpolate those Msg values directly in the template. For that, we use underscore interpolation.
+
+[source, hamlet]
 ----
 $doctype 5
 <html>
