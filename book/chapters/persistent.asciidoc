@@ -44,6 +44,7 @@ Persistent on its own.
 
 [source, haskell]
 ----
+{-# LANGUAGE EmptyDataDecls    #-}
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE GADTs             #-}
 {-# LANGUAGE OverloadedStrings #-}
