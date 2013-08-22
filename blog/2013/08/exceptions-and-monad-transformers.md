@@ -16,7 +16,7 @@ myFunc = do
 
 In a world without exceptions, this seems completely reasonable. However, what happens if the call to `useResource` throws a runtime exception? In such a case, `releaseResource` would never be called, and our scarce resource would never be released. In concurrent code dealing with mutexes, such a bug could lead to a deadlock.
 
-The solution to this problem is well known: use the <hoogle results="1">bracket</hoogle> function. Then our above example reduces to `myFunc = bracket acquireScarceResource useResource releaseResource`. We're now safe from any exception thrown by `useResource`, and even from asynchronous exceptions (a topic I'll try to avoid in this post).
+The solution to this problem is well known: use the <hoogle results="1">bracket</hoogle> function. Then our above example reduces to `myFunc = bracket acquireScarceResource releaseResource useResource`. We're now safe from any exception thrown by `useResource`, and even from asynchronous exceptions (a topic I'll try to avoid in this post).
 
 But let's analyze the type signature of `bracket`:
 
