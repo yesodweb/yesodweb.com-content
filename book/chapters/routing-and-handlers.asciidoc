@@ -288,7 +288,7 @@ useful if it only allowed HTML responses to be generated. We want respond with
 CSS, Javascript, JSON, images, and more. So the question is: what data types
 can be returned?
 
-In order to generated a response, we need to know two pieces of information:
+In order to generate a response, we need to know two pieces of information:
 the content type (e.g., +text/html+, +image/png+) and how to serialize it to a
 stream of bytes. This is represented by the +TypedContent+ data type:
 
