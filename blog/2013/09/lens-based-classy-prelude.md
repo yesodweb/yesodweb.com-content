@@ -51,7 +51,7 @@ takes a much more principled approach to its type classes, but has a steeper
 learning curve. Perhaps by building `classy-prelude` on top of `lens` in this
 manner, we can get an easy-to-learn library which gradually exposes users to
 powerful and well-designed abstractions. This would also allow the community to
-focus around making instances for one set of typeclasses, and then users could
+focus on making instances for one set of typeclasses, and then users could
 essentially layer whatever high-level interface on top of it that they want.
 
 I haven't looked into the other typeclasses in `classy-prelude` yet, but I have
