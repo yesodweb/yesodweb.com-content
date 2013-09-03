@@ -40,9 +40,9 @@ I tried replacing this in `classy-prelude` (using [FP Haskell
 Center](https://www.fpcomplete.com/) to do my coding, of course), and [the
 result](https://github.com/snoyberg/classy-prelude/commit/024cf34a3690088238a6c28e5f0694162a1111a7)
 was nearly perfect. As expected, I had to modify some type signatures in my
-test suite to use `Each` instead of `CanMap`, and there appear to be no
-instances of `Each` for `Set` and `HashSet` (I'm sure there's a reason for
-that, I'm just not familiar with the issue).
+test suite to use `Each` instead of `CanMap`. Also, there appear are no
+instances of `Each` for `Set` and `HashSet`; please [see my explanation
+below](#no-set-instance) based on a very good explanation I got from Edward.
 
 To me, this is a very interesting direction to consider heading in.
 `classy-prelude` has always focused on pragmatism, and retaining the
@@ -67,3 +67,40 @@ even harder to deal with. But `classy-prelude` has never been a
 beginner-friendly project, and at least if both `classy-prelude` and `lens`
 users got the *same* terrifying error messages, it might be easier to build up
 some common documentation on how to address them.
+
+<h2 id="no-set-instance">No Set/HashSet instances</h2>
+
+I'm sure most of us are familiar with the common identity:
+
+    map f . map g = map (f . g)
+
+This is also the second functor law:
+
+    fmap f . fmap g = fmap (f . g)
+
+However, this identity does not apply with `Set`, as you can see with [a simple
+example](https://www.fpcomplete.com/user/snoyberg/random-code-snippets/set-is-not-a-functor):
+
+```haskell
+import qualified Data.Set as Set
+
+newtype AlwaysEq a = AlwaysEq { unAlwaysEq :: a }
+
+instance Eq (AlwaysEq a) where
+    _ == _ = True
+instance Ord (AlwaysEq a) where
+    _ `compare` _ = EQ
+
+main :: IO ()
+main = do
+    let s = Set.fromList [1..3]
+    print $ (Set.map unAlwaysEq . Set.map AlwaysEq) s
+    print $ Set.map (unAlwaysEq . AlwaysEq) s
+```
+
+Said another way, `map`ing on a `Set` can change its shape, by causing some
+elements to be removed. This is in constrast to other examples of `map`, which
+ensure the shape is maintained.
+
+As far as classy-prelude is concerned, I'd be content to reexport `Set.map`
+under a name like `setMap`, but not have it represented by the `map` function.
