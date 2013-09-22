@@ -64,7 +64,7 @@
     <xi:include href="chapters/creating-a-subsite.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/understanding-request.xml"
+    <xi:include href="chapters/understanding-request.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
   </part>
 
@@ -90,13 +90,13 @@
     <xi:include href="chapters/monad-control.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/conduits.xml"
+    <xi:include href="chapters/conduits.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/web-application-interface.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/settings-types.xml"
+    <xi:include href="chapters/settings-types.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/http-conduit.xml"

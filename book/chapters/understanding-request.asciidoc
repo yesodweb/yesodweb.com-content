@@ -1,0 +1,586 @@
+== Understanding a Request
+
+You can often times get away with using Yesod for quite a while without needing
+to understand its internal workings. However, such an understanding is often
+times advantageous. This chapter will walk you through the request handling
+process for a fairly typical Yesod application. Note that a fair amount of this
+discussion involves code changes in Yesod 1.2. Most of the concepts are the
+same in previous versions, though the data types involved were a bit messier.
+
+Yesod&rsquo;s usage of Template Haskell to bypass boilerplate code can make it
+a bit difficult to understand this process sometimes. If beyond the information
+in this chapter you wish to further analyze things, it can be useful to view
+GHC&rsquo;s generated code using -ddump-splices.
+
+[NOTE]
+====
+A lot of this information was originally published as a blog series on the 1.2 release. You can see the blog posts at:
+
+* link:$$http://www.yesodweb.com/blog/2013/03/yesod-1-2-cleaner-internals$$[Yesod 1.2&rsquo;s cleaner internals]
+
+* link:$$http://www.yesodweb.com/blog/2013/03/big-subsite-rewrite$$[Big Subsite Rewrite]
+
+* link:$$http://www.yesodweb.com/blog/2013/03/yesod-dispatch-version-1-2$$[Yesod dispatch, version 1.2]
+====
+
+=== Handlers
+
+When trying to understand Yesod request handling, we need to look at two
+components: how a request is dispatched to the appropriate handler code, and
+how handler functions are processed. We&rsquo;ll start off with the latter, and
+then circle back to understanding the dispatch process itself.
+
+==== Layers
+
+Yesod builds itself on top of WAI, which provides a protocol for web servers
+(or, more generally, _handlers_) and applications to communicate with each
+other. This is expressed through two datatypes: Request and Response. Then, an
+Application is defined as type +Application = Request -&gt; ResourceT IO
+Response+. A WAI handler will take an application and run it.
+
+Request and Response are both very low-level, trying to represent the HTTP
+protocol without too much embellishment. This keeps WAI as a generic tool, but
+also leaves out a lot of the information we need in order to implement a web
+framework. For example, WAI will provide us with the raw data for all request
+headers. But Yesod needs to parse that to get cookie information, and then
+parse the cookies in order to extract session information.
+
+To deal with this dichotomy, Yesod introduces two new data types:
++YesodRequest+ and +YesodResponse+. +YesodRequest+ contains a WAI Request, and
+also adds in such request information as cookies and session variables, and on
+the response side can either be a standard WAI Response, or be a higher-level
+representation of such a response including such things as updated session
+information and extra response headers. To parallel WAI&rsquo;s Application, we
+have +type YesodApp = YesodRequest -&gt; ResourceT IO YesodResponse+.
+
+But as a Yesod user, you never really see YesodApp. There&rsquo;s another layer
+on top of that which you are used to dealing with: Handler. When you write
+handler functions, you need to have access to three different things:
+
+* The YesodRequest value for the current request.
+
+* Some basic environment information, like how to log messages or handle error conditions. This is provided by the datatype RunHandlerEnv.
+
+* A mutable variable to keep track of updateable information, such as the headers to be returned and the user session state. This is called GHState.
+
+
+NOTE: I know that&rsquo;s not a great name, but it&rsquo;s there for historical reasons.
+
+So when you&rsquo;re writing a handler function, you&rsquo;re essentially just
+writing in a Reader monad that has access to all of this information. The
+runHandler function will turn a Handler into a YesodApp. yesodRunner takes this
+a step further and converts all the way to a WAI Application.
+
+==== Content
+
+Our example above, and many others you&rsquo;ve already seen, give a handler
+with a type of Handler Html. We&rsquo;ve just described what the Handler means,
+but how does Yesod know how to deal with Html? The answer lies in the
+ToTypedContent typeclass. The relevants bit of code are:
+
+[source, haskell]
+----
+data Content = ContentBuilder !BBuilder.Builder !(Maybe Int) -- ^ The content and optional content length.
+             | ContentSource !(Source (ResourceT IO) (Flush BBuilder.Builder))
+             | ContentFile !FilePath !(Maybe FilePart)
+             | ContentDontEvaluate !Content
+data TypedContent = TypedContent !ContentType !Content
+
+class ToContent a where
+    toContent :: a -> Content
+class ToContent a => ToTypedContent a where
+    toTypedContent :: a -> TypedContent
+----
+
+The Content datatype represents the different ways you can provide a response
+body. The first three mirror WAI&rsquo;s representation directly. The fourth
+(ContentDontEvaluate) is used to indicate to Yesod whether response bodies
+should be fully evaluated before being returned to users. The advantage to
+fully evaluating is that we can provide meaningful error messages if an
+exception is thrown from pure code. The downside is possibly increased time and
+memory usage.
+
+In any event, Yesod knows how to turn a Content into a response body. The
+ToContent typeclass provides a way to allow many different datatypes to be
+converted into response bodies. Many commonly used types are already instances
+of ToContent, including strict and lazy ByteString and Text, and of course
+Html.
+
+TypedContent adds an extra piece of information: the content type of the value.
+As you might expect, there are ToTypedContent instances for a number of common
+datatypes, including HTML, JSON, and plain text.
+
+[source, haskell]
+----
+instance ToTypedContent J.Value where
+    toTypedContent v = TypedContent typeJson (toContent v)
+instance ToTypedContent Html where
+    toTypedContent h = TypedContent typeHtml (toContent h)
+instance ToTypedContent T.Text where
+    toTypedContent t = TypedContent typePlain (toContent t)
+----
+
+Putting this all together: a Handler is able to return any value which is an
+instance of ToTypedContent, and Yesod will handle turning it into an
+appropriate representation and setting the Content-Type response header.
+
+==== Short-circuit responses
+
+One other oddity is how short-circuiting works. For example, you can call
+redirect in the middle of a handler function, and the rest of the function will
+not be called. The mechanism we use is standard Haskell exceptions. Calling
+redirect just throws an exception of type HandlerContents. The runHandler
+function will catch any exceptions thrown and produce an appropriate response.
+For HandlerContents, each constructor gives a clear action to perform, be it
+redirecting or sending a file. For all other exception types, an error message
+is displayed to the user.
+
+=== Dispatch
+
+Dispatch is the act of taking an incoming request and generating an appropriate
+response. We have a few different constraints regarding how we want to handle
+dispatch:
+
+* Dispatch based on path segments (or pieces).
+
+* Optionally dispatch on request method.
+
+* Support subsites: packaged collections of functionality providing multiple routes under a specific URL prefix.
+
+* Support using WAI applications as subsites, while introducing as little
+  runtime overhead to the process as possible. In particular, we want to avoid
+  performing any unnecessary parsing to generate a YesodRequest if it
+  won&rsquo;t be used.
+
+The lowest common denominator for this would be to simply use a WAI
+Application. However, this doesn&rsquo;t provide quite enough information: we
+need access to the foundation datatype, the logger, and for subsites how a
+subsite route is converted to a parent site route. To address this, we have two
+helper data types (YesodRunnerEnv and YesodSubRunnerEnv) providing this extra
+information for normal sites and subsites.
+
+With those types, dispatch now becomes a relatively simple matter: give me an
+environment and a request, and I&rsquo;ll give you a response. This is
+represented by the typeclasses YesodDispatch and YesodSubDispatch:
+
+[source, haskell]
+----
+class Yesod site => YesodDispatch site where
+    yesodDispatch :: YesodRunnerEnv site -> W.Application
+
+class YesodSubDispatch sub m where
+    yesodSubDispatch :: YesodSubRunnerEnv sub (HandlerSite m) m
+                     -> W.Application
+----
+
+We&rsquo;ll see a bit later how YesodSubDispatch is used. Let&rsquo;s first
+understand how YesodDispatch comes into play,__
+
+==== toWaiApp, toWaiAppPlain, and warp
+
+Let&rsquo;s assume for the moment that you have a datatype which is an instance
+of YesodDispatch. You&rsquo;ll want to now actually run this thing somehow. To
+do this, we need to convert it into a WAI application and pass it to some kind
+of a WAI handler/server. To start this journey, we use toWaiAppPlain. It
+performs any appwide initialization necessary. At the time of writing, this
+means allocating a logger and setting up the session backend, but more
+functionality may be added in the future. Using this data, we can now create a
+YesodRunnerEnv. And when that value is passed to yesodDispatch, we get a WAI
+application.
+
+We&rsquo;re almost done. The final remaining modification is path segment
+cleanup. The Yesod typeclass includes a member function named cleanPath which
+can be used to create canonical URLs. For example, the default implementation
+would remove double slashes and redirect a user from +/foo//bar+ to +/foo/bar+.
+toWaiAppPlain adds in some pre-processing to the normal WAI request by
+analyzing the requested path and performing cleanup/redirect as necessary.
+
+At this point, we have a fully functional WAI application. There are two other
+helper functions included. toWaiApp wraps toWaiAppPlain and additionally
+includes some commonly used WAI middlewares, including request logging and GZIP
+compression. (Please see the Haddocks for an up-to-date list.) We finally have
+the warp function which, as you might guess, runs your application with Warp.
+
+NOTE: There&rsquo;s also the warpEnv function, which reads the port number
+information from the PORT environment variable. This is used for interacting
+with certain tools, including the Keter deployment manager and the FP Complete
+School of Haskell.
+
+==== Generated code
+
+The last remaining black box is the Template Haskell generated code. This
+generated code is responsible for handling some of the tedious, error-prone
+pieces of your site. If you want to, you can write these all by hand instead.
+We&rsquo;ll demonstrate what that translation would look like, and in the
+process elucidate how YesodDispatch and YesodSubDispatch work. Let&rsquo;s
+start with a fairly typical Yesod application.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import qualified Data.ByteString.Lazy.Char8 as L8
+import           Network.HTTP.Types         (status200)
+import           Network.Wai                (pathInfo, rawPathInfo,
+                                             requestMethod, responseLBS)
+import           Yesod
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/only-get       OnlyGetR   GET
+/any-method     AnyMethodR
+/has-param/#Int HasParamR  GET
+/my-subsite     MySubsiteR WaiSubsite getMySubsite
+|]
+
+instance Yesod App
+
+getOnlyGetR :: Handler Html
+getOnlyGetR = defaultLayout
+    [whamlet|
+        <p>Accessed via GET method
+        <form method=post action=@{AnyMethodR}>
+            <button>POST to /any-method
+    |]
+
+handleAnyMethodR :: Handler Html
+handleAnyMethodR = do
+    req <- waiRequest
+    defaultLayout
+        [whamlet|
+            <p>In any-method, method == #{show $ requestMethod req}
+        |]
+
+getHasParamR :: Int -> Handler String
+getHasParamR i = return $ show i
+
+getMySubsite :: App -> WaiSubsite
+getMySubsite _ =
+    WaiSubsite app
+  where
+    app req = return $ responseLBS
+        status200
+        [("Content-Type", "text/plain")]
+        $ L8.pack $ concat
+            [ "pathInfo == "
+            , show $ pathInfo req
+            , ", rawPathInfo == "
+            , show $ rawPathInfo req
+            ]
+
+main :: IO ()
+main = warp 3000 App
+----
+
+For completeness we&rsquo;ve provided a full listing, but let&rsquo;s focus on
+just the Template Haskell portion:
+
+[source, haskell]
+----
+mkYesod "App" [parseRoutes|
+/only-get       OnlyGetR   GET
+/any-method     AnyMethodR
+/has-param/#Int HasParamR  GET
+/my-subsite     MySubsiteR WaiSubsite getMySubsite
+|]
+----
+
+While this generates a few pieces of code, we only need to replicate three
+components to make our site work. Let&rsquo;s start with the simplest: the
+Handler type synonym:
+
+[source, haskell]
+----
+type Handler = HandlerT App IO
+----
+
+Next is the type-safe URL and its rendering function. The rendering function is
+allowed to generate both path segments and query string parameters. Standard
+Yesod sites never generate query-string parameters, but it is technically
+possible. And in the case of subsites, this often does happen. Notice how we
+handle the qs parameter for the MySubsiteR case:
+
+
+[source, haskell]
+----
+instance RenderRoute App where
+    data Route App = OnlyGetR
+                   | AnyMethodR
+                   | HasParamR Int
+                   | MySubsiteR (Route WaiSubsite)
+        deriving (Show, Read, Eq)
+
+    renderRoute OnlyGetR = (["only-get"], [])
+    renderRoute AnyMethodR = (["any-method"], [])
+    renderRoute (HasParamR i) = (["has-param", toPathPiece i], [])
+    renderRoute (MySubsiteR subRoute) =
+        let (ps, qs) = renderRoute subRoute
+         in ("my-subsite" : ps, qs)
+----
+
+You can see that there&rsquo;s a fairly simple mapping from the higher-level
+route syntax and the RenderRoute instance. Each route becomes a constructor,
+each URL parameter becomes an argument to its constructor, we embed a route for
+the subsite, and use toPathPiece to render parameters to text.
+
+The final component is the YesodDispatch instance. Let&rsquo;s look at this in
+a few pieces.
+
+[source, haskell]
+----
+instance YesodDispatch App where
+    yesodDispatch env req =
+        case pathInfo req of
+            ["only-get"] ->
+                case requestMethod req of
+                    "GET" -> yesodRunner
+                        getOnlyGetR
+                        env
+                        (Just OnlyGetR)
+                        req
+                    _ -> yesodRunner
+                        (badMethod >> return ())
+                        env
+                        (Just OnlyGetR)
+                        req
+----
+
+As described above, yesodDispatch is handed both an environment and a WAI
+Request value. We can now perform dispatch based on the requested path, or in
+WAI terms, the pathInfo. Referring back to our original high-level route
+syntax, we can see that our first route is going to be the single piece
+only-get, which we pattern match for.
+
+
+NOTE: In reality, Yesod generates a much more efficient data structure to
+perform routing. We&rsquo;ve used simple pattern matching here so as not to
+obscure the point. For more information, please see the
+link:$$https://github.com/yesodweb/yesod/blob/master/yesod-routes/Yesod/Routes/Dispatch.lhs$$[Yesod.Routes.Dispatch].
+
+Once that match has succeeded, we additionally pattern match on the request
+method; if it&rsquo;s +GET+, we use the handler function getOnlyGetR.
+Otherwise, we want to return a 405 bad method response, and therefore use the
+badMethod handler. At this point, we&rsquo;ve come full circle to our original
+handler discussion. You can see that we&rsquo;re using yesodRunner to execute
+our handler function. As a reminder, this will take our environment and WAI
+Request, convert it to a YesodRequest, constructor a RunHandlerEnv, hand that
+to the handler function, and then convert the resulting YesodResponse into a
+WAI Response.
+
+Wonderful; one down, three to go. The next one is even easier.
+
+[source, haskell]
+----
+            ["any-method"] ->
+                yesodRunner handleAnyMethodR env (Just AnyMethodR) req
+----
+
+Unlike OnlyGetR, AnyMethodR will work for any request method, so we don&rsquo;t
+need to perform any further pattern matching.
+
+[source, haskell]
+----
+            ["has-param", t] | Just i <- fromPathPiece t ->
+                case requestMethod req of
+                    "GET" -> yesodRunner
+                        (getHasParamR i)
+                        env
+                        (Just $ HasParamR i)
+                        req
+                    _ -> yesodRunner
+                        (badMethod >> return ())
+                        env
+                        (Just $ HasParamR i)
+                        req
+----
+
+We add in one extra complication here: a dynamic parameter. While we used
+toPathPiece to render to a textual value above, we now use fromPathPiece to
+perform the parsing. Assuming the parse succeeds, we then follow a very similar
+dispatch system as was used for OnlyGetR. The prime difference is that our
+parameter needs to be passed to both the handler function and the route data
+constructor.
+
+Next we&rsquo;ll look at the subsite, which is quite different.
+
+[source, haskell]
+----
+            ("my-subsite":rest) -> yesodSubDispatch
+                YesodSubRunnerEnv
+                    { ysreGetSub = getMySubsite
+                    , ysreParentRunner = yesodRunner
+                    , ysreToParentRoute = MySubsiteR
+                    , ysreParentEnv = env
+                    }
+                req { pathInfo = rest }
+----
+
+Unlike the other pattern matches, here we just look to see if our pattern
+prefix matches. Any route beginning with +/my-subsite+ should be passed off to
+the subsite for processing. This is where we finally get to use
+yesodSubDispatch. This function closely mirrors yesodDispatch. We need to
+construct a new environment to be passed to it. Let&rsquo;s discuss the four
+records:
+
+* ysreGetSub demonstrates how to get the subsite foundation type from the
+  master site. We provide getMySubsite, which is the function we provided in
+  the high-level route syntax.
+
+* ysreParentRunner provides a means of running a handler function. It may seem
+  a bit boring to just provide yesodRunner, but by having a separate parameter
+  we allow the construction of deeply nested subsites, which will wrap and
+  unwrap many layers of interleaving subsites. (This is a more advanced concept
+  which we won&rsquo;t be covering in this chapter.)
+
+* ysreToParentRoute will convert a route for the subsite into a route for the
+  parent site. This is the purpose of the MySubsiteR constructor. This allows
+  subsites to use functions such as getRouteToParent.
+
+* ysreParentEnv simply passes on the initial environment, which contains a
+  number of things the subsite may need (such as logger).
+
+The other interesting thing is how we modify the pathInfo. This allows subsites
+to _continue dispatching_ from where the parent site left off. To demonstrate
+how this works, see some screenshots of various requests in the following
+figure.
+
+
+.Path info in subsite
+image::images/subsite-path-info.png[]
+
+And finally, not all requests will be valid routes. For those cases, we just
+want to respond with a 404 not found.
+
+----
+            _ -> yesodRunner (notFound >> return ()) env Nothing req
+----
+
+==== Complete code
+
+Following is the full code for the non-Template Haskell approach.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import qualified Data.ByteString.Lazy.Char8 as L8
+import           Network.HTTP.Types         (status200)
+import           Network.Wai                (pathInfo, rawPathInfo,
+                                             requestMethod, responseLBS)
+import           Yesod
+import           Yesod.Core.Types           (YesodSubRunnerEnv (..))
+
+data App = App
+
+instance RenderRoute App where
+    data Route App = OnlyGetR
+                   | AnyMethodR
+                   | HasParamR Int
+                   | MySubsiteR (Route WaiSubsite)
+        deriving (Show, Read, Eq)
+
+    renderRoute OnlyGetR = (["only-get"], [])
+    renderRoute AnyMethodR = (["any-method"], [])
+    renderRoute (HasParamR i) = (["has-param", toPathPiece i], [])
+    renderRoute (MySubsiteR subRoute) =
+        let (ps, qs) = renderRoute subRoute
+         in ("my-subsite" : ps, qs)
+
+type Handler = HandlerT App IO
+
+instance Yesod App
+
+instance YesodDispatch App where
+    yesodDispatch env req =
+        case pathInfo req of
+            ["only-get"] ->
+                case requestMethod req of
+                    "GET" -> yesodRunner
+                        getOnlyGetR
+                        env
+                        (Just OnlyGetR)
+                        req
+                    _ -> yesodRunner
+                        (badMethod >> return ())
+                        env
+                        (Just OnlyGetR)
+                        req
+            ["any-method"] ->
+                yesodRunner handleAnyMethodR env (Just AnyMethodR) req
+            ["has-param", t] | Just i <- fromPathPiece t ->
+                case requestMethod req of
+                    "GET" -> yesodRunner
+                        (getHasParamR i)
+                        env
+                        (Just $ HasParamR i)
+                        req
+                    _ -> yesodRunner
+                        (badMethod >> return ())
+                        env
+                        (Just $ HasParamR i)
+                        req
+            ("my-subsite":rest) -> yesodSubDispatch
+                YesodSubRunnerEnv
+                    { ysreGetSub = getMySubsite
+                    , ysreParentRunner = yesodRunner
+                    , ysreToParentRoute = MySubsiteR
+                    , ysreParentEnv = env
+                    }
+                req { pathInfo = rest }
+            _ -> yesodRunner (notFound >> return ()) env Nothing req
+
+getOnlyGetR :: Handler Html
+getOnlyGetR = defaultLayout
+    [whamlet|
+        <p>Accessed via GET method
+        <form method=post action=@{AnyMethodR}>
+            <button>POST to /any-method
+    |]
+
+handleAnyMethodR :: Handler Html
+handleAnyMethodR = do
+    req <- waiRequest
+    defaultLayout
+        [whamlet|
+            <p>In any-method, method == #{show $ requestMethod req}
+        |]
+
+getHasParamR :: Int -> Handler String
+getHasParamR i = return $ show i
+
+getMySubsite :: App -> WaiSubsite
+getMySubsite _ =
+    WaiSubsite app
+  where
+    app req = return $ responseLBS
+        status200
+        [("Content-Type", "text/plain")]
+        $ L8.pack $ concat
+            [ "pathInfo == "
+            , show $ pathInfo req
+            , ", rawPathInfo == "
+            , show $ rawPathInfo req
+            ]
+
+main :: IO ()
+main = warp 3000 App
+----
+
+=== Conclusion
+
+Yesod abstracts away quite a bit of the plumbing from you as a developer. Most
+of this is boilerplate code that you&rsquo;ll be happy to ignore. But it can be
+empowering to understand exactly what&rsquo;s going on under the surface. At
+this point, you should hopefully be able- with help from the Haddocks- to write
+a site without any of the autogenerated Template Haskell code. Not that
+I&rsquo;d recommend it; I think using the generated code is easier and safer.
+
+One particular advantage of understanding this material is seeing where Yesod
+sits in the world of WAI. This makes it easier to see how Yesod will interact
+with WAI middleware, or how to include code from other WAI framework in a Yesod
+application (or vice-versa!).

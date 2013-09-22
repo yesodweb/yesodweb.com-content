@@ -1,0 +1,111 @@
+== Settings Types
+
+Let's say you're writing a webserver. You want the server to take a port to
+listen on, and an application to run. So you create the following function:
+
+[source, haskell]
+----
+run :: Int -> Application -> IO ()
+----
+
+But suddenly you realize that some people will want to customize their timeout
+durations. So you modify your API:
+
+[source, haskell]
+----
+run :: Int -> Int -> Application -> IO ()
+----
+
+So, which +Int+ is the timeout, and which is the port? Well, you could create
+some type aliases, or comment your code. But there's another problem creeping
+into our code: this +run+ function is getting unmanageable. Soon we'll need to
+take an extra parameter to indicate how exceptions should be handled, and then
+another one to control which host to bind to, and so on.
+
+A more extensible solution is to introduce a settings datatype:
+
+[source, haskell]
+----
+data Settings = Settings
+    { settingsPort :: Int
+    , settingsHost :: String
+    , settingsTimeout :: Int
+    }
+----
+
+And this makes the calling code almost self-documenting:
+
+[source, haskell]
+----
+run Settings
+    { settingsPort = 8080
+    , settingsHost = "127.0.0.1"
+    , settingsTimeout = 30
+    } myApp
+----
+
+Great, couldn't be clearer, right? True, but what happens when you have 50
+settings to your webserver. Do you really want to have to specify all of those
+each time? Of course not. So instead, the webserver should provide a set of
+defaults:
+
+[source, haskell]
+----
+defaultSettings = Settings 3000 "127.0.0.1" 30
+----
+
+And now, instead of needing to write that long bit of code above, we can get
+away with:
+
+[source, haskell]
+----
+run defaultSettings { settingsPort = 8080 } myApp -- (1)
+----
+
+This is great, except for one minor hitch. Let's say we now decide to add an
+extra record to +Settings+. Any code out in the wild looking like this:
+
+[source, haskell]
+----
+run (Settings 8080 "127.0.0.1" 30) myApp -- (2)
+----
+
+will be broken, since the +Settings+ constructor now takes 4 arguments. The
+proper thing to do would be to bump the major version number so that dependent
+packages don't get broken. But having to change major versions for every minor
+setting you add is a nuisance. The solution? Don't export the +Settings+
+constructor:
+
+[source, haskell]
+----
+module MyServer
+    ( Settings
+    , settingsPort
+    , settingsHost
+    , settingsTimeout
+    , run
+    , defaultSettings
+    ) where
+----
+
+With this approach, no one can write code like (2), so you can freely add new
+records without any fear of code breaking.
+
+The one downside of this approach is that it's not immediately obvious from the
+Haddocks that you can actually change the settings via record syntax. That's
+the point of this chapter: to clarify what's going on in the libraries that use
+this technique.
+
+I personally use this technique in a few places, feel free to have a look at
+the Haddocks to see what I mean.
+
+* Warp: Settings 
+* http-conduit: Request and ManagerSettings 
+* xml-conduit
+* Parsing: ParseSettings 
+* Rendering: RenderSettings 
+
+As a tangential issue, +http-conduit+ and +xml-conduit+ actually create
+instances of the +Default+ typeclass instead of declaring a brand new
+identifier.  This means you can just type +def+ instead of
++defaultParserSettings+.
