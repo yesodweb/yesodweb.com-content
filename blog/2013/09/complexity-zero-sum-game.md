@@ -174,6 +174,18 @@ main = runResourceT $ sourceFile "input.txt" $$ do
     isolate 20 =$ sinkFile "output2.txt"
 ```
 
+With an input.txt of:
+
+    hellohellohellohelloworldworldworldworldbyebyebyebye
+
+output1.txt ends up with:
+
+    hellohellohellohello
+
+and output2.txt is:
+
+    worldworldworldworld
+
 (You can inflate the number 20 to something much larger to make the need for
 streaming data more realistic.)
 
@@ -183,11 +195,162 @@ and 40 byte chunks, send the 20 byte piece off to output1.txt, and return the
 remaining 40 bytes as leftovers. The second call to `isolate` can then read
 that chunk in and repeat the process.
 
-It's hard for me to imagine 
+It's hard for me to imagine this being much more declarative. We're able to
+leverage conduit's two forms of composition. Monadic composition allows us to
+string together the two consumers to consume successive data from the producer.
+And we're able to use fusion to combine the `isolate` calls with the `sinkFile`
+calls, and to connect the source with the combined sink.
 
-* Use takeWhile
+This kind of dual composition has been the hallmark of pipes since its first
+release, so certainly building up something similar should be trivial. With the
+newly released pipes-bytestring, let's try to naively copy our conduit code
+over.
 
-## await can fail
+```haskell
+main :: IO ()
+main =
+    withFile "input.txt" ReadMode $ \input ->
+    withFile "output1.txt" WriteMode $ \output1 ->
+    withFile "output2.txt" WriteMode $ \output2 ->
+        runEffect $ fromHandle input >-> do
+            take 20 >-> toHandle output1
+            take 20 >-> toHandle output2
+```
+
+When I run this code, *output2.txt is empty*! To understand why, let's consider
+how `isolate` works in conduit. We get an initial chunk of (say) 60 bytes,
+split off the first 20, and return the remaining 40 as leftovers. But pipes has
+no leftover support, so take simply drops the data on the floor! Not only is
+this unintuitive behavior, and completely undocumented, but is
+non-deterministic: if the first chunk was instead 30 bytes, only 10 bytes of
+data would be lost. If it was 100 bytes, 80 bytes would be lost. I'd consider
+the very presence of this function to be an inherent flaw in this library that
+needs to be rectified immediately.
+
+(By the way, `drop` is even worse than `take`. I'll leave it to reader comments
+to discover why.)
+
+In order to get the right behavior, you have to use the `splitAt` function instead:
+
+```haskell
+main :: IO ()
+main =
+    withFile "input.txt" ReadMode $ \input ->
+    withFile "output1.txt" WriteMode $ \output1 ->
+    withFile "output2.txt" WriteMode $ \output2 -> do
+        input' <- runEffect $ splitAt 20 (fromHandle input) >-> toHandle output1
+        void $ runEffect $ splitAt 20 input' >-> toHandle output2
+```
+
+There are a number of points that need to be elucidated here:
+
+* The `do`-block is no longer performing any kind of composition of Pipes, but
+  rather just IO composition. In fact, we've had to completely give up on
+  "vertical composition" of pipes to make this work.
+
+* We have to explicitly pass around the producer. I'm familiar with this style
+  of coding, since early versions of conduit encouraged it, and it's not an
+  experience I'd want to repeat. It's easy to accidentally pass around the old
+  producer instead of the new one, for example. And this is exactly the kind of
+  drudgery that streaming libraries should be able to liberate us from!
+
+This approach to leftovers just inverts the whole concept of a producer to a
+pull-based model. This is a valid approach, but it sacrifices so much of the
+elegance and simplisity we have in a streaming library, and pushes it to a user
+problem. The API is now seemingly doubled, between "Pipes" and "Splitters" as
+the API documentation calls them.
+
+Gabriel claims this can be encapsulated nicely via a `StateT` as is done in
+pipes-parse. This may be true, and it's certainly true that everything can be
+implemented with this abstraction. But now users are required to hop between
+two or three different ecosystems of functions in order to implement anything
+involving chunked data.
+
+### Simple parsing
+
+As a further illustration of the problems of lack of proper chunked data
+support, consider the following trivial conduit snippet:
+
+```haskell
+parseA :: Monad m => Sink Text m A
+parseC :: Monad m => Sink Text m C
+
+myParse :: Monad m => Sink Text m (A, C)
+myParse = (,) <$> parseA <*> parseC
+```
+
+Since monadic composition works naturally for `Sink`s- even chunked `Sink`s-
+composing two different `Sink` can be achieved by using standard Applicative
+operators. Such easy composition is not possible (AFAICT) with pipes-parse or
+pipes-bytestring.
+
+So my claim is: pipes has simplified its core by leaving out leftover support,
+resulting in some really complicated user-facing APIs. conduit includes the
+complexity in one place, the core, and the rest of the codebase reaps the
+benefits.
+
+## Folding
+
+Let's go back to basics, and implement a very simplistic left fold on lists:
+
+```haskell
+foldl _ a [] = a
+foldl f a (b:bs) = foldl f (f a b) bs
+```
+
+It has to handle to cases: if the list is empty, return the accumulator,
+otherwise get a new accumulator and recurse. Great. Can we do the same thing
+with conduit?
+
+```haskell
+foldl :: Monad m => (a -> b -> a) -> a -> Sink b m a
+foldl f a = do
+    mb <- await
+    case mb of
+        Nothing -> return a
+        Just b -> foldl f (f a b)
+```
+
+It's a bit wordier, since we need to perform a monadic action to get the next
+value instead of using simple pattern matching, but the algorithm is the same.
+Using this let's us leverage all of our standard monadic composition and
+fusion. For example, to skip the first 5 numbers in the stream and sum up the
+following 5, you would write:
+
+```haskell
+res <- mapM_ yield [1..20] $$ do
+    drop 5
+    isolate 5 =$ foldl (+) 0
+print res
+```
+
+Let's compare this to the (slightly simplified) type of `fold` in pipes:
+
+```haskell
+fold :: Monad m => (b -> a -> b) -> b -> Producer a m () -> m b
+```
+
+That type is decidedly different. Instead of our conduit `fold`, which provided
+a `Sink` which could use normal composition, `fold` from pipes is using the
+same trick we saw previously of taking an explicit `Producer` and producing a
+single value. This defeats all of our standard composition abilities. I think
+the canonical way to reimplement my above code would look something like:
+
+```
+FIXME i have no idea
+```
+
+~It gets even scarier when you look at the implementation of `fold`:~. Never mind, the implementation of `fold` uses explicit constructors just for an optimization. It seems like the right way to implement this `fold` is via:
+
+```haskell
+fold f a p = do
+    eb <- next p
+    case eb of
+        Left _ -> return a
+        Right (b, p') -> fold f (f a b) p'
+```
+
+That now looks pretty similar to the conduit version, the difference being `next`. The issue is that `await` in pipes cannot indicate the termination of the stream. I know there are reasons for this choice, but it seems to me like the complexity knob, once again, was set to the wrong calibration.
 
 * fold can't be implemented in the higher-level API
 * No need for ~> composition, we've just got monads
