@@ -144,6 +144,6 @@ details in a later blog post on the problems with this approach.
 
 Gabriel's `FreeT` trick is interesting, and certainly clever. Given the
 constraints of pipes, it seems like a good solution to the problem. However,
-let's not convince a constrained good solution with the ideal solution. In my
+let's not confuse a constrained good solution with the ideal solution. In my
 opinion, being able to reuse commonly used abstractions is far preferable to
 needing to invent lots of clever hacks.
