@@ -55,6 +55,13 @@ I'll step through a few of the features which conduit has elected to bake into
 its core, which have to some extent complicated the core. And then I'd like to
 compare those with the pipes approach of adding them on afterwards.
 
+I'd like to make one thing clear before getting started. I have huge respect
+for pipes, and the work Gabriel has done on it. pipes itself has had a huge
+influence on conduit's development, and without pipes I doubt conduit would
+be nearly as elegant as it is today. The purpose of this blog post is to
+point out some important differences in the two libraries, and places where
+I believe the pipes solution is lacking.
+
 ## Deterministic resource handling
 
 Consider the following simplistic file reading function in conduit:
@@ -137,8 +144,8 @@ Some long running computation
 {input.txt closed}
 ```
 
-Uh-oh. The input file is kept open during the entire long running computation!
-This problem is identified in the [pipes-safe release
+That's a bit worrisome. The input file is kept open during the entire long
+running computation!  This problem is identified in the [pipes-safe release
 announcement](http://www.haskellforall.com/2013/01/pipes-safe-10-resource-management-and.html)
 from January. By keeping finalizers in the core datatype, conduit is able to
 ensure prompt resource finalization, at the expense of losing strict
