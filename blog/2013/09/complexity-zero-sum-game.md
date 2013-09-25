@@ -1,3 +1,29 @@
+For the __tl;dr__ crowd:
+
+* pipes keeps a simpler core paradigm that conduit. The claim that goes along
+  with this is that pipes is simpler/cleaner/more elegant than conduit.
+
+* pipes is only now starting to provide a solution for the more complicated
+  data flow cases that iteratee, enumerator, conduit, and even io-streams have
+  provided for a while.
+
+* Now that we can compare equally powerful solutions, it's a good time to
+  compare the solutions, and judge their overall complexity. My claim is that:
+
+    * By pushing the complex solutions out of the core, the solutions
+      themselves are more complicated than the all-in-one conduit solution.
+
+    * As a result, pipes has lost many of its core touted principles, such as
+      easy composition.
+
+    * And in some cases, the layered pipes solution does not actually provide
+      the guarantees we'd expect. Said another way, pipes is buggy.
+
+The rest of this post is a bit of philosophy, and then lots of concrete
+examples to back up these claims.
+
+* * *
+
 Consider the following truly ridiculous code:
 
 ```haskell
@@ -322,12 +348,15 @@ It's a bit wordier, since we need to perform a monadic action to get the next
 value instead of using simple pattern matching, but the algorithm is the same.
 Using this let's us leverage all of our standard monadic composition and
 fusion. For example, to skip the first 5 numbers in the stream and sum up the
-following 5, you would write:
+following 5, and then do the same process again, you would write:
 
 ```haskell
 res <- mapM_ yield [1..20] $$ do
     drop 5
-    isolate 5 =$ foldl (+) 0
+    x <- isolate 5 =$ foldl (+) 0
+    drop 5
+    y <- isolate 5 =$ foldl (+) 0
+    return (x, y)
 print res
 ```
 
@@ -340,12 +369,24 @@ fold :: Monad m => (b -> a -> b) -> b -> Producer a m () -> m b
 That type is decidedly different. Instead of our conduit `fold`, which provided
 a `Sink` which could use normal composition, `fold` from pipes is using the
 same trick we saw previously of taking an explicit `Producer` and producing a
-single value. This defeats all of our standard composition abilities. I think
-the canonical way to reimplement my above code would look something like:
+single value. This defeats all of our standard composition abilities. Gabriel
+[provided me with a
+solution](http://www.reddit.com/r/haskell/comments/1n0i29/folding_lines_in_conduit/ccep9ek):
 
+```haskell
+res <- (`evalStateT` (each [1..20])) $ do
+    runEffect $ for (input >-> P.take 5) discard
+    res1 <- P.sum (input >-> P.take 5)
+    runEffect $ for (input >-> P.take 5) discard
+    res2 <- P.sum (input >-> P.take 5)
+    return (res1, res2)
+print res
 ```
-FIXME i have no idea
-```
+
+However, your consumer is no longer the standard consumer. You end up with a
+lot of boilerplate for converting between the two different paradigms. Simple
+composition is no longer present. And, at least to me, this kind of solution is
+far from obvious or trivial.
 
 ~It gets even scarier when you look at the implementation of `fold`:~. Never mind, the implementation of `fold` uses explicit constructors just for an optimization. It seems like the right way to implement this `fold` is via:
 
