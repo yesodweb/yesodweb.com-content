@@ -1,4 +1,4 @@
-We are pleased to announce the first release of the [mono-traversable](hackage.Haskell.org/package/mono-traversable) package and version 0.6 of the [classy-prelude](hackage.Haskell.org/package/classy-prelude). A special thanks goes to [FPComplete](www.fpcomplete.com) and [DocMunch](www.docmunch.com) for sponsoring its development and to Edward Kmett for advising the development of mono-traversable.
+We are pleased to announce the first release of the [mono-traversable](http://hackage.Haskell.org/package/mono-traversable) package and version 0.6 of the [classy-prelude](http://hackage.Haskell.org/package/classy-prelude). A special thanks goes to [FPComplete](http://www.fpcomplete.com) and [DocMunch](http://www.docmunch.com) for sponsoring its development and to Edward Kmett for advising the development of mono-traversable.
 
 ## Goals
 
@@ -84,7 +84,7 @@ Some of the functionality discussed here is similar to the ListLike package, but
 
 ## Partial functions and non-empty data structures
 
-Another important aspect of classy-prelude's modernization is providing better alternatives to parital functions. In the 0.6 release we try to make it easier to use [semigroups](hackage.haskell.org/package/semigroups), including `Data.List.NonEmpty`. Some of Haskell's partial functions come from attempting to operate on a list that must be non-empty. We have a powerful type sytem, so we should be putting it to use! Rather than partial functions, or even functions from [safe](hackage.Haskell.org/package/safe), we can define data structures have at least one element with Data.List.NonEmpty
+Another important aspect of classy-prelude's modernization is providing better alternatives to parital functions. In the 0.6 release we try to make it easier to use [semigroups](http://hackage.haskell.org/package/semigroups), including `Data.List.NonEmpty`. Some of Haskell's partial functions come from attempting to operate on a list that must be non-empty. We have a powerful type sytem, so we should be putting it to use! Rather than partial functions, or even functions from [safe](http://hackage.Haskell.org/package/safe), we can define data structures have at least one element with Data.List.NonEmpty
 
 ```
 head (x:|[]) == x
