@@ -1,5 +1,17 @@
 Title: Yesod quick start guide
 
+## FP Haskell Center
+
+The easiest way to get started with Yesod is by using [FP Haskell
+Center](https://www.fpcomplete.com/business/haskell-center/overview/). FP
+Haskell Center provides a web based development environment with all of the
+Haskell toolchain and Yesod libraries preinstalled. You can get started right
+away by [cloning an existing Yesod
+project](https://www.fpcomplete.com/school/project-templates/file-server).
+
+The rest of this page provides instructions for installing on your local
+system.
+
 ## Getting Haskell
 
 You'll need two main tools: the Glasgow Haskell Compiler (GHC) and
