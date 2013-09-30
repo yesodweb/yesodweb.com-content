@@ -14,7 +14,7 @@ save the new design for a later blog post.
 
 ## The flaw: automatic termination
 
-If you look at the very concepts of pipes (e.g., the [Pipe datatype in pipes
+If you look at the core concepts of pipes (e.g., the [Pipe datatype in pipes
 1.0](http://hackage.haskell.org/package/pipes-1.0/docs/src/Control-Pipe-Common.html#Pipe)),
 things are very simple. A Pipe can yield a value downstream, await for a value
 from upstream, perform a monadic action, and complete processing. This core is
@@ -28,24 +28,25 @@ ways; the identity pipe, for example, is expressed simply as `await >>= yield`.
 However, this decision ends up pushing complexity into many other parts of the
 ecosystem, and in some cases makes proper behavior impossible to achieve.
 
-I have not commented on this issue previously, since until now pipes has not
-provided any form of solution for many of the problems I'm going to raise. With
-the advent of pipes-bytestring, pipes-parse, and pipes-safe, there's enough of
-a solution available to make a meaningful analysis.
+conduit is not immune to this issue. conduit does not have automatic
+termination on the consuming side, but does have it on the producing side.
 
-FIXME: explain these points
+I've held off on commenting on these limitations in pipes previosly, since
+until now pipes has not provided any form of solution for many of the problems
+I'm going to raise. With the advent of pipes-bytestring, pipes-parse, and
+pipes-safe, there's enough of a solution available to make a meaningful
+analysis. After looking at these solutions, my conclusion is:
 
-* By pushing the complex solutions out of the core, the solutions
-  themselves are more complicated than the all-in-one conduit solution.
+* pipes has removed complexity from its core. However, this hasn't in fact
+  solved complexity, it's merely pushed the complexity to other helper
+  libraries. In my opinion, the overall solution is far more complex than a
+  single consistent solution would be.
 
-* As a result, pipes has lost many of its core touted principles, such as
-  easy composition.
+* In trying to solve some of these problems outside of the core, pipes has lost
+  many of its touted principles, such as easy composition.
 
 * And in some cases, the layered pipes solution does not actually provide
   the guarantees we'd expect. Said another way, pipes is buggy.
-
-conduit is not immune to this issue. conduit does not have automatic
-termination on the consuming side, but does have it on the producing side.
 
 The remainder of this post will be examples of limitations in pipes and conduit
 that result from this functionality. Note that, even though most of the issues
