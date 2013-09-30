@@ -1,94 +1,165 @@
-For the __tl;dr__ crowd:
+This blog post has actually been through many iterations as I've investigated
+the problems more thoroughly. After looking at the various examples I'll be
+bringing below quite a bit, I've come to a conclusion: there is just one single
+design decision in pipes which leads to the problems I'll describe. And
+conduit has inherited half of this issue, leading to it getting some of these
+issues as well.
 
-* pipes keeps a simpler core paradigm that conduit. The claim that goes along
-  with this is that pipes is simpler/cleaner/more elegant than conduit.
+In this blog post, I'm hoping to motivate the fact that there is actually a
+problem. I've been working on some experimental code in conduit which changes
+this design, thereby simplifying the internal structure, keeping all of its
+current features, and solving the two ways in which conduit currently does not
+follow the category laws. I'll describe all of these issues in this post, and
+save the new design for a later blog post.
 
-* pipes is only now starting to provide a solution for the more complicated
-  data flow cases that iteratee, enumerator, conduit, and even io-streams have
-  provided for a while.
+## The flaw: automatic termination
 
-* Now that we can compare equally powerful solutions, it's a good time to
-  compare the solutions, and judge their overall complexity. My claim is that:
+If you look at the very concepts of pipes (e.g., the [Pipe datatype in pipes
+1.0](http://hackage.haskell.org/package/pipes-1.0/docs/src/Control-Pipe-Common.html#Pipe)),
+things are very simple. A Pipe can yield a value downstream, await for a value
+from upstream, perform a monadic action, and complete processing. This core is
+simpler than conduit's core, which includes leftovers and finalizers, as well
+as failure when awaiting from upstream. 
 
-    * By pushing the complex solutions out of the core, the solutions
-      themselves are more complicated than the all-in-one conduit solution.
+However, this simplicity includes a heavy cost: there's no way to detect
+termination of a stream. As soon as one component of a pipeline terminates, the
+rest of the pipeline terminates also. This behavior can be convenient in many
+ways; the identity pipe, for example, is expressed simply as `await >>= yield`.
+However, this decision ends up pushing complexity into many other parts of the
+ecosystem, and in some cases makes proper behavior impossible to achieve.
 
-    * As a result, pipes has lost many of its core touted principles, such as
-      easy composition.
+I have not commented on this issue previously, since until now pipes has not
+provided any form of solution for many of the problems I'm going to raise. With
+the advent of pipes-bytestring, pipes-parse, and pipes-safe, there's enough of
+a solution available to make a meaningful analysis.
 
-    * And in some cases, the layered pipes solution does not actually provide
-      the guarantees we'd expect. Said another way, pipes is buggy.
+FIXME: explain these points
 
-The rest of this post is a bit of philosophy, and then lots of concrete
-examples to back up these claims.
+* By pushing the complex solutions out of the core, the solutions
+  themselves are more complicated than the all-in-one conduit solution.
 
-* * *
+* As a result, pipes has lost many of its core touted principles, such as
+  easy composition.
 
-Consider the following truly ridiculous code:
+* And in some cases, the layered pipes solution does not actually provide
+  the guarantees we'd expect. Said another way, pipes is buggy.
 
-```haskell
-import Safe
+conduit is not immune to this issue. conduit does not have automatic
+termination on the consuming side, but does have it on the producing side.
 
-main = do
-    case readMay "1" of
-        Nothing -> putStrLn "Invalid integer"
-        Just i ->
-            case readMay "2" of
-                Nothing -> putStrLn "Invalid integer"
-                Just j -> print $ i + j
-```
+The remainder of this post will be examples of limitations in pipes and conduit
+that result from this functionality. Note that, even though most of the issues
+I raise have workarounds, I will not be discussing those in general. My goal is
+to point out that the core abstraction is deficient, not address possible
+workarounds.
 
-This is a long, convoluted, error-prone way of adding the numbers 1 and 2. No
-programmer should ever write code like this. I feel quite comfortable in saying
-that the following code is absolutely better in every way than the previous
-code:
+## pipes: How do I fold?
 
-```haskell
-main = print $ 1 + 2
-```
+conduit provides a single abstraction which addresses all of the data
+processing functionality it supports. You get prompt resource handling, chunked
+data support, and the ability to fold over an input stream. In pipes, these are
+all handled by a separate abstraction. To clarify what I mean, compare the type
+signatures for a summing sink (receives all input values and adds them up) and
+a printing sink (i.e., prints all input to stdout) in conduit:
 
-Going from the first to the second example is an exercise in reducing
-complexity. A huge part of our job as programmers is trying to figure out ways
-to reduce complexity in our codebases. Better abstractions, powerful libraries,
-and great languages are all techniques we try and use to reduce the complexity.
+    sum :: (Monad m, Num a) => Consumer a m a
+    print :: (MonadIO m, Show a) => Consumer a m ()
 
-Very rarely will we see an example as clear-cut as the one above. Often times
-there will be some kind of a trade-off between two approaches. Other times, the
-complexity will truly be unwarranted, but simplifying will just be a hard
-problem to solve.
+Notice how both of these are conceptually the same: they are both consumers,
+which can be composed with other conduits in the normal way (i.e. the `=$=`
+operator). Now compare the types in pipes:
 
-However, in some cases, none of this will be true. Some solutions may be
-complex, but are complex because the problem itself really does have that level
-of complexity inherent to it. After we've implemented every simplification we
-can find, we'll still be left with a complex solution. And this is when we
-enter the complexity [zero sum
-game](http://en.wikipedia.org/wiki/Zero-sum_game). At this point, all we can do
-is shuffle complexity from one part of the system to another. We can make good
-arguments for why the complexity should be placed at one point or another, but
-ultimately the complexity is there.
+    sum :: (Monad m, Num a) => Producer a m () -> m a
+    print :: MonadIO m => Show a => Consumer' a m r
 
-Almost two years ago, pipes was released, and touted as a simpler alternative
-to enumerator and conduit. I claimed at the time that it was a baseless
-comparison, since pipes didn't have most of the functionality of those two
-libraries. Nonetheless, the comparisons were made. I've since then asked many
-times to see the claims backed up. Finally, with the release of pipes-parse and
-pipes-bytestring, there's enough of a basis for comparison to be made. And I'm
-going to claim that, while the core of pipes may be simpler than the core of
-conduit, the complexity has merely been shuffled, and shuffled in a very
-pessimistic manner.
+These two things are fundamentally different. The first is a function that
+takes a data producer and processes it. It does not get to take advantage of
+normal composition (though that can be achieved by instead composing on the
+producer). pipes has these two separate approaches for processing a stream of
+data, and each must be used at different points.
 
-I'll step through a few of the features which conduit has elected to bake into
-its core, which have to some extent complicated the core. And then I'd like to
-compare those with the pipes approach of adding them on afterwards.
+To understand why this is the case, let's look at a simplistic implementation
+of `sum` in conduit:
 
-I'd like to make one thing clear before getting started. I have huge respect
-for pipes, and the work Gabriel has done on it. pipes itself has had a huge
-influence on conduit's development, and without pipes I doubt conduit would
-be nearly as elegant as it is today. The purpose of this blog post is to
-point out some important differences in the two libraries, and places where
-I believe the pipes solution is lacking.
+    sum =
+        loop 0
+      where
+        loop x = await >>= maybe (return x) (\y -> loop $! x + y)
 
-## Deterministic resource handling
+The `await` function returns a `Maybe` value. If upstream has no more output,
+then the `sum` function is notified with a `Nothing` value, and can return the
+sum it has computed. In pipes, however, if upstream closes, `await` will simply
+never return.
+
+### pipes: Dummy return values
+
+You *could* implement a limited `sum` function in pipes, such as "add up the
+first 10 elements." This would look something like this (I'm specializing to
+`Integer` to help the explanation later):
+
+    sum :: Monad m
+        => Int -- ^ total values to add
+        -> Consumer' Integer m Integer
+    sum count0 =
+        loop count0 0
+      where
+        loop 0 total = return total
+        loop count total = await >>= \i -> loop (count - 1) (total + i)
+
+That's simple enough. In fact, it's even simpler than the conduit version,
+since it doesn't need to pay attention to whether upstream terminated. (Put a
+bookmark on that comment, I'll get back to it momentarily.)
+
+So let's go ahead and try to use this. A naive caller function may look like this:
+
+    main = do
+        x <- runEffect $ mapM_ yield [1..20] >-> sum 10
+        print x
+
+However, this generates a compiler error:
+
+    Couldn't match type `Integer' with `()'
+    
+The issue is that the producer has a return type of `()`, whereas we want a
+return an `Integer` from `sum`. `pipes` requires that all components of the
+pipeline have the same return value, since any one of them can terminate
+computation. In order to work around this, we need to use some kind of a return
+value from the producer. A `Maybe` value works well for this:
+
+    main = do
+        x <- runEffect $
+            (mapM_ yield [1..20] >> return Nothing)
+            >-> fmap Just (sum 10)
+        print x
+
+Now our return value is of type `Maybe Integer`, not `Integer`. But if we think
+about it, this is perfectly logical, since the `sum` function can't return a
+value unless there are at least 10 values in the stream.
+
+This comes back to the fact that the conduit version of the above `sum`
+function is more complicated. That's because it will explicitly deal with
+termination of the upstream. This grants it the ability to return the current
+total, or if so desired, emulate the pipes behavior above and return a
+`Nothing` to indicate not enough input was provided.
+
+### conduit: lack of upstream return values
+
+There's a bit of a mismatch in the conduit abstraction: the most downstream
+component (the Sink) can provide a return value, but the rest of the upstream
+components cannot. This was an explicit design decision, and in my experience
+it's what users actually need the vast majority of the time. (I only needed an
+upstream return value once in all of my conduit usage, and was able to work
+around the problem using some low-level tricks.) However, this does present
+some more abstract problems. For one, there's no meaningful right identity in
+conduit.
+
+Remember that in conduit, upstream has automatic termination, while downstream
+does not. This explains why only downstream can provide a return value.
+However, if we turn off automatic termination on both sides, we can get values
+returned from both upstream and downstream. (Yes, this claim is pretty vague
+right now, I'll elaborate fully in my next blog post.)
+
+## pipes: Prompt resource finalization
 
 Consider the following simplistic file reading function in conduit:
 
@@ -173,25 +244,32 @@ Some long running computation
 That's a bit worrisome. The input file is kept open during the entire long
 running computation!  This problem is identified in the [pipes-safe release
 announcement](http://www.haskellforall.com/2013/01/pipes-safe-10-resource-management-and.html)
-from January. By keeping finalizers in the core datatype, conduit is able to
-ensure prompt resource finalization, at the expense of losing strict
-associativity. pipes has elected instead for a simpler core and strict
-associativity, with the result of some fairly surprising behavior.
+from January.
 
-So assuming that prompt finalization is actually important to you, how do you
-achieve this behavior with pipes? You could restructure your program a bit and
-run two different pipelines. That's fine in this case, of a simple pipeline
-writing to stdout. But as the program becomes more complicated, rewriting it in
-such a way as to ensure the finalizer is called immediately may become
-prohibitively difficult.
+The reason pipes is not able to guarantee prompt finalization is that the data
+producer is never given a chance to perform its own cleanup. In the line:
 
-Point being: there's certainly complexity involved in prompt finalization. But
-punting on this as pipes has done doesn't solve the complexity, it merely
-pushes it off as a concern for the user. In conduit, the library itself handles
-the complexity, so it doesn't become a user concern, with the downside that
-composition is not associative with regards to ordering of finalizers.
+    readFile "input.txt" >-> P.take 4
 
-## Chunking and leftovers
+Assuming input.txt has more than four characters, the call to `P.fromHandle` in
+`readFile` will never exit. Instead, processing will halt as soon as `take 4`
+returns. I consider this behavior to actually be a bug: the `bracket` function
+has distinctly different semantics than `Control.Exception.bracket`, and scarce
+resources will be kept open for an indefinitely long time (until the `SafeT`
+block is exited).
+
+### conduit: lack of assocativity
+
+conduit doesn't get away free here either. conduit also doesn't allow the
+upstream to continue processing after downstream completes. Instead, it adds a
+new concept that a finalizer function can be yielded with each value. However,
+this implementation approach doesn't allow for deterministic ordering of
+finalizers. This bug was originally [identified by Dan
+Burton](https://github.com/snoyberg/conduit/pull/57#issuecomment-7474555).
+However, by getting rid of early termination in producers, we can solve this
+problem and take back full associativity.
+
+## pipes: Chunking and leftovers
 
 The other major feature that conduit bakes into the core which pipes does not
 is leftovers. Leftover support is necessary for a few different things, but the
@@ -291,15 +369,16 @@ This approach to leftovers just inverts the whole concept of a producer to a
 pull-based model. This is a valid approach, but it sacrifices so much of the
 elegance and simplisity we have in a streaming library, and pushes it to a user
 problem. The API is now seemingly doubled, between "Pipes" and "Splitters" as
-the API documentation calls them.
+the API documentation calls them. (This is similar to the issues I raise above
+regarding folds.)
 
-Gabriel claims this can be encapsulated nicely via a `StateT` as is done in
-pipes-parse. This may be true, and it's certainly true that everything can be
-implemented with this abstraction. But now users are required to hop between
-two or three different ecosystems of functions in order to implement anything
-involving chunked data.
+While these limitations [can be worked
+around](http://www.reddit.com/r/haskell/comments/1n0i29/folding_lines_in_conduit/ccep9ek),
+I believe the workarounds defeat so much of the elegance of the declarative
+approach pipes claims. conduit keeps that elegance by baking leftovers directly
+into the core abstraction.
 
-### Simple parsing
+### pipes: Simple parsing
 
 As a further illustration of the problems of lack of proper chunked data
 support, consider the following trivial conduit snippet:
@@ -322,83 +401,112 @@ resulting in some really complicated user-facing APIs. conduit includes the
 complexity in one place, the core, and the rest of the codebase reaps the
 benefits.
 
-## Folding
+### conduit: Lack of identity in presence of leftovers
 
-Let's go back to basics, and implement a very simplistic left fold on lists:
+conduit solves leftovers by baking it into the core abstraction as a separate
+concept. This has been criticized by Gabriel and others (rightfully so) in that
+it makes the core harder to reason about. The manner in which this issue
+manifests is that identity does not preserve leftovers. In other words,
+`idConduit =$= leftover x /= leftover x`.
 
-```haskell
-foldl _ a [] = a
-foldl f a (b:bs) = foldl f (f a b) bs
-```
+At this point, you're probably wondering: I get the problems with leftovers,
+how does this indict automatic termination as the cause? I'll have to be a bit
+vague until my next post, but the basic idea is that there's an incredibly easy
+way to implement leftovers: each time a component completes, it returns both
+its return value and its leftovers. When this component is monadically composed
+with another component, the leftovers are supplied as input to that new
+component. And when composed via fusion (a.k.a., vertical composition), the
+leftovers are provided as part of the result.
 
-It has to handle to cases: if the list is empty, return the accumulator,
-otherwise get a new accumulator and recurse. Great. Can we do the same thing
-with conduit?
+## pipes and conduit: isolate
 
-```haskell
-foldl :: Monad m => (a -> b -> a) -> a -> Sink b m a
-foldl f a = do
-    mb <- await
-    case mb of
-        Nothing -> return a
-        Just b -> foldl f (f a b)
-```
+I don't think the iteratee approach gets nearly enough credit; in some cases,
+we're still not completely caught up. Take for example [the `isolate`
+function](http://haddocks.fpcomplete.com/fp/7.4.2/20130922-179/enumerator/Data-Enumerator-List.html#v:isolate),
+which has the following description:
 
-It's a bit wordier, since we need to perform a monadic action to get the next
-value instead of using simple pattern matching, but the algorithm is the same.
-Using this let's us leverage all of our standard monadic composition and
-fusion. For example, to skip the first 5 numbers in the stream and sum up the
-following 5, and then do the same process again, you would write:
+> isolate n reads at most n elements from the stream, and passes them to its iteratee. If the iteratee finishes early, elements continue to be consumed from the outer stream until n have been consumed.
 
-```haskell
-res <- mapM_ yield [1..20] $$ do
-    drop 5
-    x <- isolate 5 =$ foldl (+) 0
-    drop 5
-    y <- isolate 5 =$ foldl (+) 0
-    return (x, y)
-print res
-```
+This kind of function could be incredibly useful for something like consuming
+an HTTP request body. A web server will determine the length of the request
+body from the `content-length` header, and then stream that body to the
+application. If the application doesn't consume the entire body, `isolate` can
+ensure that the rest of the input is flushed, so that the next request is
+available for the webserver to continue processing.
 
-Let's compare this to the (slightly simplified) type of `fold` in pipes:
+A simpler example of this would be a function to consume lines. Consider the
+following approach in conduit:
 
-```haskell
-fold :: Monad m => (b -> a -> b) -> b -> Producer a m () -> m b
-```
+    line :: Monad m => Conduit Char m Char
+    line = do
+        mc <- await
+        case mc of
+            Nothing -> return ()
+            Just '\n' -> return ()
+            Just c -> yield c >> line
 
-That type is decidedly different. Instead of our conduit `fold`, which provided
-a `Sink` which could use normal composition, `fold` from pipes is using the
-same trick we saw previously of taking an explicit `Producer` and producing a
-single value. This defeats all of our standard composition abilities. Gabriel
-[provided me with a
-solution](http://www.reddit.com/r/haskell/comments/1n0i29/folding_lines_in_conduit/ccep9ek):
+The algorithm is simple: get a character. If there is no character, or it's a
+newline, we're done processing. Otherwise, yield the character downstream, and
+continue. Let's try to use this function to get the second line of input:
 
-```haskell
-res <- (`evalStateT` (each [1..20])) $ do
-    runEffect $ for (input >-> P.take 5) discard
-    res1 <- P.sum (input >-> P.take 5)
-    runEffect $ for (input >-> P.take 5) discard
-    res2 <- P.sum (input >-> P.take 5)
-    return (res1, res2)
-print res
-```
+    main = do
+        secondLine <- mapM_ yield "Hello\nWorld\n" $$ do
+            line =$ return ()
+            line =$ CL.consume
+        putStrLn secondLine
 
-However, your consumer is no longer the standard consumer. You end up with a
-lot of boilerplate for converting between the two different paradigms. Simple
-composition is no longer present. And, at least to me, this kind of solution is
-far from obvious or trivial.
+We'd expect the output to be `World`, but unfortunately it's not. The actual
+output is `Hello`. The reason is that the Sink attached to the first call to
+`line` does not consume any of the input provided by `line`. As a result, it
+terminates immediately, and therefore `line` also terminates immediately, since
+producers automatically terminate. In fact, `line` is never called here at all!
 
-~It gets even scarier when you look at the implementation of `fold`:~. Never mind, the implementation of `fold` uses explicit constructors just for an optimization. It seems like the right way to implement this `fold` is via:
+One workaround is to provide a modified `line` that takes a `Sink` as its first
+argument, e.g.:
 
-```haskell
-fold f a p = do
-    eb <- next p
-    case eb of
-        Left _ -> return a
-        Right (b, p') -> fold f (f a b) p'
-```
+    -- This is the same as the previous line
+    lineHelper :: Monad m => Conduit Char m Char
 
-That now looks pretty similar to the conduit version, the difference being `next`. The issue is that `await` in pipes cannot indicate the termination of the stream. I know there are reasons for this choice, but it seems to me like the complexity knob, once again, was set to the wrong calibration.
+    line :: Monad m
+         => Sink Char m a
+         -> Sink Char m a
+    line sink = lineHelper =$ do
+        result <- sink
+        CL.sinkNull -- discard the rest of the line
+        return result
 
-* fold can't be implemented in the higher-level API
-* No need for ~> composition, we've just got monads
+Then, instead of using fusion to combine `line` with our sinks, we just pass
+them as arguments, e.g.:
+
+    main = do
+        secondLine <- mapM_ yield "Hello\nWorld\n" $$ do
+            line $ return () -- note: replaced =$ with $
+            line $ CL.consume
+        putStrLn secondLine
+
+While this works, it's not ideal. Like the pipes solutions to folding and
+leftovers, we're left with two different and conflicting approaches which don't
+compose with each other.
+
+### Sneek preview
+
+To give a bit of a sneak peek for the next post, let's consider what an ideal
+version of `line` may look like. It would need to be able to continue consuming
+input after calling `yield`. We may even call that something like `tryYield`,
+and allow `yield` to maintain its current auto-termination behavior. This would
+look like:
+
+    line :: Monad m => Conduit Char m Char
+    line = do
+        mc <- await
+        case mc of
+            Nothing -> return ()
+            Just '\n' -> return ()
+            Just c -> tryYield c >> line
+
+We're still left with a question. The current behavior of conduit would mean
+that no input is consumed if downstream is already closed. With the
+hypothetical `line` function I just wrote, one character will be consumed
+before `tryYield` is ever called. Is there any way to perfectly model the
+previous behavior and ensure no actions are performed if downstream is closed?
+I'll let you know in the next blog post.
