@@ -511,3 +511,24 @@ hypothetical `line` function I just wrote, one character will be consumed
 before `tryYield` is ever called. Is there any way to perfectly model the
 previous behavior and ensure no actions are performed if downstream is closed?
 I'll let you know in the next blog post.
+
+## Conclusion
+
+I want to be clear: the pipes design is very elegant. Some of the issues I've
+listed above can be worked around. If you're OK with having to use a separate
+set of functions for writing folds, for example, the approach will work.
+However, there are other cases- like prompt resource finalization- for which
+there does not appear to be a readily available workaround. If you don't have
+need of prompt resource finalization, then this limitation may not bother you.
+For other cases, it could be a deal-breaker.
+
+On the conduit side, we're looking at three identified flaws: associativity
+affecting finalizers ordering, guaranteed emptying when using a Conduit, and
+identity regarding leftovers. These would all be nice to fix, but at the same
+time none of them are major issues. So the question is: would making this kind
+of a change be worth it?
+
+Before making any decisions, I think it's worth analyzing the new design. I
+think at the very least it will give us new insights into our existing
+approaches, and maximally may let us drastically improve our streaming
+libraries.
