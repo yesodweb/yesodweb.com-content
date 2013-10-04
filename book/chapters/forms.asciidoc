@@ -807,6 +807,95 @@ getHomeR = do
         |]
 ----
 
+=== Values that don't come from the user
+
+Imagine you're writing a blog hosting web app, and you want to have a form for
+users to enter a blog post. A blog post will consist of four pieces of
+information:
+
+* Title
+* HTML contents
+* User ID of the author
+* Publication date
+
+We want the user to enter the first two values, but not the second two. User ID
+should be determined automatically by authenticating the user (a topic we
+haven't covered yet), and the publication date should just be the current time.
+The question is, how do we keep our simple applicative form syntax, and yet
+pull in values that don't come from the user?
+
+The answer is two separate helper functions:
+
+* +pure+ allows us to wrap up a plain value as an applicative form value.
+* +lift+ allows us to run arbitrary +Handler+ actions inside an applicative form.
+
+Let's see an example of using these two functions:
+
+[source, haskell]
+----
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+module Case where
+
+import           Control.Applicative
+import           Data.Text           (Text)
+import           Data.Time
+import           Yesod
+
+-- In the authentication chapter, we'll address this properly
+newtype UserId = UserId Int
+    deriving Show
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET POST
+|]
+
+instance Yesod App
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+type Form a = Html -> MForm Handler (FormResult a, Widget)
+
+data Blog = Blog
+    { blogTitle    :: Text
+    , blogContents :: Textarea
+    , blogUser     :: UserId
+    , blogPosted   :: UTCTime
+    }
+    deriving Show
+
+form :: UserId -> Form Blog
+form userId = renderDivs $ Blog
+    <$> areq textField "Title" Nothing
+    <*> areq textareaField "Contents" Nothing
+    <*> pure userId
+    <*> lift (liftIO getCurrentTime)
+
+getHomeR :: Handler Html
+getHomeR = do
+    let userId = UserId 5 -- again, see the authentication chapter
+    ((res, widget), enctype) <- runFormPost $ form userId
+    defaultLayout
+        [whamlet|
+            <p>Previous result: #{show res}
+            <form method=post action=@{HomeR} enctype=#{enctype}>
+                ^{widget}
+                <input type=submit>
+        |]
+
+postHomeR :: Handler Html
+postHomeR = getHomeR
+
+main :: IO ()
+main = warp 3000 App
+----
+
 === Summary
 
 Forms in Yesod are broken up into three groups. Applicative is the most common,
