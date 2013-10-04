@@ -1,3 +1,7 @@
+- time: 2013-10-04T10:00:00Z
+  author: michael
+  title: A warning about segfaults
+  path: 2013/10/segfaults.md
 - time: 2013-10-02T10:53:00Z
   author: greg
   title: 'Prelude replacements are for application developers'
