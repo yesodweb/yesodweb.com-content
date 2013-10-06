@@ -854,7 +854,7 @@ program is:
 import Data.Text (Text)
 import qualified Data.Text as T
 import Text.Hamlet (HtmlUrlI18n, ihamlet)
-import Text.Blaze (toHtml)
+import Text.Blaze.Html (toHtml)
 import Text.Blaze.Html.Renderer.String (renderHtml)
 
 data MyRoute = Home | Time | Stylesheet
