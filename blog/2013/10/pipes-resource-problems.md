@@ -34,8 +34,7 @@ main = do
 ```
 
 I'd like to write a program to create a clone of this "input" directory, into a
-directory called "output". Using filesystem-conduit (built on the wonderful
-system-filepath and system-fileio packages), this is pretty easy:
+directory called "output". Using filesystem-conduit, this is pretty easy:
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
@@ -55,7 +54,7 @@ main = runResourceT $ traverse False "input" $$ awaitForever (\infile -> do
 
 `traverse` creates a stream of all of the files found in the input path,
 traversing subdirectories. For each file, we create the output filename, create
-the directing for the output file, and then connect `sourceFile` to `sinkFile`
+the directory for the output file, and then connect `sourceFile` to `sinkFile`
 to perform the actual copy. Each of these functions guarantees prompt cleanup
 of the file handles they hold, and the enclosing `runResourceT` ensures that
 resources will be cleaned up, even in the event of an exception.
@@ -109,13 +108,51 @@ Go ahead and run that program. You should get output that looks something like:
 > copy-pipes.hs: input/13/1/12: openFile: resource exhausted (Too many open
 > files)
 
-The exact file is crashes on may be different, and if you've increased your
+The exact file it crashes on may be different, and if you've increased your
 ulimits, the program may succeed. But the core problem is that pipes provides
-no means of guaranteeing that a resource is cleaned up.
+no means of guaranteeing that a resource is cleaned up. What's even more
+troubling is that the behavior of pipes is *worse* than that of lazy I/O. Since
+pipes continues to hold on to open file handles after they are no longer
+needed, the garbage collector has no chance of helping us. By contrast, the
+following lazy I/O version of the program generally runs without crashing:
+
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+import           Control.Monad
+import           Control.Monad.IO.Class
+import           Filesystem                (createTree, isDirectory, isFile,
+                                            listDirectory)
+import           Filesystem.Path.CurrentOS
+import           Prelude                   hiding (FilePath)
+
+main = traverse "input" $ \infile -> do
+    Just suffix <- return $ stripPrefix "input/" infile
+    let outfile = "output" </> suffix
+    createTree $ directory outfile
+    readFile (encodeString infile) >>= writeFile (encodeString outfile)
+
+traverse :: MonadIO m => FilePath -> (FilePath -> m a) -> m ()
+traverse root f =
+    liftIO (listDirectory root) >>= pull
+  where
+    pull [] = return ()
+    pull (p:ps) = do
+        isFile' <- liftIO $ isFile p
+        if isFile'
+            then f p >> pull ps
+            else do
+                follow' <- liftIO $ isDirectory p
+                if follow'
+                    then do
+                        ps' <- liftIO $ listDirectory p
+                        pull ps
+                        pull ps'
+                    else pull ps
+```
 
 ## Why this is a problem
 
-For many of us, the whole point of a streaming data library is to provide for
+For many of us, the primary goal of a streaming data library is to provide for
 deterministic resource handling. While not the only issue with lazy I/O, its
 non-determinism was high on the list. The issue is that, based on various
 environmental factors, cleanup of resources could be delayed until the next
@@ -136,11 +173,11 @@ the resourcet package. conduit itself then provides on demand acquisition and
 prompt finalization.
 
 pipes-safe includes a SafeT transformer which is almost identical to ResourceT.
-And this transformer guarantees that, no matter what (*for some definitions of
-no matter what*), a cleanup action is called. However, just like ResourceT, it
-can give no guarantees about promptness. I'll get into the details of *why* in
-my next blog post, but pipes is unable to guarantee that it will run code at a
-specific point.
+And this transformer guarantees that, short of a program crash, a cleanup
+action is always called. However, just like ResourceT, it can give no
+guarantees about promptness. I'll get into the details of *why* in my next blog
+post, but pipes is unable to guarantee that it will run code at a specific
+point.
 
 Let's look at one of the examples from the pipes-safe docs:
 
@@ -203,6 +240,10 @@ pipes-safe, these programs are doing slightly different things: conduit deals
 with 50 byte chunks, while pipes is dealing with 50 *line* chunks. This
 distinction is irrelevant for the current discussion, I'm just trying to keep
 the examples concise by using functions built into the libraries.
+
+Ignoring any issues of which programs can or cannot be rewritten to work with
+pipes, the more glaring issue is that pipes makes it easy and natural to write
+programs which have very detrimental behavior regarding resources.
 
 ## It's unreliable
 
