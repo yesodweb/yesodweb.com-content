@@ -12,6 +12,8 @@ current features, and solving the two ways in which conduit currently does not
 follow the category laws. I'll describe all of these issues in this post, and
 save the new design for a later blog post.
 
+Note that, while this blog post was actually written first, it can be considered a [continuation of my previous blog post](http://www.yesodweb.com/blog/2013/10/pipes-resource-problems), which gives some very concrete examples of the resource issues I raise below.
+
 ## The flaw: automatic termination
 
 If you look at the core concepts of pipes (e.g., the [Pipe datatype in pipes
@@ -24,7 +26,7 @@ as failure when awaiting from upstream.
 However, this simplicity includes a heavy cost: there's no way to detect
 termination of a stream. As soon as one component of a pipeline terminates, the
 rest of the pipeline terminates also. This behavior can be convenient in many
-ways; the identity pipe, for example, is expressed simply as `await >>= yield`.
+ways; the identity pipe, for example, is expressed simply as `forever $ await >>= yield`.
 However, this decision ends up pushing complexity into many other parts of the
 ecosystem, and in some cases makes proper behavior impossible to achieve.
 
@@ -32,7 +34,7 @@ conduit is not immune to this issue. conduit does not have automatic
 termination on the consuming side, but does have it on the producing side.
 
 I've held off on commenting on these limitations in pipes previosly, since
-until now pipes has not provided any form of solution for many of the problems
+until recently pipes has not provided any form of solution for many of the problems
 I'm going to raise. With the advent of pipes-bytestring, pipes-parse, and
 pipes-safe, there's enough of a solution available to make a meaningful
 analysis. After looking at these solutions, my conclusion is:
@@ -68,7 +70,7 @@ a printing sink (i.e., prints all input to stdout) in conduit:
 
 Notice how both of these are conceptually the same: they are both consumers,
 which can be composed with other conduits in the normal way (i.e. the `=$=`
-operator). Now compare the types in pipes:
+operator and monadic bind). Now compare the types in pipes:
 
     sum :: (Monad m, Num a) => Producer a m () -> m a
     print :: MonadIO m => Show a => Consumer' a m r
@@ -121,8 +123,8 @@ However, this generates a compiler error:
 
     Couldn't match type `Integer' with `()'
     
-The issue is that the producer has a return type of `()`, whereas we want a
-return an `Integer` from `sum`. `pipes` requires that all components of the
+The issue is that the producer has a return type of `()`, whereas we want to
+return an `Integer` from `sum`. pipes requires that all components of the
 pipeline have the same return value, since any one of them can terminate
 computation. In order to work around this, we need to use some kind of a return
 value from the producer. A `Maybe` value works well for this:
@@ -263,7 +265,7 @@ block is exited).
 
 conduit doesn't get away free here either. conduit also doesn't allow the
 upstream to continue processing after downstream completes. Instead, it adds a
-new concept that a finalizer function can be yielded with each value. However,
+new concept: a finalizer function can be yielded with each value. However,
 this implementation approach doesn't allow for deterministic ordering of
 finalizers. This bug was originally [identified by Dan
 Burton](https://github.com/snoyberg/conduit/pull/57#issuecomment-7474555).
