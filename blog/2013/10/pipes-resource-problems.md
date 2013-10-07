@@ -245,6 +245,9 @@ Ignoring any issues of which programs can or cannot be rewritten to work with
 pipes, the more glaring issue is that pipes makes it easy and natural to write
 programs which have very detrimental behavior regarding resources.
 
+__UPDATE__: There's a more sophisticated example the better demonstrates the
+problem at the end of this blog post.
+
 ## It's unreliable
 
 One last point is that this behavior is unreliable. Consider this example again:
@@ -273,3 +276,43 @@ iteratees or conduit.
 Again, my point in this blog post is simply to establish the fact that there's
 a problem. I'll get into more details about the cause in the following blog
 post, and a solution to that problem in the one after that.
+
+## Update: a more complicated problem
+
+After publishing this blog post, there was a discussion on Reddit which pointed
+out the presence of `withFile` in pipes-safe, of which I was previously
+unaware. That allows the two examples I gave above to be implemented, but
+doesn't actually solve the core problem that finalizers within a pipeline
+cannot be run promptly. Here's a more complicated example to demonstrate this.
+
+The following snippet of conduit code loops over all of the files in an input
+folder, and spits each 50-byte chunk into a separate file in the output folder.
+At no point is more than one file handle open for reading and one for writing.
+
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+import Data.Conduit
+import Data.Conduit.List (peek)
+import Data.Conduit.Filesystem
+import Data.Conduit.Binary (isolate)
+import Data.String (fromString)
+
+main =
+    runResourceT $ src $$ loop 0
+  where
+    src = traverse False "input" $= awaitForever sourceFile
+    loop i = do
+        mx <- peek
+        case mx of
+            Nothing -> return ()
+            Just _ -> do
+                let fp = "out-conduit/" ++ show i
+                isolate 50 =$ sinkFile (fromString fp)
+                loop $ i + 1
+```
+
+To me, this demonstrates the beauty of composition that conduit provides. Our
+`src` above never has to be structured in such a way to deal with resource
+allocation or finalization; `sourceFile` automatically handles it correctly.
+
+I'm not aware of any solution to this problem in pipes.
