@@ -316,3 +316,54 @@ To me, this demonstrates the beauty of composition that conduit provides. Our
 allocation or finalization; `sourceFile` automatically handles it correctly.
 
 I'm not aware of any solution to this problem in pipes.
+
+Update 2: Gabriel has [provided a solution](http://www.reddit.com/r/haskell/comments/1nw7ji/pipes_resource_problems/ccn7bs1) for this in pipes:
+
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+
+import Control.Monad
+import Data.DirStream
+import Pipes
+import Pipes.Safe
+import Pipes.ByteString
+import qualified Pipes.ByteString.Parse as P
+import Pipes.Parse
+
+import qualified Filesystem as F
+import qualified Filesystem.Path.CurrentOS as F
+import System.IO
+
+main =
+    runSafeT $ runEffect $ (`evalStateT` src) (loop 0)
+  where
+    src = for (every (childFileOf "/usr/bin")) readFile'
+    loop i = do
+        eof <- isEndOfBytes
+        unless eof $ do
+            let fp = F.decodeString ("out/" ++ show i)
+            runSafeT $ runEffect $
+                hoist lift (input >-> P.take 50) >-> writeFile' fp
+            loop (i + 1)
+
+-- `childOf` returns all children, including directories.  This is just a quick filter to get only files
+childFileOf :: (MonadSafe m) => F.FilePath -> ListT m F.FilePath
+childFileOf file = do
+    path <- childOf file
+    isDir <- liftIO $ isDirectory path
+    guard (not isDir)
+    return path
+
+-- Work around `FilePath` mismatch.  See comments below
+readFile' :: (MonadSafe m) => F.FilePath -> Producer ByteString m ()
+readFile' file =
+    bracket (liftIO $ F.openFile file ReadMode) (liftIO . hClose) fromHandle
+
+writeFile' :: (MonadSafe m) => F.FilePath -> Consumer ByteString m r
+writeFile' file =
+    bracket (liftIO $ F.openFile file WriteMode) (liftIO . hClose) toHandle
+```
+
+I think this is a good demonstration of the fact that having proper resource
+handling in the core is (1) more composable, (2) much safer and (3) far easier
+to use.
