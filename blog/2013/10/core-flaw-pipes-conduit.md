@@ -3,16 +3,30 @@ the problems more thoroughly. After looking at the various examples I'll be
 bringing below quite a bit, I've come to a conclusion: there is just one single
 design decision in pipes which leads to the problems I'll describe. And
 conduit has inherited half of this issue, leading to it getting some of these
-issues as well.
+issues as well (and in some cases different issues).
 
 In this blog post, I'm hoping to motivate the fact that there is actually a
 problem. I've been working on some experimental code in conduit which changes
 this design, thereby simplifying the internal structure, keeping all of its
 current features, and solving the two ways in which conduit currently does not
 follow the category laws. I'll describe all of these issues in this post, and
-save the new design for a later blog post.
+save the new design for my next post.
 
-Note that, while this blog post was actually written first, it can be considered a [continuation of my previous blog post](http://www.yesodweb.com/blog/2013/10/pipes-resource-problems), which gives some very concrete examples of the resource issues I raise below.
+Note that, while this blog post was actually written first, it can be
+considered a [continuation of my previous blog
+post](http://www.yesodweb.com/blog/2013/10/pipes-resource-problems), which
+gives some very concrete examples of the resource issues I raise below.
+
+## Goal of this series
+
+Since some people seemed to misunderstand my purpose with this series, let me
+make it crystal clear: pipes promises a lot of elegance in dealing with
+streaming data, whereas conduit includes functionality which has been demanded
+in real world code. Many people have asked me if there is some way to merge
+these two advantages, usually asking if conduit can be built on top of pipes. I
+started that investigation, and came away with the answer "no" based on the
+points below. However, with the change I'll be describing, I think there's a
+very good chance for finding a common solution for the goals of both packages.
 
 ## The flaw: automatic termination
 
