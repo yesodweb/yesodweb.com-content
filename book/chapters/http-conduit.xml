@@ -44,7 +44,7 @@ main = do
         res &lt;- http req manager
 
         -- And finally stream the value to a file
-        responseBody res $$ sinkFile "foo.txt"
+        responseBody res $$+- sinkFile "foo.txt"
 
         -- Make it a POST request, don't follow redirects, and accept any
         -- status code.
@@ -54,7 +54,7 @@ main = do
                 , checkStatus = \_ _ -&gt; Nothing
                 }
         res2 &lt;- http req2 manager
-        responseBody res2 $$ sinkFile "post-foo.txt"</programlisting>
+        responseBody res2 $$+- sinkFile "post-foo.txt"</programlisting>
    </section>
    <section>
     <title>Concepts</title>
