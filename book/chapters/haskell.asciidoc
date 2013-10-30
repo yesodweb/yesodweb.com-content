@@ -121,10 +121,7 @@ commands:
 [NOTE]
 ====
 You probably want to perform a sandboxed install of your Yesod project
-by using the cabal sandbox feature.
-
-[source]
-cabal sandbox init
+by using the cabal sandbox feature by running the command +cabal sandbox init+
 
 ====
 
