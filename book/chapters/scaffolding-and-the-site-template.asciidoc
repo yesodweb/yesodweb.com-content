@@ -39,26 +39,17 @@ will focus on the scaffoldings for one of the database backends. There will be
 minor differences for the simple backend.
 
 After creating your files, the scaffolder will print a message about getting
-started. It gives two sets of options for commands: one using _cabal_, and the
-other using _cabal-dev_. _cabal-dev_ is basically a wrapper around cabal which
-causes all dependencies to be built in a sandbox. Using it is a good way to
-ensure that installing other packages will not break your site setup. It is
-strongly recommended. If you don't have _cabal-dev_, you can install it by
-running _cabal install cabal-dev_.
-
-NOTE: At the time of writing, cabal-install 1.18 has been recently released,
-which includes sandboxing functionality itself. The community is beginning to
-migrate over to the built-in sandbox support, so at some point in the future
-cabal-dev support will likely be removed.
-
-Note that you really do need to use the _cabal install --only-dependencies_ (or
-_cabal-dev install --only-dependencies_) command. Most likely, you do not yet
+started. The suggested command runs _cabal sandbox init_. This will ensure
+that your packages are installed only to your project directory,
+avoiding conflicts with other projects.
+Note that you really do need to use the _cabal install --only-dependencies_
+command. Most likely, you do not yet
 have all the dependencies in place needed by your site. For example, none of
 the database backends, nor the Javascript minifier (hjsmin) are installed when
 installing the +yesod+ package.
 
-Finally, to launch your development site, you would use _yesod devel_ (or
-_yesod --dev devel_). This site will automatically rebuild and reload whenever
+Finally, to launch your development site, you would use _yesod devel_.
+This site will automatically rebuild and reload whenever
 you change your code.
 
 === File Structure
