@@ -432,7 +432,7 @@ data Car = Car
 data Color = Red | Blue | Gray | Black
     deriving (Show, Eq, Enum, Bounded)
 
-carAForm :: Maybe Car -> AForm Synopsis Synopsis Car
+carAForm :: Maybe Car -> AForm Handler Car
 carAForm mcar = Car
     <$> areq textField "Model" (carModel <$> mcar)
     <*> areq carYearField "Year" (carYear <$> mcar)
