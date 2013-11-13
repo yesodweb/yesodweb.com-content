@@ -13,7 +13,7 @@ web-devel](http://www.haskell.org/pipermail/web-devel/2013/002663.html) about
 the planned changes to WAI. For the most part, the changes Kazu and I have
 implemented coincide with the conclusions of that thread, namely:
 
-* The Request constructor has been moved to a .Internal module.
+* The Request constructor has been moved to an Internal module.
 * serverName and serverPort have been removed.
 * requestBody no longer lives in `ResourceT IO`.
 * As an optimization to avoid extra lookups, `requestHeaderHost` is now part of `Request`. We may add other such optimization fields in the future.
