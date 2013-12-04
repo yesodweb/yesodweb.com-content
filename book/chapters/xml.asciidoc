@@ -1,0 +1,781 @@
+== xml-conduit
+
+Many developers cringe at the thought of dealing with XML files. XML has the
+reputation of having a complicated data model, with obfuscated libraries and
+huge layers of complexity sitting between you and your goal. I'd like to posit
+that a lot of that pain is actually a language and library issue, not inherent
+to XML.
+
+Once again, Haskell's type system allows us to easily break down the problem to
+its most basic form. The xml-types package neatly deconstructs the XML data
+model (both a streaming and DOM-based approach) into some simple ADTs.
+Haskell's standard immutable data structures make it easier to apply transforms
+to documents, and a simple set of functions makes parsing and rendering a
+breeze.
+
+We're going to be covering the xml-conduit package. Under the surface, this
+package uses a lot of the approaches Yesod in general does for high
+performance: blaze-builder, text, conduit and attoparsec. But from a user
+perspective, it provides everything from the simplest APIs
+(+readFile+/+writeFile+) through full control of XML event streams.
+
+In addition to +xml-conduit+, there are a few related packages that come into
+play, like xml-hamlet and xml2html. We'll cover both how to use all these
+packages, and when they should be used.
+
+=== Synopsis
+
+[source, xml]
+----
+<!-- Input XML file --> 
+<document title="My Title">
+    <para>This is a paragraph. It has <em>emphasized</em> and <strong>strong</strong> words.</para>
+    <image href="myimage.png"/>
+</document>
+----
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+import qualified Data.Map        as M
+import           Prelude         hiding (readFile, writeFile)
+import           Text.Hamlet.XML
+import           Text.XML
+
+main :: IO ()
+main = do
+    -- readFile will throw any parse errors as runtime exceptions
+    -- def uses the default settings
+    Document prologue root epilogue <- readFile def "input.xml"
+
+    -- root is the root element of the document, let's modify it
+    let root' = transform root
+
+    -- And now we write out. Let's indent our output
+    writeFile def
+        { rsPretty = True
+        } "output.html" $ Document prologue root' epilogue
+
+-- We'll turn out <document> into an XHTML document
+transform :: Element -> Element
+transform (Element _name attrs children) = Element "html" M.empty
+    [xml|
+        <head>
+            <title>
+                $maybe title <- M.lookup "title" attrs
+                    \#{title}
+                $nothing
+                    Untitled Document
+        <body>
+            $forall child <- children
+                ^{goNode child}
+    |]
+
+goNode :: Node -> [Node]
+goNode (NodeElement e) = [NodeElement $ goElem e]
+goNode (NodeContent t) = [NodeContent t]
+goNode (NodeComment _) = [] -- hide comments
+goNode (NodeInstruction _) = [] -- and hide processing instructions too
+
+-- convert each source element to its XHTML equivalent
+goElem :: Element -> Element
+goElem (Element "para" attrs children) =
+    Element "p" attrs $ concatMap goNode children
+goElem (Element "em" attrs children) =
+    Element "i" attrs $ concatMap goNode children
+goElem (Element "strong" attrs children) =
+    Element "b" attrs $ concatMap goNode children
+goElem (Element "image" attrs _children) =
+    Element "img" (fixAttr attrs) [] -- images can't have children
+  where
+    fixAttr mattrs
+        | "href" `M.member` mattrs  = M.delete "href" $ M.insert "src" (mattrs M.! "href") mattrs
+        | otherwise                 = mattrs
+goElem (Element name attrs children) =
+    -- don't know what to do, just pass it through...
+    Element name attrs $ concatMap goNode children
+----
+
+[source, xhtml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Output XHTML -->
+<html>
+    <head>
+        <title>
+            My Title
+        </title>
+    </head>
+    <body>
+        <p>
+            This is a paragraph. It has 
+            <i>
+                emphasized
+            </i>
+            and 
+            <b>
+                strong
+            </b>
+            words.
+        </p>
+        <img src="myimage.png"/>
+    </body>
+</html>
+----
+
+=== Types
+
+Let's take a bottom-up approach to analyzing types. This section will also
+serve as a primer on the XML data model itself, so don't worry if you're not
+completely familiar with it.
+
+I think the first place where Haskell really shows its strength is with the
++Name+ datatype. Many languages (like Java) struggle with properly expressing
+names. The issue is that there are in fact three components to a name: its
+local name, its namespace (optional), and its prefix (also optional). Let's
+look at some XML to explain:
+
+[source, xml]
+----
+<no-namespace/>
+<no-prefix xmlns="first-namespace" first-attr="value1"/>
+<foo:with-prefix xmlns:foo="second-namespace" foo:second-attr="value2"/>
+----
+
+The first tag has a local name of +no-namespace+, and no namespace or prefix.
+The second tag (local name: +no-prefix+) _also_ has no prefix, but it does have
+a namespace (+first-namespace+). +first-attr+, however, does _not_ inherit that
+namespace: attribute namespaces must always be explicitly set with a prefix.
+
+NOTE: Namespaces are almost always URIs of some sort, though there is nothing
+in any specification requiring that it be so.
+
+The third tag has a local name of +with-prefix+, a prefix of +foo+ and a
+namespace of +second-namespace+. Its attribute has a +second-attr+ local name
+and the same prefix and namespace. The +xmlns+ and +xmlns:foo+ attributes are
+part of the namespace specification, and are not considered attributes of their
+respective elements.
+
+So let's review what we need from a name: every name has a local name, and it
+can optionally have a prefix and namespace. Seems like a simple fit for a
+record type:
+
+[source, haskell]
+----
+data Name = Name
+    { nameLocalName :: Text
+    , nameNamespace :: Maybe Text
+    , namePrefix    :: Maybe Text
+    }
+----
+
+According the the XML namespace standard, two names are considered equivalent
+if they have the same localname and namespace. In other words, the prefix is
+not important. Therefore, +xml-types+ defines +Eq+ and +Ord+ instances that
+ignore the prefix.
+
+The last class instance worth mentioning is +IsString+. It would be very
+tedious to have to manually type out +Name "p" Nothing Nothing+ every time we
+want a paragraph. If you turn on +OverloadedStrings+, +"p"+ will resolve to
+that all by itself! In addition, the +IsString+ instance recognizes something
+called Clark notation, which allows you to prefix the namespace surrounded in
+curly brackets. In other words:
+
+[source, haskell]
+----
+"{namespace}element" == Name "element" (Just "namespace") Nothing
+"element" == Name "element" Nothing Nothing
+----
+
+==== The Four Types of Nodes
+
+XML documents are a tree of nested nodes. There are in fact four different
+types of nodes allowed: elements, content (i.e., text), comments, and
+processing instructions.
+
+[NOTE]
+====
+You may not be familiar with that last one, it's less commonly used. It is marked up as:
+
+[source, xml]
+----
+<?target data?>
+----
+
+There are two surprising facts about processing instructions (PIs):
+
+* PIs don't have attributes. While often times you'll see processing
+  instructions that appear to have attributes, there are in fact no rules about
+  that data of an instruction.
+
+* The +&lt;?xml ...?&gt;+ stuff at the beginning of a document is not a
+  processing instruction. It is simply the beginning of the document (known as
+  the XML declaration), and happens to look an awful lot like a PI. The
+  difference though is that the +&lt;?xml ...?&gt;+ line will not appear in
+  your parsed content.
+====
+
+Since processing instructions have two pieces of text associated with them (the
+target and the data), we have a simple data type:
+
+[source, haskell]
+----
+data Instruction = Instruction
+    { instructionTarget :: Text
+    , instructionData :: Text
+    }
+----
+
+Comments have no special datatype, since they are just text. But content is an
+interesting one: it could contain either plain text or unresolved entities
+(e.g., +&amp;copyright-statement;+). xml-types keeps those unresolved entities
+in all the data types in order to completely match the spec. However, in
+practice, it can be very tedious to program against those data types. And in
+most use cases, an unresolved entity is going to end up as an error anyway.
+
+Therefore, the +Text.XML+ module defines its own set of datatypes for nodes,
+elements and documents that removes all unresolved entities. If you need to
+deal with unresolved entities instead, you should use the +Text.XML.Unresolved+
+module.  From now on, we'll be focusing only on the +Text.XML+ data types,
+though they are almost identical to the +xml-types+ versions.
+
+Anyway, after that detour: content is just a piece of text, and therefore it
+too does not have a special datatype. The last node type is an element, which
+contains three pieces of information: a name, a map of attribute name/value
+pairs, and a list of children nodes. (In +xml-types+, this value could contain
+unresolved entities as well.) So our +Element+ is defined as:
+
+[source, haskell]
+----
+data Element = Element
+    { elementName :: Name
+    , elementAttributes :: Map Name Text
+    , elementNodes :: [Node]
+    }
+----
+
+Which of course begs the question: what does a +Node+ look like? This is where
+Haskell really shines: its sum types model the XML data model perfectly.
+
+[source, haskell]
+----
+data Node
+    = NodeElement Element
+    | NodeInstruction Instruction
+    | NodeContent Text
+    | NodeComment Text
+----
+
+==== Documents
+
+So now we have elements and nodes, but what about an entire document? Let's
+just lay out the datatypes:
+
+[source, haskell]
+----
+data Document = Document
+    { documentPrologue :: Prologue
+    , documentRoot :: Element
+    , documentEpilogue :: [Miscellaneous]
+    }
+
+data Prologue = Prologue
+    { prologueBefore :: [Miscellaneous]
+    , prologueDoctype :: Maybe Doctype
+    , prologueAfter :: [Miscellaneous]
+    }
+
+data Miscellaneous
+    = MiscInstruction Instruction
+    | MiscComment Text
+
+data Doctype = Doctype
+    { doctypeName :: Text
+    , doctypeID :: Maybe ExternalID
+    }
+
+data ExternalID
+    = SystemID Text
+    | PublicID Text Text
+----
+
+The XML spec says that a document has a single root element (+documentRoot+).
+It also has an optional doctype statement. Before and after both the doctype
+and the root element, you are allowed to have comments and processing
+instructions. (You can also have whitespace, but that is ignored in the
+parsing.)
+
+So what's up with the doctype? Well, it specifies the root element of the
+document, and then optional public and system identifiers. These are used to
+refer to DTD files, which give more information about the file (e.g.,
+validation rules, default attributes, entity resolution). Let's see some
+examples:
+
+[source, xml]
+----
+<!DOCTYPE root> <!-- no external identifier -->
+<!DOCTYPE root SYSTEM "root.dtd"> <!-- a system identifier -->
+<!DOCTYPE root PUBLIC "My Root Public Identifier" "root.dtd"> <!-- public identifiers have a system ID as well -->
+----
+
+And that, my friends, is the entire XML data model. For many parsing purposes,
+you'll be able to simply ignore the entire +Document+ datatype and go
+immediately to the +documentRoot+.
+
+==== Events
+
+In addition to the document API, +xml-types+ defines an Event datatype. This
+can be used for constructing streaming tools, which can be much more memory
+efficient for certain kinds of processing (eg, adding an extra attribute to all
+elements). We will not be covering the streaming API currently, though it
+should look very familiar after analyzing the document API.
+
+
+NOTE: You can see an example of the streaming API in the Sphinx case study.
+
+=== Text.XML
+
+The recommended entry point to xml-conduit is the Text.XML module. This module
+exports all of the datatypes you'll need to manipulate XML in a DOM fashion, as
+well as a number of different approaches for parsing and rendering XML content.
+Let's start with the simple ones:
+
+[source, haskell]
+----
+readFile  :: ParseSettings  -> FilePath -> IO Document
+writeFile :: RenderSettings -> FilePath -> Document -> IO ()
+----
+
+This introduces the +ParseSettings+ and +RenderSettings+ datatypes. You can use
+these to modify the behavior of the parser and renderer, such as adding
+character entities and turning on pretty (i.e., indented) output. Both these
+types are instances of the Default typeclass, so you can simply use +def+ when
+these need to be supplied. That is how we will supply these values through the
+rest of the chapter; please see the API docs for more information.
+
+It's worth pointing out that in addition to the file-based API, there is also a
+text- and bytestring-based API. The bytestring-powered functions all perform
+intelligent encoding detections, and support UTF-8, UTF-16 and UTF-32, in
+either big or little endian, with and without a Byte-Order Marker (BOM). All
+output is generated in UTF-8.
+
+For complex data lookups, we recommend using the higher-level cursors API. The
+standard +Text.XML+ API not only forms the basis for that higher level, but is
+also a great API for simple XML transformations and for XML generation. See the
+synopsis for an example.
+
+==== A note about file paths
+
+In the type signature above, we have a type +FilePath+. However, *this isn't
+Prelude.FilePath*. The standard +Prelude+ defines a type synonym +type FilePath
+= \[Char\]+. Unfortunately, there are many limitations to using such an
+approach, including confusion of filename character encodings and differences
+in path separators.
+
+Instead, +xml-conduit+ uses the system-filepath package, which defines an
+abstract +FilePath+ type. I've personally found this to be a much nicer
+approach to work with. The package is fairly easy to follow, so I won't go into
+details here. But I do want to give a few quick explanations of how to use it:
+
+* Since a +FilePath+ is an instance of +IsString+, you can type in regular
+  strings and they will be treated properly, as long as the +OverloadedStrings+
+  extension is enabled. (I highly recommend enabling it anyway, as it makes
+  dealing with +Text+ values much more pleasant.)
+
+* If you need to explicitly convert to or from +Prelude+'s +FilePath+, you
+  should use the encodeString and decodeString, respectively. This takes into
+  account file path encodings.
+
+* Instead of manually splicing together directory names and file names with
+  extensions, use the operators in the +Filesystem.Path.CurrentOS+ module, e.g.
+  +myfolder &lt;/&gt; filename &lt;.&gt; extension+.
+
+=== Cursor
+
+Suppose you want to pull the title out of an XHTML document. You could do so
+with the +Text.XML+ interface we just described, using standard pattern
+matching on the children of elements. But that would get very tedious, very
+quickly. Probably the gold standard for these kinds of lookups is XPath, where
+you would be able to write +/html/head/title+. And that's exactly what inspired
+the design of the Text.XML.Cursor combinators.
+
+A cursor is an XML node that knows its location in the tree; it's able to
+traverse upwards, sideways, and downwards. (Under the surface, this is achieved
+by link:$$http://www.haskell.org/haskellwiki/Tying_the_Knot$$[tying the knot].)
+There are two functions available for creating cursors from +Text.XML+ types:
++fromDocument+ and +fromNode+.
+
+We also have the concept of an Axis, defined as +type Axis = Cursor -&gt;
+\[Cursor\]+. It's easiest to get started by looking at example axes: child
+returns zero or more cursors that are the child of the current one, parent
+returns the single parent cursor of the input, or an empty list if the input is
+the root element, and so on.
+
+In addition, there are some axes that take predicates. +element+ is a commonly
+used function that filters down to only elements which match the given name.
+For example, +element "title"+ will return the input element if its name is
+"title", or an empty list otherwise.
+
+Another common function which isn't quite an axis is +content &#58;: Cursor
+-&gt; \[Text\]+. For all content nodes, it returns the contained text;
+otherwise, it returns an empty list.
+
+And thanks to the monad instance for lists, it's easy to string all of these
+together. For example, to do our title lookup, we would write the following
+program:
+
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import Prelude hiding (readFile)
+import Text.XML
+import Text.XML.Cursor
+import qualified Data.Text as T
+
+main :: IO ()
+main = do
+    doc <- readFile def "test.xml"
+    let cursor = fromDocument doc
+    print $ T.concat $
+            child cursor >>= element "head" >>= child
+                         >>= element "title" >>= descendant >>= content
+----
+
+What this says is:
+
+. Get me all the child nodes of the root element
+
+. Filter down to only the elements named "head"
+
+. Get all the children of all those head elements
+
+. Filter down to only the elements named "title"
+
+. Get all the descendants of all those title elements. (A descendant is a
+  child, or a descendant of a child. Yes, that was a recursive definition.)
+
+. Get only the text nodes.
+
+So for the input document:
+
+[source, xml]
+----
+<html>
+    <head>
+        <title>My <b>Title</b></title>
+    </head>
+    <body>
+        <p>Foo bar baz</p>
+    </body>
+</html>
+----
+
+We end up with the output +My Title+. This is all well and good, but it's much
+more verbose than the XPath solution. To combat this verbosity, Aristid
+Breitkreuz added a set of operators to the Cursor module to handle many common
+cases. So we can rewrite our example as:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import Prelude hiding (readFile)
+import Text.XML
+import Text.XML.Cursor
+import qualified Data.Text as T
+
+main :: IO ()
+main = do
+    doc <- readFile def "test.xml"
+    let cursor = fromDocument doc
+    print $ T.concat $
+        cursor $/ element "head" &/ element "title" &// content
+----
+
++$/+ says to apply the axis on the right to the children of the cursor on the
+left. +&amp;/+ is almost identical, but is instead used to combine two axes
+together. This is a general rule in +Text.XML.Cursor+: operators beginning with
+$ directly apply an axis, while &amp; will combine two together. +&amp;//+ is
+used for applying an axis to all descendants.
+
+Let's go for a more complex, if more contrived, example. We have a document
+that looks like:
+
+[source, xml]
+----
+<html>
+    <head>
+        <title>Headings</title>
+    </head>
+    <body>
+        <hgroup>
+            <h1>Heading 1 foo</h1>
+            <h2 class="foo">Heading 2 foo</h2>
+        </hgroup>
+        <hgroup>
+            <h1>Heading 1 bar</h1>
+            <h2 class="bar">Heading 2 bar</h2>
+        </hgroup>
+    </body>
+</html>
+----
+
+We want to get the content of all the +h1+ tags which precede an +h2+ tag with
+a +class+ attribute of "bar". To perform this convoluted lookup, we can write:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import Prelude hiding (readFile)
+import Text.XML
+import Text.XML.Cursor
+import qualified Data.Text as T
+
+main :: IO ()
+main = do
+    doc <- readFile def "test2.xml"
+    let cursor = fromDocument doc
+    print $ T.concat $
+        cursor $// element "h2"
+               >=> attributeIs "class" "bar"
+               >=> precedingSibling
+               >=> element "h1"
+               &// content
+----
+
+Let's step through that. First we get all h2 elements in the document. (+$//+
+gets all descendants of the root element.) Then we filter out only those with
++class=bar+. That +&gt;=&gt;+ operator is actually the standard operator from
+Control.Monad; yet another advantage of the monad instance of lists.
++precedingSibling+ finds all nodes that come before our node *and* share the
+same parent. (There is also a +preceding+ axis which takes all elements earlier
+in the tree.) We then take just the +h1+ elements, and then grab their content.
+
+
+NOTE: The equivalent XPath, for comparison, would be +//h2\[@class =
+'bar'\]/preceding-sibling::h1//text()+.
+
+While the cursor API isn't quite as succinct as XPath, it has the advantages of
+being standard Haskell code, and of type safety.
+
+=== xml-hamlet
+
+Thanks to the simplicity of Haskell's data type system, creating XML content
+with the +Text.XML API+ is easy, if a bit verbose. The following code:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import           Data.Map (empty)
+import           Prelude  hiding (writeFile)
+import           Text.XML
+
+main :: IO ()
+main =
+    writeFile def "test3.xml" $ Document (Prologue [] Nothing []) root []
+  where
+    root = Element "html" empty
+        [ NodeElement $ Element "head" empty
+            [ NodeElement $ Element "title" empty
+                [ NodeContent "My "
+                , NodeElement $ Element "b" empty
+                    [ NodeContent "Title"
+                    ]
+                ]
+            ]
+        , NodeElement $ Element "body" empty
+            [ NodeElement $ Element "p" empty
+                [ NodeContent "foo bar baz"
+                ]
+            ]
+        ]
+----
+
+produces
+
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<html><head><title>My <b>Title</b></title></head><body><p>foo bar baz</p></body></html>
+----
+
+This is leaps and bounds easier than having to deal with an imperative,
+mutable-value-based API (cough, Java, cough), but it's far from pleasant, and
+obscures what we're really trying to achieve. To simplify things, we have the
+xml-hamlet package, which using Quasi-Quotation to allow you to type in your
+XML in a natural syntax. For example, the above could be rewritten as:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+import           Data.Map        (empty)
+import           Prelude         hiding (writeFile)
+import           Text.Hamlet.XML
+import           Text.XML
+
+main :: IO ()
+main =
+    writeFile def "test3.xml" $ Document (Prologue [] Nothing []) root []
+  where
+    root = Element "html" empty [xml|
+<head>
+    <title>
+        My #
+        <b>Title
+<body>
+    <p>foo bar baz
+|]
+----
+
+Let's make a few points:
+
+
+* The syntax is almost identical to normal Hamlet, except URL-interpolation
+  (@{...}) has been removed. As such:
+
+** No close tags.
+
+** Whitespace-sensitive.
+
+** If you want to have whitespace at the end of a line, use a # at the end. At
+   the beginning, use a backslash.
+
+* An +xml+ interpolation will return a list of ++Node++s. So you still need to
+  wrap up the output in all the normal +Document+ and root +Element+
+  constructs.
+
+
+* There is no support for the special +.class+ and +#id+ attribute forms.
+
+And like normal Hamlet, you can use variable interpolation and control
+structures. So a slightly more complex example would be:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+import Text.XML
+import Text.Hamlet.XML
+import Prelude hiding (writeFile)
+import Data.Text (Text, pack)
+import Data.Map (empty)
+
+data Person = Person
+    { personName :: Text
+    , personAge :: Int
+    }
+
+people :: [Person]
+people =
+    [ Person "Michael" 26
+    , Person "Miriam" 25
+    , Person "Eliezer" 3
+    , Person "Gavriella" 1
+    ]
+
+main :: IO ()
+main =
+    writeFile def "people.xml" $ Document (Prologue [] Nothing []) root []
+  where
+    root = Element "html" empty [xml|
+<head>
+    <title>Some People
+<body>
+    <h1>Some People
+    $if null people
+        <p>There are no people.
+    $else
+        <dl>
+            $forall person <- people
+                ^{personNodes person}
+|]
+
+personNodes :: Person -> [Node]
+personNodes person = [xml|
+<dt>#{personName person}
+<dd>#{pack $ show $ personAge person}
+|]
+----
+
+A few more notes:
+
+* The caret-interpolation (&#94;{...}) takes a list of nodes, and so can easily
+  embed other ++xml++-quotations.
+
+* Unlike Hamlet, hash-interpolations (#{...}) are not polymorphic, and can
+  _only_ accept +Text+ values.
+
+=== xml2html
+
+So far in this chapter, our examples have revolved around XHTML. I've done that
+so far simply because it is likely to be the most familiar form of XML for most
+of our readers. But there's an ugly side to all this that we must acknowledge:
+not all XHTML will be correct HTML. The following discrepancies exist:
+
+* There are some void tags (e.g., +img+, +br+) in HTML which do not need to
+  have close tags, and in fact are not allowed to.
+
+* HTML does not understand self-closing tags, so
+  +&lt;script&gt;&lt;/script&gt;+ and +&lt;script/&gt;+ mean very different
+  things.
+
+* Combining the previous two points: you are free to self-close void tags,
+  though to a browser it won't mean anything.
+
+* In order to avoid quirks mode, you should start your HTML documents with a
+  +DOCTYPE+ statement.
+
+* We do not want the XML declaration +&lt;?xml ...?&gt;+ at the top of an HTML
+  page.
+
+* We do not want any namespaces used in HTML, while XHTML is fully namespaced.
+
+* The contents of +&lt;style&gt;+ and +&lt;script&gt;+ tags should not be
+  escaped.
+
+That's where the xml2html package comes into play. It provides a ToHtml
+instance for ++Node++s, ++Document++s and ++Element++s. In order to use it,
+just import the Text.XML.Xml2Html module.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+import           Data.Map                        (empty)
+import           Text.Blaze.Html                 (toHtml)
+import           Text.Blaze.Html.Renderer.String (renderHtml)
+import           Text.Hamlet.XML
+import           Text.XML
+import           Text.XML.Xml2Html               ()
+
+main :: IO ()
+main = putStr $ renderHtml $ toHtml $ Document (Prologue [] Nothing []) root []
+
+root :: Element
+root = Element "html" empty [xml|
+<head>
+    <title>Test
+    <script>if (5 < 6 || 8 > 9) alert("Hello World!");
+    <style>body > h1 { color: red }
+<body>
+    <h1>Hello World!
+|]
+----
+
+Outputs: (whitespace added)
+
+[source, html]
+----
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Test</title>
+        <script>if (5 < 6 || 8 > 9) alert("Hello World!");</script>
+        <style>body > h1 { color: red }</style>
+    </head>
+    <body>
+        <h1>Hello World!</h1>
+    </body>
+</html>
+----
