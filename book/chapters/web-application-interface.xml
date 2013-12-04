@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"><chapter>
    <title>Web Application Interface</title>
-   <para/>
+   <para>NOTE: This chapter has not yet been converted to Yesod 1.2. Some information may be slightly out-of-date.</para>
    <para/>
    <para>It is a problem almost every language used for web development has dealt with: the low level interface between the web server and the application. The earliest example of a solution is the venerable and battle-worn CGI (CGI), providing a language-agnostic interface using only standard input, standard output and environment variables.</para>
    <para>Back when Perl was becoming the de facto web programming language, a major shortcoming of CGI became apparent: the process needed to be started anew for each request. When dealing with an interpretted language and application requiring database connection, this overhead became unbearable. FastCGI (and later SCGI) arose as a successor to CGI, but it seems that much of the programming world went in a different direction.</para>

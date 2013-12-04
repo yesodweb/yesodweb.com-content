@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"><chapter>
    <title>Wiki: markdown, chat subsite, event source</title>
-   <para/>
+   <para>NOTE: This chapter has not yet been converted to Yesod 1.2. Some information may be slightly out-of-date.</para>
    <para/>
    <para>This example will tie together a few different ideas. We'll start with a chat subsite, which
    allows us to embed a chat widget on any page. We'll use the HTML 5 event source API to handle

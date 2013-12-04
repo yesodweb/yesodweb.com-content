@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"><chapter>
    <title>monad-control</title>
-   <para/>
+   <para>NOTE: This chapter has not yet been converted to Yesod 1.2. Some information may be slightly out-of-date.</para>
    <para/>
    <para>
     <function>monad-control</function> is used in a few places within Yesod, most notably to ensure proper exception handling within Persistent. It is a general purpose package to extend standard functionality in monad transformers.</para>

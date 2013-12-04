@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"><chapter>
    <title>Creating a Subsite</title>
-   <para/>
+   <para>NOTE: This chapter has not yet been converted to Yesod 1.2. Some information may be slightly out-of-date.</para>
    <para/>
    <para>How many sites provide authentication systems? Or need to provide CRUD (CRUD) management of some objects? Or a blog? Or a wiki?</para>
    <para>The theme here is that many websites include common components that can be reused throughout multiple sites. However, it is often quite difficult to get code to be modular enough to be truly plug-and-play: a component will require hooks into the routing system, usually for multiple routes, and will need some way of sharing styling information with the master site.</para>
