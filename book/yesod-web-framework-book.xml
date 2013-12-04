@@ -102,7 +102,7 @@
     <xi:include href="chapters/http-conduit.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/xml.xml"
+    <xi:include href="chapters/xml.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
   </part>
 </book>
