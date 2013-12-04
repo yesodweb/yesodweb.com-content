@@ -58,7 +58,7 @@
     <xi:include href="chapters/scaffolding-and-the-site-template.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/internationalization.xml"
+    <xi:include href="chapters/internationalization.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/creating-a-subsite.xml"
