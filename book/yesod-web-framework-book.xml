@@ -52,7 +52,7 @@
     <xi:include href="chapters/yesods-monads.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/authentication-and-authorization.xml"
+    <xi:include href="chapters/authentication-and-authorization.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/scaffolding-and-the-site-template.asciidoc"
