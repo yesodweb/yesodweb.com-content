@@ -38,13 +38,13 @@ include::restful-content.asciidoc[]
 
 include::yesods-monads.asciidoc[]
 
-include::ch14.asciidoc[]
+include::authentication-and-authorization.asciidoc[]
 
-include::ch15.asciidoc[]
+include::scaffolding-and-the-site-template.asciidoc[]
 
-include::ch16.asciidoc[]
+include::internationalization.asciidoc[]
 
-include::ch17.asciidoc[]
+include::creating-a-subsite.asciidoc[]
 
 [[I_part_d1e8222]]
 = Examples
@@ -72,6 +72,6 @@ include::appd.asciidoc[]
 
 include::appe.asciidoc[]
 
-include::appf.asciidoc[]
+include::xml.asciidoc[]
 
 include::colo.asciidoc[]
