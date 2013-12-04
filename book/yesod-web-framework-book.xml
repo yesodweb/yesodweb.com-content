@@ -61,7 +61,7 @@
     <xi:include href="chapters/internationalization.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/creating-a-subsite.xml"
+    <xi:include href="chapters/creating-a-subsite.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/understanding-request.asciidoc"
