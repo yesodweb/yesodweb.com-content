@@ -15,7 +15,19 @@ feedback on the API design.
 
 My [previous blog post](http://www.yesodweb.com/blog/2013/11/wai-2-http-client)
 discussed the motivations behind these releases, so I won't go into those
-details here. The only other thing I want to touch on is the affect on the rest
+details here. At a high level, here are some of the motivations for these changes:
+
+- WAI 2.0
+    - Improving performance of Warp
+    - Scaling on multicore if complied with coming GHC 7.8
+    - Cleaning up API of Warp and enriching documentations
+- http-client
+    - Shared infrastructure for multiple high-level HTTP client libraries.
+    - Choice of SSL backend.
+    - Lower dependency requirements for simple HTTP queries.
+    - Easier to test out new high-level APIs.
+
+The only other thing I want to touch on is the affect on the rest
 of the package ecosystem triggered by these releases.
 
 Together with this release, I'm releasing new versions of all of the WAI and
