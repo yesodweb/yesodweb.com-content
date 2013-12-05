@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-12-04</date>
 </articleinfo>
-<section id="_xml_conduit">
+<appendix id="_xml_conduit">
 <title>xml-conduit</title>
 <simpara>Many developers cringe at the thought of dealing with XML files. XML has the
 reputation of having a complicated data model, with obfuscated libraries and
@@ -734,5 +734,5 @@ root = Element "html" empty [xml|
     &lt;/body&gt;
 &lt;/html&gt;</programlisting>
 </section>
-</section>
+</appendix>
 </article>

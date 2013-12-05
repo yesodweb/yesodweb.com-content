@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<?asciidoc-toc?>
+<?asciidoc-numbered?>
+
+<article lang="en">
+<articleinfo>
+    <date>2013-12-05</date>
+</articleinfo>
+<appendix id="_web_application_interface">
+<title>Web Application Interface</title>
+<simpara>It is a problem almost every language used for web development has dealt with:
+the low level interface between the web server and the application. The
+earliest example of a solution is the venerable and battle-worn CGI (CGI),
+providing a language-agnostic interface using only standard input, standard
+output and environment variables.</simpara>
+<simpara>Back when Perl was becoming the de facto web programming language, a major
+shortcoming of CGI became apparent: the process needed to be started anew for
+each request. When dealing with an interpretted language and application
+requiring database connection, this overhead became unbearable. FastCGI (and
+later SCGI) arose as a successor to CGI, but it seems that much of the
+programming world went in a different direction.</simpara>
+<simpara>Each language began creating its own standard for interfacing with servers.
+mod_perl. mod_python. mod_php. mod_ruby. Within the same language, multiple
+interfaces arose. In some cases, we even had interfaces on top of interfaces.
+And all of this led to much duplicated effort: a Python application designed to
+work with FastCGI wouldn&#8217;t work with mod_python; mod_python only exists for
+certain webservers; and these programming language specific web server
+extensions need to be written for each programming language.</simpara>
+<simpara>Haskell has its own history. We originally had the cgi package, which provided
+a monadic interface. The fastcgi package then provided the same interface.
+Meanwhile, it seemed that the majority of Haskell web development focused on
+the standalone server. The problem is that each server comes with its own
+interface, meaning that you need to target a specific backend. This means that
+it is impossible to share common features, like GZIP encoding, development
+servers, and testing frameworks.</simpara>
+<simpara>WAI attempts to solve this, by providing a generic and efficient interface
+between web servers and applications. Any <emphasis role="strong">handler</emphasis> supporting the interface
+can serve any WAI application, while any application using the interface can
+run on any handler.</simpara>
+<simpara>At the time of writing, there are various backends, including Warp, FastCGI,
+and development server. There are even more esoteric backends like
+wai-handler-webkit for creating desktop apps. wai-extra provides many common
+middleware components like GZIP, JSON-P and virtual hosting. wai-test makes it
+easy to write unit tests, and wai-handler-devel lets you develop your
+applications without worrying about stopping to compile. Yesod targets WAI, as
+well as other Haskell web frameworks such as Scotty and MFlow. It&#8217;s also used
+by some applications that skip the framework entirely, including Hoogle.</simpara>
+<note><simpara>Yesod provides an alternate approach for a devel server, known as <emphasis>yesod
+devel</emphasis>. The difference from wai-handler-devel is that yesod devel actually
+compiles your code each time, respecting all settings in your cabal file. This
+is the recommended aproach for general Yesod development.</simpara></note>
+<section id="_the_interface">
+<title>The Interface</title>
+<simpara>The interface itself is very straight-forward: an application takes a request
+and returns a response. A response is an HTTP status, a list of headers and a
+response body. A request contains various information: the requested path,
+query string, request body, HTTP version, and so on.</simpara>
+<section id="_response_body">
+<title>Response Body</title>
+<simpara>Haskell has a datatype known as a lazy bytestring. By utilizing laziness, you
+can create large values without exhausting memory. Using lazy I/O, you can do
+such tricks as having a value which represents the entire contents of a file,
+yet only occupies a small memory footprint. In theory, a lazy bytestring is the
+only representation necessary for a response body.</simpara>
+<simpara>In practice, while lazy byte strings are wonderful for generating "pure"
+values, the lazy I/O necessary to read a file introduces some non-determinism
+into our programs. When serving thousands of small files a second, the limiting
+factor is not memory, but file handles. Using lazy I/O, file handles may not be
+freed immediately, leading to resource exhaustion. To deal with this, WAI uses
+conduits.</simpara>
+<simpara>The data type relevant to us now is a source. A source produces a stream of
+data, producing a single chunk at a time. In the case of WAI, the request body
+would be a source passed to the application, and the response body would be a
+source returned from the application.</simpara>
+<simpara>There are two further optimizations: many systems provide a sendfile system
+call, which sends a file directly to a socket, bypassing a lot of the memory
+copying inherent in more general I/O system calls. Additionally, there is a
+datatype in Haskell called <literal>Builder</literal> which allows efficient copying of bytes
+into buffers.</simpara>
+<simpara>The WAI response body therefore has three constructors: one for pure builders
+(<literal>ResponseBuilder</literal>), one for a source of builders (<literal>ResponseSource</literal>) and one
+for files (<literal>ResponseFile</literal>).</simpara>
+</section>
+<section id="_request_body">
+<title>Request Body</title>
+<simpara>In order to avoid the need to load the entire request body into memory, we use
+sources here as well. Since the purpose of these values are for reading (not
+writing), we use <literal>ByteString</literal>s in place of <literal>Builder</literal>s. There is a record
+inside <literal>Request</literal> called <literal>requestBody</literal>, with type <literal>Source IO ByteString</literal>. We can
+use all of the standard conduit functions to interact with this source.</simpara>
+<simpara>The request body could in theory contain any type of data, but the most common
+are URL encoded and multipart form data. The wai-extra package contains
+built-in support for parsing these in a memory-efficient manner.</simpara>
+</section>
+</section>
+<section id="_hello_world">
+<title>Hello World</title>
+<simpara>To demonstrate the simplicity of WAI, let&#8217;s look at a hello world example. In
+this example, we&#8217;re going to use the OverloadedStrings language extension to
+avoid explicitly packing string values into bytestrings.</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
+import Network.Wai
+import Network.HTTP.Types (status200)
+import Network.Wai.Handler.Warp (run)
+
+application _ = return $
+  responseLBS status200 [("Content-Type", "text/plain")] "Hello World"
+
+main = run 3000 application</programlisting>
+<simpara>Lines 2 through 4 perform our imports. Warp is provided by the warp package,
+and is the premiere WAI backend. WAI is also built on top of the http-types
+package, which provides a number of datatypes and convenience values, including
+<literal>status200</literal>.</simpara>
+<simpara>First we define our application. Since we don&#8217;t care about the specific request
+parameters, we ignore the argument to the function. For any request, we are
+returning a response with status code 200 ("OK"), and text/plain content type
+and a body containing the words "Hello World". Pretty straight-forward.</simpara>
+</section>
+<section id="_middleware">
+<title>Middleware</title>
+<simpara>In addition to allowing our applications to run on multiple backends without
+code changes, the WAI allows us another benefits: middleware. Middleware is
+essentially an application transformer, taking one application and returning
+another one.</simpara>
+<simpara>Middleware components can be used to provide lots of services: cleaning up
+URLs, authentication, caching, JSON-P requests. But perhaps the most useful and
+most intuitive middleware is gzip compression. The middleware works very
+simply: it parses the request headers to determine if a client supports
+compression, and if so compresses the response body and adds the appropriate
+response header.</simpara>
+<simpara>The great thing about middlewares is that they are unobtrusive. Let&#8217;s see how
+we would apply the gzip middleware to our hello world application.</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
+import Network.Wai
+import Network.Wai.Handler.Warp (run)
+import Network.Wai.Middleware.Gzip (gzip, def)
+import Network.HTTP.Types (status200)
+
+application _ = return $ responseLBS status200 [("Content-Type", "text/plain")]
+                       "Hello World"
+
+main = run 3000 $ gzip def application</programlisting>
+<simpara>We added an import line to actually have access to the middleware, and then
+simply applied gzip to our application. You can also <emphasis>chain together</emphasis> multiple
+middlewares: a line such as <literal>gzip False $ jsonp $ othermiddleware $
+myapplication</literal> is perfectly valid. One word of warning: the order the
+middleware is applied can be important. For example, jsonp needs to work on
+uncompressed data, so if you apply it after you apply gzip, you&#8217;ll have
+trouble.</simpara>
+</section>
+</appendix>
+</article>

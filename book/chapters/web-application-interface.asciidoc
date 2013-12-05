@@ -1,0 +1,168 @@
+[appendix]
+== Web Application Interface
+
+It is a problem almost every language used for web development has dealt with:
+the low level interface between the web server and the application. The
+earliest example of a solution is the venerable and battle-worn CGI (CGI),
+providing a language-agnostic interface using only standard input, standard
+output and environment variables.
+
+Back when Perl was becoming the de facto web programming language, a major
+shortcoming of CGI became apparent: the process needed to be started anew for
+each request. When dealing with an interpretted language and application
+requiring database connection, this overhead became unbearable. FastCGI (and
+later SCGI) arose as a successor to CGI, but it seems that much of the
+programming world went in a different direction.
+
+Each language began creating its own standard for interfacing with servers.
+mod_perl. mod_python. mod_php. mod_ruby. Within the same language, multiple
+interfaces arose. In some cases, we even had interfaces on top of interfaces.
+And all of this led to much duplicated effort: a Python application designed to
+work with FastCGI wouldn't work with mod_python; mod_python only exists for
+certain webservers; and these programming language specific web server
+extensions need to be written for each programming language.
+
+Haskell has its own history. We originally had the cgi package, which provided
+a monadic interface. The fastcgi package then provided the same interface.
+Meanwhile, it seemed that the majority of Haskell web development focused on
+the standalone server. The problem is that each server comes with its own
+interface, meaning that you need to target a specific backend. This means that
+it is impossible to share common features, like GZIP encoding, development
+servers, and testing frameworks.
+
+WAI attempts to solve this, by providing a generic and efficient interface
+between web servers and applications. Any *handler* supporting the interface
+can serve any WAI application, while any application using the interface can
+run on any handler.
+
+At the time of writing, there are various backends, including Warp, FastCGI,
+and development server. There are even more esoteric backends like
+wai-handler-webkit for creating desktop apps. wai-extra provides many common
+middleware components like GZIP, JSON-P and virtual hosting. wai-test makes it
+easy to write unit tests, and wai-handler-devel lets you develop your
+applications without worrying about stopping to compile. Yesod targets WAI, as
+well as other Haskell web frameworks such as Scotty and MFlow. It's also used
+by some applications that skip the framework entirely, including Hoogle.
+
+
+NOTE: Yesod provides an alternate approach for a devel server, known as _yesod
+devel_. The difference from wai-handler-devel is that yesod devel actually
+compiles your code each time, respecting all settings in your cabal file. This
+is the recommended aproach for general Yesod development.
+
+=== The Interface
+
+The interface itself is very straight-forward: an application takes a request
+and returns a response. A response is an HTTP status, a list of headers and a
+response body. A request contains various information: the requested path,
+query string, request body, HTTP version, and so on.
+
+==== Response Body
+
+Haskell has a datatype known as a lazy bytestring. By utilizing laziness, you
+can create large values without exhausting memory. Using lazy I/O, you can do
+such tricks as having a value which represents the entire contents of a file,
+yet only occupies a small memory footprint. In theory, a lazy bytestring is the
+only representation necessary for a response body.
+
+In practice, while lazy byte strings are wonderful for generating "pure"
+values, the lazy I/O necessary to read a file introduces some non-determinism
+into our programs. When serving thousands of small files a second, the limiting
+factor is not memory, but file handles. Using lazy I/O, file handles may not be
+freed immediately, leading to resource exhaustion. To deal with this, WAI uses
+conduits.
+
+The data type relevant to us now is a source. A source produces a stream of
+data, producing a single chunk at a time. In the case of WAI, the request body
+would be a source passed to the application, and the response body would be a
+source returned from the application.
+
+There are two further optimizations: many systems provide a sendfile system
+call, which sends a file directly to a socket, bypassing a lot of the memory
+copying inherent in more general I/O system calls. Additionally, there is a
+datatype in Haskell called +Builder+ which allows efficient copying of bytes
+into buffers.
+
+The WAI response body therefore has three constructors: one for pure builders
+(+ResponseBuilder+), one for a source of builders (+ResponseSource+) and one
+for files (+ResponseFile+).
+
+==== Request Body
+
+In order to avoid the need to load the entire request body into memory, we use
+sources here as well. Since the purpose of these values are for reading (not
+writing), we use ++ByteString++s in place of ++Builder++s. There is a record
+inside +Request+ called +requestBody+, with type +Source IO ByteString+. We can
+use all of the standard conduit functions to interact with this source.
+
+The request body could in theory contain any type of data, but the most common
+are URL encoded and multipart form data. The wai-extra package contains
+built-in support for parsing these in a memory-efficient manner.
+
+=== Hello World
+
+To demonstrate the simplicity of WAI, let's look at a hello world example. In
+this example, we're going to use the OverloadedStrings language extension to
+avoid explicitly packing string values into bytestrings.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import Network.Wai
+import Network.HTTP.Types (status200)
+import Network.Wai.Handler.Warp (run)
+
+application _ = return $
+  responseLBS status200 [("Content-Type", "text/plain")] "Hello World"
+
+main = run 3000 application
+----
+
+Lines 2 through 4 perform our imports. Warp is provided by the warp package,
+and is the premiere WAI backend. WAI is also built on top of the http-types
+package, which provides a number of datatypes and convenience values, including
++status200+.
+
+First we define our application. Since we don't care about the specific request
+parameters, we ignore the argument to the function. For any request, we are
+returning a response with status code 200 ("OK"), and text/plain content type
+and a body containing the words "Hello World". Pretty straight-forward.
+
+=== Middleware
+
+In addition to allowing our applications to run on multiple backends without
+code changes, the WAI allows us another benefits: middleware. Middleware is
+essentially an application transformer, taking one application and returning
+another one.
+
+Middleware components can be used to provide lots of services: cleaning up
+URLs, authentication, caching, JSON-P requests. But perhaps the most useful and
+most intuitive middleware is gzip compression. The middleware works very
+simply: it parses the request headers to determine if a client supports
+compression, and if so compresses the response body and adds the appropriate
+response header.
+
+The great thing about middlewares is that they are unobtrusive. Let's see how
+we would apply the gzip middleware to our hello world application.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import Network.Wai
+import Network.Wai.Handler.Warp (run)
+import Network.Wai.Middleware.Gzip (gzip, def)
+import Network.HTTP.Types (status200)
+
+application _ = return $ responseLBS status200 [("Content-Type", "text/plain")]
+                       "Hello World"
+
+main = run 3000 $ gzip def application
+----
+
+We added an import line to actually have access to the middleware, and then
+simply applied gzip to our application. You can also _chain together_ multiple
+middlewares: a line such as +gzip False $ jsonp $ othermiddleware $
+myapplication+ is perfectly valid. One word of warning: the order the
+middleware is applied can be important. For example, jsonp needs to work on
+uncompressed data, so if you apply it after you apply gzip, you'll have
+trouble.

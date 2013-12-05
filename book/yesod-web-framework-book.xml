@@ -87,19 +87,19 @@
   <part>
     <title>Appendices</title>
 
-    <xi:include href="chapters/monad-control.xml"
+    <xi:include href="chapters/monad-control.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/conduits.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/web-application-interface.xml"
+    <xi:include href="chapters/web-application-interface.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/settings-types.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/http-conduit.xml"
+    <xi:include href="chapters/http-conduit.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/xml.asciidoc"
