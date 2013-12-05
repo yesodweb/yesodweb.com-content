@@ -1,3 +1,4 @@
+[appendix]
 == Settings Types
 
 Let's say you're writing a webserver. You want the server to take a port to

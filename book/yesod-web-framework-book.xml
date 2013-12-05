@@ -74,7 +74,7 @@
     <xi:include href="chapters/blog-example-advanced.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/wiki-chat-example.xml"
+    <xi:include href="chapters/wiki-chat-example.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
     <xi:include href="chapters/json-web-service.asciidoc"

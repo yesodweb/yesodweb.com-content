@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<?asciidoc-toc?>
+<?asciidoc-numbered?>
+
+<article lang="en">
+<articleinfo>
+    <date>2013-12-05</date>
+</articleinfo>
+<section id="_wiki_markdown_chat_subsite_event_source">
+<title>Wiki: markdown, chat subsite, event source</title>
+<note><simpara>This chapter is in the process of being updated.</simpara></note>
+<simpara>This example will tie together a few different ideas. We&#8217;ll start with a chat
+subsite, which allows us to embed a chat widget on any page. We&#8217;ll use the HTML
+5 event source API to handle sending events from the server to the client.</simpara>
+<simpara>In order to define a subsite, we first need to create a foundation type for the
+subsite, the same as we would do for a normal Yesod application. In our case,
+we want to keep a channel of all the events to be sent to the individual
+participants of a chat. This ends up looking like:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">module Chat.Data where
+
+import           Control.Concurrent.Chan (Chan)
+import           Network.Wai.EventSource (ServerEvent)
+import           Yesod
+
+-- | Our subsite foundation. We keep a channel of events that all connections
+-- will share.
+data Chat = Chat (Chan ServerEvent)</programlisting>
+<simpara>We also need to define our subsite routes in the same module. We need to have
+two commands: one to send a new message to all users, and another to receive
+the stream of messages.</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">mkYesodSubData "Chat" [parseRoutes|
+/send SendR POST
+/recv ReceiveR GET
+|]</programlisting>
+<simpara>Now that we&#8217;ve defined our foundation and routes, we need to create a separate
+module for providing the subsite dispatch functionality. (We&#8217;ll call this
+module <literal>Chat</literal>.)</simpara>
+<simpara>This module stands on its own, and can be used in any application. Next we&#8217;ll provide such a driver application: a wiki. Our wiki will have a hard-coded homepage, and then a wiki section of the site. We&#8217;ll be using multiple dynamic pieces to allow an arbitrary hierarchy of pages within the Wiki.</simpara>
+<simpara>For storage, we&#8217;ll just use a mutable reference to a <literal>Map</literal>. For a production application, this should be replaced with a proper database. The content will be stored and served as Markdown. <literal>yesod-auth</literal>'s dummy plugin will provide us with (fake) authentication.</simpara>
+<programlisting language="haskell" linenumbering="unnumbered"></programlisting>
+</section>
+</article>

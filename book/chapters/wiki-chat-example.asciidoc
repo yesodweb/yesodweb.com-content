@@ -1,0 +1,51 @@
+== Wiki: markdown, chat subsite, event source
+
+NOTE: This chapter is in the process of being updated.
+
+This example will tie together a few different ideas. We'll start with a chat
+subsite, which allows us to embed a chat widget on any page. We'll use the HTML
+5 event source API to handle sending events from the server to the client.
+
+In order to define a subsite, we first need to create a foundation type for the
+subsite, the same as we would do for a normal Yesod application. In our case,
+we want to keep a channel of all the events to be sent to the individual
+participants of a chat. This ends up looking like:
+
+[source, haskell]
+----
+module Chat.Data where
+
+import           Control.Concurrent.Chan (Chan)
+import           Network.Wai.EventSource (ServerEvent)
+import           Yesod
+
+-- | Our subsite foundation. We keep a channel of events that all connections
+-- will share.
+data Chat = Chat (Chan ServerEvent)
+----
+
+We also need to define our subsite routes in the same module. We need to have
+two commands: one to send a new message to all users, and another to receive
+the stream of messages.
+
+[source, haskell]
+----
+mkYesodSubData "Chat" [parseRoutes|
+/send SendR POST
+/recv ReceiveR GET
+|]
+----
+
+Now that we've defined our foundation and routes, we need to create a separate
+module for providing the subsite dispatch functionality. (We'll call this
+module +Chat+.)
+
+This module stands on its own, and can be used in any application. Next we'll provide such a driver application: a wiki. Our wiki will have a hard-coded homepage, and then a wiki section of the site. We'll be using multiple dynamic pieces to allow an arbitrary hierarchy of pages within the Wiki.
+
+For storage, we'll just use a mutable reference to a +Map+. For a production application, this should be replaced with a proper database. The content will be stored and served as Markdown. +yesod-auth+'s dummy plugin will provide us with (fake) authentication.
+
+
+[source, haskell]
+----
+----
+
