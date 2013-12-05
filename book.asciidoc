@@ -62,15 +62,15 @@ include::ch21.asciidoc[]
 
 
 
-include::appa.asciidoc[]
+include::monad-control.asciidoc[]
 
 include::appb.asciidoc[]
 
-include::appc.asciidoc[]
+include::web-application-interface.asciidoc[]
 
-include::appd.asciidoc[]
+include::settings-types.asciidoc[]
 
-include::appe.asciidoc[]
+include::http-conduit.asciidoc[]
 
 include::xml.asciidoc[]
 
