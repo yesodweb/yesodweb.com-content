@@ -1,3 +1,4 @@
+[appendix]
 == xml-conduit
 
 Many developers cringe at the thought of dealing with XML files. XML has the
