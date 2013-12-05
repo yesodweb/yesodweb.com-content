@@ -3,6 +3,12 @@
 [appendix]
 == Conduit
 
+NOTE: This appendix is very far out of date, and the primary conduit
+documentation has since moved to
+link:https://www.fpcomplete.com/user/snoyberg/library-documentation/conduit-overview[FP
+Complete's School of Haskell]. It is highly recommended to read the content
+there.
+
 Conduits are a solution to the streaming data problem. Oftentimes, laziness allows us to process large amounts of data without pulling all values into memory. However, doing so in the presence of I/O requires us to use lazy I/O. The main downside to lazy I/O is non-determinism: we have no guarantees of when our resource finalizers will be run. For small application, this may be acceptable, but for a high-load server, we could quickly run out of scarce resources, such as file handles.
 
 Conduits allow us to process large streams of data while still retaining deterministic resource handling. They provide a unified interface for data streams, whether they come from files, sockets, or memory. And when combined with +ResourceT+, we can safely allocate resources, knowing that they will always be reclaimed—even in the presence of exceptions.
