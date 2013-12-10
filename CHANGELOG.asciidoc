@@ -8,3 +8,4 @@
   QuasiQuoter indentation).
 * Much cleaner formatting for the blog example.
 * Deeper explanation of Yesod's core monads.
+* More thorough explanations in example chapters, particular the Wiki/chat subsite.
