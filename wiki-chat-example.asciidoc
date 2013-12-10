@@ -1,0 +1,513 @@
+== Wiki: markdown, chat subsite, event source
+
+This example will tie together a few different ideas. We'll start with a chat
+subsite, which allows us to embed a chat widget on any page. We'll use the HTML
+5 event source API to handle sending events from the server to the client. You
+can view the entire project on
+link:https://www.fpcomplete.com/user/snoyberg/yesod/wiki-markdown-chat-subsite-event-source[FP
+Haskell Center].
+
+=== Subsite: data
+
+In order to define a subsite, we first need to create a foundation type for the
+subsite, the same as we would do for a normal Yesod application. In our case,
+we want to keep a channel of all the events to be sent to the individual
+participants of a chat. This ends up looking like:
+
+[source, haskell]
+----
+module Chat.Data where
+
+import           Control.Concurrent.Chan (Chan)
+import           Network.Wai.EventSource (ServerEvent)
+import           Yesod
+
+-- | Our subsite foundation. We keep a channel of events that all connections
+-- will share.
+data Chat = Chat (Chan ServerEvent)
+----
+
+We also need to define our subsite routes in the same module. We need to have
+two commands: one to send a new message to all users, and another to receive
+the stream of messages.
+
+[source, haskell]
+----
+mkYesodSubData "Chat" [parseRoutes|
+/send SendR POST
+/recv ReceiveR GET
+|]
+----
+
+=== Subsite: handlers
+
+Now that we've defined our foundation and routes, we need to create a separate
+module for providing the subsite dispatch functionality. We'll call this
+module +Chat+, and it's where we'll start to see how a subsite functions.
+
+A subsite always sits as a layer on top of some master site, which will be
+provided by the user. In many cases, a subsite will require specific
+functionality to be present in the master site. In the case of our chat
+subsite, we want user authentication to be provided by the master site. The
+subsite needs to be able to query whether the current user is logged into the
+site, and to get the user's name.
+
+The way we represent this concept is to define a typeclass that encapsulates
+the necessary functionality. Let's have a look at our +YesodChat+ typeclass:
+
+[source, haskell]
+----
+class (Yesod master, RenderMessage master FormMessage)
+        => YesodChat master where
+    getUserName :: HandlerT master IO Text
+    isLoggedIn :: HandlerT master IO Bool
+----
+
+Any master site which wants to use the chat subsite will need to provide a
++YesodChat+ instance. (We'll see in a bit how this requirement is enforced.)
+There are a few interesting things to note:
+
+* We can put further constraints on the master site, such as providing a
+  +Yesod+ instance and allowing rendering of form messages. The former allows
+  us to use +defaultLayout+, while the latter allows us to use standard form
+  widgets.
+
+* Previously in the book, we've used the +Handler+ monad quite a bit. Remember
+  that +Handler+ is just an application-specific type synonym around
+  +HandlerT+. Since this code is intended to work with many different
+  applications, we use the full +HandlerT+ form of the transformer.
+
+Speaking of the +Handler+ type synonym, we're going to want to have something
+similar for our subsite. The question is: what does this monad look like? In a
+subsite situation, we end up with two layers of +HandlerT+ transformers: one
+for the subsite, and one for the master site. We want to have a synonym that
+works for any master site which is an instance of +YesodChat+, so we end up
+with:
+
+[source, haskell]
+----
+type ChatHandler a =
+    forall master. YesodChat master =>
+    HandlerT Chat (HandlerT master IO) a
+----
+
+Now that we have our machinery out of the way, it's time to write our subsite
+handler functions. We had two routes: one for sending messages, and one for
+receiving messages. Let's start with sending. We need to:
+
+. Get the username for the person sending the message.
+. Parse the message from the incoming parameters. (Note that we're going to use GET parameters for simplicity of the client-side Ajax code.)
+. Write the message to the +Chan+.
+
+The trickiest bit of all this code is to know when to use +lift+. Let's look at
+the implementation, and then discuss those +lift+ usages:
+
+[source, haskell]
+----
+postSendR :: ChatHandler ()
+postSendR = do
+    from <- lift getUserName
+    body <- lift $ runInputGet $ ireq textField "message"
+    Chat chan <- getYesod
+    liftIO $ writeChan chan $ ServerEvent Nothing Nothing $ return $
+        fromText from <> fromText ": " <> fromText body
+----
+
++getUserName+ is the function we defined in our +YesodChat+ typeclass earlier.
+If we look at that type signature, we see that it lives in the master site's
++Handler+ monad. Therefore, we need to +lift+ that call out of the subsite.
+
+The call to +runInputGet+ is a little more subtle. Theoretically, we could run
+this in either the subsite or the master site. However, we use +lift+ here as
+well for one specific reason: message translations. By using the master site,
+we can take advantage of whatever +RenderMessage+ instance the master site
+defines. This also explains why we have a +RenderMessage+ constraint on the
++YesodChat+ typeclass.
+
+The next call to +getYesod+ is _not_ ++lift++ed. The reasoning here is simple:
+we want to get the subsite's foundation type in order to access the message
+channel. If we instead ++lift++ed that call, we'd get the master site's
+foundation type instead, which is not what we want in this case.
+
+The final line puts the new message into the channel. Since this is an +IO+
+action, we use +liftIO+. +ServerEvent+ is part of the +wai-eventsource+
+package, and is the means by which we're providing server-sent events in this
+example.
+
+The receiving side is similarly simple:
+
+[source, haskell]
+----
+getReceiveR :: ChatHandler ()
+getReceiveR = do
+    Chat chan0 <- getYesod
+    chan <- liftIO $ dupChan chan0
+    req <- waiRequest
+    res <- liftResourceT $ eventSourceAppChan chan req
+    sendWaiResponse res
+----
+
+We use +dupChan+ so that each new connection receives its own copy of newly
+generated messages. This is a standard method in concurrent Haskell of creating
+braodcast channels. The last three lines of our function expose the underlying
++wai-eventsource+ application as a Yesod handler, by getting the raw WAI
+request, running the application on that request, and then sending the raw WAI
+response.
+
+NOTE: Starting with WAI 2.0, instead of using +liftResourceT+, you need to use
++liftIO+.
+
+Now that we've defined our handler functions, we can set up our dispatch. In a
+normal application, dispatching is handled by calling +mkYesod+, which creates
+the appropriate +YesodDispatch+ instance. In subsites, things are a little bit
+more complicated, since you'll often want to place constraints on the master
+site. The formula we use is the following:
+
+[source, haskell]
+----
+instance YesodChat master => YesodSubDispatch Chat (HandlerT master IO) where
+    yesodSubDispatch = $(mkYesodSubDispatch resourcesChat)
+----
+
+We're stating that our +Chat+ subsite can live on top of any master site which
+is an instance of +YesodChat+. We then use the +mkYesodSubDispatch+ Template
+Haskell function to generate all of our dispatching logic. While this is a bit
+more difficult to write than +mkYesod+, it provides necessary flexibility, and
+is mostly identical for any subsite you'll write.
+
+=== Subsite: widget
+
+We now have a fully working subsite. The final component we want as part of our
+chat library is a widget to be embedded inside a page which will provide chat
+functionality. By creating this as a widget, we can include all of our HTML,
+CSS, and Javascript as a reusable component.
+
+Our widget will need to take in one argument: a function to convert a +Chat+
+subsite URL into a master site URL. The reasoning here is that a application
+developet could place the chat subsite anywhere in the URL structure, and this
+widget needs to be able to generate Javascript which will point at the correct
+URLs. Let's start off our widget:
+
+[source, haskell]
+----
+chatWidget :: YesodChat master
+           => (Route Chat -> Route master)
+           -> WidgetT master IO ()
+chatWidget toMaster = do
+----
+
+Next, we're going to generate some identifiers to be used by our widget. It's
+always good practice to let Yesod generate unique identifiers for you instead
+of creating them manually to avoid name collissions.
+
+[source, haskell]
+----
+    chat <- newIdent   -- the containing div
+    output <- newIdent -- the box containing the messages
+    input <- newIdent  -- input field from the user
+----
+
+And next we need to check if the user is logged in, using the +isLoggedIn+
+function in our +YesodChat+ typeclass. Since we're in a +Widget+ and that
+function lives in the +Handler+ monad, we need to use +handlerToWidget+:
+
+[source, haskell]
+----
+    ili <- handlerToWidget isLoggedIn  -- check if we're already logged in
+----
+
+If the user is logged in, we want to display the chat box, style it with some
+CSS, and then make it interactive using some Javascript. This is mostly
+client-side code wrapped in a Widget:
+
+[source, haskell]
+----
+    if ili
+        then do
+            -- Logged in: show the widget
+            [whamlet|
+                <div ##{chat}>
+                    <h2>Chat
+                    <div ##{output}>
+                    <input ##{input} type=text placeholder="Enter Message">
+            |]
+            -- Just some CSS
+            toWidget [lucius|
+                ##{chat} {
+                    position: absolute;
+                    top: 2em;
+                    right: 2em;
+                }
+                ##{output} {
+                    width: 200px;
+                    height: 300px;
+                    border: 1px solid #999;
+                    overflow: auto;
+                }
+            |]
+            -- And now that Javascript
+            toWidgetBody [julius|
+                // Set up the receiving end
+                var output = document.getElementById(#{toJSON output});
+                var src = new EventSource("@{toMaster ReceiveR}");
+                src.onmessage = function(msg) {
+                    // This function will be called for each new message.
+                    var p = document.createElement("p");
+                    p.appendChild(document.createTextNode(msg.data));
+                    output.appendChild(p);
+                
+                    // And now scroll down within the output div so the most recent message
+                    // is displayed.
+                    output.scrollTop = output.scrollHeight;
+                };
+                
+                // Set up the sending end: send a message via Ajax whenever the user hits
+                // enter.
+                var input = document.getElementById(#{toJSON input});
+                input.onkeyup = function(event) {
+                    var keycode = (event.keyCode ? event.keyCode : event.which);
+                    if (keycode == '13') {
+                        var xhr = new XMLHttpRequest();
+                        var val = input.value;
+                        input.value = "";
+                        var params = "?message=" + encodeURI(val);
+                        xhr.open("POST", "@{toMaster SendR}" + params);
+                        xhr.send(null);
+                    }
+                }
+            |]
+----
+
+And finally, if the user isn't logged in, we'll ask them to log in to use the
+chat app.
+
+[source, haskell]
+----
+        else do
+            -- User isn't logged in, give a not-logged-in message.
+            master <- getYesod
+            [whamlet|
+                <p>
+                    You must be #
+                    $maybe ar <- authRoute master
+                        <a href=@{ar}>logged in
+                    $nothing
+                        logged in
+                    \ to chat.
+            |]
+----
+
+=== Master site: data
+
+Now we can proceed with writing our main application. This application will
+include the chat subsite and a wiki. The first thing we need to consider is how
+to store the wiki contents. Normally, we'd want to put this in some kind of a
+Persistent database. For simplicity, we'll just use an in-memory
+representation. Each Wiki page is indicated by a list of names, and the contents of each page is going to be a piece of +Text+. So our full foundation datatype is:
+
+[source, haskell]
+----
+data App = App
+    { getChat     :: Chat
+    , wikiContent :: IORef (Map.Map [Text] Text)
+    }
+----
+
+Next we want to set up our routes:
+
+[source, haskell]
+----
+mkYesod "App" [parseRoutes|
+/            HomeR GET      -- the homepage
+/wiki/*Texts WikiR GET POST -- note the multipiece for the wiki hierarchy
+
+/chat        ChatR Chat getChat    -- the chat subsite
+/auth        AuthR Auth getAuth    -- the auth subsite
+|]
+----
+
+=== Master site: instances
+
+We need to make two modifications to the default +Yesod+ instance. Firstly, we
+want to provide an implementation of +authRoute+, so that our chat subsite
+widget can provide a proper link to a login page. Secondly, we'll provide a
+override to the +defaultLayout+. Besides providing login/logout links, this
+function will add in the chat widget on every page.
+
+[source, haskell]
+----
+instance Yesod App where
+    authRoute _ = Just $ AuthR LoginR -- get a working login link
+
+    -- Our custom defaultLayout will add the chat widget to every page.
+    -- We'll also add login and logout links to the top.
+    defaultLayout widget = do
+        pc <- widgetToPageContent $ do
+            widget
+            chatWidget ChatR
+        mmsg <- getMessage
+        giveUrlRenderer
+            [hamlet|
+                $doctype 5
+                <html>
+                    <head>
+                        <title>#{pageTitle pc}
+                        ^{pageHead pc}
+                    <body>
+                        $maybe msg <- mmsg
+                            <div .message>#{msg}
+                        <nav>
+                            <a href=@{AuthR LoginR}>Login
+                            \ | #
+                            <a href=@{AuthR LogoutR}>Logout
+                        ^{pageBody pc}
+            |]
+----
+
+Since we're using the chat subsite, we have to provide an instance of
++YesodChat+.
+
+[source, haskell]
+----
+instance YesodChat App where
+    getUserName = do
+        muid <- maybeAuthId
+        case muid of
+            Nothing -> do
+                setMessage "Not logged in"
+                redirect $ AuthR LoginR
+            Just uid -> return uid
+    isLoggedIn = do
+        ma <- maybeAuthId
+        return $ maybe False (const True) ma
+----
+
+Our +YesodAuth+ and +RenderMessage+ instances, as well as the homepage handler,
+are rather bland:
+
+[source, haskell]
+----
+-- Fairly standard YesodAuth instance. We'll use the dummy plugin so that you
+-- can create any name you want, and store the login name as the AuthId.
+instance YesodAuth App where
+    type AuthId App = Text
+    authPlugins _ = [authDummy]
+    loginDest _ = HomeR
+    logoutDest _ = HomeR
+    getAuthId = return . Just . credsIdent
+    authHttpManager = error "authHttpManager" -- not used by authDummy
+    maybeAuthId = lookupSession "_ID"
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+-- Nothing special here, just giving a link to the root of the wiki.
+getHomeR :: Handler Html
+getHomeR = defaultLayout
+    [whamlet|
+        <p>Welcome to the Wiki!
+        <p>
+            <a href=@{wikiRoot}>Wiki root
+    |]
+  where
+    wikiRoot = WikiR []
+----
+
+=== Master site: wiki handlers
+
+Now it's time to write our wiki handlers: a GET for displaying a page, and a
+POST for updating a page. We'll also define a +wikiForm+ function to be used on
+both handlers:
+
+[source, haskell]
+----
+-- A form for getting wiki content
+wikiForm :: Maybe Textarea -> Html -> MForm Handler (FormResult Textarea, Widget)
+wikiForm mtext = renderDivs $ areq textareaField "Page body" mtext
+
+-- Show a wiki page and an edit form
+getWikiR :: [Text] -> Handler Html
+getWikiR page = do
+    -- Get the reference to the contents map
+    icontent <- fmap wikiContent getYesod
+
+    -- And read the map from inside the reference
+    content <- liftIO $ I.readIORef icontent
+
+    -- Lookup the contents of the current page, if available
+    let mtext = Map.lookup page content
+
+    -- Generate a form with the current contents as the default value.
+    -- Note that we use the Textarea wrapper to get a <textarea>.
+    (form, _) <- generateFormPost $ wikiForm $ fmap Textarea mtext
+    defaultLayout $ do
+        case mtext of
+            -- We're treating the input as markdown. The markdown package
+            -- automatically handles XSS protection for us.
+            Just text -> toWidget $ markdown def $ TL.fromStrict text
+            Nothing -> [whamlet|<p>Page does not yet exist|]
+        [whamlet|
+            <h2>Edit page
+            <form method=post>
+                ^{form}
+                <div>
+                    <input type=submit>
+        |]
+
+-- Get a submitted wiki page and updated the contents.
+postWikiR :: [Text] -> Handler Html
+postWikiR page = do
+    icontent <- fmap wikiContent getYesod
+    content <- liftIO $ I.readIORef icontent
+    let mtext = Map.lookup page content
+    ((res, form), _) <- runFormPost $ wikiForm $ fmap Textarea mtext
+    case res of
+        FormSuccess (Textarea t) -> do
+            liftIO $ I.atomicModifyIORef icontent $
+                \m -> (Map.insert page t m, ())
+            setMessage "Page updated"
+            redirect $ WikiR page
+        _ -> defaultLayout
+                [whamlet|
+                    <form method=post>
+                        ^{form}
+                        <div>
+                            <input type=submit>
+                |]
+----
+
+=== Master site: running
+
+Finally, we're ready to run our application. Unlike many of our previous
+examples in this book, we need to perform some real initialization in the
++main+ function. The +Chat+ subsite requires an empty +Chan+ to be created, and
+we need to create a mutable variable to hold the wiki contents. Once we have
+those values, we can create an +App+ value and pass it to the +warp+ function.
+
+[source, haskell]
+----
+main :: IO ()
+main = do
+    -- Create our server event channel
+    chan <- newChan
+
+    -- Initially have a blank database of wiki pages
+    icontent <- I.newIORef Map.empty
+
+    -- Run our app
+    warpEnv App
+        { getChat = Chat chan
+        , wikiContent = icontent
+        }
+----
+
+=== Conclusion
+
+This example demonstrated creation of a non-trivial subsite. Some important
+points to notice were the usage of typeclasses to express constraints on the
+master site, how data initialization was performed in the +main+ function, and
+how ++lift++ing allowed us to operate in either the subsite or master site
+context.
+
+If you're looking for a way to test out your subsite skills, I'd recommend
+modifying this example so that the Wiki code also lived in its own subsite.

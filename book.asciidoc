@@ -51,11 +51,11 @@ include::creating-a-subsite.asciidoc[]
 
 include::blog-example-advanced.asciidoc[]
 
-include::ch19.asciidoc[]
+include::wiki-chat-example.asciidoc[]
 
 include::json-web-service.asciidoc[]
 
-include::ch21.asciidoc[]
+include::case-study-sphinx.asciidoc[]
 
 [[I_part_d1e8717]]
 = Appendices
