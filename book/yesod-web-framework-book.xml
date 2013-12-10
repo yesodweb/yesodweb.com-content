@@ -80,7 +80,7 @@
     <xi:include href="chapters/json-web-service.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/case-study-sphinx.xml"
+    <xi:include href="chapters/case-study-sphinx.asciidoc"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
   </part>
 
