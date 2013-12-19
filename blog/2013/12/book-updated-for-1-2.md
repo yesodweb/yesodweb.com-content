@@ -5,5 +5,5 @@ took far less time to update than I'd expected. So I'm happy to announce that
 the Yesod book is now fully revised and up-to-date with version 1.2 of Yesod.
 The final chapter [on using
 Sphinx](http://www.yesodweb.com/book/case-study-sphinx) is now available, and
-benefited greatly from the simplified streaming data primitives introduced in
+benefitted greatly from the simplified streaming data primitives introduced in
 Yesod 1.2.
