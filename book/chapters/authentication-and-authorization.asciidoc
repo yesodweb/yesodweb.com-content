@@ -72,8 +72,9 @@ Let's jump right in with an example of authentication.
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
+import           Data.Default           (def)
 import           Data.Text              (Text)
-import           Network.HTTP.Conduit   (Manager, def, newManager)
+import           Network.HTTP.Conduit   (Manager, conduitManagerSettings, newManager)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.BrowserId
@@ -130,7 +131,7 @@ getHomeR = do
 
 main :: IO ()
 main = do
-    man <- newManager def
+    man <- newManager conduitManagerSettings
     warp 3000 $ App man
 ----
 
