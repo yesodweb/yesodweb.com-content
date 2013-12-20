@@ -15,7 +15,7 @@ different situations.
 
 NOTE: While the information in this chapter is not Yesod-version-dependent, I
 don't necessarily believe that all of the recommendations given here are
-accurate given more recent developments, such as FP Complete's upcoming
+accurate given more recent developments, such as FP Complete's
 application server, or the availability of Keter. I've left this chapter mostly
 unchanged, but will likely update it again in the coming months. (June 23,
 2013)
@@ -30,6 +30,39 @@ combination to build your executable is:
 ----
 cabal clean && cabal configure && cabal build
 ----
+
+=== Files to deploy
+
+With a Yesod scaffolded application, there are essentially three sets of files that need
+to be deployed:
+
+. Your executable.
+. The config folder.
+. The static folder.
+
+Everything else, such as Shakespearean templates, gets compiled into the
+executable itself.
+
+There is one caveat, however: the +config/client_session_key.aes+ file. This
+file controls the server side encryption used for securing client side session
+cookies. Yesod will automatically generate a new one of these keys if none is
+present. In practice, this means that, if you do not include this file in
+deployment, all of your users will have to log in again when you redeploy. If
+you follow the advice above and include the +config+ folder, this issue will be
+partially resolved.
+
+The other half of the resolution is to ensure that once you generate a
++config/client_session_key.aes+ file, you keep the same one for all future
+deployments. The simplest way to ensure this is to keep that file in your
+version control. However, if your version control is open source, this will be
+dangerous: anyone with access to your repository will be able to spoof login
+credentials!
+
+The problem described here is essentially one of system administration, not
+programming. Yesod does not provide any built-in approach for securely storing
+client session keys. If you have an open source repository, or do not trust
+everyone who has access to your source code repository, it's vital to figure
+out a safe storage solution for the client session key.
 
 === Warp
 
