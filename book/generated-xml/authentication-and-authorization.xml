@@ -5,7 +5,7 @@
 
 <article lang="en">
 <articleinfo>
-    <date>2013-12-04</date>
+    <date>2013-12-19</date>
 </articleinfo>
 <section id="_authentication_and_authorization">
 <title>Authentication and Authorization</title>
@@ -68,8 +68,9 @@ of the benefits of a declarative authorization system.</simpara>
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
+import           Data.Default           (def)
 import           Data.Text              (Text)
-import           Network.HTTP.Conduit   (Manager, def, newManager)
+import           Network.HTTP.Conduit   (Manager, conduitManagerSettings, newManager)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.BrowserId
@@ -126,7 +127,7 @@ getHomeR = do
 
 main :: IO ()
 main = do
-    man &lt;- newManager def
+    man &lt;- newManager conduitManagerSettings
     warp 3000 $ App man</programlisting>
 <simpara>We&#8217;ll start with the route declarations. First we declare our standard <literal>HomeR</literal>
 route, and then we set up the authentication subsite. Remember that a subsite
@@ -444,8 +445,9 @@ your Yesod typeclass instance. Let&#8217;s see an example.</simpara>
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
+import           Data.Default         (def)
 import           Data.Text            (Text)
-import           Network.HTTP.Conduit (Manager, def, newManager)
+import           Network.HTTP.Conduit (Manager, conduitManagerSettings, newManager)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.Dummy -- just for testing, don't use in real life!!!
@@ -526,7 +528,7 @@ getAdminR = defaultLayout
 
 main :: IO ()
 main = do
-    manager &lt;- newManager def
+    manager &lt;- newManager conduitManagerSettings
     warp 3000 $ App manager</programlisting>
 <simpara><literal>authRoute</literal> should be your login page, almost always <literal>AuthR</literal> <literal>LoginR</literal>.
 <literal>isAuthorized</literal> is a function that takes two parameters: the requested route,

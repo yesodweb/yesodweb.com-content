@@ -5,7 +5,7 @@
 
 <article lang="en">
 <articleinfo>
-    <date>2013-06-23</date>
+    <date>2013-12-20</date>
 </articleinfo>
 <section id="_deploying_your_webapp">
 <title>Deploying your Webapp</title>
@@ -21,7 +21,7 @@ deployment, and gives some general recommendations on what you should choose in
 different situations.</simpara>
 <note><simpara>While the information in this chapter is not Yesod-version-dependent, I
 don&#8217;t necessarily believe that all of the recommendations given here are
-accurate given more recent developments, such as FP Complete&#8217;s upcoming
+accurate given more recent developments, such as FP Complete&#8217;s
 application server, or the availability of Keter. I&#8217;ve left this chapter mostly
 unchanged, but will likely update it again in the coming months. (June 23,
 2013)</simpara></note>
@@ -32,6 +32,48 @@ using the scaffolded site, it&#8217;s as simple as <literal>cabal build</literal
 cleaning beforehand to make sure there is no cached information, so a simple
 combination to build your executable is:</simpara>
 <screen>cabal clean &amp;&amp; cabal configure &amp;&amp; cabal build</screen>
+</section>
+<section id="_files_to_deploy">
+<title>Files to deploy</title>
+<simpara>With a Yesod scaffolded application, there are essentially three sets of files that need
+to be deployed:</simpara>
+<orderedlist numeration="arabic">
+<listitem>
+<simpara>
+Your executable.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+The config folder.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+The static folder.
+</simpara>
+</listitem>
+</orderedlist>
+<simpara>Everything else, such as Shakespearean templates, gets compiled into the
+executable itself.</simpara>
+<simpara>There is one caveat, however: the <literal>config/client_session_key.aes</literal> file. This
+file controls the server side encryption used for securing client side session
+cookies. Yesod will automatically generate a new one of these keys if none is
+present. In practice, this means that, if you do not include this file in
+deployment, all of your users will have to log in again when you redeploy. If
+you follow the advice above and include the <literal>config</literal> folder, this issue will be
+partially resolved.</simpara>
+<simpara>The other half of the resolution is to ensure that once you generate a
+<literal>config/client_session_key.aes</literal> file, you keep the same one for all future
+deployments. The simplest way to ensure this is to keep that file in your
+version control. However, if your version control is open source, this will be
+dangerous: anyone with access to your repository will be able to spoof login
+credentials!</simpara>
+<simpara>The problem described here is essentially one of system administration, not
+programming. Yesod does not provide any built-in approach for securely storing
+client session keys. If you have an open source repository, or do not trust
+everyone who has access to your source code repository, it&#8217;s vital to figure
+out a safe storage solution for the client session key.</simpara>
 </section>
 <section id="_warp">
 <title>Warp</title>
