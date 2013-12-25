@@ -162,7 +162,7 @@ documentation].
 === Overloaded Strings
 
 What's the type of +"hello"+? Traditionally, it's +String+, which is defined as
-+type String = \[Char\]+. Unfortunately, there are a number of limitations with
++type String = [Char]+. Unfortunately, there are a number of limitations with
 this:
 
 * It's a very inefficient implementation of textual data. We need to allocate
