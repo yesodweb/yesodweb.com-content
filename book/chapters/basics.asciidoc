@@ -162,7 +162,7 @@ it produces an HTML file with a doctype and +html+, +head+ and +body+ tags. As
 we'll see in the Yesod typeclass chapter, this function can be overridden to do
 much more.
 
-In our example, we pass +\[whamlet|Hello World!|\]+ to +defaultLayout+.
+In our example, we pass +[whamlet|Hello World!|]+ to +defaultLayout+.
 +whamlet+ is another quasi-quoter. In this case, it converts Hamlet syntax into
 a Widget. Hamlet is the default HTML templating engine in Yesod. Together with
 its siblings Cassius, Lucius and Julius, you can create HTML, CSS and
