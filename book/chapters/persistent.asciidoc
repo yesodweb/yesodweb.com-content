@@ -766,8 +766,8 @@ data Person = Person { personId :: Maybe PersonId, name :: String }
 
 I definitely prefer +insert $ Person Nothing "Michael"+ to +insert $ Person
 undefined "Michael"+. And now our types will be much simpler, right? For
-example, +selectList+ could return a simple +\[Person\]+ instead of that ugly
-+\[Entity SqlPersist Person\]+.
+example, +selectList+ could return a simple +[Person]+ instead of that ugly
++[Entity SqlPersist Person]+.
 
 The problem is that the "ugliness" is incredibly useful. Having +Entity Person+
 makes it obvious, at the type level, that we're dealing with a value that

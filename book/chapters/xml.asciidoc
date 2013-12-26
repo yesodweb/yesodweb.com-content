@@ -370,7 +370,7 @@ synopsis for an example.
 
 In the type signature above, we have a type +FilePath+. However, *this isn't
 Prelude.FilePath*. The standard +Prelude+ defines a type synonym +type FilePath
-= \[Char\]+. Unfortunately, there are many limitations to using such an
+= [Char]+. Unfortunately, there are many limitations to using such an
 approach, including confusion of filename character encodings and differences
 in path separators.
 
@@ -408,7 +408,7 @@ There are two functions available for creating cursors from +Text.XML+ types:
 +fromDocument+ and +fromNode+.
 
 We also have the concept of an Axis, defined as +type Axis = Cursor -&gt;
-\[Cursor\]+. It's easiest to get started by looking at example axes: child
+[Cursor]+. It's easiest to get started by looking at example axes: child
 returns zero or more cursors that are the child of the current one, parent
 returns the single parent cursor of the input, or an empty list if the input is
 the root element, and so on.
@@ -419,7 +419,7 @@ For example, +element "title"+ will return the input element if its name is
 "title", or an empty list otherwise.
 
 Another common function which isn't quite an axis is +content &#58;: Cursor
--&gt; \[Text\]+. For all content nodes, it returns the contained text;
+-&gt; [Text]+. For all content nodes, it returns the contained text;
 otherwise, it returns an empty list.
 
 And thanks to the monad instance for lists, it's easy to string all of these
@@ -554,8 +554,8 @@ same parent. (There is also a +preceding+ axis which takes all elements earlier
 in the tree.) We then take just the +h1+ elements, and then grab their content.
 
 
-NOTE: The equivalent XPath, for comparison, would be +//h2\[@class =
-'bar'\]/preceding-sibling::h1//text()+.
+NOTE: The equivalent XPath, for comparison, would be +//h2[@class =
+'bar']/preceding-sibling::h1//text()+.
 
 While the cursor API isn't quite as succinct as XPath, it has the advantages of
 being standard Haskell code, and of type safety.

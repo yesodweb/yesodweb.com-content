@@ -296,8 +296,8 @@ appropriately.
 NOTE: If you're dealing with a backend that has non-numeric IDs, like MongoDB,
 you'll need to work out something a bit more clever than this.
 
-We then loop over the resulting IDs to get a +\[Maybe Result\]+ value, and use
-+catMaybes+ to turn it into a +\[Result\]+. In the where clause, we define our
+We then loop over the resulting IDs to get a +[Maybe Result]+ value, and use
++catMaybes+ to turn it into a +[Result]+. In the where clause, we define our
 local settings, which override the default port and set up the search to work
 when _any_ term matches the document.
 
