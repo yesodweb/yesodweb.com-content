@@ -158,7 +158,7 @@ of Widgets:
 
 setTitle:: Turns some HTML into the page title.
 
-addCassiusMedia, addLuciusMedia:: Works the same as toWidget, but takes an
+toWidgetMedia:: Works the same as toWidget, but takes an
 additional parameter to indicate what kind of media this applies to. Useful for
 creating print stylesheets, for instance.
 
