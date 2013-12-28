@@ -5,7 +5,7 @@
 
 <article lang="en">
 <articleinfo>
-    <date>2013-09-02</date>
+    <date>2013-12-28</date>
 </articleinfo>
 <section id="_persistent">
 <title>Persistent</title>
@@ -791,8 +791,8 @@ the ID inside the value. In other words, instead of having:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">data Person = Person { personId :: Maybe PersonId, name :: String }</programlisting>
 <simpara>I definitely prefer <literal>insert $ Person Nothing "Michael"</literal> to <literal>insert $ Person
 undefined "Michael"</literal>. And now our types will be much simpler, right? For
-example, <literal>selectList</literal> could return a simple <literal>\[Person\]</literal> instead of that ugly
-<literal>\[Entity SqlPersist Person\]</literal>.</simpara>
+example, <literal>selectList</literal> could return a simple <literal>[Person]</literal> instead of that ugly
+<literal>[Entity SqlPersist Person]</literal>.</simpara>
 <simpara>The problem is that the "ugliness" is incredibly useful. Having <literal>Entity Person</literal>
 makes it obvious, at the type level, that we&#8217;re dealing with a value that
 exists in the database. Let&#8217;s say we want to create a link to another page that

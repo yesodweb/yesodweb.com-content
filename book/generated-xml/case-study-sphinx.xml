@@ -5,7 +5,7 @@
 
 <article lang="en">
 <articleinfo>
-    <date>2013-12-10</date>
+    <date>2013-12-28</date>
 </articleinfo>
 <section id="_case_study_sphinx_based_search">
 <title>Case Study: Sphinx-based Search</title>
@@ -272,8 +272,8 @@ taking advantage of the fact that the SQL Persistent backends use a
 appropriately.</simpara>
 <note><simpara>If you&#8217;re dealing with a backend that has non-numeric IDs, like MongoDB,
 you&#8217;ll need to work out something a bit more clever than this.</simpara></note>
-<simpara>We then loop over the resulting IDs to get a <literal>\[Maybe Result\]</literal> value, and use
-<literal>catMaybes</literal> to turn it into a <literal>\[Result\]</literal>. In the where clause, we define our
+<simpara>We then loop over the resulting IDs to get a <literal>[Maybe Result]</literal> value, and use
+<literal>catMaybes</literal> to turn it into a <literal>[Result]</literal>. In the where clause, we define our
 local settings, which override the default port and set up the search to work
 when <emphasis>any</emphasis> term matches the document.</simpara>
 <simpara>Let&#8217;s finally look at the <literal>getResult</literal> function:</simpara>

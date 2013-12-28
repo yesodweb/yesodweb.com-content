@@ -5,7 +5,7 @@
 
 <article lang="en">
 <articleinfo>
-    <date>2013-07-04</date>
+    <date>2013-12-28</date>
 </articleinfo>
 <section id="_basics">
 <title>Basics</title>
@@ -147,7 +147,7 @@ function wraps up the content it&#8217;s given in your site&#8217;s template. By
 it produces an HTML file with a doctype and <literal>html</literal>, <literal>head</literal> and <literal>body</literal> tags. As
 we&#8217;ll see in the Yesod typeclass chapter, this function can be overridden to do
 much more.</simpara>
-<simpara>In our example, we pass <literal>\[whamlet|Hello World!|\]</literal> to <literal>defaultLayout</literal>.
+<simpara>In our example, we pass <literal>[whamlet|Hello World!|]</literal> to <literal>defaultLayout</literal>.
 <literal>whamlet</literal> is another quasi-quoter. In this case, it converts Hamlet syntax into
 a Widget. Hamlet is the default HTML templating engine in Yesod. Together with
 its siblings Cassius, Lucius and Julius, you can create HTML, CSS and

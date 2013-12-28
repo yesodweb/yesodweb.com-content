@@ -5,7 +5,7 @@
 
 <article lang="en">
 <articleinfo>
-    <date>2013-10-30</date>
+    <date>2013-12-28</date>
 </articleinfo>
 <section id="I_chapter2_d1e408">
 <title>Haskell</title>
@@ -203,7 +203,7 @@ documentation</ulink>.</simpara>
 <section id="I_sect12_d1e671">
 <title>Overloaded Strings</title>
 <simpara>What&#8217;s the type of <literal>"hello"</literal>? Traditionally, it&#8217;s <literal>String</literal>, which is defined as
-<literal>type String = \[Char\]</literal>. Unfortunately, there are a number of limitations with
+<literal>type String = [Char]</literal>. Unfortunately, there are a number of limitations with
 this:</simpara>
 <itemizedlist>
 <listitem>

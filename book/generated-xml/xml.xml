@@ -5,7 +5,7 @@
 
 <article lang="en">
 <articleinfo>
-    <date>2013-12-04</date>
+    <date>2013-12-28</date>
 </articleinfo>
 <appendix id="_xml_conduit">
 <title>xml-conduit</title>
@@ -307,7 +307,7 @@ synopsis for an example.</simpara>
 <title>A note about file paths</title>
 <simpara>In the type signature above, we have a type <literal>FilePath</literal>. However, <emphasis role="strong">this isn&#8217;t
 Prelude.FilePath</emphasis>. The standard <literal>Prelude</literal> defines a type synonym <literal>type FilePath
-= \[Char\]</literal>. Unfortunately, there are many limitations to using such an
+= [Char]</literal>. Unfortunately, there are many limitations to using such an
 approach, including confusion of filename character encodings and differences
 in path separators.</simpara>
 <simpara>Instead, <literal>xml-conduit</literal> uses the system-filepath package, which defines an
@@ -354,7 +354,7 @@ by <ulink url="http://www.haskell.org/haskellwiki/Tying_the_Knot">tying the knot
 There are two functions available for creating cursors from <literal>Text.XML</literal> types:
 <literal>fromDocument</literal> and <literal>fromNode</literal>.</simpara>
 <simpara>We also have the concept of an Axis, defined as <literal>type Axis = Cursor -&gt;
-\[Cursor\]</literal>. It&#8217;s easiest to get started by looking at example axes: child
+[Cursor]</literal>. It&#8217;s easiest to get started by looking at example axes: child
 returns zero or more cursors that are the child of the current one, parent
 returns the single parent cursor of the input, or an empty list if the input is
 the root element, and so on.</simpara>
@@ -363,7 +363,7 @@ used function that filters down to only elements which match the given name.
 For example, <literal>element "title"</literal> will return the input element if its name is
 "title", or an empty list otherwise.</simpara>
 <simpara>Another common function which isn&#8217;t quite an axis is <literal>content &#58;: Cursor
--&gt; \[Text\]</literal>. For all content nodes, it returns the contained text;
+-&gt; [Text]</literal>. For all content nodes, it returns the contained text;
 otherwise, it returns an empty list.</simpara>
 <simpara>And thanks to the monad instance for lists, it&#8217;s easy to string all of these
 together. For example, to do our title lookup, we would write the following
@@ -487,8 +487,8 @@ Control.Monad; yet another advantage of the monad instance of lists.
 <literal>precedingSibling</literal> finds all nodes that come before our node <emphasis role="strong">and</emphasis> share the
 same parent. (There is also a <literal>preceding</literal> axis which takes all elements earlier
 in the tree.) We then take just the <literal>h1</literal> elements, and then grab their content.</simpara>
-<note><simpara>The equivalent XPath, for comparison, would be <literal>//h2\[@class =
-<emphasis>bar</emphasis>\]/preceding-sibling::h1//text()</literal>.</simpara></note>
+<note><simpara>The equivalent XPath, for comparison, would be <literal>//h2[@class =
+<emphasis>bar</emphasis>]/preceding-sibling::h1//text()</literal>.</simpara></note>
 <simpara>While the cursor API isn&#8217;t quite as succinct as XPath, it has the advantages of
 being standard Haskell code, and of type safety.</simpara>
 </section>
