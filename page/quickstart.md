@@ -41,7 +41,8 @@ __Note__: There is a bug in the 64-bit GHC 7.4 for Mac which prevents `yesod dev
 
 Building Yesod and all of its dependencies is a simple procedure. Just run:
 
-    cabal install yesod-platform yesod-bin
+    cabal update
+    cabal install yesod-platform yesod-bin --max-backjumps=-1 --reorder-goals
 
 Note that this will be installing a large number of packages, and may take a
 while. (15 minutes on modern systems, up to 40 minutes on older systems.) This
