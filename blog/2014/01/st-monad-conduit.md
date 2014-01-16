@@ -163,7 +163,7 @@ and (at least some of) the functions in
 
 As it stands right now, `conduitSwapBase` will allow the following base transformations to be applied:
 
-* `ST` can be converted to any other monad.
+* `ST` can be converted to ~~any other monad~~. __EDIT__ See update below.
 * `Identity` can be converted to any other monad.
 * `IO` can be converted to any instance of `MonadIO`.
 * For many transformers (all instances of [MonadTransControl](http://haddocks.fpcomplete.com/fp/7.4.2/20130829-168/monad-control/Control-Monad-Trans-Control.html#t:MonadTransControl) actually), if the base monad `m1` can be converted to `m2`, then the transformer `t m1` can be converted to `t m2`.
@@ -171,3 +171,14 @@ As it stands right now, `conduitSwapBase` will allow the following base transfor
 This addition allows us to keep more type safety in our codebase, while still
 allowing safe interleaving of `IO` actions with pure code. I'm happy with the
 addition so far, I'm curious to hear further ideas from the community.
+
+__UPDATE__: As [pointed out on
+Reddit](http://www.reddit.com/r/haskell/comments/1vcvxe/the_st_monad_and_conduit/cer0l4l),
+a backtracking base monad can break refential transparency for `ST`. I've
+[pushed a new
+commit](https://github.com/snoyberg/conduit/commit/77417ee45da8f9ee4e239b1f7e6a21013fd5b084)
+that constrains the types of monads that can be converted to. In particular, it
+works for monads which are processed in a linear/non branching manner. This
+includes Identity, IO and Maybe, and transformers like ReaderT and ErrorT.
+
+I'm currently calling this concept `MonadLinear`, but I have a strong feeling that there's a better abstraction already in existence.
