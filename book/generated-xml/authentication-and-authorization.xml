@@ -5,7 +5,7 @@
 
 <article lang="en">
 <articleinfo>
-    <date>2013-12-19</date>
+    <date>2014-01-18</date>
 </articleinfo>
 <section id="_authentication_and_authorization">
 <title>Authentication and Authorization</title>
@@ -203,6 +203,11 @@ They use email addresses as identifiers, which people are comfortable with, as o
 </simpara>
 </listitem>
 </itemizedlist>
+<simpara>In addition to these six methods, there are other methods available to control
+other behavior of the authentication system, such as what the login page looks
+like. For more information, please
+<ulink url="http://hackage.haskell.org/package/yesod-auth-1.2.5.2/docs/Yesod-Auth.html#t:YesodAuth">see
+the API documentation</ulink>.</simpara>
 <simpara>In our <literal>HomeR</literal> handler, we have some simple links to the login and logout
 pages, depending on whether or not the user is logged in. Notice how we
 construct these subsite links: first we give the subsite route name (<literal>AuthR</literal>),

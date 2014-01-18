@@ -189,6 +189,12 @@ So what exactly goes in this +YesodAuth+ instance? There are six required declar
    all third-party login systems) to share connections, avoiding the cost of
    restarting a TCP connection for each request.
 
+In addition to these six methods, there are other methods available to control
+other behavior of the authentication system, such as what the login page looks
+like. For more information, please
+link:http://hackage.haskell.org/package/yesod-auth-1.2.5.2/docs/Yesod-Auth.html#t:YesodAuth[see
+the API documentation].
+
 In our +HomeR+ handler, we have some simple links to the login and logout
 pages, depending on whether or not the user is logged in. Notice how we
 construct these subsite links: first we give the subsite route name (+AuthR+),
