@@ -1,3 +1,7 @@
+- time: 2014-01-20T14:40:00Z
+  author: michael
+  title: Improved transformer and exception support in conduit
+  path: 2014/01/conduit-transformer-exception.md
 - time: 2014-01-17T06:40:00Z
   author: michael
   title: 'Update: The ST monad and conduit'
