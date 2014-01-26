@@ -49,6 +49,8 @@ include::creating-a-subsite.asciidoc[]
 [[I_part_d1e8222]]
 = Examples
 
+include::initializing-foundation-data.asciidoc[]
+
 include::blog-example-advanced.asciidoc[]
 
 include::wiki-chat-example.asciidoc[]
