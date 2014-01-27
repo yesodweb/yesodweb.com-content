@@ -5,7 +5,7 @@
 
 <article lang="en">
 <articleinfo>
-    <date>2013-12-28</date>
+    <date>2014-01-27</date>
 </articleinfo>
 <appendix id="xml_xml_conduit">
 <title>xml-conduit</title>
@@ -488,7 +488,7 @@ Control.Monad; yet another advantage of the monad instance of lists.
 same parent. (There is also a <literal>preceding</literal> axis which takes all elements earlier
 in the tree.) We then take just the <literal>h1</literal> elements, and then grab their content.</simpara>
 <note><simpara>The equivalent XPath, for comparison, would be <literal>//h2[@class =
-<emphasis>bar</emphasis>]/preceding-sibling::h1//text()</literal>.</simpara></note>
+'bar']/preceding-sibling::h1//text()</literal>.</simpara></note>
 <simpara>While the cursor API isn&#8217;t quite as succinct as XPath, it has the advantages of
 being standard Haskell code, and of type safety.</simpara>
 </section>
