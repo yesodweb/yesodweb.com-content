@@ -1,0 +1,67 @@
+= Yesod Web Framework Book
+
+:author: Michael Snoyman
+:lang: en
+// a2x: --format=epub --doctype=book
+
+= Basics
+
+include::chapters/introduction.asciidoc[]
+
+include::chapters/haskell.asciidoc[]
+
+include::chapters/basics.asciidoc[]
+
+include::chapters/shakespearean-templates.asciidoc[]
+
+include::chapters/widgets.asciidoc[]
+
+include::chapters/yesod-typeclass.asciidoc[]
+
+include::chapters/routing-and-handlers.asciidoc[]
+
+include::chapters/forms.asciidoc[]
+
+include::chapters/sessions.asciidoc[]
+
+include::chapters/persistent.asciidoc[]
+
+include::chapters/deploying-your-webapp.asciidoc[]
+
+= Advanced
+
+include::chapters/restful-content.asciidoc[]
+
+include::chapters/yesods-monads.asciidoc[]
+
+include::chapters/authentication-and-authorization.asciidoc[]
+
+include::chapters/scaffolding-and-the-site-template.asciidoc[]
+
+include::chapters/internationalization.asciidoc[]
+
+include::chapters/creating-a-subsite.asciidoc[]
+
+= Examples
+
+include::chapters/blog-example-advanced.asciidoc[]
+
+include::chapters/wiki-chat-example.asciidoc[]
+
+include::chapters/json-web-service.asciidoc[]
+
+include::chapters/case-study-sphinx.asciidoc[]
+
+= Appendices
+
+include::chapters/monad-control.asciidoc[]
+
+include::chapters/conduits.asciidoc[]
+
+include::chapters/web-application-interface.asciidoc[]
+
+include::chapters/settings-types.asciidoc[]
+
+include::chapters/http-conduit.asciidoc[]
+
+include::chapters/xml.asciidoc[]
