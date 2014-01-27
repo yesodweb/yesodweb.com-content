@@ -1,3 +1,7 @@
+- time: 2014-01-27T08:40:00Z
+  author: michael
+  title: Initializing data in the foundation datatype
+  path: 2014/01/initializing-foundation-data.html
 - time: 2014-01-20T14:40:00Z
   author: michael
   title: Improved transformer and exception support in conduit
