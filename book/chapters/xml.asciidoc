@@ -555,7 +555,7 @@ in the tree.) We then take just the +h1+ elements, and then grab their content.
 
 
 NOTE: The equivalent XPath, for comparison, would be +//h2[@class =
-'bar']/preceding-sibling::h1//text()+.
+\'bar']/preceding-sibling::h1//text()+.
 
 While the cursor API isn't quite as succinct as XPath, it has the advantages of
 being standard Haskell code, and of type safety.
