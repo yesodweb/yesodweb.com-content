@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-12-05</date>
 </articleinfo>
-<appendix id="_settings_types">
+<appendix id="settings-types_settings_types">
 <title>Settings Types</title>
 <simpara>Let&#8217;s say you&#8217;re writing a webserver. You want the server to take a port to
 listen on, and an application to run. So you create the following function:</simpara>

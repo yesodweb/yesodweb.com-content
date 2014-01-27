@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-06-07</date>
 </articleinfo>
-<section id="_sessions">
+<section id="sessions_sessions">
 <title>Sessions</title>
 <simpara>HTTP is a stateless protocol. While some view this as a disadvantage, advocates
 of RESTful web development laud this as a plus. When state is removed from the
@@ -20,7 +20,7 @@ shopping carts are the classic example, but other more mundane interactions
 like proper login handling can be greatly enhanced by proper usage of sessions.</simpara>
 <simpara>This chapter will describe how Yesod stores session data, how you can access
 this data, and some special functions to help you make the most of sessions.</simpara>
-<section id="_clientsession">
+<section id="sessions_clientsession">
 <title>Clientsession</title>
 <simpara>One of the earliest packages spun off from Yesod was clientsession. This
 package uses encryption and signatures to store data in a client-side cookie.
@@ -56,7 +56,7 @@ the session, and put the actual data in a database.</simpara>
 <simpara>All of the interaction with clientsession is handled by Yesod internally, but
 there are a few spots where you can tweak the behavior just a bit.</simpara>
 </section>
-<section id="_controlling_sessions">
+<section id="sessions_controlling_sessions">
 <title>Controlling sessions</title>
 <simpara>By default, your Yesod application will use clientsession for its session
 storage, getting the encryption key from the client <literal>client-session-key.aes</literal>
@@ -90,7 +90,7 @@ should include a pregenerated key with it, otherwise all existing sessions will
 be invalidated when your new key file is generated. The scaffolding addresses
 this for you.</simpara></note>
 </section>
-<section id="_session_operations">
+<section id="sessions_session_operations">
 <title>Session Operations</title>
 <simpara>Like most frameworks, a session in Yesod is a key-value store. The base session
 API boils down to four functions: <literal>lookupSession</literal> gets a value for a key (if
@@ -144,7 +144,7 @@ instance RenderMessage App FormMessage where
 main :: IO ()
 main = warp 3000 App</programlisting>
 </section>
-<section id="_messages">
+<section id="sessions_messages">
 <title>Messages</title>
 <simpara>One usage of sessions previously alluded to is messages. They come to solve a
 common problem in web development: the user performs a <literal>POST</literal> request, the web
@@ -241,7 +241,7 @@ main = warp 3000 App</programlisting>
 </mediaobject>
 </figure>
 </section>
-<section id="_ultimate_destination">
+<section id="sessions_ultimate_destination">
 <title>Ultimate Destination</title>
 <simpara>Not to be confused with a horror film, ultimate destination is a technique
 originally developed for Yesod&#8217;s authentication framework, but which has more
@@ -346,7 +346,7 @@ getSayHelloR = do
 main :: IO ()
 main = warp 3000 App</programlisting>
 </section>
-<section id="_summary">
+<section id="sessions_summary">
 <title>Summary</title>
 <simpara>Sessions are the primary means by which we bypass the statelessness imposed by
 HTTP. We shouldn&#8217;t consider this an escape hatch to perform whatever actions we

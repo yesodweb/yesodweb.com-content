@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-12-28</date>
 </articleinfo>
-<appendix id="_xml_conduit">
+<appendix id="xml_xml_conduit">
 <title>xml-conduit</title>
 <simpara>Many developers cringe at the thought of dealing with XML files. XML has the
 reputation of having a complicated data model, with obfuscated libraries and
@@ -28,7 +28,7 @@ perspective, it provides everything from the simplest APIs
 <simpara>In addition to <literal>xml-conduit</literal>, there are a few related packages that come into
 play, like xml-hamlet and xml2html. We&#8217;ll cover both how to use all these
 packages, and when they should be used.</simpara>
-<section id="_synopsis">
+<section id="xml_synopsis">
 <title>Synopsis</title>
 <programlisting language="xml" linenumbering="unnumbered">&lt;!-- Input XML file --&gt;
 &lt;document title="My Title"&gt;
@@ -118,7 +118,7 @@ goElem (Element name attrs children) =
     &lt;/body&gt;
 &lt;/html&gt;</programlisting>
 </section>
-<section id="_types">
+<section id="xml_types">
 <title>Types</title>
 <simpara>Let&#8217;s take a bottom-up approach to analyzing types. This section will also
 serve as a primer on the XML data model itself, so don&#8217;t worry if you&#8217;re not
@@ -162,7 +162,7 @@ called Clark notation, which allows you to prefix the namespace surrounded in
 curly brackets. In other words:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">"{namespace}element" == Name "element" (Just "namespace") Nothing
 "element" == Name "element" Nothing Nothing</programlisting>
-<section id="_the_four_types_of_nodes">
+<section id="xml_the_four_types_of_nodes">
 <title>The Four Types of Nodes</title>
 <simpara>XML documents are a tree of nested nodes. There are in fact four different
 types of nodes allowed: elements, content (i.e., text), comments, and
@@ -225,7 +225,7 @@ Haskell really shines: its sum types model the XML data model perfectly.</simpar
     | NodeContent Text
     | NodeComment Text</programlisting>
 </section>
-<section id="_documents">
+<section id="xml_documents">
 <title>Documents</title>
 <simpara>So now we have elements and nodes, but what about an entire document? Let&#8217;s
 just lay out the datatypes:</simpara>
@@ -270,7 +270,7 @@ examples:</simpara>
 you&#8217;ll be able to simply ignore the entire <literal>Document</literal> datatype and go
 immediately to the <literal>documentRoot</literal>.</simpara>
 </section>
-<section id="_events">
+<section id="xml_events">
 <title>Events</title>
 <simpara>In addition to the document API, <literal>xml-types</literal> defines an Event datatype. This
 can be used for constructing streaming tools, which can be much more memory
@@ -280,7 +280,7 @@ should look very familiar after analyzing the document API.</simpara>
 <note><simpara>You can see an example of the streaming API in the Sphinx case study.</simpara></note>
 </section>
 </section>
-<section id="_text_xml">
+<section id="xml_text_xml">
 <title>Text.XML</title>
 <simpara>The recommended entry point to xml-conduit is the Text.XML module. This module
 exports all of the datatypes you&#8217;ll need to manipulate XML in a DOM fashion, as
@@ -303,7 +303,7 @@ output is generated in UTF-8.</simpara>
 standard <literal>Text.XML</literal> API not only forms the basis for that higher level, but is
 also a great API for simple XML transformations and for XML generation. See the
 synopsis for an example.</simpara>
-<section id="_a_note_about_file_paths">
+<section id="xml_a_note_about_file_paths">
 <title>A note about file paths</title>
 <simpara>In the type signature above, we have a type <literal>FilePath</literal>. However, <emphasis role="strong">this isn&#8217;t
 Prelude.FilePath</emphasis>. The standard <literal>Prelude</literal> defines a type synonym <literal>type FilePath
@@ -340,7 +340,7 @@ Instead of manually splicing together directory names and file names with
 </itemizedlist>
 </section>
 </section>
-<section id="_cursor">
+<section id="xml_cursor">
 <title>Cursor</title>
 <simpara>Suppose you want to pull the title out of an XHTML document. You could do so
 with the <literal>Text.XML</literal> interface we just described, using standard pattern
@@ -492,7 +492,7 @@ in the tree.) We then take just the <literal>h1</literal> elements, and then gra
 <simpara>While the cursor API isn&#8217;t quite as succinct as XPath, it has the advantages of
 being standard Haskell code, and of type safety.</simpara>
 </section>
-<section id="_xml_hamlet">
+<section id="xml_xml_hamlet">
 <title>xml-hamlet</title>
 <simpara>Thanks to the simplicity of Haskell&#8217;s data type system, creating XML content
 with the <literal>Text.XML API</literal> is easy, if a bit verbose. The following code:</simpara>
@@ -647,7 +647,7 @@ Unlike Hamlet, hash-interpolations (#{&#8230;}) are not polymorphic, and can
 </listitem>
 </itemizedlist>
 </section>
-<section id="_xml2html">
+<section id="xml_xml2html">
 <title>xml2html</title>
 <simpara>So far in this chapter, our examples have revolved around XHTML. I&#8217;ve done that
 so far simply because it is likely to be the most familiar form of XML for most

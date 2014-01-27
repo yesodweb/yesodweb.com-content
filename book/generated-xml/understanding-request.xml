@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-09-22</date>
 </articleinfo>
-<section id="_understanding_a_request">
+<section id="understanding-request_understanding_a_request">
 <title>Understanding a Request</title>
 <simpara>You can often times get away with using Yesod for quite a while without needing
 to understand its internal workings. However, such an understanding is often
@@ -39,13 +39,13 @@ GHC&rsquo;s generated code using -ddump-splices.</simpara>
 </listitem>
 </itemizedlist>
 </note>
-<section id="_handlers">
+<section id="understanding-request_handlers">
 <title>Handlers</title>
 <simpara>When trying to understand Yesod request handling, we need to look at two
 components: how a request is dispatched to the appropriate handler code, and
 how handler functions are processed. We&rsquo;ll start off with the latter, and
 then circle back to understanding the dispatch process itself.</simpara>
-<section id="_layers">
+<section id="understanding-request_layers">
 <title>Layers</title>
 <simpara>Yesod builds itself on top of WAI, which provides a protocol for web servers
 (or, more generally, <emphasis>handlers</emphasis>) and applications to communicate with each
@@ -91,7 +91,7 @@ writing in a Reader monad that has access to all of this information. The
 runHandler function will turn a Handler into a YesodApp. yesodRunner takes this
 a step further and converts all the way to a WAI Application.</simpara>
 </section>
-<section id="_content">
+<section id="understanding-request_content">
 <title>Content</title>
 <simpara>Our example above, and many others you&rsquo;ve already seen, give a handler
 with a type of Handler Html. We&rsquo;ve just described what the Handler means,
@@ -132,7 +132,7 @@ instance ToTypedContent T.Text where
 instance of ToTypedContent, and Yesod will handle turning it into an
 appropriate representation and setting the Content-Type response header.</simpara>
 </section>
-<section id="_short_circuit_responses">
+<section id="understanding-request_short_circuit_responses">
 <title>Short-circuit responses</title>
 <simpara>One other oddity is how short-circuiting works. For example, you can call
 redirect in the middle of a handler function, and the rest of the function will
@@ -144,7 +144,7 @@ redirecting or sending a file. For all other exception types, an error message
 is displayed to the user.</simpara>
 </section>
 </section>
-<section id="_dispatch">
+<section id="understanding-request_dispatch">
 <title>Dispatch</title>
 <simpara>Dispatch is the act of taking an incoming request and generating an appropriate
 response. We have a few different constraints regarding how we want to handle
@@ -191,7 +191,7 @@ class YesodSubDispatch sub m where
                      -&gt; W.Application</programlisting>
 <simpara>We&rsquo;ll see a bit later how YesodSubDispatch is used. Let&rsquo;s first
 understand how YesodDispatch comes into play,__</simpara>
-<section id="_towaiapp_towaiappplain_and_warp">
+<section id="understanding-request_towaiapp_towaiappplain_and_warp">
 <title>toWaiApp, toWaiAppPlain, and warp</title>
 <simpara>Let&rsquo;s assume for the moment that you have a datatype which is an instance
 of YesodDispatch. You&rsquo;ll want to now actually run this thing somehow. To
@@ -218,7 +218,7 @@ information from the PORT environment variable. This is used for interacting
 with certain tools, including the Keter deployment manager and the FP Complete
 School of Haskell.</simpara></note>
 </section>
-<section id="_generated_code">
+<section id="understanding-request_generated_code">
 <title>Generated code</title>
 <simpara>The last remaining black box is the Template Haskell generated code. This
 generated code is responsible for handling some of the tedious, error-prone
@@ -436,7 +436,7 @@ figure.</simpara>
 want to respond with a 404 not found.</simpara>
 <screen>            _ -&gt; yesodRunner (notFound &gt;&gt; return ()) env Nothing req</screen>
 </section>
-<section id="_complete_code">
+<section id="understanding-request_complete_code">
 <title>Complete code</title>
 <simpara>Following is the full code for the non-Template Haskell approach.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
@@ -546,7 +546,7 @@ main :: IO ()
 main = warp 3000 App</programlisting>
 </section>
 </section>
-<section id="_conclusion">
+<section id="understanding-request_conclusion">
 <title>Conclusion</title>
 <simpara>Yesod abstracts away quite a bit of the plumbing from you as a developer. Most
 of this is boilerplate code that you&rsquo;ll be happy to ignore. But it can be

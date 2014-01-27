@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-12-05</date>
 </articleinfo>
-<appendix id="_web_application_interface">
+<appendix id="web-application-interface_web_application_interface">
 <title>Web Application Interface</title>
 <simpara>It is a problem almost every language used for web development has dealt with:
 the low level interface between the web server and the application. The
@@ -50,13 +50,13 @@ by some applications that skip the framework entirely, including Hoogle.</simpar
 devel</emphasis>. The difference from wai-handler-devel is that yesod devel actually
 compiles your code each time, respecting all settings in your cabal file. This
 is the recommended aproach for general Yesod development.</simpara></note>
-<section id="_the_interface">
+<section id="web-application-interface_the_interface">
 <title>The Interface</title>
 <simpara>The interface itself is very straight-forward: an application takes a request
 and returns a response. A response is an HTTP status, a list of headers and a
 response body. A request contains various information: the requested path,
 query string, request body, HTTP version, and so on.</simpara>
-<section id="_response_body">
+<section id="web-application-interface_response_body">
 <title>Response Body</title>
 <simpara>Haskell has a datatype known as a lazy bytestring. By utilizing laziness, you
 can create large values without exhausting memory. Using lazy I/O, you can do
@@ -82,7 +82,7 @@ into buffers.</simpara>
 (<literal>ResponseBuilder</literal>), one for a source of builders (<literal>ResponseSource</literal>) and one
 for files (<literal>ResponseFile</literal>).</simpara>
 </section>
-<section id="_request_body">
+<section id="web-application-interface_request_body">
 <title>Request Body</title>
 <simpara>In order to avoid the need to load the entire request body into memory, we use
 sources here as well. Since the purpose of these values are for reading (not
@@ -94,7 +94,7 @@ are URL encoded and multipart form data. The wai-extra package contains
 built-in support for parsing these in a memory-efficient manner.</simpara>
 </section>
 </section>
-<section id="_hello_world">
+<section id="web-application-interface_hello_world">
 <title>Hello World</title>
 <simpara>To demonstrate the simplicity of WAI, let&#8217;s look at a hello world example. In
 this example, we&#8217;re going to use the OverloadedStrings language extension to
@@ -117,7 +117,7 @@ parameters, we ignore the argument to the function. For any request, we are
 returning a response with status code 200 ("OK"), and text/plain content type
 and a body containing the words "Hello World". Pretty straight-forward.</simpara>
 </section>
-<section id="_middleware">
+<section id="web-application-interface_middleware">
 <title>Middleware</title>
 <simpara>In addition to allowing our applications to run on multiple backends without
 code changes, the WAI allows us another benefits: middleware. Middleware is

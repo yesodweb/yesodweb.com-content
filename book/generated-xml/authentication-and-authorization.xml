@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2014-01-18</date>
 </articleinfo>
-<section id="_authentication_and_authorization">
+<section id="authentication-and-authorization_authentication_and_authorization">
 <title>Authentication and Authorization</title>
 <simpara>Authentication and authorization are two very related, and yet separate,
 concepts. While the former deals with identifying a user, the latter determines
@@ -26,7 +26,7 @@ authorization code is written in Haskell, you have the full flexibility of the
 language at your disposal.</simpara>
 <simpara>This chapter will cover how to set up an "auth" solution in Yesod and discuss
 some trade-offs in the different authentication options.</simpara>
-<section id="_overview">
+<section id="authentication-and-authorization_overview">
 <title>Overview</title>
 <simpara>The yesod-auth package provides a unified interface for a number of different
 authentication plugins. The only real requirement for these backends is that
@@ -60,7 +60,7 @@ implement authorization in a more ad-hoc way by adding calls to <literal>require
 and the like within individual handler functions, though this undermines many
 of the benefits of a declarative authorization system.</simpara>
 </section>
-<section id="_authenticate_me">
+<section id="authentication-and-authorization_authenticate_me">
 <title>Authenticate Me</title>
 <simpara>Let&#8217;s jump right in with an example of authentication.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE MultiParamTypeClasses #-}
@@ -238,7 +238,7 @@ followed by the route within the subsite (<literal>LoginR</literal> and <literal
 </mediaobject>
 </figure>
 </section>
-<section id="_email">
+<section id="authentication-and-authorization_email">
 <title>Email</title>
 <simpara>For many use cases, third-party authentication of email will be sufficient.
 Occassionally, you&#8217;ll want users to actual create passwords on your site. The
@@ -439,7 +439,7 @@ main = withSqliteConn "email.db3" $ \conn -&gt; do
     runNoLoggingT $ runSqlConn (runMigration migrateAll) conn
     warp 3000 $ App conn</programlisting>
 </section>
-<section id="_authorization">
+<section id="authentication-and-authorization_authorization">
 <title>Authorization</title>
 <simpara>Once you can authenticate your users, you can use their credentials to
 <emphasis>authorize</emphasis> requests. Authorization in Yesod is simple and declarative: most of
@@ -564,7 +564,7 @@ Pull any session or request values you want
 system as you like, or even tie into existing systems used by your
 organization.</simpara>
 </section>
-<section id="_conclusion">
+<section id="authentication-and-authorization_conclusion">
 <title>Conclusion</title>
 <simpara>This chapter covered the basics of setting up user authentication, as well as
 how the built-in authorization functions provide a simple, declarative approach

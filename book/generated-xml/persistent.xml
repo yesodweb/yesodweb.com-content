@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2014-01-01</date>
 </articleinfo>
-<section id="_persistent">
+<section id="persistent_persistent">
 <title>Persistent</title>
 <simpara>Forms deal with the boundary between the user and the application. Another
 boundary we need to deal with is between the application and the storage layer.
@@ -58,7 +58,7 @@ Automatically perform database migrations
 <simpara>Persistent works well with Yesod, but it is quite
 usable on its own as a standalone library. Most of this chapter will address
 Persistent on its own.</simpara>
-<section id="_synopsis">
+<section id="persistent_synopsis">
 <title>Synopsis</title>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls    #-}
 {-# LANGUAGE FlexibleContexts  #-}
@@ -102,7 +102,7 @@ main = runSqlite ":memory:" $ do
     delete janeId
     deleteWhere [BlogPostAuthorId ==. johnId]</programlisting>
 </section>
-<section id="_solving_the_boundary_issue">
+<section id="persistent_solving_the_boundary_issue">
 <title>Solving the boundary issue</title>
 <simpara>Suppose you are storing information on people in a SQL database. Your table
 might look something like:</simpara>
@@ -147,7 +147,7 @@ sure you are aware by now, that doesn&#8217;t jive well with the Yesod approach 
 things. We like to take advantage of Haskell&#8217;s strong typing to save us
 wherever possible, and data storage is no exception.</simpara>
 <simpara>So the question remains: how can we use Haskell&#8217;s type system to save the day?</simpara>
-<section id="_types">
+<section id="persistent_types">
 <title>Types</title>
 <simpara>Like routing, there is nothing intrinsically difficult about type-safe data
 access. It just requires a lot of monotonous, error prone, boiler plate code.
@@ -214,7 +214,7 @@ rowsep="1" colsep="1"
 </tgroup>
 </informaltable>
 </section>
-<section id="_code_generation">
+<section id="persistent_code_generation">
 <title>Code Generation</title>
 <simpara>In order to ensure that the PersistEntity instances match up properly with your
 Haskell datatypes, Persistent takes responsibility for both. This is also good
@@ -338,7 +338,7 @@ database using an <literal>Id</literal>. In Persistent, you never need to worry 
 using the key from the wrong table: trying to load up a different entity (like
 <literal>House</literal>) using a <literal>PersonId</literal> will never compile.</simpara>
 </section>
-<section id="_persiststore">
+<section id="persistent_persiststore">
 <title>PersistStore</title>
 <simpara>One last detail is left unexplained from the previous example: what exactly
 does <literal>runSqlite</literal> do, and what is that monad that our database actions are
@@ -386,7 +386,7 @@ block, it will roll back the entire transaction.</simpara></note>
 </itemizedlist>
 </section>
 </section>
-<section id="_migrations">
+<section id="persistent_migrations">
 <title>Migrations</title>
 <simpara>I&#8217;m sorry to tell you, but so far I have lied to you a bit: the example from
 the previous section does not actually work. If you try to run it, you will get
@@ -504,7 +504,7 @@ would perform for you. This may be useful for performing migrations that
 Persistent is not capable of, for adding arbitrary SQL to a migration, or just
 to log what migrations occurred.</simpara>
 </section>
-<section id="_uniqueness">
+<section id="persistent_uniqueness">
 <title>Uniqueness</title>
 <simpara>In addition to declaring fields within an entity, you can also declare
 uniqueness constraints. A typical example would be requiring that a username be
@@ -554,7 +554,7 @@ above. This happens via the <literal>Unique</literal> associated type. In the ex
 end up with a new constructor:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">PersonName :: String -&gt; String -&gt; Unique Person</programlisting>
 </section>
-<section id="_queries">
+<section id="persistent_queries">
 <title>Queries</title>
 <simpara>Depending on what your goal is, there are different approaches to querying the
 database. Some commands query based on a numeric ID, while others will filter.
@@ -565,7 +565,7 @@ return many results.</simpara>
 to encode as many invariants in the types as possible. For example, a query
 that can return only 0 or 1 results will use a <literal>Maybe</literal> wrapper, whereas a query
 returning many results will return a list.</simpara>
-<section id="_fetching_by_id">
+<section id="persistent_fetching_by_id">
 <title>Fetching by ID</title>
 <simpara>The simplest query you can perform in Persistent is getting based on an ID.
 Since this value may or may not exist, its return type is wrapped in a <literal>Maybe</literal>.</simpara>
@@ -580,7 +580,7 @@ the value, returning a 404 message if it is not found. Fortunately, the
 <literal>get404</literal> (provided by the yesod-persistent package) function helps us out here.
 We&#8217;ll go into more details when we see integration with Yesod.</simpara>
 </section>
-<section id="_fetching_by_unique_constraint">
+<section id="persistent_fetching_by_unique_constraint">
 <title>Fetching by unique constraint</title>
 <simpara><literal>getBy</literal> is almost identical to <literal>get</literal>, except:</simpara>
 <orderedlist numeration="arabic">
@@ -602,7 +602,7 @@ it returns an <literal>Entity</literal> instead of a value. An <literal>Entity</
         Just (Entity personId person) -&gt; liftIO $ print person</programlisting>
 <simpara>Like <literal>get404</literal>, there is also a <literal>getBy404</literal> function.</simpara>
 </section>
-<section id="_select_functions">
+<section id="persistent_select_functions">
 <title>Select functions</title>
 <simpara>Most likely, you&#8217;re going to want more powerful queries. You&#8217;ll want to find
 everyone over a certain age; all cars available in blue; all users without a
@@ -699,7 +699,7 @@ operators are the "is member" and "is not member". They are, respectively,
 <simpara>This (completely nonsensical) example means: find people who are 26-30,
 inclusive, OR whose names are neither Adam or Bonny, OR whose age is either 50
 or 60.</simpara>
-<section id="_selectopt">
+<section id="persistent_selectopt">
 <title>SelectOpt</title>
 <simpara>All of our <literal>selectList</literal> calls have included an empty list as the second
 parameter. That specifies no options, meaning: sort however the database wants,
@@ -765,11 +765,11 @@ last name, then first name.</simpara>
 </section>
 </section>
 </section>
-<section id="_manipulation">
+<section id="persistent_manipulation">
 <title>Manipulation</title>
 <simpara>Querying is only half the battle. We also need to be able to add data to and
 modify existing data in the database.</simpara>
-<section id="_insert">
+<section id="persistent_insert">
 <title>Insert</title>
 <simpara>It&#8217;s all well and good to be able to play with data in the database, but how
 does it get there in the first place? The answer is the <literal>insert</literal> function. You
@@ -814,7 +814,7 @@ person</emphasis>, as opposed to an equivalent person.</simpara>
 overall, it&#8217;s the <emphasis>right</emphasis> approach, which in the grand scheme of things leads
 to better, less buggy code.</simpara>
 </section>
-<section id="_update">
+<section id="persistent_update">
 <title>Update</title>
 <simpara>Now, in the context of that discussion, let&#8217;s think about updating. The simplest way to update is:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">let michael = Person "Michael" 26
@@ -848,7 +848,7 @@ with a different value. For that, you use (surprise) the <literal>replace</liter
 <programlisting language="haskell" linenumbering="unnumbered">    personId &lt;- insert $ Person "Michael" "Snoyman" 26
     replace personId $ Person "John" "Doe" 20</programlisting>
 </section>
-<section id="_delete">
+<section id="persistent_delete">
 <title>Delete</title>
 <simpara>As much as it pains us, sometimes we must part with our data. To do so, we have three functions:</simpara>
 <variablelist>
@@ -892,7 +892,7 @@ need to give some hints to GHC as to what table we&#8217;re interested in:</simp
 <programlisting language="haskell" linenumbering="unnumbered">    deleteWhere ([] :: [Filter Person])</programlisting>
 </section>
 </section>
-<section id="_attributes">
+<section id="persistent_attributes">
 <title>Attributes</title>
 <simpara>So far, we have seen a basic syntax for our <literal>persistLowerCase</literal> blocks: a line
 for the name of our entities, and then an indented line for each field with two
@@ -990,7 +990,7 @@ up-to-date list is maintained
 <ulink url="https://github.com/yesodweb/yesod/wiki/Persistent-entity-syntax">on the
 Yesod wiki</ulink>.</simpara>
 </section>
-<section id="_relations">
+<section id="persistent_relations">
 <title>Relations</title>
 <simpara>Persistent allows references between your data types in a manner that is
 consistent with supporting non-SQL databases. We do this by embedding an ID in
@@ -1060,7 +1060,7 @@ main = runSqlite ":memory:" $ do
     insert $ PersonStore michael target
     insert $ PersonStore michael sevenEleven</programlisting>
 </section>
-<section id="_closer_look_at_types">
+<section id="persistent_closer_look_at_types">
 <title>Closer look at types</title>
 <simpara>So far, we&#8217;ve spoken about <literal>Person</literal> and <literal>PersonId</literal> without really explaining
 what they are. In the simplest sense, for a SQL-only system, the <literal>PersonId</literal>
@@ -1103,7 +1103,7 @@ entity and the key, which is almost always the correct assumption.</simpara>
 <simpara>In practice, this works great: we can have a <literal>Text &#8594; KeyBackend MongoDB
 entity</literal> function and a <literal>Text &#8594; KeyBackend SqlPersist entity</literal> function, and
 everything runs smoothly.</simpara>
-<section id="_more_complicated_more_generic">
+<section id="persistent_more_complicated_more_generic">
 <title>More complicated, more generic</title>
 <simpara>By default, Persistent will hard-code your datatypes to work with a specific
 database backend. When using <literal>sqlSettings</literal>, this is the <literal>SqlBackend</literal> type. But
@@ -1145,7 +1145,7 @@ to pop up is in compiler error messages. So it&#8217;s important to be aware tha
 this exists, but it shouldn&#8217;t affect you on a day-to-day basis.</simpara>
 </section>
 </section>
-<section id="_custom_fields">
+<section id="persistent_custom_fields">
 <title>Custom Fields</title>
 <simpara>Occassionally, you will want to define a custom field to be used in your
 datastore. The most common case is an enumeration, such as employment status.
@@ -1189,7 +1189,7 @@ necessary due to the GHC stage restriction, which essentially means that, in
 many cases, Template Haskell generated code cannot be used in the same module
 it was created in.</simpara></note>
 </section>
-<section id="_persistent_raw_sql">
+<section id="persistent_persistent_raw_sql">
 <title>Persistent: Raw SQL</title>
 <simpara>The Persistent package provides a type safe interface to data stores. It tries
 to be backend-agnostic, such as not relying on relational features of SQL. My
@@ -1231,7 +1231,7 @@ main = runSqlite ":memory:" $ do
 <simpara>There is also higher-level support that allows for automated data marshaling.
 Please see the Haddock API docs for more details.</simpara>
 </section>
-<section id="_integration_with_yesod">
+<section id="persistent_integration_with_yesod">
 <title>Integration with Yesod</title>
 <simpara>So you&#8217;ve been convinced of the power of Persistent. How do you integrate it
 with your Yesod application? If you use the scaffolding, most of the work is
@@ -1322,7 +1322,7 @@ returning a <literal>Nothing</literal> when a result can&#8217;t be found, it re
 page. The <literal>getPersonR</literal> function is a very common approach used in real-world
 Yesod applications: <literal>get404</literal> a value and then return a response based on it.</simpara>
 </section>
-<section id="_more_complex_sql">
+<section id="persistent_more_complex_sql">
 <title>More complex SQL</title>
 <simpara>Persistent strives to be backend-agnostic. The advantage of this approach is
 code which easily moves from different backend types. The downside is that you
@@ -1335,7 +1335,7 @@ infrastructure. The Haddocks for that package provide a good introduction to
 its usage. And since it uses many Persistent concepts, most of your existing
 Persistent knowledge should transfer over easily.</simpara>
 </section>
-<section id="_something_besides_sqlite">
+<section id="persistent_something_besides_sqlite">
 <title>Something besides SQLite</title>
 <simpara>To keep the examples in this chapter simple, we&#8217;ve used the SQLite backend. Just to round things out, here&#8217;s our original synopsis rewritten to work with PostgreSQL:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE FlexibleContexts  #-}
@@ -1382,7 +1382,7 @@ main = withPostgresqlPool connStr 10 $ \pool -&gt; do
         delete janeId
         deleteWhere [BlogPostAuthorId ==. johnId]</programlisting>
 </section>
-<section id="_summary">
+<section id="persistent_summary">
 <title>Summary</title>
 <simpara>Persistent brings the type safety of Haskell to your data access layer. Instead
 of writing error-prone, untyped data access, or manually writing boilerplate

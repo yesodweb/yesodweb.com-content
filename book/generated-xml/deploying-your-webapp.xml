@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-12-20</date>
 </articleinfo>
-<section id="_deploying_your_webapp">
+<section id="deploying-your-webapp_deploying_your_webapp">
 <title>Deploying your Webapp</title>
 <simpara>I can&#8217;t speak for others, but I personally prefer programming to system
 administration. But the fact is that, eventually, you need to serve your app
@@ -25,7 +25,7 @@ accurate given more recent developments, such as FP Complete&#8217;s
 application server, or the availability of Keter. I&#8217;ve left this chapter mostly
 unchanged, but will likely update it again in the coming months. (June 23,
 2013)</simpara></note>
-<section id="_compiling">
+<section id="deploying-your-webapp_compiling">
 <title>Compiling</title>
 <simpara>First things first: how do you build your production application? If you&#8217;re
 using the scaffolded site, it&#8217;s as simple as <literal>cabal build</literal>. I also recommend
@@ -33,7 +33,7 @@ cleaning beforehand to make sure there is no cached information, so a simple
 combination to build your executable is:</simpara>
 <screen>cabal clean &amp;&amp; cabal configure &amp;&amp; cabal build</screen>
 </section>
-<section id="_files_to_deploy">
+<section id="deploying-your-webapp_files_to_deploy">
 <title>Files to deploy</title>
 <simpara>With a Yesod scaffolded application, there are essentially three sets of files that need
 to be deployed:</simpara>
@@ -75,7 +75,7 @@ client session keys. If you have an open source repository, or do not trust
 everyone who has access to your source code repository, it&#8217;s vital to figure
 out a safe storage solution for the client session key.</simpara>
 </section>
-<section id="_warp">
+<section id="deploying-your-webapp_warp">
 <title>Warp</title>
 <simpara>As we have mentioned before, Yesod is built on the Web Application Interface
 (WAI), allowing it to run on any WAI backend. At the time of writing, the
@@ -167,7 +167,7 @@ You can use Nginx as either a load balancer or a SSL proxy. (Though with
 believe that the increased performance and decreased complexity of skipping the
 Nginx step make standalone Warp a better choice. Feel free to follow either
 approach, they are both perfectly valid.</simpara></note>
-<section id="_configuration">
+<section id="deploying-your-webapp_configuration">
 <title>Configuration</title>
 <simpara>In general, Nginx will listen on port 80 and your Yesod/Warp app will listen on
 some unprivileged port (lets say 4321). You will then need to provide a
@@ -229,7 +229,7 @@ instead modify your original server block like so:</simpara>
     }
 }</screen>
 </section>
-<section id="_server_process">
+<section id="deploying-your-webapp_server_process">
 <title>Server Process</title>
 <simpara>Many people are familiar with an Apache/mod_php or Lighttpd/FastCGI kind of
 setup, where the web server automatically spawns the web application. With
@@ -249,7 +249,7 @@ exec /home/michael/sites/mysite/dist/build/mysite/mysite</screen>
 mysite</literal>.</simpara>
 </section>
 </section>
-<section id="_fastcgi">
+<section id="deploying-your-webapp_fastcgi">
 <title>FastCGI</title>
 <simpara>Some people may prefer using FastCGI for deployment. In this case, you&#8217;ll need
 to add an extra tool to the mix. FastCGI works by receiving new connection from
@@ -293,7 +293,7 @@ fastcgi_param  SERVER_ADDR        $server_addr;
 fastcgi_param  SERVER_PORT        $server_port;
 fastcgi_param  SERVER_NAME        $server_name;</screen>
 </section>
-<section id="_desktop">
+<section id="deploying-your-webapp_desktop">
 <title>Desktop</title>
 <simpara>Another nifty backend is wai-handler-webkit. This backend combines Warp and
 QtWebkit to create an executable that a user simply double-clicks. This can be
@@ -310,7 +310,7 @@ that the user is still using the site, <literal>wai-handler-launch</literal>  in
 Javascript snippet to every HTML page it serves. It <literal>wai-handler-launch</literal>
 doesn&#8217;t receive a ping for two minutes, it shuts down.</simpara>
 </section>
-<section id="_cgi_on_apache">
+<section id="deploying-your-webapp_cgi_on_apache">
 <title>CGI on Apache</title>
 <simpara>CGI and FastCGI work almost identically on Apache, so it should be fairly
 straight-forward to port this configuration. You essentially need to accomplish
@@ -345,7 +345,7 @@ request for <literal>/blog</literal> to <literal>/blog/</literal>. The first Rew
 requesting the executable, the second allows Apache to serve the static files,
 and the last line does the actual rewriting.</simpara>
 </section>
-<section id="_fastcgi_on_lighttpd">
+<section id="deploying-your-webapp_fastcgi_on_lighttpd">
 <title>FastCGI on lighttpd</title>
 <simpara>For this example, I&#8217;ve left off some of the basic FastCGI settings like
 mime-types. I also have a more complex file in production that prepends "www."
@@ -373,7 +373,7 @@ fastcgi.server = (
     ))
 )</screen>
 </section>
-<section id="_cgi_on_lighttpd">
+<section id="deploying-your-webapp_cgi_on_lighttpd">
 <title>CGI on lighttpd</title>
 <simpara>This is basically the same as the FastCGI version, but tells lighttpd to run a
 file ending in ".cgi" as a CGI executable. In this case, the file lives at

@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-12-10</date>
 </articleinfo>
-<section id="_wiki_markdown_chat_subsite_event_source">
+<section id="wiki-chat-example_wiki_markdown_chat_subsite_event_source">
 <title>Wiki: markdown, chat subsite, event source</title>
 <simpara>This example will tie together a few different ideas. We&#8217;ll start with a chat
 subsite, which allows us to embed a chat widget on any page. We&#8217;ll use the HTML
@@ -15,7 +15,7 @@ subsite, which allows us to embed a chat widget on any page. We&#8217;ll use the
 can view the entire project on
 <ulink url="https://www.fpcomplete.com/user/snoyberg/yesod/wiki-markdown-chat-subsite-event-source">FP
 Haskell Center</ulink>.</simpara>
-<section id="_subsite_data">
+<section id="wiki-chat-example_subsite_data">
 <title>Subsite: data</title>
 <simpara>In order to define a subsite, we first need to create a foundation type for the
 subsite, the same as we would do for a normal Yesod application. In our case,
@@ -38,7 +38,7 @@ the stream of messages.</simpara>
 /recv ReceiveR GET
 |]</programlisting>
 </section>
-<section id="_subsite_handlers">
+<section id="wiki-chat-example_subsite_handlers">
 <title>Subsite: handlers</title>
 <simpara>Now that we&#8217;ve defined our foundation and routes, we need to create a separate
 module for providing the subsite dispatch functionality. We&#8217;ll call this
@@ -160,7 +160,7 @@ Haskell function to generate all of our dispatching logic. While this is a bit
 more difficult to write than <literal>mkYesod</literal>, it provides necessary flexibility, and
 is mostly identical for any subsite you&#8217;ll write.</simpara>
 </section>
-<section id="_subsite_widget">
+<section id="wiki-chat-example_subsite_widget">
 <title>Subsite: widget</title>
 <simpara>We now have a fully working subsite. The final component we want as part of our
 chat library is a widget to be embedded inside a page which will provide chat
@@ -257,7 +257,7 @@ chat app.</simpara>
                     \ to chat.
             |]</programlisting>
 </section>
-<section id="_master_site_data">
+<section id="wiki-chat-example_master_site_data">
 <title>Master site: data</title>
 <simpara>Now we can proceed with writing our main application. This application will
 include the chat subsite and a wiki. The first thing we need to consider is how
@@ -277,7 +277,7 @@ representation. Each Wiki page is indicated by a list of names, and the contents
 /auth        AuthR Auth getAuth    -- the auth subsite
 |]</programlisting>
 </section>
-<section id="_master_site_instances">
+<section id="wiki-chat-example_master_site_instances">
 <title>Master site: instances</title>
 <simpara>We need to make two modifications to the default <literal>Yesod</literal> instance. Firstly, we
 want to provide an implementation of <literal>authRoute</literal>, so that our chat subsite
@@ -350,7 +350,7 @@ getHomeR = defaultLayout
   where
     wikiRoot = WikiR []</programlisting>
 </section>
-<section id="_master_site_wiki_handlers">
+<section id="wiki-chat-example_master_site_wiki_handlers">
 <title>Master site: wiki handlers</title>
 <simpara>Now it&#8217;s time to write our wiki handlers: a GET for displaying a page, and a
 POST for updating a page. We&#8217;ll also define a <literal>wikiForm</literal> function to be used on
@@ -409,7 +409,7 @@ postWikiR page = do
                             &lt;input type=submit&gt;
                 |]</programlisting>
 </section>
-<section id="_master_site_running">
+<section id="wiki-chat-example_master_site_running">
 <title>Master site: running</title>
 <simpara>Finally, we&#8217;re ready to run our application. Unlike many of our previous
 examples in this book, we need to perform some real initialization in the
@@ -430,7 +430,7 @@ main = do
         , wikiContent = icontent
         }</programlisting>
 </section>
-<section id="_conclusion">
+<section id="wiki-chat-example_conclusion">
 <title>Conclusion</title>
 <simpara>This example demonstrated creation of a non-trivial subsite. Some important
 points to notice were the usage of typeclasses to express constraints on the

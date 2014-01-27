@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-12-04</date>
 </articleinfo>
-<section id="_internationalization">
+<section id="internationalization_internationalization">
 <title>Internationalization</title>
 <simpara>Users expect our software to speak their language. Unfortunately for us, there
 will likely be more than one language involved. While doing simple string
@@ -44,7 +44,7 @@ Absolutely no issues at all with word order.
 </simpara>
 </listitem>
 </itemizedlist>
-<section id="_synopsis">
+<section id="internationalization_synopsis">
 <title>Synopsis</title>
 <programlisting language="messages" linenumbering="unnumbered">-- @messages/en.msg
 Hello: Hello
@@ -120,7 +120,7 @@ postLangR = do
 main :: IO ()
 main = warp 3000 App</programlisting>
 </section>
-<section id="_overview">
+<section id="internationalization_overview">
 <title>Overview</title>
 <simpara>Most existing i18n solutions out there, like gettext or Java message bundles,
 work on the principle of string lookups. Usually some form of
@@ -156,7 +156,7 @@ render function and call it on the values you provide.</simpara>
 associate a render function with your application, you use the <literal>YesodMessage</literal>
 typeclass.</simpara>
 </section>
-<section id="_message_files">
+<section id="internationalization_message_files">
 <title>Message files</title>
 <simpara>The simplest approach to creating translations is via message files. The setup
 is simple: there is a single folder containing all of your translation files,
@@ -192,7 +192,7 @@ These will be arguments to the data constructor.</simpara>
 string, which allows usage of our typical variable interpolation syntax
 translation helper functions to deal with issues like pluralization, you can
 create all the translated messages you need.</simpara>
-<section id="_specifying_types">
+<section id="internationalization_specifying_types">
 <title>Specifying types</title>
 <simpara>Since we will be creating a datatype out of our message specifications, each
 parameter to a data constructor must be given a data type. We use a @-syntax
@@ -219,7 +219,7 @@ specifies what the backup language will be, to be used when none of the
 languages provided by your application match the user&#8217;s language list.</simpara>
 </section>
 </section>
-<section id="_rendermessage_typeclass">
+<section id="internationalization_rendermessage_typeclass">
 <title>RenderMessage typeclass</title>
 <simpara>Your call to <literal>mkMessage</literal> creates an instance of the <literal>RenderMessage</literal> typeclass,
 which is the core of Yesod&#8217;s i18n. It is defined as:</simpara>
@@ -265,7 +265,7 @@ language (in our case, English).</simpara>
 manually, as the message file interface does all this for you. But it&#8217;s always
 a good idea to have an understanding of what&#8217;s going on under the surface.</simpara>
 </section>
-<section id="_interpolation">
+<section id="internationalization_interpolation">
 <title>Interpolation</title>
 <simpara>One way to use your new <literal>RenderMessage</literal> instance would be to directly call the
 <literal>renderMessage</literal> function. This would work, but it&#8217;s a bit tedious: you need to
@@ -278,7 +278,7 @@ Once Hamlet gets the output <literal>Text</literal> value, it uses the <literal>
 produce an <literal>Html</literal> value, meaning that any special characters (&lt;, &amp;,
 &gt;) will be automatically escaped.</simpara>
 </section>
-<section id="_phrases_not_words">
+<section id="internationalization_phrases_not_words">
 <title>Phrases, not words</title>
 <simpara>As a final note, I&#8217;d just like to give some general i18n advice. Let&#8217;s say you
 have an application for selling turtles. You&#8217;re going to use the word "turtle"

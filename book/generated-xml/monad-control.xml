@@ -7,12 +7,12 @@
 <articleinfo>
     <date>2013-12-05</date>
 </articleinfo>
-<appendix id="_monad_control">
+<appendix id="monad-control_monad_control">
 <title>monad-control</title>
 <simpara>monad-control is used in a few places within Yesod, most notably to ensure
 proper exception handling within Persistent. It is a general purpose package to
 extend standard functionality in monad transformers.</simpara>
-<section id="_overview">
+<section id="monad-control_overview">
 <title>Overview</title>
 <simpara>One of the powerful, and sometimes confusing, features in Haskell is monad
 transformers. They allow you to take different pieces of functionality- such as
@@ -77,7 +77,7 @@ useMyFileErrorBad = withMyFile sayHiError
                 with actual type `IO ()'</programlisting>
 <simpara>Why does this happen, and how can we work around it?</simpara>
 </section>
-<section id="_intuition">
+<section id="monad-control_intuition">
 <title>Intuition</title>
 <simpara>Let&#8217;s try and develop an external intuition of what&#8217;s happening here. The
 <literal>ErrorT</literal> monad transformer adds extra functionality to the IO monad. We&#8217;ve
@@ -131,7 +131,7 @@ it and focuses on the inner monad. When we&#8217;re done playing around with tha
 inner monad, we can pull our state back out and reconstruct our original monad
 stack.</simpara>
 </section>
-<section id="_types">
+<section id="monad-control_types">
 <title>Types</title>
 <simpara>I purposely started with the ErrorT transformer, as it is one of the simplest
 for this inversion mechanism. Unfortunately, others are a bit more complicated.
@@ -185,7 +185,7 @@ useMyFileError2 =
 almost identically to runErrorT. However, we&#8217;re still left with two problems:
 we don&#8217;t know where to get that errorRun value from, and we still need to
 restructure the original ErrorT after we&#8217;re done.</simpara>
-<section id="_monadtranscontrol">
+<section id="monad-control_monadtranscontrol">
 <title>MonadTransControl</title>
 <simpara>Obviously in the specific case we have before us, we could use our knowledge of
 the ErrorT transformer to beat the types into submission and create our Run
@@ -247,7 +247,7 @@ useMyFileError5 =
 <programlisting language="haskell" linenumbering="unnumbered">useMyFileError6 :: ErrorT MyError IO ()
 useMyFileError6 = control $ \run -&gt; withMyFile $ run . sayHiError</programlisting>
 </section>
-<section id="_monadcontrolio">
+<section id="monad-control_monadcontrolio">
 <title>MonadControlIO</title>
 <simpara>The MonadTrans class provides the lift method, which allows you to lift an
 action one level in the stack. There is also the MonadIO class that provides
@@ -283,7 +283,7 @@ useMyFileCrazy :: ReaderT Int (StateT Double (ErrorT MyError IO)) ()
 useMyFileCrazy = controlIO $ \run -&gt; withMyFile $ run . sayHiCrazy</programlisting>
 </section>
 </section>
-<section id="_real_life_examples">
+<section id="monad-control_real_life_examples">
 <title>Real Life Examples</title>
 <simpara>Let&#8217;s solve some real-life problems with this code. Probably the biggest
 motivating use case is exception handling in a transformer stack. For example,
@@ -304,7 +304,7 @@ simple:</simpara>
             -&gt; ErrorT MyError IO b
 allocaError f = controlIO $ \run -&gt; alloca $ run . f</programlisting>
 </section>
-<section id="_lost_state">
+<section id="monad-control_lost_state">
 <title>Lost State</title>
 <simpara>Let&#8217;s rewind a bit to our onExceptionError. It uses onException under the
 surface, which has a type signature: <literal>IO a -&gt; IO b -&gt; IO a</literal>. Let me ask
@@ -319,7 +319,7 @@ we&#8217;re essentially ignoring the monadic side effects as well!</simpara>
 <simpara>In practice, monad-control will usually be doing the right thing for you, but
 you need to be aware that some side effects may disappear.</simpara>
 </section>
-<section id="_more_complicated_cases">
+<section id="monad-control_more_complicated_cases">
 <title>More Complicated Cases</title>
 <simpara>In order to make our tricks work so far, we&#8217;ve needed to have functions that
 give us full access to play around with their values. Sometimes, this isn&#8217;t the

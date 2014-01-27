@@ -7,12 +7,12 @@
 <articleinfo>
     <date>2013-12-28</date>
 </articleinfo>
-<section id="_basics">
+<section id="basics_basics">
 <title>Basics</title>
 <simpara>The first step with any new technology is getting it running. The goal of
 this chapter is to get you started with a simple Yesod application, and cover
 some of the basic concepts and terminology.</simpara>
-<section id="_hello_world">
+<section id="basics_hello_world">
 <title>Hello World</title>
 <simpara>Let&#8217;s get this book started properly: a simple web page that says Hello
 World:</simpara>
@@ -41,7 +41,7 @@ browser to <ulink url="http://localhost:3000">http://localhost:3000</ulink>, you
 &lt;html&gt;&lt;head&gt;&lt;title&gt;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;Hello World!&lt;/body&gt;&lt;/html&gt;</programlisting>
 <simpara>We&#8217;ll refer back to this example through the rest of the chapter.</simpara>
 </section>
-<section id="_routing">
+<section id="basics_routing">
 <title>Routing</title>
 <simpara>Like most modern web frameworks, Yesod follows a
 <ulink url="http://en.wikipedia.org/wiki/Front_Controller_pattern">front controller
@@ -133,7 +133,7 @@ instances are created, and there are other cases to handle such as subsites.
 We&#8217;ll get into the details as we go through the book, especially in the
 &#8220;Understanding a Request&#8221; chapter.</simpara>
 </section>
-<section id="_handler_function">
+<section id="basics_handler_function">
 <title>Handler function</title>
 <simpara>So we have a route named <literal>HomeR</literal>, and it responds to <literal>GET</literal> requests. How do you
 define your response? You write a handler function. Yesod follows a standard
@@ -158,7 +158,7 @@ components of a site consisting of HTML, CSS and Javascript and reuse them
 throughout your site. We&#8217;ll get into more detail on them in the widgets
 chapter.</simpara>
 </section>
-<section id="_the_foundation">
+<section id="basics_the_foundation">
 <title>The Foundation</title>
 <simpara>The word &#8216;HelloWorld&#8217; shows up a number of times in our example. Every Yesod
 application has a foundation datatype. This datatype must be an instance of the
@@ -196,7 +196,7 @@ A random number generator.
 </itemizedlist>
 <note><simpara>By the way, the word Yesod (יסוד) means <emphasis>foundation</emphasis> in Hebrew.</simpara></note>
 </section>
-<section id="_running">
+<section id="basics_running">
 <title>Running</title>
 <simpara>Once again we mention <literal>HelloWorld</literal> in our main function. Our foundation
 contains all the information we need to route and respond to requests in our
@@ -215,7 +215,7 @@ outside of Yesod for other Haskell development (both framework and
 non-framework applications), as well as a standard file server in a number of
 production environments.</simpara>
 </section>
-<section id="_resources_and_type_safe_urls">
+<section id="basics_resources_and_type_safe_urls">
 <title>Resources and type-safe URLs</title>
 <simpara>In our hello world, we defined just a single resource (<literal>HomeR</literal>). A web
 application is usually much more exciting with more than one page on it. Let&#8217;s
@@ -279,7 +279,7 @@ appropriately. If you miss one, you&#8217;ll have 404s at runtime. In Yesod, all
 do is update your route and compile: GHC will pinpoint every single line of
 code that needs to be corrected.</simpara>
 </section>
-<section id="_the_scaffolded_site">
+<section id="basics_the_scaffolded_site">
 <title>The scaffolded site</title>
 <simpara>Installing Yesod will give you both the Yesod library, as well as a <literal>yesod</literal>
 executable. This executable accepts a few commands, but the first one you&#8217;ll
@@ -296,7 +296,7 @@ and instead deal directly with Yesod as a library. But if you&#8217;re going to 
 a real site, I strongly recommend using the scaffolding.</simpara>
 <simpara>We will cover the structure of the scaffolded site in the scaffolding chapter.</simpara>
 </section>
-<section id="_development_server">
+<section id="basics_development_server">
 <title>Development server</title>
 <simpara>One of the advantages interpreted languages have over compiled languages is
 fast prototyping: you save changes to a file and hit refresh. If we want to
@@ -313,7 +313,7 @@ devel</emphasis>, so our examples will just use <literal>warp</literal>. Fortuna
 is fully configured to use the development server, so when you&#8217;re ready to move
 over to the real world, it will be waiting for you.</simpara>
 </section>
-<section id="_summary">
+<section id="basics_summary">
 <title>Summary</title>
 <simpara>Every Yesod application is built around a foundation datatype. We associate
 some resources with that datatype and define some handler functions, and Yesod

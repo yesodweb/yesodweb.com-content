@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-10-07</date>
 </articleinfo>
-<section id="_shakespearean_templates">
+<section id="shakespearean-templates_shakespearean_templates">
 <title>Shakespearean Templates</title>
 <simpara>Yesod uses the Shakespearean family of template languages as its standard
 approach to HTML, CSS and Javascript creation. This language family shares some
@@ -42,7 +42,7 @@ Automated checking of valid URLs, whenever possible, through type-safe
 around: each can be used independently of the other. This chapter will address
 these template languages on their own, while the remainder of the book will use
 them to enhance Yesod application development.</simpara>
-<section id="_synopsis">
+<section id="shakespearean-templates_synopsis">
 <title>Synopsis</title>
 <simpara>There are four main languages at play: Hamlet is an HTML templating language,
 Julius is for Javascript, and Cassius and Lucius are both for CSS. Hamlet and
@@ -54,7 +54,7 @@ Javascript; the only added feature is variable interpolation.</simpara>
 same processing engine underneath, but Cassius files have indentation converted
 into braces before processing. The choice between the two is purely one of
 syntactical preference.</simpara></note>
-<section id="_hamlet_html">
+<section id="shakespearean-templates_hamlet_html">
 <title>Hamlet (HTML)</title>
 <programlisting language="hamlet" linenumbering="unnumbered">$doctype 5
 &lt;html&gt;
@@ -72,7 +72,7 @@ syntactical preference.</simpara></note>
                     &lt;li&gt;#{name} (#{age} years old)
         &lt;footer&gt;^{copyright}</programlisting>
 </section>
-<section id="_cassius_css">
+<section id="shakespearean-templates_cassius_css">
 <title>Cassius (CSS)</title>
 <programlisting language="cassius" linenumbering="unnumbered">#myid
     color: #{red}
@@ -80,7 +80,7 @@ syntactical preference.</simpara></note>
 foo bar baz
     background-image: url(@{MyBackgroundR})</programlisting>
 </section>
-<section id="_lucius_css">
+<section id="shakespearean-templates_lucius_css">
 <title>Lucius (CSS)</title>
 <programlisting language="lucius" linenumbering="unnumbered">section.blog {
     padding: 1em;
@@ -90,7 +90,7 @@ foo bar baz
     }
 }</programlisting>
 </section>
-<section id="_julius_javascript">
+<section id="shakespearean-templates_julius_javascript">
 <title>Julius (Javascript)</title>
 <programlisting language="julius" linenumbering="unnumbered">$(function(){
     $("section.#{sectionClass}").hide();
@@ -99,7 +99,7 @@ foo bar baz
 });</programlisting>
 </section>
 </section>
-<section id="_types">
+<section id="shakespearean-templates_types">
 <title>Types</title>
 <simpara>Before we jump into syntax, let&#8217;s take a look at the various types involved. We
 mentioned in the introduction that types help protect us from XSS attacks. For
@@ -142,7 +142,7 @@ HTML in our CSS.</simpara>
 <programlisting language="lucius" linenumbering="unnumbered">.red { color: #{colorRed} }</programlisting>
 <simpara>Please see the Haddock documentation for more details.</simpara>
 </note>
-<section id="_type_safe_urls">
+<section id="shakespearean-templates_type_safe_urls">
 <title>Type-safe URLs</title>
 <simpara>Possibly the most unique feature in Yesod is type-safe URLs, and the ability to
 use them conveniently is provided directly by Shakespeare. Usage is nearly
@@ -218,17 +218,17 @@ surface. Supposing we had a template:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">\render -&gt; mconcat ["&lt;a href='", render Time, "'&gt;The time&lt;/a&gt;"]</programlisting>
 </section>
 </section>
-<section id="_syntax">
+<section id="shakespearean-templates_syntax">
 <title>Syntax</title>
 <simpara>All Shakespearean languages share the same interpolation syntax, and are able
 to utilize type-safe URLs. They differ in the syntax specific for their target
 language (HTML, CSS, or Javascript).</simpara>
-<section id="_hamlet_syntax">
+<section id="shakespearean-templates_hamlet_syntax">
 <title>Hamlet Syntax</title>
 <simpara>Hamlet is the most sophisticated of the languages. Not only does it provide
 syntax for generating HTML, it also allows for basic control structures:
 conditionals, looping, and maybes.</simpara>
-<section id="_tags">
+<section id="shakespearean-templates_tags">
 <title>Tags</title>
 <simpara>Obviously tags will play an important part of any HTML template language. In
 Hamlet, we try to stick very close to existing HTML syntax to make the language
@@ -280,7 +280,7 @@ inner "i" tag will not. You are free to use whichever approach you want, there
 is no penalty for either choice. Be aware, however, that the <emphasis role="strong">only</emphasis> time you
 use closing tags in Hamlet is for such inline tags; normal tags are not closed.</simpara>
 </section>
-<section id="_interpolation">
+<section id="shakespearean-templates_interpolation">
 <title>Interpolation</title>
 <simpara>What we have so far is a nice, simplified HTML, but it doesn&#8217;t let us interact
 with our Haskell code at all. How do we pass in variables? Simple: with
@@ -351,7 +351,7 @@ main = putStrLn $ renderHtml $ [hamlet|
     ^{footer}
 |] render</programlisting>
 </section>
-<section id="_attributes">
+<section id="shakespearean-templates_attributes">
 <title>Attributes</title>
 <simpara>In that last example, we put an href attribute on the "a" tag. Let&#8217;s elaborate on the syntax:</simpara>
 <itemizedlist>
@@ -388,7 +388,7 @@ You can add an attribute optionally by using colons. To make a checkbox only
 </listitem>
 </itemizedlist>
 </section>
-<section id="_conditionals">
+<section id="shakespearean-templates_conditionals">
 <title>Conditionals</title>
 <simpara>Eventually, you&#8217;ll want to put in some logic in your page. The goal of Hamlet
 is to make the logic as minimalistic as possible, pushing the heavy lifting
@@ -402,7 +402,7 @@ $else
     &lt;p&gt;I don't know who you are. Please log in so I can decide if you get access.</programlisting>
 <simpara>All the same rules of normal interpolation apply to the content of the conditionals.</simpara>
 </section>
-<section id="_maybe">
+<section id="shakespearean-templates_maybe">
 <title>Maybe</title>
 <simpara>Similarly, we have a special construct for dealing with Maybe values. This
 could technically be dealt with using <literal>if</literal>, <literal>isJust</literal> and <literal>fromJust</literal>, but this
@@ -418,7 +418,7 @@ values on the left hand side, such as constructors and tuples.</simpara>
 <simpara>The right-hand-side follows the same rules as interpolations, allow variables,
 function application, and so on.</simpara>
 </section>
-<section id="_forall">
+<section id="shakespearean-templates_forall">
 <title>Forall</title>
 <simpara>And what about looping over lists? We have you covered there too:</simpara>
 <programlisting language="hamlet" linenumbering="unnumbered">$if null people
@@ -428,7 +428,7 @@ $else
         $forall person &lt;- people
             &lt;li&gt;#{person}</programlisting>
 </section>
-<section id="_case">
+<section id="shakespearean-templates_case">
 <title>Case</title>
 <simpara>Pattern matching is one of the great strengths of Haskell. Sum types let you
 cleanly model many real-world types, and <literal>case</literal> statements let you safely
@@ -440,14 +440,14 @@ same power.</simpara>
     $of Right baz
         &lt;p&gt;It was right: #{baz}</programlisting>
 </section>
-<section id="_with">
+<section id="shakespearean-templates_with">
 <title>With</title>
 <simpara>Rounding out our statements, we have <literal>with</literal>. It&#8217;s basically just a convenience
 for declaring a synonym for a long expression.</simpara>
 <programlisting language="hamlet" linenumbering="unnumbered">$with foo &lt;- some very (long ugly) expression that $ should only $ happen once
     &lt;p&gt;But I'm going to use #{foo} multiple times. #{foo}</programlisting>
 </section>
-<section id="_doctype">
+<section id="shakespearean-templates_doctype">
 <title>Doctype</title>
 <simpara>Last bit of syntactic sugar: the doctype statement. We have support for a
 number of different versions of a <literal>doctype</literal>, though we recommend <literal>$doctype 5</literal>
@@ -463,7 +463,7 @@ for modern web applications, which generates <literal>&lt;!DOCTYPE html&gt;</lit
 support for this, but in general find the <literal>$doctype</literal> approach easier to read.</simpara></note>
 </section>
 </section>
-<section id="_lucius_syntax">
+<section id="shakespearean-templates_lucius_syntax">
 <title>Lucius Syntax</title>
 <simpara>Lucius is one of two CSS templating languages in the Shakespeare family. It is
 intended to be a superset of CSS, leveraging the existing syntax while adding
@@ -541,7 +541,7 @@ myCSS =
 
 main = TLIO.putStrLn $ renderCss $ myCSS render</programlisting>
 </section>
-<section id="_cassius_syntax">
+<section id="shakespearean-templates_cassius_syntax">
 <title>Cassius Syntax</title>
 <simpara>Cassius is a whitespace-sensitive alternative to Lucius. As mentioned in the
 synopsis, it uses the same processing engine as Lucius, but preprocesses all
@@ -552,7 +552,7 @@ simple example:</simpara>
     border: 1px solid #{bannerColor}
     background-image: url(@{BannerImageR})</programlisting>
 </section>
-<section id="_julius_syntax">
+<section id="shakespearean-templates_julius_syntax">
 <title>Julius Syntax</title>
 <simpara>Julius is the simplest of the languages discussed here. In fact, some might
 even say it&#8217;s really just Javascript. Julius allows the three forms of
@@ -563,7 +563,7 @@ your Javascript is automatically minified. This is not a feature of Julius;
 instead, Yesod uses the hjsmin package to minify Julius output.</simpara></note>
 </section>
 </section>
-<section id="_calling_shakespeare">
+<section id="shakespearean-templates_calling_shakespeare">
 <title>Calling Shakespeare</title>
 <simpara>The question of course arises at some point: how do I actually use this stuff?
 There are three different ways to call out to Shakespeare from your Haskell
@@ -730,7 +730,7 @@ rowsep="1" colsep="1"
 </tbody>
 </tgroup>
 </informaltable>
-<section id="_alternate_hamlet_types">
+<section id="shakespearean-templates_alternate_hamlet_types">
 <title>Alternate Hamlet Types</title>
 <simpara>So far, we&#8217;ve seen how to generate an <literal>HtmlUrl</literal> value from Hamlet, which is a
 piece of HTML with embedded type-safe URLs. There are currently three other
@@ -833,7 +833,7 @@ main = putStrLn $ renderHtml
      $ (template 5) (toHtml . renderEnglish) renderUrl</programlisting>
 </section>
 </section>
-<section id="_other_shakespeare">
+<section id="shakespearean-templates_other_shakespeare">
 <title>Other Shakespeare</title>
 <simpara>In addition to HTML, CSS and Javascript helpers, there is also some more
 general-purpose Shakespeare available. shakespeare-text provides a simple way
@@ -881,7 +881,7 @@ Also, there are longer names for these quasiquoters (<literal>ltext</literal> an
 </listitem>
 </itemizedlist>
 </section>
-<section id="_general_recommendations">
+<section id="shakespearean-templates_general_recommendations">
 <title>General Recommendations</title>
 <simpara>Here are some general hints from the Yesod community on how to get the most out
 of Shakespeare.</simpara>

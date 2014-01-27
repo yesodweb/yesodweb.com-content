@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-07-19</date>
 </articleinfo>
-<section id="_blog_i18n_authentication_authorization_and_database">
+<section id="blog-example-advanced_blog_i18n_authentication_authorization_and_database">
 <title>Blog: i18n, authentication, authorization, and database</title>
 <simpara>This is a simple blog app. It allows an admin to add blog posts via a rich text
 editor (nicedit), allows logged-in users to comment, and has full i18n support.

@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-12-04</date>
 </articleinfo>
-<section id="_creating_a_subsite">
+<section id="creating-a-subsite_creating_a_subsite">
 <title>Creating a Subsite</title>
 <simpara>How many sites provide authentication systems? Or need to provide CRUD (CRUD)
 management of some objects? Or a blog? Or a wiki?</simpara>
@@ -21,7 +21,7 @@ their handlers that can be easily inserted into a master site. By using type
 classes, it is easy to ensure that the master site provides certain
 capabilities, and to access the default site layout. And with type-safe URLs,
 it&#8217;s easy to link from the master site to subsites.</simpara>
-<section id="_hello_world">
+<section id="creating-a-subsite_hello_world">
 <title>Hello World</title>
 <simpara>Perhaps the trickiest part of writing subsites is getting started.  Let&#8217;s dive
 in with a simple Hello World subsite. We need to create one module to contain

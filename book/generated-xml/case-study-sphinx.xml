@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-12-28</date>
 </articleinfo>
-<section id="_case_study_sphinx_based_search">
+<section id="case-study-sphinx_case_study_sphinx_based_search">
 <title>Case Study: Sphinx-based Search</title>
 <simpara><ulink url="http://sphinxsearch.com/">Sphinx</ulink> is a search server, and powers the
 search feature on many sites. While the actual code necessary to integrate
@@ -39,7 +39,7 @@ Providing the document content to Sphinx. This is where the interesting stuff
 <simpara>The full code for this example can be
 <ulink url="https://www.fpcomplete.com/user/snoyberg/yesod/case-study-sphinx">found
 on FP Haskell Center</ulink>.</simpara>
-<section id="_sphinx_setup">
+<section id="case-study-sphinx_sphinx_setup">
 <title>Sphinx Setup</title>
 <simpara>Unlike many of our other examples, to start with here we&#8217;ll need to actually
 configure and run our external Sphinx server. I&#8217;m not going to go into all the
@@ -87,7 +87,7 @@ Obviously this won&#8217;t work until you have your web app running. For a produ
 site, it would make sense to run this command via a crontab script so the index
 is regularly updated.</simpara>
 </section>
-<section id="_basic_yesod_setup">
+<section id="case-study-sphinx_basic_yesod_setup">
 <title>Basic Yesod Setup</title>
 <simpara>Let&#8217;s get our basic Yesod setup going. We&#8217;re going to have a single table in
 the database for holding documents, which consist of a title and content. We&#8217;ll
@@ -190,7 +190,7 @@ getDocR docid = do
             &lt;div .content&gt;#{docContent doc}
         |]</programlisting>
 </section>
-<section id="_searching">
+<section id="case-study-sphinx_searching">
 <title>Searching</title>
 <simpara>Now that we&#8217;ve got the boring stuff out of the way, let&#8217;s jump into the actual
 searching. We&#8217;re going to need three pieces of information for displaying a
@@ -318,7 +318,7 @@ escaped. A sample of this HTML is:</simpara>
 &amp;#8230; 5. The Congress shall have &lt;span class='match'&gt;power&lt;/span&gt; to enforce, by appropriate legislation
 &amp;#8230;</programlisting>
 </section>
-<section id="_streaming_xmlpipe_output">
+<section id="case-study-sphinx_streaming_xmlpipe_output">
 <title>Streaming xmlpipe output</title>
 <simpara>We&#8217;ve saved the best for last. For the majority of Yesod handlers, the
 recommended approach is to load up the database results into memory and then
@@ -432,7 +432,7 @@ getXmlpipeR =
  $= renderBuilder def
  $= CL.map Chunk</programlisting>
 </section>
-<section id="_full_code">
+<section id="case-study-sphinx_full_code">
 <title>Full code</title>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE GADTs                 #-}

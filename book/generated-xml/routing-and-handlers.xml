@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-09-02</date>
 </articleinfo>
-<section id="_routing_and_handlers">
+<section id="routing-and-handlers_routing_and_handlers">
 <title>Routing and Handlers</title>
 <simpara>If we look at Yesod as a Model-View-Controller framework, routing and handlers
 make up the controller. For contrast, let&#8217;s describe two other routing
@@ -36,7 +36,7 @@ routes, and provides Template Haskell functions to convert this DSL to Haskell
 code. This chapter will explain the syntax of the routing declarations, give
 you a glimpse of what code is generated for you, and explain the interaction
 between routing and handler functions.</simpara>
-<section id="_route_syntax">
+<section id="routing-and-handlers_route_syntax">
 <title>Route Syntax</title>
 <simpara>Instead of trying to shoe-horn route declarations into an existing syntax,
 Yesod&#8217;s approach is to use a simplified syntax designed just for routes. This
@@ -51,7 +51,7 @@ application.</simpara>
 /static       StaticR   Static getStatic</programlisting>
 <simpara>The next few sections will explain the full details of what goes on in the
 route declaration.</simpara>
-<section id="_pieces">
+<section id="routing-and-handlers_pieces">
 <title>Pieces</title>
 <simpara>One of the first thing Yesod does when it gets a request is split up the
 requested path into pieces. The pieces are tokenized at all forward slashes.
@@ -71,7 +71,7 @@ characters.</simpara>
 <simpara>If, by the way, you want more fine-tuned control of how paths are split into
 pieces and joined together again, you&#8217;ll want to look at the <literal>cleanPath</literal> and
 <literal>joinPath</literal> methods in the Yesod typeclass chapter.</simpara>
-<section id="_types_of_pieces">
+<section id="routing-and-handlers_types_of_pieces">
 <title>Types of Pieces</title>
 <simpara>When you are declaring your routes, you have three types of pieces at your
 disposal:</simpara>
@@ -152,7 +152,7 @@ instance PathMultiPiece Page where
     fromPathMultiPiece _ = Nothing</programlisting>
 </section>
 </section>
-<section id="_resource_name">
+<section id="routing-and-handlers_resource_name">
 <title>Resource name</title>
 <simpara>Each resource pattern also has a name associated with it. That name will become
 the constructor for the type safe URL datatype associated with your
@@ -178,7 +178,7 @@ named <literal>FaqR</literal>, you would end up with a route data type roughly l
 <literal>FaqR</literal>. On the other hand, <literal>/year/two-thousand-nine</literal>, <literal>/person/michael/snoyman</literal>
 and <literal>/page/FAQ</literal> would all result in 404 errors without ever seeing your code.</simpara>
 </section>
-<section id="_handler_specification">
+<section id="routing-and-handlers_handler_specification">
 <title>Handler specification</title>
 <simpara>The last piece of the puzzle when declaring your resources is how they will be
 handled. There are three options in Yesod:</simpara>
@@ -225,7 +225,7 @@ from a value of your master foundation datatype.</simpara>
 closely at the static subsite in the scaffolded site chapter.</simpara>
 </section>
 </section>
-<section id="_dispatch">
+<section id="routing-and-handlers_dispatch">
 <title>Dispatch</title>
 <simpara>Once you have specified your routes, Yesod will take care of all the pesky
 details of URL dispatch for you. You just need to make sure to provide the
@@ -235,7 +235,7 @@ above (<literal>MyHandlerR GET</literal> becomes <literal>getMyHandlerR</literal
 <literal>handleMyOtherHandlerR</literal>).</simpara>
 <simpara>Now that we know which functions we need to write, let&#8217;s figure out what their
 type signatures should be.</simpara>
-<section id="_return_type">
+<section id="routing-and-handlers_return_type">
 <title>Return Type</title>
 <simpara>Let&#8217;s look at a simple handler function:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">mkYesod "Simple" [parseRoutes|
@@ -246,7 +246,7 @@ getHomeR :: Handler Html
 getHomeR = defaultLayout [whamlet|&lt;h1&gt;This is simple|]</programlisting>
 <simpara>There are two components to this returns type: <literal>Handler</literal> and <literal>Html</literal>. Let&#8217;s
 analyze each in more depth.</simpara>
-<section id="_handler_monad">
+<section id="routing-and-handlers_handler_monad">
 <title>Handler monad</title>
 <simpara>Like the <literal>Widget</literal> type, the <literal>Handler</literal> data type is not defined anywhere in the
 Yesod libraries. Instead, the libraries provide the data type:</simpara>
@@ -268,7 +268,7 @@ in.</simpara>
 be used in both monads. If you see <literal>MonadHandler</literal> in any API documentation, you
 should remember that the function can be used in your <literal>Handler</literal> functions.</simpara>
 </section>
-<section id="_html">
+<section id="routing-and-handlers_html">
 <title>Html</title>
 <simpara>There&#8217;s nothing too surprising about this type. This function returns some HTML
 content, represented by the <literal>Html</literal> data type. But clearly Yesod would not be
@@ -288,7 +288,7 @@ stream of bytes. This is represented by the <literal>TypedContent</literal> data
 representing an empty response).</simpara>
 </section>
 </section>
-<section id="_arguments">
+<section id="routing-and-handlers_arguments">
 <title>Arguments</title>
 <simpara>Let&#8217;s return to our simple example from above:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">mkYesod "Simple" [parseRoutes|
@@ -336,14 +336,14 @@ specified. Also, notice how we are able to use both <literal>Html</literal> and 
 values.</simpara>
 </section>
 </section>
-<section id="_the_handler_functions">
+<section id="routing-and-handlers_the_handler_functions">
 <title>The Handler functions</title>
 <simpara>Since the majority of your code will live in the <literal>Handler</literal> monad, it&#8217;s
 important to invest some time in understanding it better. The remainder of this
 chapter will give a brief introduction to some of the most common functions
 living in the <literal>Handler</literal> monad. I am specifically <emphasis>not</emphasis> covering any of the
 session functions; that will be addressed in the sessions chapter.</simpara>
-<section id="_application_information">
+<section id="routing-and-handlers_application_information">
 <title>Application Information</title>
 <simpara>There are a number of functions that return information about your application
 as a whole, and give no information about individual requests. Some of these
@@ -386,7 +386,7 @@ percent-encoding necessary.
 </varlistentry>
 </variablelist>
 </section>
-<section id="_request_information">
+<section id="routing-and-handlers_request_information">
 <title>Request Information</title>
 <simpara>The most common information you will want to get about the current request is
 the requested path, the query string parameters and <literal>POST</literal>ed form data. The
@@ -403,7 +403,7 @@ should use <literal>runRequestBody</literal>.</simpara>
 to access the Web Application Interface (WAI) request value. See the WAI
 appendix for more details.</simpara>
 </section>
-<section id="_short_circuiting">
+<section id="routing-and-handlers_short_circuiting">
 <title>Short Circuiting</title>
 <simpara>The following functions immediately end execution of a handler function and
 return a result to the user.</simpara>
@@ -494,7 +494,7 @@ technique like server-sent events.
 </varlistentry>
 </variablelist>
 </section>
-<section id="_response_headers">
+<section id="routing-and-handlers_response_headers">
 <title>Response Headers</title>
 <variablelist>
 <varlistentry>
@@ -588,7 +588,7 @@ Sets the Expires header to the specified date/time.
 </variablelist>
 </section>
 </section>
-<section id="_summary">
+<section id="routing-and-handlers_summary">
 <title>Summary</title>
 <simpara>Routing and dispatch is arguably the core of Yesod: it is from here that our
 type-safe URLs are defined, and the majority of our code is written within the

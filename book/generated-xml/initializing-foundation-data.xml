@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2014-01-26</date>
 </articleinfo>
-<section id="_initializing_data_in_the_foundation_datatype">
+<section id="initializing-foundation-data_initializing_data_in_the_foundation_datatype">
 <title>Initializing data in the foundation datatype</title>
 <simpara>This example is meant to demonstrate a relatively simple concept: performing
 some initialization of data to be kept in the foundation datatype. There are
@@ -38,7 +38,7 @@ such a strong emphasis on using an external database for persistence.</simpara><
 route, and will serve content stored in a Markdown file. In addition to serving
 that content, we&#8217;ll also display an old-school visitor counter indicating how
 many visitors have been to the site.</simpara>
-<section id="_step_1_define_your_foundation">
+<section id="initializing-foundation-data_step_1_define_your_foundation">
 <title>Step 1: define your foundation</title>
 <simpara>We&#8217;ve identified two pieces of information to be initialized: the Markdown
 content to be display on the homepage, and a mutable variable holding the
@@ -52,7 +52,7 @@ our foundation data type is:</simpara>
     , visitorCount    :: IORef Int
     }</programlisting>
 </section>
-<section id="_step_2_use_the_foundation">
+<section id="initializing-foundation-data_step_2_use_the_foundation">
 <title>Step 2: use the foundation</title>
 <simpara>For this trivial example, we only have one route: the homepage. All we need to do is:</simpara>
 <orderedlist numeration="arabic">
@@ -87,7 +87,7 @@ getHomeR = do
             &lt;p&gt;You are visitor number: #{currentCount}.
         |]</programlisting>
 </section>
-<section id="_step_3_create_the_foundation_value">
+<section id="initializing-foundation-data_step_3_create_the_foundation_value">
 <title>Step 3: create the foundation value</title>
 <simpara>When we initialize our application, we&#8217;ll now need to provide values for the
 two fields we described above. This is normal <literal>IO</literal> code, and can perform any
@@ -119,7 +119,7 @@ main = do
         , visitorCount    = countRef
         }</programlisting>
 </section>
-<section id="_conclusion">
+<section id="initializing-foundation-data_conclusion">
 <title>Conclusion</title>
 <simpara>There&#8217;s no rocket science involved in this example, just very straightforward
 programming. The purpose of this chapter is to demonstrate the commonly used

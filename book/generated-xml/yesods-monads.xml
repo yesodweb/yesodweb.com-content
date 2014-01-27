@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-08-04</date>
 </articleinfo>
-<section id="_yesod_8217_s_monads">
+<section id="yesods-monads_yesod_8217_s_monads">
 <title>Yesod&#8217;s Monads</title>
 <simpara>As you&#8217;ve read through this book, there have been a number of monads which have
 appeared: <literal>Handler</literal>, <literal>Widget</literal> and <literal>YesodDB</literal> (for Persistent). As with most
@@ -22,7 +22,7 @@ query, and <literal>defaultLayout</literal> to return a <literal>Widget</literal
 calls to <literal>toWidget</literal>.</simpara>
 <simpara>However, if we have a deeper understanding of these types, we can achieve some
 fancier results.</simpara>
-<section id="_monad_transformers">
+<section id="yesods-monads_monad_transformers">
 <title>Monad Transformers</title>
 <blockquote>
 <attribution>
@@ -76,7 +76,7 @@ of transformers you have around an <literal>IO</literal>, there&#8217;s still an
 meaning you can perform I/O in any of these monad transformer stacks. You&#8217;ll
 often see code that looks like <literal>liftIO $ putStrLn "Hello There!"</literal>.</simpara>
 </section>
-<section id="_the_three_transformers">
+<section id="yesods-monads_the_three_transformers">
 <title>The Three Transformers</title>
 <note><simpara>In previous versions of Yesod, <literal>Handler</literal> and <literal>Widget</literal> were far more
 magical and scary. Since version 1.2, things are much simplified. So if you
@@ -117,7 +117,7 @@ can do, by using the <literal>handlerToWidget</literal> function. So for example
 database queries inside a <literal>Widget</literal> by using something like <literal>handlerToWidget .
 runDB</literal>.</simpara>
 </section>
-<section id="_example_database_driven_navbar">
+<section id="yesods-monads_example_database_driven_navbar">
 <title>Example: Database-driven navbar</title>
 <simpara>Let&#8217;s put some of this new knowledge into action. We want to create a <literal>Widget</literal>
 that generates its output based on the contents of the database. Previously,
@@ -213,7 +213,7 @@ app.</simpara>
 </mediaobject>
 </figure>
 </section>
-<section id="_example_request_information">
+<section id="yesods-monads_example_request_information">
 <title>Example: Request information</title>
 <simpara>Likewise, you can get request information inside a <literal>Widget</literal>. Here we can determine the sort order of a list based on a GET parameter.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE MultiParamTypeClasses #-}
@@ -288,7 +288,7 @@ many common monad transformers.</simpara>
 <simpara>But if you want to, you can wrap up the call to <literal>runInputGet</literal> above using
 <literal>handlerToWidget</literal>, and everything will work the same.</simpara>
 </section>
-<section id="_performance_and_error_messages">
+<section id="yesods-monads_performance_and_error_messages">
 <title>Performance and error messages</title>
 <note><simpara>You can consider this section extra credit. It gets into some of the
 design motivation behind Yesod, which isn&#8217;t necessary for usage of Yesod.</simpara></note>
@@ -357,7 +357,7 @@ A <literal>WidgetT</literal> is essentially just a <literal>WriterT</literal> on
 <simpara>If you want to understand this more, please have a look at the definitions of
 <literal>HandlerT</literal> and <literal>WidgetT</literal> in <literal>Yesod.Core.Types</literal>.</simpara>
 </section>
-<section id="_summary">
+<section id="yesods-monads_summary">
 <title>Summary</title>
 <simpara>If you completely ignore this chapter, you&#8217;ll still be able to use Yesod to
 great benefit. The advantage of understanding how Yesod&#8217;s monads interact is to

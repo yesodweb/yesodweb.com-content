@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-12-28</date>
 </articleinfo>
-<section id="_widgets">
+<section id="widgets_widgets">
 <title>Widgets</title>
 <simpara>One of the challenges in web development is that we have to coordinate three
 different client-side technologies: HTML, CSS and Javascript. Worse still, we
@@ -24,7 +24,7 @@ libraries, such as jQuery, one time only.</simpara>
 <simpara>Our four template languages- Hamlet, Cassius, Lucius and Julius- provide the
 raw tools for constructing your output. Widgets provide the glue that allows
 them to work together seamlessly.</simpara>
-<section id="_synopsis">
+<section id="widgets_synopsis">
 <title>Synopsis</title>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}
@@ -90,7 +90,7 @@ main = warp 3000 App</programlisting>
   &lt;/body&gt;
 &lt;/html&gt;</programlisting>
 </section>
-<section id="_what_8217_s_in_a_widget">
+<section id="widgets_what_8217_s_in_a_widget">
 <title>What&#8217;s in a Widget?</title>
 <simpara>At a very superficial level, an HTML document is just a bunch of nested tags.
 This is the approach most HTML generation tools take: you define hierarchies of
@@ -155,7 +155,7 @@ taking the first title set and ignoring others, filtering duplicates from the
 list of external scripts and stylesheets, and concatenating head and body
 content.</simpara>
 </section>
-<section id="_constructing_widgets">
+<section id="widgets_constructing_widgets">
 <title>Constructing Widgets</title>
 <simpara>In order to use widgets, you&#8217;ll obviously need to be able to get your hands on
 them. The most common way will be via the <literal>ToWidget</literal> typeclass, and its
@@ -241,7 +241,7 @@ referring to files hosted on a CDN, like Google&#8217;s jQuery.
 </varlistentry>
 </variablelist>
 </section>
-<section id="_combining_widgets">
+<section id="widgets_combining_widgets">
 <title>Combining Widgets</title>
 <simpara>The whole idea of widgets is to increase composability. You can take these
 individual pieces of HTML, CSS and Javascript, combine them together into
@@ -266,7 +266,7 @@ myWidget' = myWidget1 &gt;&gt; myWidget2</programlisting>
 meaning you can use <literal>mconcat</literal> or a <literal>Writer</literal> monad to build things up. In my
 experience, it&#8217;s easiest and most natural to just use do-notation.</simpara></note>
 </section>
-<section id="_generate_ids">
+<section id="widgets_generate_ids">
 <title>Generate IDs</title>
 <simpara>If we&#8217;re really going for true code reuse here, we&#8217;re eventually going to run
 into name conflicts. Let&#8217;s say that there are two helper libraries that both
@@ -278,7 +278,7 @@ automatically generates a word that is unique for this handler.</simpara>
     toWidget [hamlet|&lt;h1 .#{headerClass}&gt;My Header|]
     toWidget [lucius| .#{headerClass} { color: green; } |]</programlisting>
 </section>
-<section id="_whamlet">
+<section id="widgets_whamlet">
 <title>whamlet</title>
 <simpara>Let&#8217;s say you&#8217;ve got a fairly standard Hamlet template, that embeds another
 Hamlet template to represent the footer:</simpara>
@@ -324,7 +324,7 @@ separate file.</simpara>
 <note><simpara>The scaffolded site has an even more convenient function, <literal>widgetFile</literal>,
 which will also include your Lucius, Cassius, and Julius files automatically.
 We&#8217;ll cover that in the scaffolding chapter.</simpara></note>
-<section id="_types">
+<section id="widgets_types">
 <title>Types</title>
 <simpara>You may have noticed that I&#8217;ve been avoiding type signatures so far. The simple
 answer is that each widget is a value of type <literal>Widget</literal>. But if you look through
@@ -371,7 +371,7 @@ page =
 similar situation with the <literal>HandlerT</literal> and <literal>Handler</literal> types.</simpara>
 </section>
 </section>
-<section id="_using_widgets">
+<section id="widgets_using_widgets">
 <title>Using Widgets</title>
 <simpara>It&#8217;s all well and good that we have these beautiful Widget datatypes, but how
 exactly do we turn them into something the user can interact with? The most
@@ -499,7 +499,7 @@ getHomeR = defaultLayout
 main :: IO ()
 main = warp 3000 App</programlisting>
 </section>
-<section id="_using_handler_functions">
+<section id="widgets_using_handler_functions">
 <title>Using handler functions</title>
 <simpara>We haven&#8217;t covered too much of the handler functionality yet, but once we do,
 the question arises: how do we use those functions in a widget? For example,
@@ -519,7 +519,7 @@ needed to be explicitly converted using <literal>lift</literal>, not <literal>ha
 system is not only easier to use, but also avoids any strange monad transformer
 tricks which were previously employed.</simpara></note>
 </section>
-<section id="_summary">
+<section id="widgets_summary">
 <title>Summary</title>
 <simpara>The basic building block of each page is a widget. Individual snippets of HTML,
 CSS, and Javascript can be turned into widgets via the polymorphic <literal>toWidget</literal>

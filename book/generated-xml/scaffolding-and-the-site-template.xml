@@ -7,7 +7,7 @@
 <articleinfo>
     <date>2013-10-30</date>
 </articleinfo>
-<section id="_scaffolding_and_the_site_template">
+<section id="scaffolding-and-the-site-template_scaffolding_and_the_site_template">
 <title>Scaffolding and the Site Template</title>
 <simpara>So you&#8217;re tired of running small examples, and ready to write a real site? Then
 you&#8217;re at the right chapter. Even with the entire Yesod library at your
@@ -44,7 +44,7 @@ recommended that you follow along with an actual scaffolded site.</simpara>
 <note><simpara>Due to the nature of the scaffolded site, it is the most fluid component
 of Yesod, and can change from version to version. It is possible that the
 information in this chapter is slightly outdated.</simpara></note>
-<section id="_how_to_scaffold">
+<section id="scaffolding-and-the-site-template_how_to_scaffold">
 <title>How to Scaffold</title>
 <simpara>The yesod-bin package installs an executable (conveniently named <emphasis>yesod</emphasis> as
 well). This executable provides a few commands (run <emphasis>yesod</emphasis> by itself to get a
@@ -71,12 +71,12 @@ installing the <literal>yesod</literal> package.</simpara>
 This site will automatically rebuild and reload whenever
 you change your code.</simpara>
 </section>
-<section id="_file_structure">
+<section id="scaffolding-and-the-site-template_file_structure">
 <title>File Structure</title>
 <simpara>The scaffolded site is built as a fully cabalized Haskell package. In addition
 to source files, config files, templates, and static files are produced as
 well.</simpara>
-<section id="_cabal_file">
+<section id="scaffolding-and-the-site-template_cabal_file">
 <title>Cabal file</title>
 <simpara>Whether directly using <emphasis>cabal</emphasis>, or indirectly using <emphasis>yesod devel</emphasis>, building
 your code will always go through the cabal file. If you open the file, you&#8217;ll
@@ -112,7 +112,7 @@ correctly. Unfortunately, neither Cabal nor GHC will give you a warning if you
 forgot to make this update, and instead you&#8217;ll get a very scary-looking error
 message from yesod devel.</simpara>
 </section>
-<section id="_routes_and_entities">
+<section id="scaffolding-and-the-site-template_routes_and_entities">
 <title>Routes and entities</title>
 <simpara>Multiple times in this book, you&#8217;ve seen a comment like "We&#8217;re declaring our
 routes/entities with quasiquotes for convenience. In a production site, you
@@ -139,7 +139,7 @@ Helper utilities should either be declared in <literal>Import.hs</literal> or, i
 </listitem>
 </itemizedlist>
 </section>
-<section id="_foundation_and_application_modules">
+<section id="scaffolding-and-the-site-template_foundation_and_application_modules">
 <title>Foundation and Application modules</title>
 <simpara>The <literal>mkYesod</literal> function which we have used throughout the book declares a few
 things:</simpara>
@@ -205,7 +205,7 @@ Imports the messages files. If you look for the line starting with
 <simpara>We&#8217;ll be referring back to this file later, as we discussed some of the special
 implementations of <literal>Yesod</literal> typeclass methods.</simpara>
 </section>
-<section id="_import">
+<section id="scaffolding-and-the-site-template_import">
 <title>Import</title>
 <simpara>The <literal>Import</literal> module was born out of a few commonly recurring patterns.</simpara>
 <itemizedlist>
@@ -234,7 +234,7 @@ I want to make sure I never use some evil function (<literal>head</literal>, <li
 re-export the parts of <literal>Prelude</literal> we want, add in all the other stuff we want,
 define our own functions as well, and then import this file in all handlers.</simpara>
 </section>
-<section id="_handler_modules">
+<section id="scaffolding-and-the-site-template_handler_modules">
 <title>Handler modules</title>
 <simpara>Handler modules should go inside the <emphasis>Handler</emphasis> folder. The site template
 includes one module: <emphasis>Handler/Root.hs</emphasis>. How you split up your handler functions
@@ -280,7 +280,7 @@ Put a module statement at the top, and an <literal>import Import</literal> line 
 <simpara>You can use the <emphasis>yesod add-handler</emphasis> command to automate the last three steps.</simpara>
 </section>
 </section>
-<section id="_widgetfile">
+<section id="scaffolding-and-the-site-template_widgetfile">
 <title>widgetFile</title>
 <simpara>It&#8217;s very common to want to include CSS and Javascript specific to a page. You
 don&#8217;t want to have to remember to include those Lucius and Julius files
@@ -319,7 +319,7 @@ contents will <emphasis>not</emphasis> be included until the file calling <liter
 recompiled. In such a case, you may need to force a save of that file to get
 <emphasis>yesod devel</emphasis> to recompile.</simpara></note>
 </section>
-<section id="_defaultlayout">
+<section id="scaffolding-and-the-site-template_defaultlayout">
 <title>defaultLayout</title>
 <simpara>One of the first things you&#8217;re going to want to customize is the look of your
 site. The layout is actually broken up into two files:</simpara>
@@ -344,7 +344,7 @@ site. The layout is actually broken up into two files:</simpara>
 Lucius, Cassius, or Julius files named <emphasis>default-layout.*</emphasis> will automatically be
 included as well.</simpara>
 </section>
-<section id="_static_files">
+<section id="scaffolding-and-the-site-template_static_files">
 <title>Static files</title>
 <simpara>The scaffolded site automatically includes the static file subsite, optimized
 for serving files that will not change over the lifetime of the current build.
@@ -395,7 +395,7 @@ Yesod can avoid an expensive disk write of the CSS/Javascript file contents if a
 </orderedlist>
 <simpara>Finally, all of your Javascript is automatically minified via hjsmin.</simpara>
 </section>
-<section id="_conclusion">
+<section id="scaffolding-and-the-site-template_conclusion">
 <title>Conclusion</title>
 <simpara>The purpose of this chapter was not to explain every line that exists in the
 scaffolded site, but instead to give a general overview to how it works. The
