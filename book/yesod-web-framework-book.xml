@@ -7,8 +7,6 @@
   <part>
     <title>Basics</title>
 
-    <xi:include href="ch00.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
-
     <xi:include href="generated-xml/introduction.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
