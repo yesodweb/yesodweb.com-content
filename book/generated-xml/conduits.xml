@@ -5,10 +5,10 @@
 
 <article lang="en">
 <articleinfo>
-    <date>2013-09-22</date>
+    <date>2014-01-27</date>
 </articleinfo>
-<section id="conduits_conduit">
+<appendix id="conduits_conduit">
 <title>Conduit</title>
 <simpara>The official conduit tutorial has moved to FP School of Haskell: <ulink url="https://www.fpcomplete.com/user/snoyberg/library-documentation/conduit-overview">https://www.fpcomplete.com/user/snoyberg/library-documentation/conduit-overview</ulink></simpara>
-</section>
+</appendix>
 </article>
