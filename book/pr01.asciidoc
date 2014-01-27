@@ -1,3 +1,0 @@
-== Preface
-
-This version of the Yesod book was snapshotted from the Git repository.
