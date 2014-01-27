@@ -1,3 +1,7 @@
+- time: 2014-01-28T08:40:00Z
+  author: michael
+  title: "Announcing: the Resource monad"
+  path: 2014/01/announcing-resource-monad.md
 - time: 2014-01-27T08:40:00Z
   author: michael
   title: Initializing data in the foundation datatype
