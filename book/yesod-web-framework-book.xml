@@ -7,105 +7,103 @@
   <part>
     <title>Basics</title>
 
-    <xi:include href="ch00.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
-
-    <xi:include href="chapters/introduction.asciidoc"
+    <xi:include href="generated-xml/introduction.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/haskell.asciidoc"
+    <xi:include href="generated-xml/haskell.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/basics.asciidoc"
+    <xi:include href="generated-xml/basics.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/shakespearean-templates.asciidoc"
+    <xi:include href="generated-xml/shakespearean-templates.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/widgets.asciidoc"
+    <xi:include href="generated-xml/widgets.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/yesod-typeclass.asciidoc"
+    <xi:include href="generated-xml/yesod-typeclass.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/routing-and-handlers.asciidoc"
+    <xi:include href="generated-xml/routing-and-handlers.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/forms.asciidoc"
+    <xi:include href="generated-xml/forms.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/sessions.asciidoc"
+    <xi:include href="generated-xml/sessions.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/persistent.asciidoc"
+    <xi:include href="generated-xml/persistent.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/deploying-your-webapp.asciidoc"
+    <xi:include href="generated-xml/deploying-your-webapp.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
   </part>
 
   <part>
     <title>Advanced</title>
 
-    <xi:include href="chapters/restful-content.asciidoc"
+    <xi:include href="generated-xml/restful-content.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/yesods-monads.asciidoc"
+    <xi:include href="generated-xml/yesods-monads.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/authentication-and-authorization.asciidoc"
+    <xi:include href="generated-xml/authentication-and-authorization.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/scaffolding-and-the-site-template.asciidoc"
+    <xi:include href="generated-xml/scaffolding-and-the-site-template.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/internationalization.asciidoc"
+    <xi:include href="generated-xml/internationalization.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/creating-a-subsite.asciidoc"
+    <xi:include href="generated-xml/creating-a-subsite.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/understanding-request.asciidoc"
+    <xi:include href="generated-xml/understanding-request.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
   </part>
 
   <part>
     <title>Examples</title>
 
-    <xi:include href="chapters/initializing-foundation-data.asciidoc"
+    <xi:include href="generated-xml/initializing-foundation-data.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/blog-example-advanced.asciidoc"
+    <xi:include href="generated-xml/blog-example-advanced.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/wiki-chat-example.asciidoc"
+    <xi:include href="generated-xml/wiki-chat-example.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/json-web-service.asciidoc"
+    <xi:include href="generated-xml/json-web-service.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/case-study-sphinx.asciidoc"
+    <xi:include href="generated-xml/case-study-sphinx.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
   </part>
 
   <part>
     <title>Appendices</title>
 
-    <xi:include href="chapters/monad-control.asciidoc"
+    <xi:include href="generated-xml/monad-control.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/conduits.asciidoc"
+    <xi:include href="generated-xml/conduits.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/web-application-interface.asciidoc"
+    <xi:include href="generated-xml/web-application-interface.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/settings-types.asciidoc"
+    <xi:include href="generated-xml/settings-types.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/http-conduit.asciidoc"
+    <xi:include href="generated-xml/http-conduit.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
 
-    <xi:include href="chapters/xml.asciidoc"
+    <xi:include href="generated-xml/xml.xml"
                 xmlns:xi="http://www.w3.org/2001/XInclude" />
   </part>
 </book>

@@ -5,6 +5,7 @@ mkdir generated-xml
 for f in chapters/*.asciidoc
 do
     BN=`basename $f`
-    DEST=generated-xml/${BN%.asciidoc}.xml
-    asciidoc -b docbook45 -o $DEST $f
+    FILEID="${BN%.asciidoc}"
+    DEST="generated-xml/${FILEID}.xml"
+    asciidoc -b docbook45 --attribute=idprefix="${FILEID}_" -o "$DEST" "$f"
 done
