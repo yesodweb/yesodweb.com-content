@@ -17,7 +17,7 @@ I helped him in testing it and porting it to BSD variants.
 
 If you compile your concurrent program by the coming GHC 7.8, the executable scales on multicores.
 No modifications are necessary.
-Just specify the +RTS -Nx option.
+Just specify the +RTS -Nx option (and -qa -A32m if necessary).
 It is really nice, isn't it?
 
 However, GHC 7.8 would disclose another bottleneck of your program.
