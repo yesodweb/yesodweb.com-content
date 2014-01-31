@@ -95,3 +95,5 @@ To log a message, `pushLogStr` is used:
 When a user thread calls `pushLogStr`, a `Logger` is selected according to the core number on which the thread is running.
 
 The new fast logger loses only about 10% of performance on any numbers of cores.
+
+I would like to thank Michael Snoyman, Toralf Wittner, Tobias Florek, and Gregory Collins for their contributions to fast-logger.
