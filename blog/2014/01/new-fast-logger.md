@@ -7,8 +7,8 @@ I will explain how I re-designed fast-logger in this article and how I improved 
 ## The coming GHC 7.8 and Handle
 
 One of the coolest features of the coming GHC 7.8 is [multicore IO manager](http://haskell.cs.yale.edu/wp-content/uploads/2013/08/hask035-voellmy.pdf).
-The runtime system of GHC 7.6 or earlier provides parallel GC, efficient memory allocation mechanism and the IO manger.
-So, a concurrent program complied by GHC 7.6 or earlier should be scaled on a multicore system if the +RTS -Nx command-line option is specfied.
+The runtime system of GHC 7.6 or earlier provides parallel GC, efficient memory allocation mechanism and the IO manager.
+So, a concurrent program complied by GHC 7.6 or earlier should be scaled on a multicore system if the +RTS -Nx command-line option is specified.
 
 Unfortunately, it appeared that this is not the case.
 This is mainly because the IO manager has several bottlenecks.
@@ -24,7 +24,7 @@ However, GHC 7.8 would disclose another bottleneck of your program.
 
 I noticed this when I was trying to get Mighty prepared for GHC 7.8.
 Mighty 2.x uses the pre-fork technique to scale on multicore systems.
-That is, Mighty 2.x forks processes according to its configuration file to get over the bottlenecks the IO manager.
+That is, Mighty 2.x forks processes according to its configuration file to get over the bottlenecks of the IO manager.
 If you want to know the pre-fork technique in detail, please read [Mighttpd – a High Performance Web Server in Haskell](http://themonadreader.wordpress.com/2011/10/26/issue-19/).
 
 I modified Mighty with the pre-fork code removed because it will be not necessary for GHC 7.8.
@@ -72,7 +72,7 @@ Here is a simplified code to append a log message to a queue. (Note that `pushLo
           | otherwise          = (ologmsg <> nlogmsg, Nothing)
 
 
-When a log message is appended to a queue, its total length is compared with the current buffer size (in `checkBuf`). If the total length is bigger than the buffer size, the queue is swapped with the log message. Then, the buffer is locked. The log messages in the old queue are copied into the buffer then the buffer is wrote into its corresponding file. Otherwise, the log message is just appended to the queue.
+When a log message is appended to a queue, its total length is compared with the current buffer size (in `checkBuf`). If the total length is bigger than the buffer size, the queue is swapped with the log message. Then, the buffer is locked. The log messages in the old queue are copied into the buffer then the buffer is written into its corresponding file. Otherwise, the log message is just appended to the queue.
 
 Why is this new approach fast? Well, the new one takes a lock only when it flushes its buffer and the locking can be obtained in almost all cases. But the old one tries to take a lock everytime when each message is copied into `Handle`'s buffer.
 
