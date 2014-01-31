@@ -1,3 +1,7 @@
+- time: 2014-01-31T13:00:00Z
+  author: kazu
+  title: "Faster and scalable fast-logger"
+  path: 2014/01/new-fast-logger.md
 - time: 2014-01-28T08:40:00Z
   author: michael
   title: "Announcing: the Resource monad"
