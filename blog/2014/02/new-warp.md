@@ -1,6 +1,6 @@
 # Improving the performance of Warp again
 
-As you may remember, I improved the performance of Warp in 2012 and wrote [some blog articles](http://www.yesodweb.com/blog/2012/09/improving-warp) on this web site. Based on these articles, Michael and I wrote an article: ["Warp"](http://aosabook.org/en/posa/warp.html) for POSA, The Performance of Open Source Applications.
+As you may remember, I improved the performance of Warp in 2012 and wrote [some blog articles](http://www.yesodweb.com/blog/2012/09/improving-warp) on this web site. Based on these articles, Michael and I wrote an article ["Warp"](http://aosabook.org/en/posa/warp.html) for POSA(Performance of Open Source Applications).
 
 In the last year after working with Andreas, I hit upon some ideas to make Warp faster and implemented them. In this article, I will explain how I improved the performance of Warp again. If you have not read the POSA article, I recommend to give a look at it before reading this article.
 
@@ -20,8 +20,6 @@ When I was testing [multicore IO manager](http://haskell.cs.yale.edu/wp-content/
 - Thread scheduling (the "-y" option)
 - `Network.Socket.ByteString.recv` (the "-p" option)
 
-I will explain these in order.
-
 ## Better thread scheduling
 
 GHC's I/O functions are optimistic. Let's consider `recv`.
@@ -38,11 +36,11 @@ Thus the IO manager works frequently.
     recvfrom(13, )                -- Haskell thread A
     sendto(13, )                  -- Haskell thread A
     recvfrom(13, ) = -1 EAGAIN    -- Haskell thread A
-    epoll_ctl(3, )                -- Haskell thread A (a job for IO manager)
+    epoll_ctl(3, )                -- Haskell thread A (a job for the IO manager)
     recvfrom(14, )                -- Haskell thread B
     sendto(14, )                  -- Haskell thread B
     recvfrom(14, ) = -1 EAGAIN    -- Haskell thread B
-    epoll_ctl(3, )                -- Haskell thread B (a job for IO manager)
+    epoll_ctl(3, )                -- Haskell thread B (a job for the IO manager)
 
 The idea is to call `yield` after `send` for better scheduling.
 `yield` pushes its Haskell thread onto the end of thread queue. So,
@@ -57,8 +55,7 @@ message would arrive.
     sendto(13, )                  -- Haskell thread A
 
 In other words, `yield` makes the IO manager work less frequently.
-This magically improves throughput.
-
+This magically improves throughput!
 This means that even multicore IO manager still has significant overhread.
 It uses `MVar` to notify data availability to Haskell threads.
 Since `MVar` is a lock, it may be slow.
@@ -80,8 +77,18 @@ This change itself improved the performance and enables the `yield` hack resulti
 
 ## Buffer allocation to send HTTP response
 
+Michael and I noticed that the buffer for receiving can also be used for sending. Let's recall that `Response` has three constructors:
+
+    data Response
+        = ResponseFile H.Status H.ResponseHeaders FilePath (Maybe FilePart)
+        | ResponseBuilder H.Status H.ResponseHeaders Builder
+        | ResponseSource H.Status H.ResponseHeaders (forall b. WithSource IO (C.Flush Builder) b)
+
+We changed that the buffer is used for `ResponseBuilder` and `ResponseSource` to avoid extra buffer allocations. (In the case of `ResponseFile`, the zero copy system call, sendfile(), ensures no extra buffer is allocated.)
 
 ## HTTP request parser
+
+At this stage, I took profiles of Mighty. Here is a result:
 
     sendfileloop                    Network.Sendfile.Linux                    7.5    0.0
     parseReqeustLine                Network.Wai.Handler.Warp.RequestHeader    3.6    5.8
@@ -89,7 +96,7 @@ This change itself improved the performance and enables the `yield` hack resulti
     serveConnection.recvSendLoop    Network.Wai.Handler.Warp.Run              3.1    1.9
     >>=                             Data.Conduit.Internal                     2.9    3.9
 
-After writing a low-level persor for HTTP requests:
+I persuaded my self that I/O functions are slow. But I could not be satisfied with the poor performance of the HTTP request parser. `parseReqeustLine` was implemented by using the utility functions of `ByteString`. Since they have overhead, I re-wrote it with `Ptr`-releated functions. After writing the low-level persor, the profiling became:
 
     sendfileloop                  Network.Sendfile.Linux                    8.3    0.0
     sendResponse                  Network.Wai.Handler.Warp.Response         3.7    3.1
@@ -97,7 +104,9 @@ After writing a low-level persor for HTTP requests:
     >>=                           Data.Conduit.Internal                     2.9    4.0
     serveConnection.recvSendLoop  Network.Wai.Handler.Warp.Run              2.6    2.0
 
+I was happy because `parseReqeustLine` disappeared from here. One homework for me is to understand why `sendfileloop` is so slow. Probably I need to check if locks are used in sendfile(). If you have any ideas, please let me know.
+
 ## Acknowledgment
 
-I thank Joey Hess for letting Warp work well on Windows and
+Michael and I thank Joey Hess for letting Warp work well on Windows and
 Gregory Collins for discussion on performance.
