@@ -47,7 +47,7 @@ The idea is to call `yield` after `send` for better scheduling.
 `yield` pushes its Haskell thread onto the end of thread queue.
 So, another thread can work.
 During the work of other threads, a request message would arrive.
-With the `yield` hack, a log of "strace" becomes as follows:
+With the `yield` hack, a log of "strace" becames as follows:
 
     recvfrom(13, )                -- Haskell thread A
     sendto(13, )                  -- Haskell thread A
@@ -152,7 +152,7 @@ So, `allocate` uses a global lock. To my calculation, `LARGE_OBJECT_THRESHOLD/si
 
 Since old Warp specified 4,096 to `recv`, a global lock is acquired for *every HTTP request*. If the size of an HTTP request is some between 409 and 4,095, another global lock is obtained.
 
-To avoid contention, I modified Warp so that a buffer of 4,096 bytes is allocated by `malloc()` for *every HTTP connection*. Sophisticated `malloc()` implementations have *arena* to avoid global contention. Also, since we replate `malloc()` and `free()` for the same size, we can take advantage of the free list in `malloc()`.
+To avoid contention, I modified Warp so that a buffer of 4,096 bytes is allocated by `malloc()` for *every HTTP connection*. Sophisticated `malloc()` implementations have *arena* to avoid global contention. Also, since we repeat `malloc()` and `free()` for the same size, we can take advantage of the free list in `malloc()`.
 
 The buffer is passed to the `recv()` system call. After an HTTP request is received, a `ByteString` is allocated by `mallocByteString` and data is copied by `memcpy`. This tuning also improved the throughput of Warp drastically.
 
@@ -189,7 +189,7 @@ I was happy because `parseReqeustLine` disappeared from here. One homework for m
 
 ## Performance improvement
 
-So, how fast Warp became actually? I show a chart to compare throughput among Mighty 2 complied GHC 7.6.3, Mighty 3 compiled coming GHC 7.8, and nginx 1.4.0. Note that only one core is used. I have two reasons for this: 1) since the change  of data center of our company, I cannot use the environment described in the POSA article. So, I need to draw this chart based on my old memo. 2) And nginx does not scale at all in my environment even if the deep sleep mode is disabled.
+So, how fast Warp became actually? I show a chart to compare throughput among Mighty 2 complied by GHC 7.6.3, Mighty 3 compiled by coming GHC 7.8, and nginx 1.4.0. Note that only one core is used. I have two reasons for this: 1) since the change  of data center of our company, I cannot use the environment described in the POSA article at this moment. So, I need to draw this chart based on my old memo. 2) nginx does not scale at all in my environment even if the deep sleep mode is disabled.
 
 Anyway, here is the result measured by `weighttp -n 100000 -c 1000 -k`:
 
