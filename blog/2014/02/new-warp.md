@@ -1,10 +1,10 @@
 # Improving the performance of Warp again
 
-As you may remember, I improved the performance of Warp in 2012 and wrote [some blog articles](http://www.yesodweb.com/blog/2012/09/improving-warp) on this web site. Based on these articles, Michael and I wrote an article ["Warp"](http://aosabook.org/en/posa/warp.html) for POSA(Performance of Open Source Applications).
+As you may remember, I improved the performance of Warp in 2012 and wrote [some blog articles](http://www.yesodweb.com/blog/2012/09/improving-warp) on this web site. Based on these articles, Michael and I wrote an article ["Warp"](http://aosabook.org/en/posa/warp.html) for POSA (Performance of Open Source Applications).
 
-In the last year after working with Andreas, I hit upon some ideas to make Warp faster again and implemented them. In this article, I will explain how I improved the performance of Warp again. If you have not read the POSA article, I recommend to give a look at it beforehand.
+After working with Andreas last year, I came up with some new ideas to yet again improve Warp's performance, and have implemented them in Warp 2.0. In this article, I will explain these new techniques. If you have not read the POSA article, I recommend to give a look at it beforehand.
 
-Here are items to be explained:
+Here are the high level ideas to be covered:
 
 - Better thread scheduling
 - Buffer allocation to receive HTTP requests
@@ -23,15 +23,15 @@ When I was testing [multicore IO manager](http://haskell.cs.yale.edu/wp-content/
 ## Better thread scheduling
 
 GHC's I/O functions are optimistic.
-For instance, `recv` first tries to read incoming data anyway.
-If the data are available, `recv` succeeds.
+For instance, `recv` tries to read incoming data immediately.
+If there is data available, `recv` succeeds.
 Otherwise, `EAGAIN` is returned.
-In this case, `recv` asks the IO manager to notify when the data are available.
+In this case, `recv` asks the IO manager to notify it when data is available.
 
 If a network server repeats receive/send actions,
-`recv` just after `send` probably fails because
+`recv` just after `send` will usually fail because
 there is a time lag for the next request from the client.
-Thus the IO manager works frequently.
+Thus the IO manager is often required to do notification work.
 Here is a log of "strace":
 
     recvfrom(13, )                -- Haskell thread A
@@ -43,10 +43,11 @@ Here is a log of "strace":
     recvfrom(14, ) = -1 EAGAIN    -- Haskell thread B
     epoll_ctl(3, )                -- Haskell thread B (a job for the IO manager)
 
-The idea is to call `yield` after `send` for better scheduling.
+To achieve better scheduling, we need to call `yield` after `send`.
 `yield` pushes its Haskell thread onto the end of thread queue.
-So, another thread can work.
-During the work of other threads, a request message would arrive.
+In the meanwhile, other threads are able to work.
+During the work of other threads, a new request message can arrive,
+and therefore the next call to `recv` will succeed.
 With the `yield` hack, a log of "strace" becames as follows:
 
     recvfrom(13, )                -- Haskell thread A
@@ -61,9 +62,12 @@ This magically improves throughput!
 This means that even multicore IO manager still has unignorable overhead.
 It uses `MVar` to notify data availability to Haskell threads.
 Since `MVar` is a lock, it may be slow.
-Or, allocation of `MVar` may be slow.
+Or more precisely, allocation of the `MVar` may be slow.
 
-Unfortunately when I added `yield` to Warp, no performance improvement is gained. It seems to me that Monad stack (`ResourceT`) handcuffs the `yield` hack. So, Michael removed `ResourceT` from WAI. This is why the type of `Application` change from:
+Unfortunately when I first added `yield` to Warp, no performance improvement were
+gained. It seems to me that Monad stack (`ResourceT`) handcuffs the `yield`
+hack. So, Michael removed `ResourceT` from WAI. This is why the type of
+`Application` change from:
 
     type Application = Request -> ResourceT IO Response
 
@@ -72,6 +76,8 @@ to:
     type Application = Request -> IO Response
 
 This change itself improved the performance and enables the `yield` hack resulting in drastic performance improvement of Warp at least on small numbers of cores.
+
+Michael has added an explanation of the removal of `ResourceT` to the end of this post.
 
 ## Buffer allocation to receive HTTP requests
 
@@ -195,7 +201,79 @@ Anyway, here is the result measured by `weighttp -n 100000 -c 1000 -k`:
 
 ![Fig1: Throughput on one core](/assets/new-warp/result.png)
 
+## Removing ResourceT from WAI
+
+Before we can understand how we removed ResourceT from WAI, we need to understand its purpose.
+The goal is to allow an `Application` to acquire a scarce resource, such as a database connection.
+But let's have a closer look at the three response constructors used in WAI (in the 1.4 series):
+
+```haskell
+data Response
+    = ResponseFile H.Status H.ResponseHeaders FilePath (Maybe FilePart)
+    | ResponseBuilder H.Status H.ResponseHeaders Builder
+    | ResponseSource H.Status H.ResponseHeaders (C.Source (C.ResourceT IO) (C.Flush Builder))
+```
+
+Both `ResponseFile` and `ResponseBuilder` return pure values which are unable to take
+advantage of the `ResourceT` environment to allocate resources.
+In other words, the only constructor which takes advantage of `ResourceT` is `ResponseSource`.
+Our goal, therefore, was to limit the effect of resource allocation to just that constructor,
+and even better to make the resource environment overhead optional in that case.
+
+The first step is what Kazu already mentioned above: changing `Application` to live in `IO` instead of `ResourceT IO`.
+We need to make the same change to the `ResponseSource` constructor.
+But now we're left with a question: how would we acquire a resource inside a streaming response
+in an exception safe manner?
+
+Let's remember that an alternative to `ResourceT` is to use the bracket pattern.
+And let's look at the structure of how a streaming response is processed in Warp.
+(A similar process applies to CGI and other backends.)
+
+1. Parse the incoming request, generated a `Request` value.
+2. Pass the `Request` value to the application, getting a `Response` value.
+3. Run the `Source` provided by the application to get individual chunks from the `Response` and send them to the client.
+
+In order to get exception safety, we need to account for three different issues:
+
+* Catch any exceptions thrown in the application itself while generating the
+  `Response`. This can already be handled by the application, since it simply
+  lives in the `IO` monad.
+
+* Mask asynchronous exceptions between steps 2 and 3. This second point
+  required a minor change to Warp to add async masking.
+
+* Allow the application to install an exception handler around step 3.
+
+That third point is the bit that required a change in WAI.
+The idea is to emulate the same kind of bracket API provided by functions like `withFile`.
+Let's consider the signature for that function:
+
+```haskell
+withFile :: FilePath -> IOMode -> (Handle -> IO a) -> IO a
+
+-- or partially applied
+withSomeFile "foo" ReadMode :: (Handle -> IO a) -> IO a
+```
+
+In our case, we don't want to get a `Handle`, but instead a `Source` of bytes.
+Let's make a type signature or two to represent this idea:
+
+```haskell
+type ByteSource = Source IO (Flush Builder)
+type WithByteSource a = (ByteSource -> IO a) -> IO a
+```
+
+And the resulting `ResponseSource` constructor is:
+
+```haskell
+ResponseSource H.Status H.ResponseHeaders (forall b. WithByteSource b)
+```
+
+To deal with the common case of installing a cleanup function, WAI provides the `responseSourceBracket` function.
+At a higher level, Yesod is able to build on top of this to provide the same `ResourceT` functionality we had
+previously, so that a Yesod user can simply use `allocate` and friends and get full exception safety.
+
 ## Acknowledgment
 
-Michael and I thank Joey Hess for letting Warp work well on Windows and
-Gregory Collins for discussion on performance.
+Michael and I thank Joey Hess for getting Warp to work well on Windows and
+Gregory Collins for his discussions on performance.
