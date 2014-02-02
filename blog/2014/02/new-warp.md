@@ -189,7 +189,7 @@ I was happy because `parseReqeustLine` disappeared from here. One homework for m
 
 ## Performance improvement
 
-So, how fast Warp became actually? I show a chart to compare throughput among Mighty 2 complied GHC 7.6.3, Mighty 3 compiled coming GHC 7.8, and nginx 1.4.0. Note that only one core is used. I have two reasons for this: 1) since the change  of data center of our company, I cannot use the environment described in the POSA article. So, I need to draw this chart according to my old memo. And nginx does not scale at all in my environment even if the deep sleep mode is disabled.
+So, how fast Warp became actually? I show a chart to compare throughput among Mighty 2 complied GHC 7.6.3, Mighty 3 compiled coming GHC 7.8, and nginx 1.4.0. Note that only one core is used. I have two reasons for this: 1) since the change  of data center of our company, I cannot use the environment described in the POSA article. So, I need to draw this chart based on my old memo. 2) And nginx does not scale at all in my environment even if the deep sleep mode is disabled.
 
 Anyway, here is the result measured by `weighttp -n 100000 -c 1000 -k`:
 
