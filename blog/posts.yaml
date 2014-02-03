@@ -1,3 +1,7 @@
+- time: 2014-02-04T06:41:00Z
+  author: michael
+  title: conduit 1.0.13 and ZipSource
+  path: 2014/02/conduit-zip-source.md
 - time: 2014-02-03T06:41:00Z
   author: kazu
   title: "Improving the performance of Warp again"
