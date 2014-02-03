@@ -62,7 +62,7 @@ This magically improves throughput!
 This means that even multicore IO manager still has unignorable overhead.
 It uses `MVar` to notify data availability to Haskell threads.
 Since `MVar` is a lock, it may be slow.
-Or more precisely, allocation of the `MVar` may be slow.
+Or perhaps, allocation of the `MVar` is slow.
 
 Unfortunately when I first added `yield` to Warp, no performance improvement were
 gained. It seems to me that Monad stack (`ResourceT`) handcuffs the `yield`
