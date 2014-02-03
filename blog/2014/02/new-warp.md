@@ -178,12 +178,12 @@ We changed that the buffer is also used for `ResponseBuilder` and `ResponseSourc
 At this stage, I took profiles of Mighty. Here is a result:
 
     sendfileloop                    Network.Sendfile.Linux                    7.5    0.0
-    parseReqeustLine                Network.Wai.Handler.Warp.RequestHeader    3.6    5.8
+    parseRequestLine                Network.Wai.Handler.Warp.RequestHeader    3.6    5.8
     sendloop                        Network.Sendfile.Linux                    3.6    0.0
     serveConnection.recvSendLoop    Network.Wai.Handler.Warp.Run              3.1    1.9
     >>=                             Data.Conduit.Internal                     2.9    3.9
 
-I persuaded my self that I/O functions are slow. But I could not be satisfied with the poor performance of the HTTP request parser. `parseReqeustLine` was implemented by using the utility functions of `ByteString`. Since they have overhead, I re-wrote it with `Ptr`-related functions. After writing the low-level parser, the profiling became:
+I persuaded my self that I/O functions are slow. But I could not be satisfied with the poor performance of the HTTP request parser. `parseRequestLine` was implemented by using the utility functions of `ByteString`. Since they have overhead, I re-wrote it with `Ptr`-related functions. After writing the low-level parser, the profiling became:
 
     sendfileloop                  Network.Sendfile.Linux                    8.3    0.0
     sendResponse                  Network.Wai.Handler.Warp.Response         3.7    3.1
@@ -191,7 +191,7 @@ I persuaded my self that I/O functions are slow. But I could not be satisfied wi
     >>=                           Data.Conduit.Internal                     2.9    4.0
     serveConnection.recvSendLoop  Network.Wai.Handler.Warp.Run              2.6    2.0
 
-I was happy because `parseReqeustLine` disappeared from here. One homework for me is to understand why `sendfileloop` is so slow. Probably I need to check if locks are used in `sendfile()`. If you have any ideas, please let me know.
+I was happy because `parseRequestLine` disappeared from here. One homework for me is to understand why `sendfileloop` is so slow. Probably I need to check if locks are used in `sendfile()`. If you have any ideas, please let me know.
 
 ## Performance improvement
 
