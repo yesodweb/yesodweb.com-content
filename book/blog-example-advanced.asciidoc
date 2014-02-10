@@ -27,9 +27,10 @@ Now our imports.
 import Yesod
 import Yesod.Auth
 import Yesod.Form.Nic (YesodNic, nicHtmlField)
-import Yesod.Auth.BrowserId (authBrowserId)
+import Yesod.Auth.BrowserId (authBrowserId, def)
 import Data.Text (Text)
-import Network.HTTP.Conduit (Manager, newManager, def)
+import Network.HTTP.Client (defaultManagerSettings)
+import Network.HTTP.Conduit (Manager, newManager)
 import Database.Persist.Sqlite
     ( ConnectionPool, SqlPersistT, runSqlPool, runMigration
     , createSqlitePool, runSqlPersistMPool
@@ -565,6 +566,6 @@ main = do
     pool <- createSqlitePool "blog.db3" 10 -- create a new pool
     -- perform any necessary migration
     runSqlPersistMPool (runMigration migrateAll) pool
-    manager <- newManager def -- create a new HTTP manager
+    manager <- newManager defaultManagerSettings -- create a new HTTP manager
     warp 3000 $ Blog pool manager -- start our server
 ----
