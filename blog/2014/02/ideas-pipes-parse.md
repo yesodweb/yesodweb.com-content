@@ -363,6 +363,12 @@ our example, the conversion is trivial, and therefore not too worrying. But in
 the case of either an expensive conversion, or a possibly-failing conversion,
 this behavior would be incredibly problematic.
 
+__UPDATE__: Davorak on Reddit helped me [come up with a better
+example](http://www.reddit.com/r/haskell/comments/1xmmtn/some_ideas_for_pipesparse/cfcr1jq)
+which demonstrates not just doubled encoding, but a program not completing
+correctly. The conduit/pipes comparison code is [available as a
+Gist](https://gist.github.com/snoyberg/8943391).
+
 So my second recommendation would be to tweak `Parser` to have a stack of
 leftovers in addition to a `Producer`, which would allow for more powerful
 leftover preserving 
