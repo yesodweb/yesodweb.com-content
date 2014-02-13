@@ -153,10 +153,12 @@ Substance of `newPinnedByteArray#` is `rts/PrimOps.cmm:stg_newPinnedByteArrayzh`
 
 So, `allocate` uses a global lock. To my calculation, `LARGE_OBJECT_THRESHOLD/sizeof(W_)` is:
 
-- 819 bytes on 32 bit machines
-- 409 bytes on 64 bit machines
+- 3,276 bytes (819 words) on 32 bit machines
+- 3,272 bytes (409 words) on 64 bit machines
 
-Since old Warp specified 4,096 to `recv`, a global lock is acquired for *every HTTP request*. If the size of an HTTP request is some between 409 and 4,095, another global lock is obtained.
+Caution: the numbers above were changed according to a comment from Simon Marlow.
+
+Since old Warp specified 4,096 to `recv`, a global lock is acquired for *every HTTP request*. If the size of an HTTP request is some between 3,272(3,276) and 4,095, another global lock is obtained.
 
 To avoid contention, I modified Warp so that a buffer of 4,096 bytes is allocated by `malloc()` for *every HTTP connection*. Sophisticated `malloc()` implementations have *arena* to avoid global contention. Also, since we repeat `malloc()` and `free()` for the same size, we can take advantage of the free list in `malloc()`.
 
