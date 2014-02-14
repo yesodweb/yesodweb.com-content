@@ -5,7 +5,7 @@
 
 <article lang="en">
 <articleinfo>
-    <date>2013-10-07</date>
+    <date>2014-02-14</date>
 </articleinfo>
 <section id="shakespearean-templates_shakespearean_templates">
 <title>Shakespearean Templates</title>
@@ -262,7 +262,7 @@ characters:</simpara>
 <orderedlist numeration="arabic">
 <listitem>
 <simpara>
-If the first non-space character in a line is a backslash, the backslash is ignored.
+If the first non-space character in a line is a backslash, the backslash is ignored. (Note: this will also cause any tag on this line to be treated as plain text.)
 </simpara>
 </listitem>
 <listitem>

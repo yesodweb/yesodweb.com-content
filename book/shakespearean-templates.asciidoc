@@ -315,7 +315,7 @@ characters:
 
 The whitespace escape rules are actually quite simple:
 
-. If the first non-space character in a line is a backslash, the backslash is ignored.
+. If the first non-space character in a line is a backslash, the backslash is ignored. (Note: this will also cause any tag on this line to be treated as plain text.)
 
 . If the last character in a line is a hash, it is ignored.
 
