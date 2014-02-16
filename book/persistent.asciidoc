@@ -34,7 +34,7 @@ declarative syntax. Some other nice features are:
   The default type-safe persistent API does not support joins, allowing support for a
   wider number of storage layers.
   Joins and other SQL specific functionality can be achieved through using
-  an raw SQL layer (with very little type safety).
+  a raw SQL layer (with very little type safety).
   An additional library, link:http://hackage.haskell.org/package/esqueleto[Esqueleto],
   builds on top of the Persistent data model, adding type-safe joins and SQL functionality.
 
@@ -121,7 +121,7 @@ data store, and everything is generally awesome. Well, until:
 
 * You want to pull data from the database, and the database layer gives you the
   data in an untyped format.
-* You want to find everyone older than 32, and you accidently write "thirtytwo"
+* You want to find everyone older than 32, and you accidentally write "thirtytwo"
   in your SQL statement. Guess what: that will compile just fine, and you won't
   find out you have a problem until runtime.
 * You decide you want to find the first 10 people alphabetically. No problem...
@@ -170,7 +170,7 @@ data PersistValue = PersistText Text
 ----
 
 Each Persistent backend needs to know how to translate the relevant values into
-something the database can understand. However, it would be awkward do have to
+something the database can understand. However, it would be awkward to have to
 express all of our data simply in terms of these basic types. The next layer is
 the +PersistField+ typeclass, which defines how an arbitrary Haskell datatype
 can be marshaled to and from a +PersistValue+. A +PersistField+ correlates to a
@@ -1215,7 +1215,7 @@ this exists, but it shouldn't affect you on a day-to-day basis.
 
 === Custom Fields
 
-Occassionally, you will want to define a custom field to be used in your
+Occasionally, you will want to define a custom field to be used in your
 datastore. The most common case is an enumeration, such as employment status.
 For this, Persistent provides a helper Template Haskell function:
 
