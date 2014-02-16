@@ -1,9 +1,9 @@
 I'm happy to announce the release of a number of packages today, in particular:
 
-* mono-traversable 0.3
-* chunked-data 0.1 (first release)
-* conduit-combinators 0.1 (first release)
-* classy-prelude, classy-prelude-conduit, and classy-prelude-yesod 0.8
+* [mono-traversable](http://hackage.haskell.org/package/mono-traversable) 0.3
+* [chunked-data](http://hackage.haskell.org/package/chunked-data) 0.1 (first release)
+* [conduit-combinators](http://hackage.haskell.org/package/conduit-combinators) 0.1 (first release)
+* [classy-prelude](http://hackage.haskell.org/package/classy-prelude), [classy-prelude-conduit](http://hackage.haskell.org/package/classy-prelude-conduit), and [classy-prelude-yesod](http://hackage.haskell.org/package/classy-prelude-yesod) 0.8
 
 I want to discuss the purpose of these packages and recent changes. I'm very
 excited about some of the opportunities these packages are presenting for
