@@ -480,7 +480,41 @@ consume. +yesodRunner+ then converts that into a WAI response, setting the
 +Content-Type+ response header to the mime type, using a 200 OK status code,
 and sending the response body.
 
-== (To)Content, (To)TypedContent
+=== (To)Content, (To)TypedContent
+
+At the very core of Yesod's content system are the following types:
+
+[source, haskell]
+----
+data Content = ContentBuilder !Builder !(Maybe Int) -- ^ The content and optional content length.
+             | ContentSource !(Source (ResourceT IO) (Flush Builder))
+             | ContentFile !FilePath !(Maybe FilePart)
+             | ContentDontEvaluate !Content
+
+type ContentType = ByteString
+data TypedContent = TypedContent !ContentType !Content
+----
+
++Content+ should remind you a bit of the WAI response types. +ContentBuilder+
+is similar to +responseBuilder+, +ContentSource+ is like +responseSource+, and
++ContentFile+ is like +responseFile+. Unlike their WAI counterparts, none of
+these constructors contain information on the status code or response headers;
+that's handled orthogonally in Yesod.
+
+The one completely new constructor is +ContentDontEvaluate+. By default, when
+you create a response body in Yesod, Yesod fully evaluates the body before
+generating the response. The reason for this is to ensure that there are no
+impure exceptions in your value. Yesod wants to make sure to catch any such
+exceptions before starting to send your response so that, if there *is* an
+exception, Yesod can generate a proper 500 internal server error response
+instead of simply dying in the middle of sending a non-error response. However,
+performing this evaluation can cause more memory usage. Therefore, Yesod
+provides a means of opting out of this protection.
+
++TypedContent+ is then a minor addition to +Content+: it includes the
++ContentType+ as well.
+
+=== HasContentType and representations
 
 == Dynamic parameters
 
