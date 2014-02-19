@@ -1,0 +1,72 @@
+The majority of this book is built around giving practical information on how
+to get common tasks done, without drilling too much into the details of what's
+going on under the surface. While the book presumes knowledge of Haskell, it
+does not follow the typical style of many Haskell libraries introductions. Many
+seasoned Haskellers are put off by this hiding of implementation details. The
+purpose of this appendix is to address those concerns.
+
+In this appendix, we'll start off from a bare minimum web application, and
+build up to more complicated examples, explaining the components and their
+types along the way.
+
+== Hello Warp
+
+Let's start off with the most bare minimum application we can think of:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import Network.Wai
+import Network.Wai.Handler.Warp
+import Network.HTTP.Types
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app req = return $ responseLBS
+    status200
+    [("Content-Type", "text/plain")]
+    "Hello Warp!"
+----
+
+Wait a minute, there's no Yesod in there! Don't worry, we'll get there.
+Remember, we're building from the ground up, and in Yesod, the ground floor in
+WAI, the Web Application Interface. WAI sits between a web *handler*, such as a
+web server or a test framework, and a web *application*. In our case, the
+handler is Warp, a high performance web server, and our application is the
++app+ function.
+
+What's this mysterious +Application+ type? It's a simple synonym for +type
+Application = Request -> IO Response+. The +Request+ value contains information
+such as the requested path, query string, request headers, request body, and
+the IP address of the client. We can use this to do some simple dispatching:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import Network.Wai
+import Network.Wai.Handler.Warp
+import Network.HTTP.Types
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app req =
+    case pathInfo req of
+        ["foo", "bar"] -> return $ responseLBS
+            status200
+            [("Content-Type", "text/plain")]
+            "You requested /foo/bar"
+        _ -> return $ responseLBS
+            status200
+            [("Content-Type", "text/plain")]
+            "You requested something else"
+----
+
+WAI mandates that the path be split into individual fragments (the stuff
+between forward slashes) and converted into text. This allows for easy pattern
+matching. If you need the original, unmodified +ByteString+, you can use
++rawPathInfo+. For more information on the available fields, please see the WAI
+Haddocks.
