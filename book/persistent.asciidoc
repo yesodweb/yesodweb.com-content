@@ -195,7 +195,7 @@ we have the following correspondence between Persistent and SQL:
 
 In order to ensure that the PersistEntity instances match up properly with your
 Haskell datatypes, Persistent takes responsibility for both. This is also good
-from a DRY (Don't Repeat Yourslef) perspective: you only need to define your
+from a DRY (Don't Repeat Yourself) perspective: you only need to define your
 entities once. Let's see a quick example:
 
 [source, haskell]
