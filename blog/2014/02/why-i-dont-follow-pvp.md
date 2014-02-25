@@ -1,8 +1,10 @@
-I've been considering writing
-this blog post for a while, but a [recent Haskell Cafe thread](FIXME include link) finally put me over the
-top. (Note: I'm not going to discuss the issues of identifier naming in this
-post, I consider that a very separate topic, and one which I'm not nearly as
-passionate on.)
+I've been considering writing this blog post for a while, but a [recent Haskell
+Cafe thread](FIXME include link) finally put me over the top. Note: I'm only
+going to discuss the [Package Versioning Policy
+(PVP)](http://www.haskell.org/haskellwiki/Package_versioning_policy) here, and
+ignore the other topic from that mailing list thread (identifier naming), as I
+consider that a very separate topic, and one which I'm not nearly as passionate
+on.
 
 Let me start off with my qualifications for discussing this subject:
 
@@ -14,7 +16,7 @@ So I consider myself both a library author and end user, and due to Stackage
 have gotten to see a lot of interdependencies between packages. My very short
 summary is:
 
-__The [PVP](http://www.haskell.org/haskellwiki/Package_versioning_policy) doesn't work.__
+__The PVP doesn't work.__
 
 The slightly longer summary is:
 
