@@ -168,10 +168,10 @@ But user problems can be mitigated through other means than the PVP:
 * Library maintainers need to ensure that their packages compile with the latest versions of their dependencies. Doing this manually is a huge pain. But this is *exactly* the benefit of adding your package to [Stackage](https://github.com/fpco/stackage): there's an automated system that will test your code for you.
 * This is a bigger request, but I'll raise it anyway: target more backwards compatibility! If you have a function `foo` that takes two parameters, and you realize you'd like the option to pass in a third, don't change `foo`, just add a separate function and deprecate `foo`. If you think this is likely to happen more often, use [a settings type](http://www.yesodweb.com/book/settings-types).
 
-## Corelibs and mostly-stable packages
+## Non-upgradeable and mostly-stable packages
 
 There's one issue that repeatedly causes huge amounts of issues: upper bounds
-on corelibs. Imagine I'm writing a package, and have tested it against base
+on non-upgradeable packages (e.g., base). Imagine I'm writing a package, and have tested it against base
 version 4.6. So, like a good PVP follower, I put in my cabal file `base >= 4.6
 && < 4.7`. Let's see the result of this:
 
