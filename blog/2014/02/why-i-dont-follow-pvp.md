@@ -74,6 +74,7 @@ cabal in the future.
 The PVP is designed to ensure that no two incompatible packages will ever have
 an install attempted. Even this goal isn't fully realized by the PVP: there are
 holes regarding re-exports for upstream dependencies and typeclass instances.
+(I can't go into more detail on these if people are interested.)
 But let's pretend for the moment that the PVP works perfectly for its given
 target, and further assume that no one ever makes any PVP-related mistakes.
 
@@ -124,7 +125,7 @@ The questions are:
 * Which of these most negatively impacts users?
 
 I can only argue from experience on that first question. The vast majority of
-backwards-incompatible changes do __not__ break the majority of their
+backwards-incompatible changes do __not__ break their
 downstream dependencies. For example, can anyone provide a single example of a
 package that was broken by the text 1.0 and 1.1 releases? I know of none. But
 [I opened up an issue three months
@@ -190,7 +191,7 @@ with base 4.7 when the newer version of `foo` does not.
 
 The other related issue is mostly-stable packages. The PVP draws no distinction
 between a package like `bytestring`, which is highly stable, and experimental
-packages. For an experimental package (e.g., the early versions of conduit),
+packages. For an experimental package,
 there's a lot more logic to including upper bounds, as the numbers game I
 describe above is skewed. But consider the code below:
 
@@ -219,6 +220,6 @@ wager quite a bit that text will never break those assumptions.
 The PVP solves one problem pretty well (not perfectly), but at huge costs.
 There are other solutions to reducing the problems we're facing, and we should
 not fanatically adhere to a policy like the PVP. Many of us who have dropped
-PVP compliance have done so- not because we're "sloppy" or "don't care about
-compatibility"- but becasue we believe the PVP causes more harm than good. I
+PVP compliance have done so not because we're "sloppy" or "don't care about
+compatibility", but becasue we believe the PVP causes more harm than good. I
 encourage others to consider making the switch as well.
