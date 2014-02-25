@@ -1,5 +1,5 @@
 I've been considering writing this blog post for a while, but a [recent Haskell
-Cafe thread](FIXME include link) finally put me over the top. Note: I'm only
+libraries thread](http://www.haskell.org/pipermail/libraries/2014-February/022114.html) finally put me over the top. Note: I'm only
 going to discuss the [Package Versioning Policy
 (PVP)](http://www.haskell.org/haskellwiki/Package_versioning_policy) here, and
 ignore the other topic from that mailing list thread (identifier naming), as I
