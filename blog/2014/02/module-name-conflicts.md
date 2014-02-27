@@ -50,9 +50,6 @@ Here are some of the conflicting module names, and the packages using them:
 * Crypto.Random
     * crypto-api
     * crypto-random
-* Crypto.Random.API
-    * crypto-random
-    * crypto-random-api
 * Data.HashSet
     * hashmap
     * unordered-containers
