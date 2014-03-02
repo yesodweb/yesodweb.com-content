@@ -131,7 +131,7 @@ myPage = docTypeHtml $ do
 
 But there's a limitation with using a pure +Builder+ value: we need to create
 the entire response body before returning the +Response+ value. With lazy
-evaluation, that's not as bad as it sounds, since not the body will live in
+evaluation, that's not as bad as it sounds, since not all of the body will live in
 memory at once. However, if we need to perform some I/O to generate our
 response body (such as reading data from a database), we'll be in trouble.
 
