@@ -16,15 +16,15 @@ Let's start off with the most bare minimum application we can think of:
 [source, haskell]
 ----
 {-# LANGUAGE OverloadedStrings #-}
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Network.HTTP.Types
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, responseLBS)
+import           Network.Wai.Handler.Warp (run)
 
 main :: IO ()
 main = run 3000 app
 
 app :: Application
-app req = return $ responseLBS
+app _req = return $ responseLBS
     status200
     [("Content-Type", "text/plain")]
     "Hello Warp!"
@@ -45,9 +45,9 @@ the IP address of the client. We can use this to do some simple dispatching:
 [source, haskell]
 ----
 {-# LANGUAGE OverloadedStrings #-}
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Network.HTTP.Types
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, pathInfo, responseLBS)
+import           Network.Wai.Handler.Warp (run)
 
 main :: IO ()
 main = run 3000 app
@@ -82,19 +82,19 @@ and use that directly:
 [source, haskell]
 ----
 {-# LANGUAGE OverloadedStrings #-}
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Network.HTTP.Types
-import Blaze.ByteString.Builder
+import           Blaze.ByteString.Builder (Builder, fromByteString)
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, responseBuilder)
+import           Network.Wai.Handler.Warp (run)
 
 main :: IO ()
 main = run 3000 app
 
 app :: Application
-app req = return $ responseBuilder
+app _req = return $ responseBuilder
     status200
     [("Content-Type", "text/plain")]
-    (fromByteString "Hello from blaze-builder!")
+    (fromByteString "Hello from blaze-builder!" :: Builder)
 ----
 
 This opens up some nice opportunities for efficiently building up response
@@ -105,18 +105,18 @@ first HTML application.
 [source, haskell]
 ----
 {-# LANGUAGE OverloadedStrings #-}
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Network.HTTP.Types
-import Text.Blaze.Html5
-import qualified Text.Blaze.Html5 as H
-import Text.Blaze.Html.Renderer.Utf8
+import           Network.HTTP.Types            (status200)
+import           Network.Wai                   (Application, responseBuilder)
+import           Network.Wai.Handler.Warp      (run)
+import           Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
+import           Text.Blaze.Html5              (Html, docTypeHtml)
+import qualified Text.Blaze.Html5              as H
 
 main :: IO ()
 main = run 3000 app
 
 app :: Application
-app req = return $ responseBuilder
+app _req = return $ responseBuilder
     status200
     [("Content-Type", "text/html")] -- yay!
     (renderHtmlBuilder myPage)
@@ -142,22 +142,24 @@ in the +Flush+ data type. Let's see how this works.
 [source, haskell]
 ----
 {-# LANGUAGE OverloadedStrings #-}
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Network.HTTP.Types
-import Data.Conduit
-import Blaze.ByteString.Builder
-import Blaze.ByteString.Builder.Char.Utf8 (fromShow)
-import Control.Concurrent (threadDelay)
-import Control.Monad.Trans.Class (lift)
-import Control.Monad (forM_)
-import Data.Monoid ((<>))
+import           Blaze.ByteString.Builder           (Builder, fromByteString)
+import           Blaze.ByteString.Builder.Char.Utf8 (fromShow)
+import           Control.Concurrent                 (threadDelay)
+import           Control.Monad                      (forM_)
+import           Control.Monad.Trans.Class          (lift)
+import           Data.Conduit                       (Flush (Chunk, Flush),
+                                                     Source, yield)
+import           Data.Monoid                        ((<>))
+import           Network.HTTP.Types                 (status200)
+import           Network.Wai                        (Application,
+                                                     responseSource)
+import           Network.Wai.Handler.Warp           (run)
 
 main :: IO ()
 main = run 3000 app
 
 app :: Application
-app req = return $ responseSource
+app _req = return $ responseSource
     status200
     [("Content-Type", "text/plain")]
     mySrc
@@ -184,14 +186,14 @@ exception. To deal with that, you can use +responseSourceBracket+:
 [source, haskell]
 ----
 {-# LANGUAGE OverloadedStrings #-}
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Network.HTTP.Types
-import Data.Conduit
-import Data.Conduit.Binary (sourceHandle)
-import qualified Data.Conduit.List as CL
-import Blaze.ByteString.Builder (fromByteString)
-import System.IO (openFile, hClose, IOMode (ReadMode))
+import           Blaze.ByteString.Builder (fromByteString)
+import           Data.Conduit             (Flush (Chunk), ($=))
+import           Data.Conduit.Binary      (sourceHandle)
+import qualified Data.Conduit.List        as CL
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, responseSourceBracket)
+import           Network.Wai.Handler.Warp (run)
+import           System.IO                (IOMode (ReadMode), hClose, openFile)
 
 main :: IO ()
 main = run 3000 app
@@ -213,9 +215,9 @@ which can use the +sendfile+ system call to avoid unnecessary buffer copies:
 [source, haskell]
 ----
 {-# LANGUAGE OverloadedStrings #-}
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Network.HTTP.Types
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, responseFile)
+import           Network.Wai.Handler.Warp (run)
 
 main :: IO ()
 main = run 3000 app
@@ -264,14 +266,15 @@ progressively add more convenience helpers on top as we go along.
 [source, haskell]
 ----
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeFamilies #-}
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Network.HTTP.Types
-import Yesod.Core
-import Yesod.Core.Types (YesodRunnerEnv (..))
-import Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
-import qualified Text.Blaze.Html5 as H
+{-# LANGUAGE TypeFamilies      #-}
+import           Network.HTTP.Types            (status200)
+import           Network.Wai                   (responseBuilder)
+import           Network.Wai.Handler.Warp      (run)
+import           Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
+import qualified Text.Blaze.Html5              as H
+import           Yesod.Core                    (Html, RenderRoute (..), Yesod,
+                                                YesodDispatch (..), toWaiApp)
+import           Yesod.Core.Types              (YesodRunnerEnv (..))
 
 -- | Our foundatation datatype.
 data App = App
@@ -375,11 +378,13 @@ advantage of +HandlerT+:
 [source, haskell]
 ----
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeFamilies #-}
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Yesod.Core
-import qualified Text.Blaze.Html5 as H
+{-# LANGUAGE TypeFamilies      #-}
+import           Network.Wai              (pathInfo)
+import           Network.Wai.Handler.Warp (run)
+import qualified Text.Blaze.Html5         as H
+import           Yesod.Core               (HandlerT, Html, RenderRoute (..),
+                                           Yesod, YesodDispatch (..), getYesod,
+                                           notFound, toWaiApp, yesodRunner)
 
 -- | Our foundatation datatype.
 data App = App
@@ -571,12 +576,17 @@ the data:
 [source, haskell]
 ----
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeFamilies #-}
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Yesod.Core
-import qualified Text.Blaze.Html5 as H
-import Data.Text (Text)
+{-# LANGUAGE TypeFamilies      #-}
+import           Data.Text                (Text)
+import           Network.Wai              (pathInfo)
+import           Network.Wai.Handler.Warp (run)
+import qualified Text.Blaze.Html5         as H
+import           Yesod.Core               (HandlerT, Html, RenderRoute (..),
+                                           TypedContent, Value, Yesod,
+                                           YesodDispatch (..), getYesod,
+                                           notFound, object, provideRep,
+                                           selectRep, toWaiApp, yesodRunner,
+                                           (.=))
 
 -- | Our foundatation datatype.
 data App = App
@@ -718,7 +728,13 @@ import           Control.Concurrent                 (threadDelay)
 import           Control.Monad                      (forM_)
 import           Data.Monoid                        ((<>))
 import           Network.Wai                        (pathInfo)
-import           Yesod.Core
+import           Yesod.Core                         (HandlerT, RenderRoute (..),
+                                                     TypedContent, Yesod,
+                                                     YesodDispatch (..), liftIO,
+                                                     notFound, respondSource,
+                                                     sendChunk, sendChunkBS,
+                                                     sendChunkText, sendFlush,
+                                                     warp, yesodRunner)
 
 -- | Our foundatation datatype.
 data App = App
@@ -867,7 +883,8 @@ previous example converted to the Template Haskell version:
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
-import           Yesod.Core
+import           Yesod.Core (RenderRoute (..), Yesod, mkYesod, parseRoutes,
+                             redirect, warp)
 
 -- | Our foundatation datatype.
 data App = App
@@ -916,7 +933,8 @@ rewrite our Fibonacci example to use it.
 [source, haskell]
 ----
 import           Data.Text  (pack)
-import           Yesod.Core
+import           Yesod.Core (LiteHandler, dispatchTo, dispatchTo, liteApp,
+                             onStatic, redirect, warp, withDynamic)
 
 getHomeR :: LiteHandler ()
 getHomeR = redirect "/fib/1"
