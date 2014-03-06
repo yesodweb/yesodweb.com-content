@@ -170,6 +170,88 @@ connections across multiple incoming clients.
 Other than that bit, everything else should be familiar. You should be able to
 connect to 4002 and talk to OUR ANGRY MAKING SERVER.
 
+## Proxy with authentication
+
+All of the examples so far have involved a single operation on our streams of
+data: sending *all* of it to a server, upper casing every byte, etc. Let's look
+at something a bit more complicated: an authenticating proxy. In this case, the
+proxy will challenge the user for a username and password, the user will enter
+them, and if they are valid, the proxy session will begin.
+
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+import           Conduit
+import           Control.Concurrent.Async (concurrently)
+import           Control.Monad            (void)
+import           Data.ByteString          (ByteString)
+import           Data.Conduit.Network
+import           Data.Word8               (_cr)
+
+creds :: [(ByteString, ByteString)]
+creds =
+    [ ("spaceballs", "12345")
+    ]
+
+checkAuth :: Conduit ByteString IO ByteString
+checkAuth = do
+    yield "Username: "
+    username <- lineAsciiC $ takeCE 80 =$= filterCE (/= _cr) =$= foldC
+    yield "Password: "
+    password <- lineAsciiC $ takeCE 80 =$= filterCE (/= _cr) =$= foldC
+    if ((username, password) `elem` creds)
+        then do
+            yield "Successfully authenticated.\n"
+        else do
+            yield "Invalid username/password.\n"
+            error "Invalid authentication, please log somewhere..."
+
+main :: IO ()
+main =
+    runTCPServer (serverSettings 4003 "*") $ \client -> do
+        (fromClient, ()) <- appSource client $$+ checkAuth =$ appSink client
+        runTCPClient (clientSettings 4000 "localhost") $ \server ->
+            void $ concurrently
+                (appSource server $$ appSink client)
+                (fromClient $$+- appSink server)
+```
+
+`creds` is just a simple collection of valid username/password combos.
+`checkAuth` is where most of our magic happens. First notice its type
+signature: it's a `Conduit` from `ByteString`s (client input) to `ByteString`s
+(output to client). We could alternatively pass around the client `Sink`
+explicitly, but this is more convenient. To say something to the client, we
+simply `yield`.
+
+We want to get a line of input data from the user. Let's look at the code more
+closely:
+
+    username <- lineAsciiC $ takeCE 80 =$= filterCE (/= _cr) =$= foldC
+
+There are a few things we're doing here:
+
+* The `lineAsciiC` combinator streams an entire line to the provided consumer. It ensures that, even if the consumer doesn't take all of the bytes, they will be flushed.
+* To prevent a memory exhaustion attack, we only keep up to 80 bytes of input.
+* `lineAsciiC` automatically strips out trailing line feeds, but does not strip out carriage returns. (Note: I might change that in a future release of conduit-combinators.) So we use `filterCE` to drop it.
+* `foldC` consumes the incoming stream of `ByteString`s and folds them together into a single `ByteString`.
+
+We use the same logic for getting the password, and then test if the
+username/password is in `creds`. If it is, we give a successful message.
+Otherwise, we give the user an error message and throw an exception to close
+the connection.
+
+The important change to `main` is the usage of connect-and-resume (the `$$+`
+operator):
+
+    (fromClient, ()) <- appSource client $$+ checkAuth =$ appSink client
+
+This allows us to consume some of the input from the client, and then resume
+the consumption later with a totally different consumer. This is highly
+convenient: instead of needing to put our authentication logic into the same
+consumer as the proxy, we can keep things nicely seperated. In order to resume
+consumption, we need to use the `$$+-` operator:
+
+    (fromClient $$+- appSink server)
+
 * * *
 
 That's all I've got for the moment. If there are points that are unclear,
