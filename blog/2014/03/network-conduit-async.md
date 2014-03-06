@@ -32,7 +32,7 @@ main = runTCPServer (serverSettings 4000 "*") $ \appData ->
 ```
 
 `runTCPServer` takes two parameters. The first is the server settings, which
-indicates how to listen for incoming connections. Our two paremeters say to
+indicates how to listen for incoming connections. Our two parameters say to
 listen on port 4000 and that the server should answer on all network
 interfaces. The second parameter is an `Application`, which takes some
 `AppData` and runs some action. Importantly, our app data provides a `Source`
