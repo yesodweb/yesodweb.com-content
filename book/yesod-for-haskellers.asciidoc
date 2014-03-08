@@ -850,7 +850,7 @@ Notice our call to +redirect+ in +getHomeR+. We're able to use the route
 datatype as the parameter to +redirect+, and Yesod takes advantage of our
 +renderRoute+ function to create a textual link.
 
-== Template Haskell
+== Routing with Template Haskell
 
 Now let's suppose we want to add a new route to our previous application. We'd
 have to make the following changes:
