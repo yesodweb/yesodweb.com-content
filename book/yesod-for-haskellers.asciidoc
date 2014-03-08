@@ -231,7 +231,7 @@ app _req = return $ responseFile
             -- you can also serve specific ranges in the file
 ----
 
-There are many aspects of WAI we haven't covered here. One important topic is WAI middlewares. These are functions of type +type Middleware = Application -> Application+, and they do some kind of arbitrary transformation to an application, such as enabling GZIP compression or logging requests. We also haven't inspected request bodies at all. But for the purposes of understanding Yesod, we've covered enough for the moment.
+There are many aspects of WAI we haven't covered here. One important topic is WAI middlewares, which we'll cover towards the end of this chapter. We also haven't inspected request bodies at all. But for the purposes of understanding Yesod, we've covered enough for the moment.
 
 == What about Yesod?
 
@@ -972,3 +972,9 @@ FIXME
 == Persistent
 
 FIXME
+
+== WAI middlewares
+
+FIXME
+
+These are functions of type +type Middleware = Application -> Application+, and they do some kind of arbitrary transformation to an application, such as enabling GZIP compression or logging requests.
