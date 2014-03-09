@@ -1,3 +1,7 @@
+- time: 2014-03-09T11:32:00Z
+  author: michael
+  title: WAI 2.1 and yesod-websockets
+  path: 2014/03/wai-yesod-websockets.md
 - time: 2014-03-05T18:44:00Z
   author: michael
   title: network-conduit, async, and conduit-combinators
