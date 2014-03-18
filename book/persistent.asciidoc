@@ -1025,7 +1025,7 @@ Person
     name String
     deriving Show
 Car
-    ownerId PersonId Eq
+    ownerId PersonId
     name String
     deriving Show
 |]
