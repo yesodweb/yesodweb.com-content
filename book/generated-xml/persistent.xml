@@ -41,7 +41,7 @@ Convenient data modeling.
   The default type-safe persistent API does not support joins, allowing support for a
   wider number of storage layers.
   Joins and other SQL specific functionality can be achieved through using
-  an raw SQL layer (with very little type safety).
+  a raw SQL layer (with very little type safety).
   An additional library, <ulink url="http://hackage.haskell.org/package/esqueleto">Esqueleto</ulink>,
   builds on top of the Persistent data model, adding type-safe joins and SQL functionality.
 </simpara>
@@ -125,7 +125,7 @@ You want to pull data from the database, and the database layer gives you the
 </listitem>
 <listitem>
 <simpara>
-You want to find everyone older than 32, and you accidently write "thirtytwo"
+You want to find everyone older than 32, and you accidentally write "thirtytwo"
   in your SQL statement. Guess what: that will compile just fine, and you won&#8217;t
   find out you have a problem until runtime.
 </simpara>
@@ -171,7 +171,7 @@ can represent data that gets sent to and from a database. Its definition is:</si
                   | PersistMap [(Text, PersistValue)]
                   | PersistObjectId ByteString -- ^ intended especially for MongoDB backend</programlisting>
 <simpara>Each Persistent backend needs to know how to translate the relevant values into
-something the database can understand. However, it would be awkward do have to
+something the database can understand. However, it would be awkward to have to
 express all of our data simply in terms of these basic types. The next layer is
 the <literal>PersistField</literal> typeclass, which defines how an arbitrary Haskell datatype
 can be marshaled to and from a <literal>PersistValue</literal>. A <literal>PersistField</literal> correlates to a
@@ -215,7 +215,7 @@ rowsep="1" colsep="1"
 <title>Code Generation</title>
 <simpara>In order to ensure that the PersistEntity instances match up properly with your
 Haskell datatypes, Persistent takes responsibility for both. This is also good
-from a DRY (Don&#8217;t Repeat Yourslef) perspective: you only need to define your
+from a DRY (Don&#8217;t Repeat Yourself) perspective: you only need to define your
 entities once. Let&#8217;s see a quick example:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell, OverloadedStrings, GADTs #-}
 import Database.Persist
@@ -1005,7 +1005,7 @@ Person
     name String
     deriving Show
 Car
-    ownerId PersonId Eq
+    ownerId PersonId
     name String
     deriving Show
 |]
@@ -1144,7 +1144,7 @@ this exists, but it shouldn&#8217;t affect you on a day-to-day basis.</simpara>
 </section>
 <section id="persistent_custom_fields">
 <title>Custom Fields</title>
-<simpara>Occassionally, you will want to define a custom field to be used in your
+<simpara>Occasionally, you will want to define a custom field to be used in your
 datastore. The most common case is an enumeration, such as employment status.
 For this, Persistent provides a helper Template Haskell function:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">-- @Employment.hs
