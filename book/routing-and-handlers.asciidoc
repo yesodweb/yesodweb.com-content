@@ -469,6 +469,69 @@ alreadyExpired:: Sets the Expires header to the past.
 
 expiresAt:: Sets the Expires header to the specified date/time.
 
+=== I/O and debugging
+
+The +HandlerT+ and +WidgetT+ monad transformers are both instances of a number
+of typeclasses. For this section, the important typeclasses are +MonadIO+ and
++MonadLogger+. The former allows you to perform arbitrary +IO+ actions inside
+your handler, such as reading from a file. In order to achieve this, you just
+need to prepend +liftIO+ to the call.
+
++MonadLogger+ provides a built-in logging system. There are many ways you can
+customize this system, including what messages get logged and where logs are
+sent. By default, logs are sent to standard output, in development all messages
+are logged, and in production, warnings and errors are logged.
+
+Often times when logging, we want to know where in the source code the logging
+occured. For this, +MonadLogger+ provides a number of convenience Template
+Haskell functions which will automatically insert source code location into the
+log messages. These functions are +$logDebug+, +$logInfo+, +$logWarn+, and
++$logError+. Let's look at a short example of some of these functions.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Control.Exception (IOException, try)
+import           Control.Monad     (when)
+import           Yesod
+
+data App = App
+instance Yesod App where
+    -- This function controls which messages are logged
+    shouldLog App src level =
+        True -- good for development
+        -- level == LevelWarn || level == LevelError -- good for production
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+|]
+
+getHomeR :: Handler Html
+getHomeR = do
+    $logDebug "Trying to read data file"
+    edata <- liftIO $ try $ readFile "datafile.txt"
+    case edata :: Either IOException String of
+        Left e -> do
+            $logError $ "Could not read datafile.txt"
+            defaultLayout [whamlet|An error occurred|]
+        Right str -> do
+            $logInfo "Reading of data file succeeded"
+            let ls = lines str
+            when (length ls < 5) $ $logWarn "Less than 5 lines of data"
+            defaultLayout
+                [whamlet|
+                    <ol>
+                        $forall l <- ls
+                            <li>#{l}
+                |]
+
+main :: IO ()
+main = warp 3000 App
+----
+
 === Summary
 
 Routing and dispatch is arguably the core of Yesod: it is from here that our
