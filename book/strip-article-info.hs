@@ -6,7 +6,7 @@ main :: IO ()
 main = getArgs >>= mapM_ go
 
 go :: FilePath -> IO ()
-go fp = S.readFile fp >>= S.writeFile fp . S.unlines . go' . map (`S.append` "\r") . S.lines . S.filter (/= '\r')
+go fp = S.readFile fp >>= S.writeFile fp . S.unlines . go' . S.lines . S.filter (/= '\r')
 
 go' :: [S.ByteString] -> [S.ByteString]
 go' [] = []
