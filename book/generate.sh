@@ -10,5 +10,6 @@ do
     then
         DEST="generated-xml/${FILEID}.xml"
         asciidoc -b docbook45 --attribute=idprefix="${FILEID}_" -o "$DEST" "$f"
+        runghc strip-article-info.hs "$DEST"
     fi
 done

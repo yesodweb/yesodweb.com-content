@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-11-12</date>
-</articleinfo>
 <section id="forms_forms">
 <title>Forms</title>
 <simpara>I&#8217;ve mentioned the boundary issue already: whenever data enters or leaves an

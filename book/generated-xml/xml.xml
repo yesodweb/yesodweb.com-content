@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2014-01-27</date>
-</articleinfo>
 <appendix id="xml_xml_conduit">
 <title>xml-conduit</title>
 <simpara>Many developers cringe at the thought of dealing with XML files. XML has the

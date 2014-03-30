@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-12-28</date>
-</articleinfo>
 <section id="case-study-sphinx_case_study_sphinx_based_search">
 <title>Case Study: Sphinx-based Search</title>
 <simpara><ulink url="http://sphinxsearch.com/">Sphinx</ulink> is a search server, and powers the

@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-10-30</date>
-</articleinfo>
 <section id="scaffolding-and-the-site-template_scaffolding_and_the_site_template">
 <title>Scaffolding and the Site Template</title>
 <simpara>So you&#8217;re tired of running small examples, and ready to write a real site? Then

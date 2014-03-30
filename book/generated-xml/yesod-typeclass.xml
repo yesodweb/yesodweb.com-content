@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-08-18</date>
-</articleinfo>
 <section id="yesod-typeclass_yesod_typeclass">
 <title>Yesod Typeclass</title>
 <simpara>Every one of our Yesod applications requires an instance of the <literal>Yesod</literal>

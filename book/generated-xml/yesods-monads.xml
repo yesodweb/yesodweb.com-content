@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-08-04</date>
-</articleinfo>
 <section id="yesods-monads_yesod_8217_s_monads">
 <title>Yesod&#8217;s Monads</title>
 <simpara>As you&#8217;ve read through this book, there have been a number of monads which have

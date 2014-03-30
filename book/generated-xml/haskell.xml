@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-12-28</date>
-</articleinfo>
 <section id="I_chapter2_d1e408">
 <title>Haskell</title>
 <simpara>In order to use Yesod, you&#8217;re going to have to know at least the basics of

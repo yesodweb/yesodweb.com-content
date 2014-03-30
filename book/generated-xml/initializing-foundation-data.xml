@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2014-01-26</date>
-</articleinfo>
 <section id="initializing-foundation-data_initializing_data_in_the_foundation_datatype">
 <title>Initializing data in the foundation datatype</title>
 <simpara>This example is meant to demonstrate a relatively simple concept: performing

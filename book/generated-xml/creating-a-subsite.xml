@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-12-04</date>
-</articleinfo>
 <section id="creating-a-subsite_creating_a_subsite">
 <title>Creating a Subsite</title>
 <simpara>How many sites provide authentication systems? Or need to provide CRUD (CRUD)

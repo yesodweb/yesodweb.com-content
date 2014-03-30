@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-12-05</date>
-</articleinfo>
 <appendix id="web-application-interface_web_application_interface">
 <title>Web Application Interface</title>
 <simpara>It is a problem almost every language used for web development has dealt with:

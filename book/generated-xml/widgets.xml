@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-12-28</date>
-</articleinfo>
 <section id="widgets_widgets">
 <title>Widgets</title>
 <simpara>One of the challenges in web development is that we have to coordinate three

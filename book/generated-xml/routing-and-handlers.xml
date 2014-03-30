@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-09-02</date>
-</articleinfo>
 <section id="routing-and-handlers_routing_and_handlers">
 <title>Routing and Handlers</title>
 <simpara>If we look at Yesod as a Model-View-Controller framework, routing and handlers

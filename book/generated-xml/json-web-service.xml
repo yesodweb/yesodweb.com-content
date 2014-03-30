@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-07-19</date>
-</articleinfo>
 <section id="json-web-service_json_web_service">
 <title>JSON Web Service</title>
 <simpara>Let&#8217;s create a very simple web service: it takes a JSON request and returns a

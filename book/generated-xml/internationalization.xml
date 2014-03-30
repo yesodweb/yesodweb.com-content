@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-12-04</date>
-</articleinfo>
 <section id="internationalization_internationalization">
 <title>Internationalization</title>
 <simpara>Users expect our software to speak their language. Unfortunately for us, there

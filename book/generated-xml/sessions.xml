@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2013-06-07</date>
-</articleinfo>
 <section id="sessions_sessions">
 <title>Sessions</title>
 <simpara>HTTP is a stateless protocol. While some view this as a disadvantage, advocates

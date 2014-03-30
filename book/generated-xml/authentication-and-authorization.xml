@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2014-01-18</date>
-</articleinfo>
 <section id="authentication-and-authorization_authentication_and_authorization">
 <title>Authentication and Authorization</title>
 <simpara>Authentication and authorization are two very related, and yet separate,
