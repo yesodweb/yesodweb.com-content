@@ -1089,7 +1089,7 @@ So far, we've spoken about +Person+ and +PersonId+ without really explaining
 what they are. In the simplest sense, for a SQL-only system, the +PersonId+
 could just be +type PersonId = Int64+. However, that means there is nothing
 binding a +PersonId+ at the type level to the +Person+ entity. As a result, you
-could accidently use a +PersonId+ and get a +Car+. In order to model this
+could accidentally use a +PersonId+ and get a +Car+. In order to model this
 relationship, we use phantom types. So, our next naive step would be:
 
 [source, haskell]

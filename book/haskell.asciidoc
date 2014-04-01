@@ -42,7 +42,7 @@ type:
   make your code more self-documenting.
 
 * A +newtype+ declaration such as +newtype Make = Make Text+. In this case,
-  you cannot accidently use a +Text+ in place of a +Make+; the compiler
+  you cannot accidentally use a +Text+ in place of a +Make+; the compiler
   will stop you. The newtype wrapper always disappears during compilation,
   and will introduce no overhead.
 

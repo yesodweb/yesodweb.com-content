@@ -143,7 +143,7 @@ blaze-html values. Also, we get to take advantage of blaze-html's amazing
 performance.
 
 Similarly, we have +Css+/+ToCss+, as well as +Javascript+/+ToJavascript+. These
-provide some compile-time sanity checks that we haven't accidently stuck some
+provide some compile-time sanity checks that we haven't accidentally stuck some
 HTML in our CSS.
 
 [NOTE]

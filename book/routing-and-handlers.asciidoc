@@ -121,7 +121,7 @@ ensure that our handler function is only ever given natural numbers, allowing
 us to once again use the type system to battle the boundary issue.
 
 NOTE: In a real life application, we would also want to ensure we never
-accidently constructed an invalid +Natural+ value internally to our app. To do
+accidentally constructed an invalid +Natural+ value internally to our app. To do
 so, we could use an approach like
 link:http://www.haskell.org/haskellwiki/Smart_constructors[smart constructors].
 For the purposes of this example, we've kept the code simple.
