@@ -1063,7 +1063,7 @@ main = runSqlite ":memory:" $ do
 what they are. In the simplest sense, for a SQL-only system, the <literal>PersonId</literal>
 could just be <literal>type PersonId = Int64</literal>. However, that means there is nothing
 binding a <literal>PersonId</literal> at the type level to the <literal>Person</literal> entity. As a result, you
-could accidently use a <literal>PersonId</literal> and get a <literal>Car</literal>. In order to model this
+could accidentally use a <literal>PersonId</literal> and get a <literal>Car</literal>. In order to model this
 relationship, we use phantom types. So, our next naive step would be:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">newtype Key entity = Key Int64
 type PersonId = Key Person</programlisting>

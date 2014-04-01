@@ -132,7 +132,7 @@ blaze-html packages, and lets Hamlet provide a general solution for producing
 blaze-html values. Also, we get to take advantage of blaze-html&#8217;s amazing
 performance.</simpara></note>
 <simpara>Similarly, we have <literal>Css</literal>/<literal>ToCss</literal>, as well as <literal>Javascript</literal>/<literal>ToJavascript</literal>. These
-provide some compile-time sanity checks that we haven&#8217;t accidently stuck some
+provide some compile-time sanity checks that we haven&#8217;t accidentally stuck some
 HTML in our CSS.</simpara>
 <note>
 <simpara>One other advantage on the CSS side is some helper datatypes for colors and units. For example:</simpara>

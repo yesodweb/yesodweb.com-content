@@ -49,7 +49,7 @@ A <literal>type</literal> declaration such as <literal>type GearCount = Int</lit
 <listitem>
 <simpara>
 A <literal>newtype</literal> declaration such as <literal>newtype Make = Make Text</literal>. In this case,
-  you cannot accidently use a <literal>Text</literal> in place of a <literal>Make</literal>; the compiler
+  you cannot accidentally use a <literal>Text</literal> in place of a <literal>Make</literal>; the compiler
   will stop you. The newtype wrapper always disappears during compilation,
   and will introduce no overhead.
 </simpara>
