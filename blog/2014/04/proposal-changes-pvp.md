@@ -25,9 +25,9 @@ explanations:
     packages. For a package like text, if you simply import Data.Text (Text,
     pack, reverse), or some other sane subset, there's no need for upper bounds.
 
-    * This doesn't provide a hard-and-fast rule like the current PVP, but is
-      rather a matter of discretion. Communication between library authors and users (via
-      documentation or other means) would be vital to making this work well.
+    Note that this doesn't provide a hard-and-fast rule like the current PVP, but is
+    rather a matter of discretion. Communication between library authors and users (via
+    documentation or other means) would be vital to making this work well.
 
 4.  For a package version A.B.C, a bump in A or B indicates some level of
     breaking change. As an opt-in approach, package authors are free to
@@ -35,7 +35,7 @@ explanations:
     packages are free to rely on the guarantees provided by package authors when
     placing upper bounds.
 
-    * Note that this is very related to point (3).
+    Note that this is very related to point (3).
 
 ## Reproducible builds
 
@@ -111,7 +111,7 @@ that experience in a while, and don't seem to be moving towards doing that
 again. In today's world, we end up with the following options:
 
 * Place upper bounds on base to indicate "I haven't tested this with newer
-  versions of GHC." This then makes it difficult to users to test out that
+  versions of GHC." This then makes it difficult for users to test out that
   package with newer versions of GHC.
 * Leave off upper bounds on base. Users may then try to install a package onto
   a version of GHC on which the package hasn't been tested, which will result
@@ -151,7 +151,7 @@ bounds in this case, so I'd like to address them both:
 
 I'll combine the discussion of the last two points. I think the heart of the
 PVP debates really comes from mostly-stable packages. Let's contrast with the
-extremes. If there's a library which is completely stable, never has a breaking
+extremes. Consider a library which is completely stable, never has a breaking
 change, and has stated with absolute certainty that it never will again. Does
 *anyone* care about upper bounds on this library? They're irrelevant! I'd have
 no problem with including an upper bound, and I doubt even the staunchest PVP
@@ -178,7 +178,7 @@ API, and I doubt it will ever be changing. The same can be said of large
 subsets of many other packages.
 
 By putting in upper bounds in these cases, we run a very real risk of
-bifurcating Hackage into "those demanding the new text version of some new
+bifurcating Hackage into "those demanding the new text version for some new
 feature" vs "those who haven't yet updated their upper bounds to allow the new
 version of text."
 
