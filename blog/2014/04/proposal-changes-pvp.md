@@ -31,11 +31,19 @@ explanations:
 
 4.  For a package version A.B.C, a bump in A or B indicates some level of
     breaking change. As an opt-in approach, package authors are free to
-    associated meaning to A and B beyond what the PVP requires. Users of these
+    associated meaning to A and B beyond what the PVP requires. Libraries which use these
     packages are free to rely on the guarantees provided by package authors when
     placing upper bounds.
 
     Note that this is very related to point (3).
+
+While I (Michael Snoyman) am the author of this proposal, the following people
+have reviewed the proposal and support it:
+
+* Bryan O'Sullivan
+* Felipe Lessa
+* Roman Cheplyaka
+* Vincent Hanquez
 
 ## Reproducible builds
 
