@@ -35,7 +35,7 @@ Mac users may also want to see
 [this page](http://www.haskell.org/haskellwiki/Mac_OS_X_Common_Installation_Paths)
 for help with their `PATH` setting.
 
-__Note__: There is a bug in the 64-bit GHC 7.4 for Mac which prevents `yesod devel` from working correctly. This bug has been corrected in 7.6. However, as 7.4 is still the recommended platform for development, it is advisable to install the 32-bit version of GHC.
+__Note__: Mac users on Mavericks should be sure to read about the [clang wrapper script](http://www.haskell.org/platform/mac.html) to get CPP working correctly. It's highly recommended for now to [use GCC's CPP implementation](https://gist.github.com/cartazio/7131371).
 
 ## Install Yesod
 

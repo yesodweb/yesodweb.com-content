@@ -158,11 +158,17 @@ commands:</simpara>
 <literal>cabal install yesod</literal> will install Yesod and all its dependencies.
 </simpara>
 </listitem>
+<listitem>
+<simpara>
+<literal>cabal install yesod-bin</literal> will install the Yesod command line tool.
+</simpara>
+</listitem>
 </itemizedlist>
-<note>
-<simpara>You probably want to perform a sandboxed install of your Yesod project
-by using the cabal sandbox feature by running the command <literal>cabal sandbox init</literal></simpara>
-</note>
+<simpara>For more up-to-date information on installing the latest version of Yesod,
+please refer to the <ulink url="http://www.yesodweb.com/page/quickstart">quick
+start guide</ulink>.</simpara>
+<note><simpara>You probably want to perform a sandboxed install of your Yesod project
+by using the cabal sandbox feature by running the command <literal>cabal sandbox init</literal></simpara></note>
 </section>
 <section id="I_sect12_d1e628">
 <title>Language Pragmas</title>

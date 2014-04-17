@@ -118,12 +118,15 @@ commands:
 
 * +cabal install yesod+ will install Yesod and all its dependencies.
 
+* +cabal install yesod-bin+ will install the Yesod command line tool.
+
+For more up-to-date information on installing the latest version of Yesod,
+please refer to the link:$$http://www.yesodweb.com/page/quickstart$$[quick
+start guide].
+
 [NOTE]
-====
 You probably want to perform a sandboxed install of your Yesod project
 by using the cabal sandbox feature by running the command +cabal sandbox init+
-
-====
 
 [[I_sect12_d1e628]]
 
