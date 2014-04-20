@@ -501,7 +501,7 @@ getEntryR :: EntryId -> Handler Html
 getEntryR entryId = do
     (entry, comments) <- runDB $ do
         entry <- get404 entryId
-        comments <- selectList [] [Asc CommentPosted]
+        comments <- selectList [CommentEntry ==. entryId] [Asc CommentPosted]
         return (entry, map entityVal comments)
     muser <- maybeAuth
     (commentWidget, enctype) <-
