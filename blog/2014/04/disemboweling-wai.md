@@ -17,7 +17,7 @@ completely universal web interface for Haskell.
 
 I've been hesitant about doing this in the past due to two different reasons:
 
-1. Making this change makes it more difficult to writes handlers and middleware
+1. Making this change makes it more difficult to write handlers and middleware
    for WAI.
 2. It's not really possible to get rid of a streaming abstraction entirely;
    instead, we end up just having a locally baked abstraction, which is less
