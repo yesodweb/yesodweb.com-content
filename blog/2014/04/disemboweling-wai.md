@@ -63,3 +63,31 @@ The code is not yet ready to be released, but it is ready for some review and
 discussion. I'm hoping to hear community feedback, both from current users of
 WAI, and those who are considering using it (either directly in an application,
 or as part of a framework).
+
+* * *
+
+A separate breaking change that came up when working on this feature has
+to do with safe resource allocation and the definition of `Application`.
+In WAI 2.0, we introduced the function `responseSourceBracket`, which is a
+version of `bracket` that works for WAI applications. Internally to Warp
+(and every other WAI handler), we had to jump through some hoops to make sure
+async exceptions were all masked and restored properly. We also had to make our
+definition of `ResponseSource` a bit ugly to make this all possible.
+
+Now with the move away from `Source`s, we have two choices: either perpetuate the strangeness in the `ResponseStream` and `ResponseRaw` constructor, or add bracket semantics to the entirety of a WAI application. In terms of code, I'm talking about replacing:
+
+    type Application = Request -> IO Response
+
+with
+
+    type Application = Request -> (forall b. (Response -> IO b) -> IO b)
+
+I've [implemented this idea as
+well](https://github.com/yesodweb/wai/commit/63ad533299a0a5bad01a36171d98511fdf8d5821).
+It certainly makes the Warp codebase easier to follow, and allows for some
+slightly more powerful applications (e.g., acquiring a resource for use in some
+lazy I/O performed by `ResponseBuilder`). The downsides are:
+
+* Yet another breaking change.
+* It's harder to explain the intuition versus the dead simple `Application` we have now.
+* It will likely make middlewares significantly harder to write, though I'll admit that I haven't tried that yet.
