@@ -91,3 +91,18 @@ lazy I/O performed by `ResponseBuilder`). The downsides are:
 * Yet another breaking change.
 * It's harder to explain the intuition versus the dead simple `Application` we have now.
 * It will likely make middlewares significantly harder to write, though I'll admit that I haven't tried that yet.
+
+When I discussed this change with Gabriel, he pointed out [his `Managed` data
+type](https://github.com/Gabriel439/Haskell-MVC-Library/blob/271dbfd5c5a4896de001e55c5890dc2c0416e542/src/MVC.hs#L334)
+as a possible approach to make the signatures and usage slightly less scary.
+That would mean:
+
+```haskell
+newtype Managed r = Managed { _bind :: forall x . (r -> IO x) -> IO x }
+type Application = Request -> Managed Response
+```
+
+`Managed` would be nice in that it provides a number of instances (including
+Monad), but it makes the WAI API a little bit denser to grok. I think I'm
+leaning against that direction, but wanted to raise this in the discussion as
+well.
