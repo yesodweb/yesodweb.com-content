@@ -978,7 +978,7 @@ existing databases.</simpara>
 Person sql=the-person-table id=numeric_id
     firstName String sql=first_name
     lastName String sql=fldLastName
-    age Int Gt Desc "sql=The Age of the Person"
+    age Int "sql=The Age of the Person"
     UniqueName firstName lastName
     deriving Show
 |]</programlisting>
@@ -1249,7 +1249,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Person
     firstName String
     lastName String
-    age Int Gt Desc
+    age Int
     deriving Show
 |]
 
