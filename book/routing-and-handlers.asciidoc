@@ -264,7 +264,7 @@ synonym:
 
 [source, haskell]
 ----
-type Handler = HandlerT MyApp IO
+type Handler = HandlerT MyApp IO ()
 ----
 
 We need to be able to modify the underlying monad when writing subsites, but
