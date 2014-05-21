@@ -110,13 +110,13 @@ Regardless of how you've installed your tools, you should sure to put +cabal+'s
 bin folder in your +PATH+ variable. On Mac and Linux, this will be
 +$HOME/.cabal/bin+ and on Windows it will be +%APPDATA%\cabal\bin+.
 
-+cabal+ has lots of different options available, but for now, just try out two
++cabal+ has lots of different options available, but for now, just try out these
 commands:
 
 
 * +cabal update+ will download the most recent list of packages from Hackage.
 
-* +cabal install yesod+ will install Yesod and all its dependencies.
+* +cabal install yesod-platform+ will install Yesod and all its dependencies.
 
 * +cabal install yesod-bin+ will install the Yesod command line tool.
 

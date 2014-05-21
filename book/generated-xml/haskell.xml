@@ -145,7 +145,7 @@ Make sure to install all of the
 <simpara>Regardless of how you&#8217;ve installed your tools, you should sure to put <literal>cabal</literal>'s
 bin folder in your <literal>PATH</literal> variable. On Mac and Linux, this will be
 <literal>$HOME/.cabal/bin</literal> and on Windows it will be <literal>%APPDATA%\cabal\bin</literal>.</simpara>
-<simpara><literal>cabal</literal> has lots of different options available, but for now, just try out two
+<simpara><literal>cabal</literal> has lots of different options available, but for now, just try out these
 commands:</simpara>
 <itemizedlist>
 <listitem>
@@ -155,7 +155,7 @@ commands:</simpara>
 </listitem>
 <listitem>
 <simpara>
-<literal>cabal install yesod</literal> will install Yesod and all its dependencies.
+<literal>cabal install yesod-platform</literal> will install Yesod and all its dependencies.
 </simpara>
 </listitem>
 <listitem>
