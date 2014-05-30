@@ -21,7 +21,7 @@ into two categories:
   [MonadCatchIO-transformers](http://hackage.haskell.org/package/MonadCatchIO-transformers), and [exceptions](http://hackage.haskell.org/package/exceptions).
 * Packages which define a generic way to embed a monad transformer inside the value, and thereby perform *any* control operation in the base monad. Examples are [monad-peel](http://hackage.haskell.org/package/monad-peel) and [monad-control](http://hackage.haskell.org/package/monad-control) (or if you want to go really far in time, [neither](http://hackage.haskell.org/package/neither-0.1.0/docs/Control-Monad-Invert.html)).
 
-Forunately, most of those options have been deprecated in favor of
+Fortunately, most of those options have been deprecated in favor of
 alternatives. Today, there are really two choices: exceptions and
 monad-control. I'd like to describe these in a bit more detail, and contrast
 some of the pluses and minuses of both approaches. My overall goals are
@@ -30,7 +30,7 @@ twofold:
 * Get more knowledge out there about the advantages of the two libraries.
 * Work towards a community consensus on when each library should be used.
 
-I'm interested in the latter point as having a consistent usage of the
+I'm interested in the latter point, since having a consistent usage of the
 `MonadBaseControl` vs `MonadMask` typeclasses in various packages makes it
 easier to reuse code.
 
@@ -41,7 +41,7 @@ amongst Duncan, Edward, and myself) and a few new thoughts from me.
 ## exceptions
 
 The exceptions package exposes three typeclasses, all specifically geared at
-example handling, and each one incrementally more powerful than the previous
+exception handling, and each one incrementally more powerful than the previous
 one. `MonadThrow` is for any monad which can throw exceptions. Some examples of
 instances are:
 
@@ -57,7 +57,7 @@ there's no way to recover the thrown exception from a `Nothing`.
 
 The final typeclass is `MonadMask`, which allows you to guarantee that certain actions are run, even in the presence of exceptions (both synchronous and asynchronous). In order to provide that guarantee, the monad stack must be able to control its flow of execution. In particular, this excludes instances for two categories of monads:
 
-* Continuation based monads, since the flow of execution make ignore a callback entirely, or call it multiple times. (For more information, see [my previous blog post](http://www.yesodweb.com/blog/2014/05/exceptions-cont-monads.)
+* Continuation based monads, since the flow of execution make ignore a callback entirely, or call it multiple times. (For more information, see [my previous blog post](http://www.yesodweb.com/blog/2014/05/exceptions-cont-monads).)
 * Monads with multiple exit points, such as ErrorT over IO.
 
 And this is the big advantage of the exceptions package vs MonadCatchIO: by
@@ -122,7 +122,7 @@ handles that the other does not:
 * exceptions allows *catching* exceptions in many more monads as well, in particular continuation based monads.
 * monad-control allows us to do far more than exception handling.
 
-So the overlap squarely falls into: throwing, catching, and recovering from
+So the overlap squarely falls into: throwing, catching, and cleaning up from
 exceptions in a monad transformer stack which can be an instance of
 MonadMask/MonadBaseControl, which is virtually any stack without
 short-circuiting or continuations, and is based on `IO`.
@@ -139,15 +139,10 @@ on the topic:
 
 * exceptions is an easier library for people to understand. I've been using
   monad-control for a while, and frankly I still find it intimidating.
-
-* If you're writing a function that might fail, using `MonadThrow` as the constraint can lead to much better code composability and more informative error messages. (I'm harking back to [8 ways to report errors in Haskell](http://www.randomhacks.net/2007/03/10/haskell-8-ways-to-report-errors/).)
-
+* If you're writing a function that might fail, using `MonadThrow` as the constraint can lead to much better code composability and more informative error messages. (I'm referring back to [8 ways to report errors in Haskell](http://www.randomhacks.net/2007/03/10/haskell-8-ways-to-report-errors/).)
 * exceptions allows for more fine-grained constraints via MonadThrow/MonadCatch/MonadMask.
-
 * monad-control makes it virtually impossible to write an incorrect instance. It's fairly easy to end up writing an invalid `MonadMask` instance, however, which could easily lead to broken code. This will hopefully be addressed this documentation and education, but it's still a concern of mine.
-
 * monad-control requires more language extensions.
-
 * While there are things that exceptions does that monad-control does not,
   those are relatively less common.
 
