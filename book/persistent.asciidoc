@@ -217,7 +217,7 @@ Person
 We use a combination of Template Haskell and Quasi-Quotation (like when
 defining routes): +persistLowerCase+ is a quasi-quoter which converts a
 whitespace-sensitive syntax into a list of entity definitions. "Lower case"
-refers to the format generated table names are created. In this scheme, an
+refers to the format of the generated table names. In this scheme, an
 entity like +SomeTable+ would become the SQL table +some_table+. You can also
 declare your entities in a separate file using +persistFileWith+. +mkPersist+
 takes that list of entities and declares:
