@@ -99,7 +99,7 @@ personForm = renderDivs $ Person
     <*> aopt urlField "Website" Nothing
 
 -- The GET handler displays the form
-getHomeR :: Handler RepHtml
+getHomeR :: Handler Html
 getHomeR = do
     -- Generate the form to be displayed
     (widget, enctype) <- generateFormPost personForm
@@ -116,7 +116,7 @@ getHomeR = do
 
 -- The POST handler processes the form. If it is successful, it displays the
 -- parsed person. Otherwise, it displays the form again with error messages.
-postPersonR :: Handler RepHtml
+postPersonR :: Handler Html
 postPersonR = do
     ((result, widget), enctype) <- runFormPost personForm
     case result of
@@ -126,7 +126,7 @@ postPersonR = do
                 <p>Invalid input, let's try again.
                 <form method=post action=@{PersonR} enctype=#{enctype}>
                     ^{widget}
-                    <input type=submit>
+                    <button>Submit
             |]
 
 main :: IO ()
@@ -432,7 +432,7 @@ data Car = Car
 data Color = Red | Blue | Gray | Black
     deriving (Show, Eq, Enum, Bounded)
 
-carAForm :: Maybe Car -> AForm Synopsis Synopsis Car
+carAForm :: Maybe Car -> AForm Handler Car
 carAForm mcar = Car
     <$> areq textField "Model" (carModel <$> mcar)
     <*> areq carYearField "Year" (carYear <$> mcar)
@@ -740,7 +740,7 @@ returns one of three results:
 
 That last case might sound surprising. It would seem that Yesod can
 automatically know that no information is supplied when the input list is
-empty. But in reality, so some field types the lack of any input is actually
+empty. But in reality, for some field types, the lack of any input is actually
 valid input. Checkboxes, for instance, indicate an unchecked state by sending
 in an empty list.
 
@@ -805,6 +805,95 @@ getHomeR = do
                 ^{widget}
                 <input type=submit value="Change password">
         |]
+----
+
+=== Values that don't come from the user
+
+Imagine you're writing a blog hosting web app, and you want to have a form for
+users to enter a blog post. A blog post will consist of four pieces of
+information:
+
+* Title
+* HTML contents
+* User ID of the author
+* Publication date
+
+We want the user to enter the first two values, but not the second two. User ID
+should be determined automatically by authenticating the user (a topic we
+haven't covered yet), and the publication date should just be the current time.
+The question is, how do we keep our simple applicative form syntax, and yet
+pull in values that don't come from the user?
+
+The answer is two separate helper functions:
+
+* +pure+ allows us to wrap up a plain value as an applicative form value.
+* +lift+ allows us to run arbitrary +Handler+ actions inside an applicative form.
+
+Let's see an example of using these two functions:
+
+[source, haskell]
+----
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+module Case where
+
+import           Control.Applicative
+import           Data.Text           (Text)
+import           Data.Time
+import           Yesod
+
+-- In the authentication chapter, we'll address this properly
+newtype UserId = UserId Int
+    deriving Show
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET POST
+|]
+
+instance Yesod App
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+type Form a = Html -> MForm Handler (FormResult a, Widget)
+
+data Blog = Blog
+    { blogTitle    :: Text
+    , blogContents :: Textarea
+    , blogUser     :: UserId
+    , blogPosted   :: UTCTime
+    }
+    deriving Show
+
+form :: UserId -> Form Blog
+form userId = renderDivs $ Blog
+    <$> areq textField "Title" Nothing
+    <*> areq textareaField "Contents" Nothing
+    <*> pure userId
+    <*> lift (liftIO getCurrentTime)
+
+getHomeR :: Handler Html
+getHomeR = do
+    let userId = UserId 5 -- again, see the authentication chapter
+    ((res, widget), enctype) <- runFormPost $ form userId
+    defaultLayout
+        [whamlet|
+            <p>Previous result: #{show res}
+            <form method=post action=@{HomeR} enctype=#{enctype}>
+                ^{widget}
+                <input type=submit>
+        |]
+
+postHomeR :: Handler Html
+postHomeR = getHomeR
+
+main :: IO ()
+main = warp 3000 App
 ----
 
 === Summary

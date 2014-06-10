@@ -22,7 +22,7 @@ import           Control.Monad.IO.Class   (liftIO)
 import           Data.Aeson               (Value, encode, object, (.=))
 import           Data.Aeson.Parser        (json)
 import           Data.ByteString          (ByteString)
-import           Data.Conduit             (ResourceT, ($$))
+import           Data.Conduit             (($$))
 import           Data.Conduit.Attoparsec  (sinkParser)
 import           Network.HTTP.Types       (status200, status400)
 import           Network.Wai              (Application, Response, requestBody,
@@ -41,7 +41,7 @@ app req = handle invalidJson $ do
         [("Content-Type", "application/json")]
         $ encode newValue
 
-invalidJson :: SomeException -> ResourceT IO Response
+invalidJson :: SomeException -> IO Response
 invalidJson ex = return $ responseLBS
     status400
     [("Content-Type", "application/json")]

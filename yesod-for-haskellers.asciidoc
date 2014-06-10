@@ -1,0 +1,1159 @@
+The majority of this book is built around giving practical information on how
+to get common tasks done, without drilling too much into the details of what's
+going on under the surface. While the book presumes knowledge of Haskell, it
+does not follow the typical style of many Haskell libraries introductions. Many
+seasoned Haskellers are put off by this hiding of implementation details. The
+purpose of this appendix is to address those concerns.
+
+In this appendix, we'll start off from a bare minimum web application, and
+build up to more complicated examples, explaining the components and their
+types along the way.
+
+== Hello Warp
+
+Let's start off with the most bare minimum application we can think of:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, responseLBS)
+import           Network.Wai.Handler.Warp (run)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _req = return $ responseLBS
+    status200
+    [("Content-Type", "text/plain")]
+    "Hello Warp!"
+----
+
+Wait a minute, there's no Yesod in there! Don't worry, we'll get there.
+Remember, we're building from the ground up, and in Yesod, the ground floor in
+WAI, the Web Application Interface. WAI sits between a web *handler*, such as a
+web server or a test framework, and a web *application*. In our case, the
+handler is Warp, a high performance web server, and our application is the
++app+ function.
+
+What's this mysterious +Application+ type? It's a simple synonym for +type
+Application = Request -> IO Response+. The +Request+ value contains information
+such as the requested path, query string, request headers, request body, and
+the IP address of the client. We can use this to do some simple dispatching:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, pathInfo, responseLBS)
+import           Network.Wai.Handler.Warp (run)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app req =
+    case pathInfo req of
+        ["foo", "bar"] -> return $ responseLBS
+            status200
+            [("Content-Type", "text/plain")]
+            "You requested /foo/bar"
+        _ -> return $ responseLBS
+            status200
+            [("Content-Type", "text/plain")]
+            "You requested something else"
+----
+
+WAI mandates that the path be split into individual fragments (the stuff
+between forward slashes) and converted into text. This allows for easy pattern
+matching. If you need the original, unmodified +ByteString+, you can use
++rawPathInfo+. For more information on the available fields, please see the WAI
+Haddocks.
+
+That addresses the request side; what about responses? We've already seen
++responseLBS+, which is a convenient way of creating a response from a lazy
++ByteString+. That function takes three arguments: the status code, a list of
+response headers (as key/value pairs), and the body itself. But +responseLBS+
+is just a convenience wrapper. Under the surface, WAI uses blaze-builder's
++Builder+ data type to represent the raw bytes. Let's dig down another level
+and use that directly:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import           Blaze.ByteString.Builder (Builder, fromByteString)
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, responseBuilder)
+import           Network.Wai.Handler.Warp (run)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _req = return $ responseBuilder
+    status200
+    [("Content-Type", "text/plain")]
+    (fromByteString "Hello from blaze-builder!" :: Builder)
+----
+
+This opens up some nice opportunities for efficiently building up response
+bodies, since +Builder+ allows for O(1) append operations. We're also able to
+take advantage of blaze-html, which sits on top of blaze-builder. Let's see our
+first HTML application.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import           Network.HTTP.Types            (status200)
+import           Network.Wai                   (Application, responseBuilder)
+import           Network.Wai.Handler.Warp      (run)
+import           Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
+import           Text.Blaze.Html5              (Html, docTypeHtml)
+import qualified Text.Blaze.Html5              as H
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _req = return $ responseBuilder
+    status200
+    [("Content-Type", "text/html")] -- yay!
+    (renderHtmlBuilder myPage)
+
+myPage :: Html
+myPage = docTypeHtml $ do
+    H.head $ do
+        H.title "Hello from blaze-html and Warp"
+    H.body $ do
+        H.h1 "Hello from blaze-html and Warp"
+----
+
+But there's a limitation with using a pure +Builder+ value: we need to create
+the entire response body before returning the +Response+ value. With lazy
+evaluation, that's not as bad as it sounds, since not all of the body will live in
+memory at once. However, if we need to perform some I/O to generate our
+response body (such as reading data from a database), we'll be in trouble.
+
+To deal with that situation, WAI uses conduit to represent a streaming response
+body. It also allows explicit control of flushing the stream by wrapping values
+in the +Flush+ data type. Let's see how this works.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import           Blaze.ByteString.Builder           (Builder, fromByteString)
+import           Blaze.ByteString.Builder.Char.Utf8 (fromShow)
+import           Control.Concurrent                 (threadDelay)
+import           Control.Monad                      (forM_)
+import           Control.Monad.Trans.Class          (lift)
+import           Data.Conduit                       (Flush (Chunk, Flush),
+                                                     Source, yield)
+import           Data.Monoid                        ((<>))
+import           Network.HTTP.Types                 (status200)
+import           Network.Wai                        (Application,
+                                                     responseSource)
+import           Network.Wai.Handler.Warp           (run)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _req = return $ responseSource
+    status200
+    [("Content-Type", "text/plain")]
+    mySrc
+
+mySrc :: Source IO (Flush Builder)
+mySrc = do
+    yield $ Chunk $ fromByteString "Starting streaming response.\n"
+    yield $ Chunk $ fromByteString "Performing some I/O.\n"
+    yield Flush
+    -- pretend we're performing some I/O
+    lift $ threadDelay 1000000
+    yield $ Chunk $ fromByteString "I/O performed, here are some results.\n"
+    forM_ [1..50 :: Int] $ \i -> do
+        yield $ Chunk $ fromByteString "Got the value: " <>
+                        fromShow i <>
+                        fromByteString "\n"
+----
+
+Another common requirement when dealing with a streaming response is safely
+allocating a scarce resource- such as a file handle. By *safely*, I mean
+ensuring that the response will be released, even in the case of some
+exception. To deal with that, you can use +responseSourceBracket+:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import           Blaze.ByteString.Builder (fromByteString)
+import           Data.Conduit             (Flush (Chunk), ($=))
+import           Data.Conduit.Binary      (sourceHandle)
+import qualified Data.Conduit.List        as CL
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, responseSourceBracket)
+import           Network.Wai.Handler.Warp (run)
+import           System.IO                (IOMode (ReadMode), hClose, openFile)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _req = responseSourceBracket
+    (openFile "index.html" ReadMode)
+    hClose
+    $ \handle -> return
+        ( status200
+        , [("Content-Type", "text/html")]
+        , sourceHandle handle $= CL.map (Chunk . fromByteString)
+        )
+----
+
+But in the case of serving files, it's more efficient to use +responseFile+,
+which can use the +sendfile+ system call to avoid unnecessary buffer copies:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, responseFile)
+import           Network.Wai.Handler.Warp (run)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _req = return $ responseFile
+    status200
+    [("Content-Type", "text/html")]
+    "index.html"
+    Nothing -- means "serve whole file"
+            -- you can also serve specific ranges in the file
+----
+
+There are many aspects of WAI we haven't covered here. One important topic is WAI middlewares, which we'll cover towards the end of this chapter. We also haven't inspected request bodies at all. But for the purposes of understanding Yesod, we've covered enough for the moment.
+
+== What about Yesod?
+
+In all our excitement about WAI and Warp, we still haven't seen anything about Yesod! Since we just learnt all about WAI, our first question should be: how does Yesod interact with WAI. The answer to that is with one very important function:
+
+[source, haskell]
+----
+toWaiApp :: YesodDispatch site => site -> IO Application
+----
+
+NOTE: There's an even more basic function in Yesod, called +toWaiAppPlain+. The
+distinction is that +toWaiAppPlain+ doesn't install any additional WAI
+middlewares, while +toWaiApp+ provides commonly used middlewares, such as
+logging, GZIP compression, and HEAD request method handling.
+
+This function takes some site value, which must be an instance of
++YesodDispatch+, and creates an +Application+. This function lives in the +IO+
+monad, since it will likely perform actions like allocating a shared logging
+buffer. The more interesting question is what this +site+ value is all about.
+
+Yesod has a concept of a *foundation data type*. This is a data type at the
+core of each application, and is used in three important ways:
+
+* It can hold onto values that are initialized and shared amongst all aspects of your application, such as an HTTP connection manager, a database connection pool, settings loaded from a file, or some shared mutable state like a counter or cache.
+* Typeclass instances provide even more information about your application. The +Yesod+ typeclass has various settings, such as what the default template of your app should be, or the maximum allowed request body size. The +YesodDispatch+ class indicates how incoming requests should be dispatched to handler functions. And there are a number of typeclasses commonly used in Yesod helper libraries, such as +RenderMessage+ for i18n support or +YesodJquery+ for providing the shared location of the jQuery Javascript library.
+* Associated types (i.e., type families) are used to create a related *route data type* for each application. This is a simple ADT that represents all legal routes in your application. But using this intermediate data type instead of dealing directly with strings, Yesod applications can take advantage of the compiler to prevent creating invalid links. This feature is known as *type safe URLs*.
+
+In keeping with the spirit of this appendix, we're going to create our first
+Yesod application the hard way, by writing everything manually. We'll
+progressively add more convenience helpers on top as we go along.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Network.HTTP.Types            (status200)
+import           Network.Wai                   (responseBuilder)
+import           Network.Wai.Handler.Warp      (run)
+import           Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
+import qualified Text.Blaze.Html5              as H
+import           Yesod.Core                    (Html, RenderRoute (..), Yesod,
+                                                YesodDispatch (..), toWaiApp)
+import           Yesod.Core.Types              (YesodRunnerEnv (..))
+
+-- | Our foundatation datatype.
+data App = App
+    { welcomeMessage :: !Html
+    }
+
+instance Yesod App
+
+instance RenderRoute App where
+    data Route App = HomeR -- just one accepted URL
+        deriving (Show, Read, Eq, Ord)
+
+    renderRoute HomeR = ( [] -- empty path info, means "/"
+                        , [] -- empty query string
+                        )
+
+instance YesodDispatch App where
+    yesodDispatch (YesodRunnerEnv _logger site _sessionBackend) _req =
+        return $ responseBuilder
+            status200
+            [("Content-Type", "text/html")]
+            (renderHtmlBuilder $ welcomeMessage site)
+
+main :: IO ()
+main = do
+    -- We could get this message from a file instead if we wanted.
+    let welcome = H.p "Welcome to Yesod!"
+    waiApp <- toWaiApp App
+        { welcomeMessage = welcome
+        }
+    run 3000 waiApp
+----
+
+OK, we've added quite a few new pieces here, let's attack them one at a time.
+The first thing we've done is created a new datatype, +App+. This is commonly
+used as the foundation data type name for each application, though you're free
+to use whatever name you want. We've added one field to this datatype,
++welcomeMessage+, which will hold the content for our homepage.
+
+Next we declare our +Yesod+ instance. We just use the default values for all of
+the methods for this example. More interesting is the +RenderRoute+ typeclass.
+This is the heart of type-safe URLs. We create an associated data type for
++App+ which lists all of our app's accepted routes. In this case, we have just
+one: the homepage, which we call +HomeR+. It's yet another Yesod naming
+convention to append +R+ to all of the route data constructors.
+
+We also need to create a +renderRoute+ method, which converts each type-safe
+route value into a tuple of path pieces and query string parameters. We'll get
+to more interesting examples later, but for now, our homepage has an empty list
+for both of those.
+
++YesodDispatch+ determines how our application behaves. It has one method,
++yesodDispatch+, of type:
+
+[source, haskell]
+----
+yesodDispatch :: YesodRunnerEnv site -> Application
+----
+
++YesodRunnerEnv+ provides three values: a +Logger+ value for outputting log
+messages, the foundation datatype value itself, and a session backend, used for
+storing and retrieving information for the user's active session. In real Yesod
+applications, as you'll see shortly, you don't need to interact with these
+values directly, but it's informative to understand what's under the surface.
+
+The return type of +yesodDispatch+ is +Application+ from WAI. But as we saw
+earlier, +Application+ is simply a function from +Request+ to +IO Response+. So
+our implementation of +yesodDispatch+ is able to use everything we learned
+about WAI above. Notice also how we accessed the +welcomeMessage+ from our
+foundation data type.
+
+Finally, we have the +main+ function. The +App+ value is easy to create and, as
+you can see, you could just as easily have performed some I/O to acquire the
+welcome message. We use +toWaiApp+ to obtain a WAI application, and then pass
+off our application to Warp, just like we did in the past.
+
+Congratulations, you've now seen your first Yesod application! (Or, at least
+your first Yesod application in this appendix.)
+
+== The HandlerT monad transformer
+
+While that example was technically using Yesod, it was incredibly uninspiring.
+There's no question that Yesod did nothing more than get in our way relative to
+WAI. And that's because we haven't started taking advantage of any of Yesod's
+features. Let's address that, starting with the +HandlerT+ monad transformer.
+
+There are many common things you'd want to do when handling a single request,
+e.g.:
+
+* Return some HTML.
+* Redirect to a different URL.
+* Return a 404 not found response.
+* Do some logging.
+
+To encapsulate all of this common functionality, Yesod provides a +HandlerT+
+monad transformer. The vast majority of the code you write in Yesod will live
+in this transformer, so you should get acquainted with it. Let's start off by
+replacing our previous +YesodDispatch+ instance with a new one that takes
+advantage of +HandlerT+:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Network.Wai              (pathInfo)
+import           Network.Wai.Handler.Warp (run)
+import qualified Text.Blaze.Html5         as H
+import           Yesod.Core               (HandlerT, Html, RenderRoute (..),
+                                           Yesod, YesodDispatch (..), getYesod,
+                                           notFound, toWaiApp, yesodRunner)
+
+-- | Our foundatation datatype.
+data App = App
+    { welcomeMessage :: !Html
+    }
+
+instance Yesod App
+
+instance RenderRoute App where
+    data Route App = HomeR -- just one accepted URL
+        deriving (Show, Read, Eq, Ord)
+
+    renderRoute HomeR = ( [] -- empty path info, means "/"
+                        , [] -- empty query string
+                        )
+
+getHomeR :: HandlerT App IO Html
+getHomeR = do
+    site <- getYesod
+    return $ welcomeMessage site
+
+instance YesodDispatch App where
+    yesodDispatch yesodRunnerEnv req =
+        let maybeRoute =
+                case pathInfo req of
+                    [] -> Just HomeR
+                    _  -> Nothing
+            handler =
+                case maybeRoute of
+                    Nothing -> notFound
+                    Just HomeR -> getHomeR
+         in yesodRunner handler yesodRunnerEnv maybeRoute req
+
+main :: IO ()
+main = do
+    -- We could get this message from a file instead if we wanted.
+    let welcome = H.p "Welcome to Yesod!"
+    waiApp <- toWaiApp App
+        { welcomeMessage = welcome
+        }
+    run 3000 waiApp
+----
+
++getHomeR+ is our first handler function. (That name is yet another naming
+convention in the Yesod world: the lower case HTTP request method, followed by
+the route constructor name.) Notice its signature: +HandlerT App IO Html+. It's
+so common to have the monad stack +HandlerT App IO+ that most applications have
+a type synonym for it, +type Handler = HandlerT App IO+. The function is
+returning some +Html+. You might be wondering if Yesod is hard-coded to only
+work with +Html+ values. We'll explain that detail in a moment.
+
+Our function body is short. We use the +getYesod+ function to get the
+foundation data type value, and then return the +welcomeMessage+ field. We'll
+build up more interesting handlers as we continue.
+
+The implementation of +yesodDispatch+ is now quite different. The key to it is
+the +yesodRunner+ function, which is a low-level function for converting
++HandlerT+ stacks into WAI ++Application++s. Let's look at its type signature:
+
+[source, haskell]
+----
+yesodRunner :: (ToTypedContent res, Yesod site)
+            => HandlerT site IO res
+            -> YesodRunnerEnv site
+            -> Maybe (Route site)
+            -> Application
+----
+
+We're already familiar with +YesodRunnerEnv+ from our previous example. As you
+can see in our call to +yesodRunner+ above, we pass that value in unchanged.
+The +Maybe (Route site)+ is a bit interesting, and gives us more insight into
+how type-safe URLs work. Until now, we only saw the rendering side of these
+URLs. But just as important is the *parsing* side: converting a requested path
+into a route value. In our example, this code is just a few lines, and we store
+the result in +maybeRoute.
+
+NOTE: It's true that our current parse function is small, but in a larger
+application it would need to be more complex, also dealing with issues like
+dynamic parameters. At that point, it becomes a non-trivial endeavor to ensure
+that our parsing and rendering functions remain in proper alignment.  We'll
+discuss how Yesod deals with that later.
+
+Coming back to the parameters to +yesodRunner+: we've now addressed the +Maybe
+(Route site)+ and +YesodRunerEnv site+. To get our +HandlerT site IO res+
+value, we pattern match on +maybeRoute+. If it's +Just HomeR+, we use
++getHomeR+. Otherwise, we use the +notFound+ function, which is a built-in
+function that returns a 404 not found response, using your default site
+template. That template can be overridden in the Yesod typeclass; out of the
+box, it's just a boring HTML page.
+
+This almost all makes sense, except for one issue: what's that +ToTypedContent+
+typeclass, and what does it have to do with our +Html+ response? Let's start by
+answering my question from above: no, Yesod does *not* in any way hard code
+support for +Html+. A handler function can return any value that has an
+instance of +ToTypedContent+. This typeclass (which will examine in a moment)
+provides both a mime-type and a representation of the data that WAI can
+consume. +yesodRunner+ then converts that into a WAI response, setting the
++Content-Type+ response header to the mime type, using a 200 OK status code,
+and sending the response body.
+
+=== (To)Content, (To)TypedContent
+
+At the very core of Yesod's content system are the following types:
+
+[source, haskell]
+----
+data Content = ContentBuilder !Builder !(Maybe Int) -- ^ The content and optional content length.
+             | ContentSource !(Source (ResourceT IO) (Flush Builder))
+             | ContentFile !FilePath !(Maybe FilePart)
+             | ContentDontEvaluate !Content
+
+type ContentType = ByteString
+data TypedContent = TypedContent !ContentType !Content
+----
+
++Content+ should remind you a bit of the WAI response types. +ContentBuilder+
+is similar to +responseBuilder+, +ContentSource+ is like +responseSource+, and
++ContentFile+ is like +responseFile+. Unlike their WAI counterparts, none of
+these constructors contain information on the status code or response headers;
+that's handled orthogonally in Yesod.
+
+The one completely new constructor is +ContentDontEvaluate+. By default, when
+you create a response body in Yesod, Yesod fully evaluates the body before
+generating the response. The reason for this is to ensure that there are no
+impure exceptions in your value. Yesod wants to make sure to catch any such
+exceptions before starting to send your response so that, if there *is* an
+exception, Yesod can generate a proper 500 internal server error response
+instead of simply dying in the middle of sending a non-error response. However,
+performing this evaluation can cause more memory usage. Therefore, Yesod
+provides a means of opting out of this protection.
+
++TypedContent+ is then a minor addition to +Content+: it includes the
++ContentType+ as well. Together with a convention that an application returns a
+200 OK status unless otherwise specified, we have everything we need from the
++TypedContent+ type to create a response.
+
+Yesod *could* have taken the approach of requiring users to always return
++TypedContent+ from a handler function, but that would have required manually
+converting to that type. Instead, Yesod uses a pair of typeclasses for this,
+appropriately named +ToContent+ and +ToTypedContent+. They have exactly the
+definitions you'd expect:
+
+[source, haskell]
+----
+class ToContent a where
+    toContent :: a -> Content
+class ToContent a => ToTypedContent a where
+    toTypedContent :: a -> TypedContent
+----
+
+And Yesod provides instances for many common data types, including +Text+,
++Html+, and aeson's +Value+ type (containing JSON data). That's how the
++getHomeR+ function was able to return +Html+: Yesod knows how to convert it to
++TypedContent+, and from there it can be converted into a +WAI+ response.
+
+=== HasContentType and representations
+
+This typeclass approach allows for one other nice abstraction. For many types, the type system itself lets us know what the content-type for the content should be. For example, +Html+ will always be served with a +text/html+ content-type.
+
+NOTE: This isn't true for all instance of +ToTypedContent+. For a counter
+example, consider the +ToTypedContent TypedContent+ instance.
+
+Some requests to a web application can be displayed with various *representation*. For example, a request for tabular data could be served with:
+
+* An HTML table.
+* A CSV file.
+* XML.
+* JSON data to be consumed by some client-side Javascript.
+
+The HTTP spec allows a client to specify its preference of representation via
+the +accept+ request header. And Yesod allows a handler function to use the
++selectRep+/+provideRep+ function combo to provide multiple representations,
+and have the framework automatically choose the appropriate one based on the
+client headers.
+
+The last missing piece to make this all work is the +HasContentType+ typeclass:
+
+[source, haskell]
+----
+class ToTypedContent a => HasContentType a where
+    getContentType :: Monad m => m a -> ContentType
+----
+
+The parameter +m a+ is just a poor man's +Proxy+ type. There are instances for
+this typeclass for most data types supported by +ToTypedContent+. Below is our
+example from above, tweaked just a bit to provide multiple representations of
+the data:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Data.Text                (Text)
+import           Network.Wai              (pathInfo)
+import           Network.Wai.Handler.Warp (run)
+import qualified Text.Blaze.Html5         as H
+import           Yesod.Core               (HandlerT, Html, RenderRoute (..),
+                                           TypedContent, Value, Yesod,
+                                           YesodDispatch (..), getYesod,
+                                           notFound, object, provideRep,
+                                           selectRep, toWaiApp, yesodRunner,
+                                           (.=))
+
+-- | Our foundatation datatype.
+data App = App
+    { welcomeMessageHtml :: !Html
+    , welcomeMessageText :: !Text
+    , welcomeMessageJson :: !Value
+    }
+
+instance Yesod App
+
+instance RenderRoute App where
+    data Route App = HomeR -- just one accepted URL
+        deriving (Show, Read, Eq, Ord)
+
+    renderRoute HomeR = ( [] -- empty path info, means "/"
+                        , [] -- empty query string
+                        )
+
+getHomeR :: HandlerT App IO TypedContent
+getHomeR = do
+    site <- getYesod
+    selectRep $ do
+        provideRep $ return $ welcomeMessageHtml site
+        provideRep $ return $ welcomeMessageText site
+        provideRep $ return $ welcomeMessageJson site
+
+instance YesodDispatch App where
+    yesodDispatch yesodRunnerEnv req =
+        let maybeRoute =
+                case pathInfo req of
+                    [] -> Just HomeR
+                    _  -> Nothing
+            handler =
+                case maybeRoute of
+                    Nothing -> notFound
+                    Just HomeR -> getHomeR
+         in yesodRunner handler yesodRunnerEnv maybeRoute req
+
+main :: IO ()
+main = do
+    waiApp <- toWaiApp App
+        { welcomeMessageHtml = H.p "Welcome to Yesod!"
+        , welcomeMessageText = "Welcome to Yesod!"
+        , welcomeMessageJson = object ["msg" .= ("Welcome to Yesod!" :: Text)]
+        }
+    run 3000 waiApp
+----
+
+=== Convenience +warp+ function
+
+And one minor convenience you'll see quite a bit in the Yesod world. It's very
+common to call +toWaiApp+ to create a WAI +Application+, and then pass that to
+Warp's +run+ function. So Yesod provides a convenience +warp+ wrapper function.
+We can replace our previous +main+ function with the following:
+
+[source, haskell]
+----
+main :: IO ()
+main =
+    warp 3000 App
+        { welcomeMessageHtml = H.p "Welcome to Yesod!"
+        , welcomeMessageText = "Welcome to Yesod!"
+        , welcomeMessageJson = object ["msg" .= ("Welcome to Yesod!" :: Text)]
+        }
+----
+
+There's also a +warpEnv+ function which reads the port number from the +PORT+
+environment variable, which is useful for working with platforms such as FP
+Haskell Center, or deployment tools like Keter.
+
+== Writing handlers
+
+Since the vast majority of your application will end up living in the
++HandlerT+ monad transformer, it's not surprising that there are quite a few
+functions that work in that context. +HandlerT+ is an instance of many common
+typeclasses, including +MonadIO+, +MonadTrans+, +MonadBaseControl+,
++MonadLogger+ and +MonadResource+, and so can automatically take advantage of
+those functionalities.
+
+In addition to that standard functionality, the following are some common
+categories of functions. The only requirement Yesod places on your handler
+functions is that, ultimately, they return a type which is an instance of
++ToTypedContent+.
+
+This section is just a short overview of functionality. For more information,
+you should either look through the Haddocks, or read the rest of this book.
+
+=== Getting request parameters
+
+There are a few pieces of information provided by the client in a request:
+
+* The requested path. This is usually handled by Yesod's routing framework, and is not directly queried in a handler function.
+* Query string parameters. This can be queried using +lookupGetParam+.
+* Request bodies. In the case of URL encoded and multipart bodies, you can use +lookupPostParam+ to get the request parameter. For multipart bodies, there's also +lookupFile+ for file parameters.
+* Request headers can be queried via +lookupHeader+. (And response headers can be set with +addHeader+.)
+* Yesod parses cookies for you automatically, and they can be queried using +lookupCookie+. (Cookies can be *set* via the +setCookie+ function.)
+* Finally, Yesod provides a user session framework, where data can be set in a cryptographically secure session and associated with each user. This can be queried and set using the functions +lookupSession+, +setSession+ and +deleteSession+.
+
+While you can use these functions directly for such purposes as processing
+forms, you usually will want to use the yesod-form library, which provides a
+higher level form abstraction based on applicative functors.
+
+=== Short circuiting
+
+In some cases, you'll want to short circuit the handling of a request. Reasons
+for doing this would be:
+
+* Send an HTTP redirect, via the +redirect+ function. This will default to using the 303 status code. You can use +redirectWith+ to get more control over this.
+* Return a 404 not found with +notFound+, or a 405 bad method via +badMethod+.
+* Indicate some error in the request via +notAuthenticated+, +permissionDenied+, or +invalidArgs+.
+* Send a special response, such as with +sendFile+ or +sendResponseStatus+ (to override the status 200 response code)
+* +sendWaiResponse+ to drop down a level of abstraction, bypass some Yesod abstractions, and use WAI itself.
+
+=== Streaming
+
+So far, the examples of +ToTypedContent+ instances I gave all involved
+non-streaming responses. +Html+, +Text+, and +Value+ all get converted into a
++ContentBuilder+ constructor. As such, they cannot interleave I/O with sending
+data to the user. What happens if we want to perform such interleaving?
+
+When we encountered this issue in WAI, we introduced the +responseSource+
+method of constructing a response. Using +sendWaiResponse+, we could reuse that
+same method for creating a streaming response in Yesod. But there's also a
+simpler API for doing this: +respondSource+. +respondSource+ takes two
+parameters: the content type of the response, and a +Source+ of +Flush
+Builder+. Yesod also provides a number of convenience functions for creating
+that +Source+, such as +sendChunk+, +sendChunkBS+, and +sendChunkText+.
+
+Here's an example, which just converts our initial +responseSource+ example
+from WAI to Yesod.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Blaze.ByteString.Builder           (fromByteString)
+import           Blaze.ByteString.Builder.Char.Utf8 (fromShow)
+import           Control.Concurrent                 (threadDelay)
+import           Control.Monad                      (forM_)
+import           Data.Monoid                        ((<>))
+import           Network.Wai                        (pathInfo)
+import           Yesod.Core                         (HandlerT, RenderRoute (..),
+                                                     TypedContent, Yesod,
+                                                     YesodDispatch (..), liftIO,
+                                                     notFound, respondSource,
+                                                     sendChunk, sendChunkBS,
+                                                     sendChunkText, sendFlush,
+                                                     warp, yesodRunner)
+
+-- | Our foundatation datatype.
+data App = App
+
+instance Yesod App
+
+instance RenderRoute App where
+    data Route App = HomeR -- just one accepted URL
+        deriving (Show, Read, Eq, Ord)
+
+    renderRoute HomeR = ( [] -- empty path info, means "/"
+                        , [] -- empty query string
+                        )
+
+getHomeR :: HandlerT App IO TypedContent
+getHomeR = respondSource "text/plain" $ do
+    sendChunkBS "Starting streaming response.\n"
+    sendChunkText "Performing some I/O.\n"
+    sendFlush
+    -- pretend we're performing some I/O
+    liftIO $ threadDelay 1000000
+    sendChunkBS "I/O performed, here are some results.\n"
+    forM_ [1..50 :: Int] $ \i -> do
+        sendChunk $ fromByteString "Got the value: " <>
+                    fromShow i <>
+                    fromByteString "\n"
+
+instance YesodDispatch App where
+    yesodDispatch yesodRunnerEnv req =
+        let maybeRoute =
+                case pathInfo req of
+                    [] -> Just HomeR
+                    _  -> Nothing
+            handler =
+                case maybeRoute of
+                    Nothing -> notFound
+                    Just HomeR -> getHomeR
+         in yesodRunner handler yesodRunnerEnv maybeRoute req
+
+main :: IO ()
+main = warp 3000 App
+----
+
+== Dynamic parameters
+
+Now that we've finished our detour into the details of the +HandlerT+
+transformer, let's get back to higher-level Yesod request processing. So far,
+all of our examples have dealt with a single supported request route. Let's
+make this more interesting. We now want to have an application which serves
+Fibonacci numbers. If you make a request to +/fib/5+, it will return the fifth
+Fibonacci number. And if you visit +/+, it will automatically redirect you to
++/fib/1+.
+
+In the Yesod world, the first question to ask is: how do we model our route
+data type? This is pretty straight-forward: +data Route App = HomeR | FibR
+Int+. The question is: how do we want to define our +RenderRoute+ instance? We
+need to convert the +Int+ to a +Text+. What function should we use?
+
+Before you answer that, realize that we'll *also* need to be able to parse back a +Text+ into an +Int+ for dispatch purposes. So we need to make sure that we have a pair of functions with the property +fromText . toText == Just+. +Show+/+Read+ could be a candidate for this, except that:
+
+. We'd be required to convert through +String+.
+. The +Show+/+Read+ instances for +Text+ and +String+ both involve extra escaping, which we don't want to incur.
+
+Instead, the approach taken by Yesod is the path-pieces package, and in
+particular the +PathPiece+ typeclass, defined as:
+
+[source, haskell]
+----
+class PathPiece s where
+    fromPathPiece :: Text -> Maybe s
+    toPathPiece   :: s    -> Text
+----
+
+Using this typeclass, we can write parse and render functions for our route datatype:
+
+[source, haskell]
+----
+instance RenderRoute App where
+    data Route App = HomeR | FibR Int
+        deriving (Show, Read, Eq, Ord)
+
+    renderRoute HomeR = ([], [])
+    renderRoute (FibR i) = (["fib", toPathPiece i], [])
+
+parseRoute' [] = Just HomeR
+parseRoute' ["fib", i] = FibR <$> fromPathPiece i
+parseRoute' _ = Nothing
+----
+
+And then we can write our +YesodDispatch+ typeclass instance:
+
+[source, haskell]
+----
+instance YesodDispatch App where
+    yesodDispatch yesodRunnerEnv req =
+        let maybeRoute = parseRoute' (pathInfo req)
+            handler =
+                case maybeRoute of
+                    Nothing -> notFound
+                    Just HomeR -> getHomeR
+                    Just (FibR i) -> getFibR i
+         in yesodRunner handler yesodRunnerEnv maybeRoute req
+
+getHomeR = redirect (FibR 1)
+
+fibs :: [Int]
+fibs = 0 : scanl (+) 1 fibs
+
+getFibR i = return $ show $ fibs !! i
+----
+
+Notice our call to +redirect+ in +getHomeR+. We're able to use the route
+datatype as the parameter to +redirect+, and Yesod takes advantage of our
++renderRoute+ function to create a textual link.
+
+== Routing with Template Haskell
+
+Now let's suppose we want to add a new route to our previous application. We'd
+have to make the following changes:
+
+. Modify the +Route+ datatype itself.
+. Add a clause to +renderRoute+.
+. Add a clause to +parseRoute'+, and make sure it corresponds correctly to +renderRoute+.
+. Add a clause to the case statement in +yesodDispatch+ to call our handler function.
+. Write our handler function.
+
+That's a lot of changes! And lots of manual, boilerplate changes means lots of
+potential for mistakes. Some of the mistakes can be caught by the compiler if
+you turn on warnings (forgetting to add a clause in +renderRoute+ or a match in
+++yesodDispatch++'s case statement), but others cannot (ensuring that
++renderRoute+ and +parseRoute+ have the same logic, or adding the +parseRoute+
+clause).
+
+This is where Template Haskell comes into the Yesod world. Instead of dealing
+with all of these changes manually, Yesod declares a high level routing syntax.
+This syntax lets you specify your route syntax, dynamic parameters, constructor
+names, and accepted request methods, and automatically generates parse, render,
+and dispatch functions.
+
+To get an idea of how much manual coding this saves, have a look at our
+previous example converted to the Template Haskell version:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Yesod.Core (RenderRoute (..), Yesod, mkYesod, parseRoutes,
+                             redirect, warp)
+
+-- | Our foundatation datatype.
+data App = App
+
+instance Yesod App
+
+mkYesod "App" [parseRoutes|
+/         HomeR GET
+/fib/#Int FibR  GET
+|]
+
+getHomeR :: Handler ()
+getHomeR = redirect (FibR 1)
+
+fibs :: [Int]
+fibs = 0 : scanl (+) 1 fibs
+
+getFibR :: Int -> Handler String
+getFibR i = return $ show $ fibs !! i
+
+main :: IO ()
+main = warp 3000 App
+----
+
+What's wonderful about this is, as the developer, you can now focus on the
+important part of your application, and not get involved in the details of
+writing parsers and renderers. There are of course some downsides to the usage
+of Template Haskell:
+
+* Compile times are a bit slower.
+* The details of what's going on behind the scenes aren't easily apparent. (Though you can use +cabal haddock+ to see what identifiers have been generated for you.)
+* You don't have as much fine-grained control. For example, in the Yesod route syntax, each dynamic parameter has to be a separate field in the route constructor, as opposed to bundling fields together. This is a conscious trade-off in Yesod between flexibility and complexity.
+
+This usage of Template Haskell is likely the most controversial decision in
+Yesod. I personally think the benefits definitely justify its usage. But if
+you'd rather avoid Template Haskell, you're free to do so. Every example so far
+in this appendix has done so, and you can follow those techniques. We also have
+another, simpler approach in the Yesod world: +LiteApp+.
+
+=== LiteApp
+
++LiteApp+ allows you to throw away type safe URLs and Template Haskell. It uses
+a simple routing DSL in pure Haskell. Once again, as a simple comparison, let's
+rewrite our Fibonacci example to use it.
+
+[source, haskell]
+----
+import           Data.Text  (pack)
+import           Yesod.Core (LiteHandler, dispatchTo, dispatchTo, liteApp,
+                             onStatic, redirect, warp, withDynamic)
+
+getHomeR :: LiteHandler ()
+getHomeR = redirect "/fib/1"
+
+fibs :: [Int]
+fibs = 0 : scanl (+) 1 fibs
+
+getFibR :: Int -> LiteHandler String
+getFibR i = return $ show $ fibs !! i
+
+main :: IO ()
+main = warp 3000 $ liteApp $ do
+    dispatchTo getHomeR
+    onStatic (pack "fib") $ withDynamic $ \i -> dispatchTo (getFibR i)
+----
+
+There you go, a simple Yesod app without any language extensions at all!
+However, even this application still demonstrates some type safety. Yesod will
+use +fromPathPiece+ to convert the parameter for +getFibR+ from +Text+ to an
++Int+, so any invalid parameter will be got by Yesod itself. It's just one less
+piece of checking that you have to perform.
+
+== Shakespeare
+
+While generating plain text pages can be fun, it's hardly what one normally
+expects from a web framework. As you'd hope, Yesod comes built in with support
+for generating HTML, CSS and Javascript as well.
+
+Before we get into templating languages, let's do it the raw, low-level way,
+and then build up to something a bit more pleasant.
+
+[source, haskell]
+----
+import           Data.Text  (pack)
+import           Yesod.Core
+
+getHomeR :: LiteHandler TypedContent
+getHomeR = return $ TypedContent typeHtml $ toContent
+    "<html><head><title>Hi There!</title>\
+    \<link rel='stylesheet' href='/style.css'>\
+    \<script src='/script.js'></script></head>\
+    \<body><h1>Hello World!</h1></body></html>"
+
+getStyleR :: LiteHandler TypedContent
+getStyleR = return $ TypedContent typeCss $ toContent
+    "h1 { color: red }"
+
+getScriptR :: LiteHandler TypedContent
+getScriptR = return $ TypedContent typeJavascript $ toContent
+    "alert('Yay, Javascript works too!');"
+
+main :: IO ()
+main = warp 3000 $ liteApp $ do
+    dispatchTo getHomeR
+    onStatic (pack "style.css") $ dispatchTo getStyleR
+    onStatic (pack "script.js") $ dispatchTo getScriptR
+----
+
+We're just reusing all of the +TypedContent+ stuff we've already learnt. We now
+have three separate routes, providing HTML, CSS and Javascript. We write our
+content as ++String++s, convert them to +Content+ using +toContent+, then wrap
+them with a +TypedContent+ constructor to give them the appropriate
+content-type headers.
+
+But as usual, we can do better. Dealing with ++String++s is not very efficient,
+and it's tedious to have to manually put in the content type all the time. But
+we already know the solution to those problems: use the +Html+ datatype from
++blaze-html+. Let's convert our +getHomeR+ function to use it:
+
+[source, haskell]
+----
+import           Data.Text                   (pack)
+import           Text.Blaze.Html5            (toValue, (!))
+import qualified Text.Blaze.Html5            as H
+import qualified Text.Blaze.Html5.Attributes as A
+import           Yesod.Core
+
+getHomeR :: LiteHandler Html
+getHomeR = return $ H.docTypeHtml $ do
+    H.head $ do
+        H.title $ toHtml "Hi There!"
+        H.link ! A.rel (toValue "stylesheet") ! A.href (toValue "/style.css")
+        H.script ! A.src (toValue "/script.js") $ return ()
+    H.body $ do
+        H.h1 $ toHtml "Hello World!"
+
+getStyleR :: LiteHandler TypedContent
+getStyleR = return $ TypedContent typeCss $ toContent
+    "h1 { color: red }"
+
+getScriptR :: LiteHandler TypedContent
+getScriptR = return $ TypedContent typeJavascript $ toContent
+    "alert('Yay, Javascript works too!');"
+
+main :: IO ()
+main = warp 3000 $ liteApp $ do
+    dispatchTo getHomeR
+    onStatic (pack "style.css") $ dispatchTo getStyleR
+    onStatic (pack "script.js") $ dispatchTo getScriptR
+----
+
+Ahh, far nicer. +blaze-html+ provides a convenient combinator library, and will
+execute far faster in most cases than whatever +String+ concatenation you might
+attempt.
+
+If you're happy with +blaze-html+ combinators, by all means use them. However,
+many people like to use a more specialized templating language. Yesod's
+standard provider for this is the Shakespearean languages: Hamlet, Lucius, and
+Julius. You are by all means welcome to use a different system if so desired,
+the only requirement is that you can a +Content+ value from the template.
+
+Since Shakespearean templates on compile-time checked, their usage requires
+either quasiquotation or Template Haskell. We'll go for the former approach
+here. Please see the Shakespeare chapter in the book for more information.
+
+[source, haskell]
+----
+{-# LANGUAGE QuasiQuotes #-}
+import           Data.Text   (Text, pack)
+import           Text.Julius (Javascript)
+import           Text.Lucius (Css)
+import           Yesod.Core
+
+getHomeR :: LiteHandler Html
+getHomeR = giveUrlRenderer $
+    [hamlet|
+        $doctype 5
+        <html>
+            <head>
+                <title>Hi There!
+                <link rel=stylesheet href=/style.css>
+                <script src=/script.js>
+            <body>
+                <h1>Hello World!
+    |]
+
+getStyleR :: LiteHandler Css
+getStyleR = giveUrlRenderer [lucius|h1 { color: red }|]
+
+getScriptR :: LiteHandler Javascript
+getScriptR = giveUrlRenderer [julius|alert('Yay, Javascript works too!');|]
+
+main :: IO ()
+main = warp 3000 $ liteApp $ do
+    dispatchTo getHomeR
+    onStatic (pack "style.css") $ dispatchTo getStyleR
+    onStatic (pack "script.js") $ dispatchTo getScriptR
+----
+
+=== URL rendering function
+
+Likely the most confusing part of this is the +giveUrlRenderer+ calls. This
+gets into one of the most powerful features of Yesod: type-safe URLs. If you
+notice in our HTML, we're providing links to the CSS and Javascript URLs via
+strings. This leads to a duplication of that information, as in our +main+
+function we have to provide those strings a second time. This is very fragile:
+our codebase is one refactor away from having broken links.
+
+The recommended approach instead would be to use our type-safe URL datatype in
+our template instead of including explicit strings. As mentioned above,
++LiteApp+ doesn't provide any meaningful type-safe URLs, so we don't have that
+option here. But if you use the Template Haskell generators, you get type-safe
+URLs for free.
+
+In any event, the Shakespearean templates all expect to receive a function to
+handle the rendering of a type-safe URL. Since we don't actually use any
+type-safe URLs, just about any function would work here (the function will be
+ignored entirely), but +giveUrlRenderer+ is a convenient way of doing this.
+
+As we'll see next, +giveUrlRenderer+ isn't really needed most of the time,
+since Widgets end up providing the renderer function for us automatically.
+
+== Widgets
+
+Dealing with HTML, CSS and Javascript as individual components can be nice in
+many cases. However, when you want to build up reusable components for a page,
+it can get in the way of composability. If you want more motivation for why
+widgets are useful, please see the widget chapter. For now, let's just dig into
+using them.
+
+[source, haskell]
+----
+{-# LANGUAGE QuasiQuotes #-}
+import           Yesod.Core
+
+getHomeR :: LiteHandler Html
+getHomeR = defaultLayout $ do
+    setTitle $ toHtml "Hi There!"
+    [whamlet|<h1>Hello World!|]
+    toWidget [lucius|h1 { color: red }|]
+    toWidget [julius|alert('Yay, Javascript works too!');|]
+
+main :: IO ()
+main = warp 3000 $ liteApp $ dispatchTo getHomeR
+----
+
+This is the same example as above, but we've now condensed it into a single
+handler. Yesod will automatically handle providing the CSS and Javascript to
+the HTML. By default, it will place them in +style+ and +script+ tags in the
++head+ and +body+ of the page, respectively, but Yesod provides many
+customization settings to do other things (such as automatically creating
+temporary static files and linking to them).
+
+Widgets also have another advantage. The +defaultLayout+ function is a member
+of the +Yesod+ typeclass, and can be modified to provide a customized
+look-and-feel for your website. Many built-in pieces of Yesod, such as error
+messages, take advantage of the widget system, so by using widgets, you get a
+consistent feel throughout your site.
+
+== Forms
+
+FIXME
+
+== Persistent
+
+FIXME
+
+== WAI middlewares
+
+FIXME
+
+These are functions of type +type Middleware = Application -> Application+, and they do some kind of arbitrary transformation to an application, such as enabling GZIP compression or logging requests.

@@ -27,16 +27,20 @@ Persistent follows the guiding principles of type safety and concise,
 declarative syntax. Some other nice features are:
 
 * Database-agnostic. There is first class support for PostgreSQL, SQLite, MySQL
-  and MongoDB, with experimental CouchDB support in the works.
+  and MongoDB, with experimental Redis support.
 
-* By being non-relational in nature, we simultaneously are able to support a
-  wider number of storage layers and are not constrained by some of the
-  performance bottlenecks incurred through joins.
+* Convenient data modeling.
+  Persistent lets you model relationships and use them in type-safe ways.
+  The default type-safe persistent API does not support joins, allowing support for a
+  wider number of storage layers.
+  Joins and other SQL specific functionality can be achieved through using
+  a raw SQL layer (with very little type safety).
+  An additional library, link:http://hackage.haskell.org/package/esqueleto[Esqueleto],
+  builds on top of the Persistent data model, adding type-safe joins and SQL functionality.
 
-* A major source of frustration in dealing with SQL databases is changes to the
-  schema. Persistent can automatically perform database migrations.
+* Automatically perform database migrations
 
-While Persistent was originally written to work well with Yesod, it is quite
+Persistent works well with Yesod, but it is quite
 usable on its own as a standalone library. Most of this chapter will address
 Persistent on its own.
 
@@ -44,6 +48,7 @@ Persistent on its own.
 
 [source, haskell]
 ----
+{-# LANGUAGE EmptyDataDecls    #-}
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE GADTs             #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -116,7 +121,7 @@ data store, and everything is generally awesome. Well, until:
 
 * You want to pull data from the database, and the database layer gives you the
   data in an untyped format.
-* You want to find everyone older than 32, and you accidently write "thirtytwo"
+* You want to find everyone older than 32, and you accidentally write "thirtytwo"
   in your SQL statement. Guess what: that will compile just fine, and you won't
   find out you have a problem until runtime.
 * You decide you want to find the first 10 people alphabetically. No problem...
@@ -165,7 +170,7 @@ data PersistValue = PersistText Text
 ----
 
 Each Persistent backend needs to know how to translate the relevant values into
-something the database can understand. However, it would be awkward do have to
+something the database can understand. However, it would be awkward to have to
 express all of our data simply in terms of these basic types. The next layer is
 the +PersistField+ typeclass, which defines how an arbitrary Haskell datatype
 can be marshaled to and from a +PersistValue+. A +PersistField+ correlates to a
@@ -190,7 +195,7 @@ we have the following correspondence between Persistent and SQL:
 
 In order to ensure that the PersistEntity instances match up properly with your
 Haskell datatypes, Persistent takes responsibility for both. This is also good
-from a DRY (Don't Repeat Yourslef) perspective: you only need to define your
+from a DRY (Don't Repeat Yourself) perspective: you only need to define your
 entities once. Let's see a quick example:
 
 [source, haskell]
@@ -212,7 +217,7 @@ Person
 We use a combination of Template Haskell and Quasi-Quotation (like when
 defining routes): +persistLowerCase+ is a quasi-quoter which converts a
 whitespace-sensitive syntax into a list of entity definitions. "Lower case"
-refers to the format generated table names are created. In this scheme, an
+refers to the format of the generated table names. In this scheme, an
 entity like +SomeTable+ would become the SQL table +some_table+. You can also
 declare your entities in a separate file using +persistFileWith+. +mkPersist+
 takes that list of entities and declares:
@@ -765,8 +770,8 @@ data Person = Person { personId :: Maybe PersonId, name :: String }
 
 I definitely prefer +insert $ Person Nothing "Michael"+ to +insert $ Person
 undefined "Michael"+. And now our types will be much simpler, right? For
-example, +selectList+ could return a simple +\[Person\]+ instead of that ugly
-+\[Entity SqlPersist Person\]+.
+example, +selectList+ could return a simple +[Person]+ instead of that ugly
++[Entity SqlPersist Person]+.
 
 The problem is that the "ugliness" is incredibly useful. Having +Entity Person+
 makes it obvious, at the type level, that we're dealing with a value that
@@ -988,7 +993,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Person sql=the-person-table id=numeric_id
     firstName String sql=first_name
     lastName String sql=fldLastName
-    age Int Gt Desc "sql=The Age of the Person"
+    age Int "sql=The Age of the Person"
     UniqueName firstName lastName
     deriving Show
 |]
@@ -1020,7 +1025,7 @@ Person
     name String
     deriving Show
 Car
-    ownerId PersonId Eq
+    ownerId PersonId
     name String
     deriving Show
 |]
@@ -1084,7 +1089,7 @@ So far, we've spoken about +Person+ and +PersonId+ without really explaining
 what they are. In the simplest sense, for a SQL-only system, the +PersonId+
 could just be +type PersonId = Int64+. However, that means there is nothing
 binding a +PersonId+ at the type level to the +Person+ entity. As a result, you
-could accidently use a +PersonId+ and get a +Car+. In order to model this
+could accidentally use a +PersonId+ and get a +Car+. In order to model this
 relationship, we use phantom types. So, our next naive step would be:
 
 [source, haskell]
@@ -1210,7 +1215,7 @@ this exists, but it shouldn't affect you on a day-to-day basis.
 
 === Custom Fields
 
-Occassionally, you will want to define a custom field to be used in your
+Occasionally, you will want to define a custom field to be used in your
 datastore. The most common case is an enumeration, such as employment status.
 For this, Persistent provides a helper Template Haskell function:
 
@@ -1332,7 +1337,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Person
     firstName String
     lastName String
-    age Int Gt Desc
+    age Int
     deriving Show
 |]
 
@@ -1393,8 +1398,6 @@ main = withSqlitePool "test.db3" openConnectionCount $ \pool -> do
 There are two important pieces here for general use. +runDB+ is used to run a
 DB action from within a +Handler+. Within the +runDB+, you can use any of the
 functions we've spoken about so far, such as +insert+ and +selectList+.
-
-foo
 
 [NOTE]
 ====

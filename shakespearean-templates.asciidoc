@@ -143,7 +143,7 @@ blaze-html values. Also, we get to take advantage of blaze-html's amazing
 performance.
 
 Similarly, we have +Css+/+ToCss+, as well as +Javascript+/+ToJavascript+. These
-provide some compile-time sanity checks that we haven't accidently stuck some
+provide some compile-time sanity checks that we haven't accidentally stuck some
 HTML in our CSS.
 
 [NOTE]
@@ -315,7 +315,7 @@ characters:
 
 The whitespace escape rules are actually quite simple:
 
-. If the first non-space character in a line is a backslash, the backslash is ignored.
+. If the first non-space character in a line is a backslash, the backslash is ignored. (Note: this will also cause any tag on this line to be treated as plain text.)
 
 . If the last character in a line is a hash, it is ignored.
 
@@ -363,7 +363,7 @@ the +toHtml+ function is applied to the result, meaning _any_ instance of
 -- It will be explained later.
 {-# LANGUAGE QuasiQuotes #-}
 import Text.Hamlet (shamlet)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 import Data.Char (toLower)
 import Data.List (sort)
 
@@ -395,7 +395,7 @@ of these.
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 import Text.Hamlet (HtmlUrl, hamlet)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 import Data.Text (Text)
 
 data MyRoute = Home
@@ -565,7 +565,7 @@ in a few more features.
 * A set of CSS properties can be created as a mixin, and reused in multiple
   declarations. 
 
-Starting the with second point: let's say you want to have some special styling
+Starting with the second point: let's say you want to have some special styling
 for some tags within your +article+. In plain ol' CSS, you'd have to write:
 
 [source, css]
@@ -699,7 +699,7 @@ syntax. You can see a simple example of each in the following code snippets.
 {-# LANGUAGE QuasiQuotes #-}
 import Text.Hamlet (HtmlUrl, hamlet)
 import Data.Text (Text)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 
 data MyRoute = Home | Time | Stylesheet
 
@@ -817,6 +817,8 @@ renderEnglish (Apples i) = T.concat ["You bought ", T.pack $ show i, " apples."]
 ----
 
 Now we want to interpolate those Msg values directly in the template. For that, we use underscore interpolation.
+
+[source, hamlet]
 ----
 $doctype 5
 <html>
@@ -852,8 +854,8 @@ program is:
 import Data.Text (Text)
 import qualified Data.Text as T
 import Text.Hamlet (HtmlUrlI18n, ihamlet)
-import Text.Blaze (toHtml)
-import Text.Blaze.Renderer.String (renderHtml)
+import Text.Blaze.Html (toHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
 
 data MyRoute = Home | Time | Stylesheet
 

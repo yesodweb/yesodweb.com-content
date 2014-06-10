@@ -149,7 +149,7 @@ getReceiveR = do
 
 We use +dupChan+ so that each new connection receives its own copy of newly
 generated messages. This is a standard method in concurrent Haskell of creating
-braodcast channels. The last three lines of our function expose the underlying
+broadcast channels. The last three lines of our function expose the underlying
 +wai-eventsource+ application as a Yesod handler, by getting the raw WAI
 request, running the application on that request, and then sending the raw WAI
 response.
@@ -183,8 +183,8 @@ functionality. By creating this as a widget, we can include all of our HTML,
 CSS, and Javascript as a reusable component.
 
 Our widget will need to take in one argument: a function to convert a +Chat+
-subsite URL into a master site URL. The reasoning here is that a application
-developet could place the chat subsite anywhere in the URL structure, and this
+subsite URL into a master site URL. The reasoning here is that an application
+developer could place the chat subsite anywhere in the URL structure, and this
 widget needs to be able to generate Javascript which will point at the correct
 URLs. Let's start off our widget:
 
@@ -198,7 +198,7 @@ chatWidget toMaster = do
 
 Next, we're going to generate some identifiers to be used by our widget. It's
 always good practice to let Yesod generate unique identifiers for you instead
-of creating them manually to avoid name collissions.
+of creating them manually to avoid name collisions.
 
 [source, haskell]
 ----

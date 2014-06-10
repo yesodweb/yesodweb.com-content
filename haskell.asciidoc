@@ -42,7 +42,7 @@ type:
   make your code more self-documenting.
 
 * A +newtype+ declaration such as +newtype Make = Make Text+. In this case,
-  you cannot accidently use a +Text+ in place of a +Make+; the compiler
+  you cannot accidentally use a +Text+ in place of a +Make+; the compiler
   will stop you. The newtype wrapper always disappears during compilation,
   and will introduce no overhead.
 
@@ -110,24 +110,23 @@ Regardless of how you've installed your tools, you should sure to put +cabal+'s
 bin folder in your +PATH+ variable. On Mac and Linux, this will be
 +$HOME/.cabal/bin+ and on Windows it will be +%APPDATA%\cabal\bin+.
 
-+cabal+ has lots of different options available, but for now, just try out two
++cabal+ has lots of different options available, but for now, just try out these
 commands:
 
 
 * +cabal update+ will download the most recent list of packages from Hackage.
 
-* +cabal install yesod+ will install Yesod and all its dependencies.
+* +cabal install yesod-platform+ will install Yesod and all its dependencies.
+
+* +cabal install yesod-bin+ will install the Yesod command line tool.
+
+For more up-to-date information on installing the latest version of Yesod,
+please refer to the link:$$http://www.yesodweb.com/page/quickstart$$[quick
+start guide].
 
 [NOTE]
-====
-Many people in the community prefer to perform sandboxed builds of their
-Haskell packages, which prevents your install Yesod from breaking existing
-packages, or packages you install in the future from breaking your Yesod
-install. I won't go into details on how to use these in the book, but the two
-most commonly used tools are
-link:$$http://hackage.haskell.org/package/cabal-dev$$[cabal-dev] and
-link:$$http://hackage.haskell.org/package/hsenv$$[hsenv].
-====
+You probably want to perform a sandboxed install of your Yesod project
+by using the cabal sandbox feature by running the command +cabal sandbox init+
 
 [[I_sect12_d1e628]]
 
@@ -166,7 +165,7 @@ documentation].
 === Overloaded Strings
 
 What's the type of +"hello"+? Traditionally, it's +String+, which is defined as
-+type String = \[Char\]+. Unfortunately, there are a number of limitations with
++type String = [Char]+. Unfortunately, there are a number of limitations with
 this:
 
 * It's a very inefficient implementation of textual data. We need to allocate
