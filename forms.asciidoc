@@ -838,8 +838,6 @@ Let's see an example of using these two functions:
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
-module Case where
-
 import           Control.Applicative
 import           Data.Text           (Text)
 import           Data.Time

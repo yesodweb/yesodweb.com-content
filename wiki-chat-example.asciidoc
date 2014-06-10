@@ -16,6 +16,7 @@ participants of a chat. This ends up looking like:
 
 [source, haskell]
 ----
+-- @Chat/Data.hs
 module Chat.Data where
 
 import           Control.Concurrent.Chan (Chan)
@@ -33,6 +34,7 @@ the stream of messages.
 
 [source, haskell]
 ----
+-- @Chat/Data.hs
 mkYesodSubData "Chat" [parseRoutes|
 /send SendR POST
 /recv ReceiveR GET
@@ -57,6 +59,7 @@ the necessary functionality. Let's have a look at our +YesodChat+ typeclass:
 
 [source, haskell]
 ----
+-- @Chat/Data.hs
 class (Yesod master, RenderMessage master FormMessage)
         => YesodChat master where
     getUserName :: HandlerT master IO Text
@@ -86,6 +89,7 @@ with:
 
 [source, haskell]
 ----
+-- @Chat/Data.hs
 type ChatHandler a =
     forall master. YesodChat master =>
     HandlerT Chat (HandlerT master IO) a
@@ -104,6 +108,7 @@ the implementation, and then discuss those +lift+ usages:
 
 [source, haskell]
 ----
+-- @Chat/Data.hs
 postSendR :: ChatHandler ()
 postSendR = do
     from <- lift getUserName
@@ -138,6 +143,7 @@ The receiving side is similarly simple:
 
 [source, haskell]
 ----
+-- @Chat/Data.hs
 getReceiveR :: ChatHandler ()
 getReceiveR = do
     Chat chan0 <- getYesod
@@ -165,6 +171,7 @@ site. The formula we use is the following:
 
 [source, haskell]
 ----
+-- @Chat/Data.hs
 instance YesodChat master => YesodSubDispatch Chat (HandlerT master IO) where
     yesodSubDispatch = $(mkYesodSubDispatch resourcesChat)
 ----
@@ -190,6 +197,7 @@ URLs. Let's start off our widget:
 
 [source, haskell]
 ----
+-- @Chat/Data.hs
 chatWidget :: YesodChat master
            => (Route Chat -> Route master)
            -> WidgetT master IO ()
@@ -202,6 +210,7 @@ of creating them manually to avoid name collisions.
 
 [source, haskell]
 ----
+-- @Chat/Data.hs
     chat <- newIdent   -- the containing div
     output <- newIdent -- the box containing the messages
     input <- newIdent  -- input field from the user
@@ -213,6 +222,7 @@ function lives in the +Handler+ monad, we need to use +handlerToWidget+:
 
 [source, haskell]
 ----
+-- @Chat/Data.hs
     ili <- handlerToWidget isLoggedIn  -- check if we're already logged in
 ----
 
@@ -222,6 +232,7 @@ client-side code wrapped in a Widget:
 
 [source, haskell]
 ----
+-- @Chat/Data.hs
     if ili
         then do
             -- Logged in: show the widget
@@ -283,6 +294,7 @@ chat app.
 
 [source, haskell]
 ----
+-- @Chat/Data.hs
         else do
             -- User isn't logged in, give a not-logged-in message.
             master <- getYesod

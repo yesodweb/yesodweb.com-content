@@ -268,7 +268,7 @@ Let's first look at +getResults+:
 ----
 getResults :: Text -> Handler [Result]
 getResults qstring = do
-    sphinxRes' <- liftIO $ S.query config "searcher" qstring
+    sphinxRes' <- liftIO $ S.query config "searcher" $ T.unpack qstring
     case sphinxRes' of
         ST.Ok sphinxRes -> do
             let docids = map (Key . PersistInt64 . ST.documentId) $ ST.matches sphinxRes
@@ -309,12 +309,12 @@ getResult :: DocId -> Doc -> Text -> IO Result
 getResult docid doc qstring = do
     excerpt' <- S.buildExcerpts
         excerptConfig
-        [escape $ docContent doc]
+        [T.unpack $ escape $ docContent doc]
         "searcher"
-        qstring
+        (T.unpack qstring)
     let excerpt =
             case excerpt' of
-                ST.Ok bss -> preEscapedToHtml $ mconcat bss
+                ST.Ok bss -> preEscapedToHtml $ decodeUtf8 $ mconcat bss
                 _ -> ""
     return Result
         { resultId = docid
@@ -528,6 +528,7 @@ import           Data.Maybe                              (catMaybes)
 import           Data.Monoid                             (mconcat)
 import           Data.Text                               (Text)
 import qualified Data.Text                               as T
+import           Data.Text.Lazy.Encoding                 (decodeUtf8)
 import qualified Data.XML.Types                          as X
 import           Database.Persist.Sqlite
 import           Text.Blaze.Html                         (preEscapedToHtml)
@@ -637,12 +638,12 @@ getResult :: DocId -> Doc -> Text -> IO Result
 getResult docid doc qstring = do
     excerpt' <- S.buildExcerpts
         excerptConfig
-        [escape $ docContent doc]
+        [T.unpack $ escape $ docContent doc]
         "searcher"
-        qstring
+        (T.unpack qstring)
     let excerpt =
             case excerpt' of
-                ST.Ok bss -> preEscapedToHtml $ mconcat bss
+                ST.Ok bss -> preEscapedToHtml $ decodeUtf8 $ mconcat bss
                 _ -> ""
     return Result
         { resultId = docid
@@ -663,7 +664,7 @@ escape =
 
 getResults :: Text -> Handler [Result]
 getResults qstring = do
-    sphinxRes' <- liftIO $ S.query config "searcher" qstring
+    sphinxRes' <- liftIO $ S.query config "searcher" $ T.unpack qstring
     case sphinxRes' of
         ST.Ok sphinxRes -> do
             let docids = map (Key . PersistInt64 . ST.documentId) $ ST.matches sphinxRes
