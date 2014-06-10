@@ -749,12 +749,12 @@ template = $(luciusFileDebug "template.lucius")
 
 main :: IO ()
 main = TLIO.putStrLn $ renderCss $ template render
+----
 
-{- @template.lucius
-
+[source, lucius]
+----
+-- @template.lucius
 foo { bar: baz }
-
--}
 ----
 
 The naming scheme for the functions is very consistent.

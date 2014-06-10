@@ -83,8 +83,8 @@ The code ends up being just as simple as those steps imply:
 
 [source, haskell]
 ----
-main :: IO ()
-main = do
+go :: IO ()
+go = do
     rawMarkdown <- TLIO.readFile "homepage.md"
     countRef <- newIORef 0
     warp 3000 App

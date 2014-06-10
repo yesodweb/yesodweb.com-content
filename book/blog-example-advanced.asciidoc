@@ -113,13 +113,14 @@ language.
 
 [source, haskell]
 ----
-mkMessage "Blog" "messages" "en"
+mkMessage "Blog" "blog-messages" "en"
 ----
 
-Our +messages/en.msg+ file contains the following content:
+Our +blog-messages/en.msg+ file contains the following content:
 
 [source, messages]
 ----
+-- @blog-messages/en.msg
 NotAnAdmin: You must be an administrator to access this page.
 
 WelcomeHomepage: Welcome to the homepage
