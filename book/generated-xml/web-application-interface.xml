@@ -6,6 +6,8 @@
 <article lang="en">
 <appendix id="web-application-interface_web_application_interface">
 <title>Web Application Interface</title>
+<note><simpara>This chapter currently covers WAI version 2.1. It will be updated to
+cover WAI version 3.0 in the next iteration of the book (covering Yesod 1.4).</simpara></note>
 <simpara>It is a problem almost every language used for web development has dealt with:
 the low level interface between the web server and the application. The
 earliest example of a solution is the venerable and battle-worn CGI (CGI),
