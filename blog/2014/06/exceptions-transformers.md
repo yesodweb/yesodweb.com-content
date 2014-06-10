@@ -57,7 +57,7 @@ there's no way to recover the thrown exception from a `Nothing`.
 
 The final typeclass is `MonadMask`, which allows you to guarantee that certain actions are run, even in the presence of exceptions (both synchronous and asynchronous). In order to provide that guarantee, the monad stack must be able to control its flow of execution. In particular, this excludes instances for two categories of monads:
 
-* Continuation based monads, since the flow of execution make ignore a callback entirely, or call it multiple times. (For more information, see [my previous blog post](http://www.yesodweb.com/blog/2014/05/exceptions-cont-monads).)
+* Continuation based monads, since the flow of execution may ignore a callback entirely, or call it multiple times. (For more information, see [my previous blog post](http://www.yesodweb.com/blog/2014/05/exceptions-cont-monads).)
 * Monads with multiple exit points, such as ErrorT over IO.
 
 And this is the big advantage of the exceptions package vs MonadCatchIO: by
