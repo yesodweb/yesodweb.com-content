@@ -957,13 +957,192 @@ use +fromPathPiece+ to convert the parameter for +getFibR+ from +Text+ to an
 +Int+, so any invalid parameter will be got by Yesod itself. It's just one less
 piece of checking that you have to perform.
 
-== Widgets
-
-FIXME
-
 == Shakespeare
 
-FIXME
+While generating plain text pages can be fun, it's hardly what one normally
+expects from a web framework. As you'd hope, Yesod comes built in with support
+for generating HTML, CSS and Javascript as well.
+
+Before we get into templating languages, let's do it the raw, low-level way,
+and then build up to something a bit more pleasant.
+
+[source, haskell]
+----
+import           Data.Text  (pack)
+import           Yesod.Core
+
+getHomeR :: LiteHandler TypedContent
+getHomeR = return $ TypedContent typeHtml $ toContent
+    "<html><head><title>Hi There!</title>\
+    \<link rel='stylesheet' href='/style.css'>\
+    \<script src='/script.js'></script></head>\
+    \<body><h1>Hello World!</h1></body></html>"
+
+getStyleR :: LiteHandler TypedContent
+getStyleR = return $ TypedContent typeCss $ toContent
+    "h1 { color: red }"
+
+getScriptR :: LiteHandler TypedContent
+getScriptR = return $ TypedContent typeJavascript $ toContent
+    "alert('Yay, Javascript works too!');"
+
+main :: IO ()
+main = warp 3000 $ liteApp $ do
+    dispatchTo getHomeR
+    onStatic (pack "style.css") $ dispatchTo getStyleR
+    onStatic (pack "script.js") $ dispatchTo getScriptR
+----
+
+We're just reusing all of the +TypedContent+ stuff we've already learnt. We now
+have three separate routes, providing HTML, CSS and Javascript. We write our
+content as ++String++s, convert them to +Content+ using +toContent+, then wrap
+them with a +TypedContent+ constructor to give them the appropriate
+content-type headers.
+
+But as usual, we can do better. Dealing with ++String++s is not very efficient,
+and it's tedious to have to manually put in the content type all the time. But
+we already know the solution to those problems: use the +Html+ datatype from
++blaze-html+. Let's convert our +getHomeR+ function to use it:
+
+[source, haskell]
+----
+import           Data.Text                   (pack)
+import           Text.Blaze.Html5            (toValue, (!))
+import qualified Text.Blaze.Html5            as H
+import qualified Text.Blaze.Html5.Attributes as A
+import           Yesod.Core
+
+getHomeR :: LiteHandler Html
+getHomeR = return $ H.docTypeHtml $ do
+    H.head $ do
+        H.title $ toHtml "Hi There!"
+        H.link ! A.rel (toValue "stylesheet") ! A.href (toValue "/style.css")
+        H.script ! A.src (toValue "/script.js") $ return ()
+    H.body $ do
+        H.h1 $ toHtml "Hello World!"
+
+getStyleR :: LiteHandler TypedContent
+getStyleR = return $ TypedContent typeCss $ toContent
+    "h1 { color: red }"
+
+getScriptR :: LiteHandler TypedContent
+getScriptR = return $ TypedContent typeJavascript $ toContent
+    "alert('Yay, Javascript works too!');"
+
+main :: IO ()
+main = warp 3000 $ liteApp $ do
+    dispatchTo getHomeR
+    onStatic (pack "style.css") $ dispatchTo getStyleR
+    onStatic (pack "script.js") $ dispatchTo getScriptR
+----
+
+Ahh, far nicer. +blaze-html+ provides a convenient combinator library, and will
+execute far faster in most cases than whatever +String+ concatenation you might
+attempt.
+
+If you're happy with +blaze-html+ combinators, by all means use them. However,
+many people like to use a more specialized templating language. Yesod's
+standard provider for this is the Shakespearean languages: Hamlet, Lucius, and
+Julius. You are by all means welcome to use a different system if so desired,
+the only requirement is that you can a +Content+ value from the template.
+
+Since Shakespearean templates on compile-time checked, their usage requires
+either quasiquotation or Template Haskell. We'll go for the former approach
+here. Please see the Shakespeare chapter in the book for more information.
+
+[source, haskell]
+----
+{-# LANGUAGE QuasiQuotes #-}
+import           Data.Text   (Text, pack)
+import           Text.Julius (Javascript)
+import           Text.Lucius (Css)
+import           Yesod.Core
+
+getHomeR :: LiteHandler Html
+getHomeR = giveUrlRenderer $
+    [hamlet|
+        $doctype 5
+        <html>
+            <head>
+                <title>Hi There!
+                <link rel=stylesheet href=/style.css>
+                <script src=/script.js>
+            <body>
+                <h1>Hello World!
+    |]
+
+getStyleR :: LiteHandler Css
+getStyleR = giveUrlRenderer [lucius|h1 { color: red }|]
+
+getScriptR :: LiteHandler Javascript
+getScriptR = giveUrlRenderer [julius|alert('Yay, Javascript works too!');|]
+
+main :: IO ()
+main = warp 3000 $ liteApp $ do
+    dispatchTo getHomeR
+    onStatic (pack "style.css") $ dispatchTo getStyleR
+    onStatic (pack "script.js") $ dispatchTo getScriptR
+----
+
+=== URL rendering function
+
+Likely the most confusing part of this is the +giveUrlRenderer+ calls. This
+gets into one of the most powerful features of Yesod: type-safe URLs. If you
+notice in our HTML, we're providing links to the CSS and Javascript URLs via
+strings. This leads to a duplication of that information, as in our +main+
+function we have to provide those strings a second time. This is very fragile:
+our codebase is one refactor away from having broken links.
+
+The recommended approach instead would be to use our type-safe URL datatype in
+our template instead of including explicit strings. As mentioned above,
++LiteApp+ doesn't provide any meaningful type-safe URLs, so we don't have that
+option here. But if you use the Template Haskell generators, you get type-safe
+URLs for free.
+
+In any event, the Shakespearean templates all expect to receive a function to
+handle the rendering of a type-safe URL. Since we don't actually use any
+type-safe URLs, just about any function would work here (the function will be
+ignored entirely), but +giveUrlRenderer+ is a convenient way of doing this.
+
+As we'll see next, +giveUrlRenderer+ isn't really needed most of the time,
+since Widgets end up providing the renderer function for us automatically.
+
+== Widgets
+
+Dealing with HTML, CSS and Javascript as individual components can be nice in
+many cases. However, when you want to build up reusable components for a page,
+it can get in the way of composability. If you want more motivation for why
+widgets are useful, please see the widget chapter. For now, let's just dig into
+using them.
+
+[source, haskell]
+----
+{-# LANGUAGE QuasiQuotes #-}
+import           Yesod.Core
+
+getHomeR :: LiteHandler Html
+getHomeR = defaultLayout $ do
+    setTitle $ toHtml "Hi There!"
+    [whamlet|<h1>Hello World!|]
+    toWidget [lucius|h1 { color: red }|]
+    toWidget [julius|alert('Yay, Javascript works too!');|]
+
+main :: IO ()
+main = warp 3000 $ liteApp $ dispatchTo getHomeR
+----
+
+This is the same example as above, but we've now condensed it into a single
+handler. Yesod will automatically handle providing the CSS and Javascript to
+the HTML. By default, it will place them in +style+ and +script+ tags in the
++head+ and +body+ of the page, respectively, but Yesod provides many
+customization settings to do other things (such as automatically creating
+temporary static files and linking to them).
+
+Widgets also have another advantage. The +defaultLayout+ function is a member
+of the +Yesod+ typeclass, and can be modified to provide a customized
+look-and-feel for your website. Many built-in pieces of Yesod, such as error
+messages, take advantage of the widget system, so by using widgets, you get a
+consistent feel throughout your site.
 
 == Forms
 
