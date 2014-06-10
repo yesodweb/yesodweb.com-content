@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2014-06-10</date>
-</articleinfo>
 <section id="shakespearean-templates_shakespearean_templates">
 <title>Shakespearean Templates</title>
 <simpara>Yesod uses the Shakespearean family of template languages as its standard

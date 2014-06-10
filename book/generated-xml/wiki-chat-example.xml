@@ -4,9 +4,6 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
-<articleinfo>
-    <date>2014-06-10</date>
-</articleinfo>
 <section id="wiki-chat-example_wiki_markdown_chat_subsite_event_source">
 <title>Wiki: markdown, chat subsite, event source</title>
 <simpara>This example will tie together a few different ideas. We&#8217;ll start with a chat
