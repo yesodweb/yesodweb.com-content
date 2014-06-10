@@ -4,6 +4,9 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
+<articleinfo>
+    <date>2014-06-10</date>
+</articleinfo>
 <appendix id="http-conduit_http_conduit">
 <title>http-conduit</title>
 <simpara>Most of Yesod is about serving content over HTTP. But that&#8217;s only half the
@@ -24,6 +27,7 @@ import Data.Conduit.Binary (sinkFile)
 
 import qualified Data.ByteString.Lazy as L
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 
 main :: IO ()
 main = do

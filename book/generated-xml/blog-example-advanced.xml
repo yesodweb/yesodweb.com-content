@@ -4,6 +4,9 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
+<articleinfo>
+    <date>2014-06-10</date>
+</articleinfo>
 <section id="blog-example-advanced_blog_i18n_authentication_authorization_and_database">
 <title>Blog: i18n, authentication, authorization, and database</title>
 <simpara>This is a simple blog app. It allows an admin to add blog posts via a rich text
@@ -74,9 +77,10 @@ translated messages. There is a single file for each language, and each file is
 named based on the language code (e.g., en, es, de-DE) and placed in that
 folder. We also specify the main language file (here, "en") as a default
 language.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">mkMessage "Blog" "messages" "en"</programlisting>
-<simpara>Our <literal>messages/en.msg</literal> file contains the following content:</simpara>
-<programlisting language="messages" linenumbering="unnumbered">NotAnAdmin: You must be an administrator to access this page.
+<programlisting language="haskell" linenumbering="unnumbered">mkMessage "Blog" "blog-messages" "en"</programlisting>
+<simpara>Our <literal>blog-messages/en.msg</literal> file contains the following content:</simpara>
+<programlisting language="messages" linenumbering="unnumbered">-- @blog-messages/en.msg
+NotAnAdmin: You must be an administrator to access this page.
 
 WelcomeHomepage: Welcome to the homepage
 SeeArchive: See the archive

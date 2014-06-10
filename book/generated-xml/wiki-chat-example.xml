@@ -4,6 +4,9 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
+<articleinfo>
+    <date>2014-06-10</date>
+</articleinfo>
 <section id="wiki-chat-example_wiki_markdown_chat_subsite_event_source">
 <title>Wiki: markdown, chat subsite, event source</title>
 <simpara>This example will tie together a few different ideas. We&#8217;ll start with a chat
@@ -18,7 +21,8 @@ Haskell Center</ulink>.</simpara>
 subsite, the same as we would do for a normal Yesod application. In our case,
 we want to keep a channel of all the events to be sent to the individual
 participants of a chat. This ends up looking like:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">module Chat.Data where
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+module Chat.Data where
 
 import           Control.Concurrent.Chan (Chan)
 import           Network.Wai.EventSource (ServerEvent)
@@ -30,7 +34,8 @@ data Chat = Chat (Chan ServerEvent)</programlisting>
 <simpara>We also need to define our subsite routes in the same module. We need to have
 two commands: one to send a new message to all users, and another to receive
 the stream of messages.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">mkYesodSubData "Chat" [parseRoutes|
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+mkYesodSubData "Chat" [parseRoutes|
 /send SendR POST
 /recv ReceiveR GET
 |]</programlisting>
@@ -48,7 +53,8 @@ subsite needs to be able to query whether the current user is logged into the
 site, and to get the user&#8217;s name.</simpara>
 <simpara>The way we represent this concept is to define a typeclass that encapsulates
 the necessary functionality. Let&#8217;s have a look at our <literal>YesodChat</literal> typeclass:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">class (Yesod master, RenderMessage master FormMessage)
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+class (Yesod master, RenderMessage master FormMessage)
         =&gt; YesodChat master where
     getUserName :: HandlerT master IO Text
     isLoggedIn :: HandlerT master IO Bool</programlisting>
@@ -79,7 +85,8 @@ subsite situation, we end up with two layers of <literal>HandlerT</literal> tran
 for the subsite, and one for the master site. We want to have a synonym that
 works for any master site which is an instance of <literal>YesodChat</literal>, so we end up
 with:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">type ChatHandler a =
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+type ChatHandler a =
     forall master. YesodChat master =&gt;
     HandlerT Chat (HandlerT master IO) a</programlisting>
 <simpara>Now that we have our machinery out of the way, it&#8217;s time to write our subsite
@@ -104,7 +111,8 @@ Write the message to the <literal>Chan</literal>.
 </orderedlist>
 <simpara>The trickiest bit of all this code is to know when to use <literal>lift</literal>. Let&#8217;s look at
 the implementation, and then discuss those <literal>lift</literal> usages:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">postSendR :: ChatHandler ()
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+postSendR :: ChatHandler ()
 postSendR = do
     from &lt;- lift getUserName
     body &lt;- lift $ runInputGet $ ireq textField "message"
@@ -129,7 +137,8 @@ action, we use <literal>liftIO</literal>. <literal>ServerEvent</literal> is part
 package, and is the means by which we&#8217;re providing server-sent events in this
 example.</simpara>
 <simpara>The receiving side is similarly simple:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">getReceiveR :: ChatHandler ()
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+getReceiveR :: ChatHandler ()
 getReceiveR = do
     Chat chan0 &lt;- getYesod
     chan &lt;- liftIO $ dupChan chan0
@@ -149,7 +158,8 @@ normal application, dispatching is handled by calling <literal>mkYesod</literal>
 the appropriate <literal>YesodDispatch</literal> instance. In subsites, things are a little bit
 more complicated, since you&#8217;ll often want to place constraints on the master
 site. The formula we use is the following:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">instance YesodChat master =&gt; YesodSubDispatch Chat (HandlerT master IO) where
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+instance YesodChat master =&gt; YesodSubDispatch Chat (HandlerT master IO) where
     yesodSubDispatch = $(mkYesodSubDispatch resourcesChat)</programlisting>
 <simpara>We&#8217;re stating that our <literal>Chat</literal> subsite can live on top of any master site which
 is an instance of <literal>YesodChat</literal>. We then use the <literal>mkYesodSubDispatch</literal> Template
@@ -168,24 +178,28 @@ subsite URL into a master site URL. The reasoning here is that an application
 developer could place the chat subsite anywhere in the URL structure, and this
 widget needs to be able to generate Javascript which will point at the correct
 URLs. Let&#8217;s start off our widget:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">chatWidget :: YesodChat master
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+chatWidget :: YesodChat master
            =&gt; (Route Chat -&gt; Route master)
            -&gt; WidgetT master IO ()
 chatWidget toMaster = do</programlisting>
 <simpara>Next, we&#8217;re going to generate some identifiers to be used by our widget. It&#8217;s
 always good practice to let Yesod generate unique identifiers for you instead
 of creating them manually to avoid name collisions.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">    chat &lt;- newIdent   -- the containing div
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+    chat &lt;- newIdent   -- the containing div
     output &lt;- newIdent -- the box containing the messages
     input &lt;- newIdent  -- input field from the user</programlisting>
 <simpara>And next we need to check if the user is logged in, using the <literal>isLoggedIn</literal>
 function in our <literal>YesodChat</literal> typeclass. Since we&#8217;re in a <literal>Widget</literal> and that
 function lives in the <literal>Handler</literal> monad, we need to use <literal>handlerToWidget</literal>:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">    ili &lt;- handlerToWidget isLoggedIn  -- check if we're already logged in</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+    ili &lt;- handlerToWidget isLoggedIn  -- check if we're already logged in</programlisting>
 <simpara>If the user is logged in, we want to display the chat box, style it with some
 CSS, and then make it interactive using some Javascript. This is mostly
 client-side code wrapped in a Widget:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">    if ili
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+    if ili
         then do
             -- Logged in: show the widget
             [whamlet|
@@ -241,7 +255,8 @@ client-side code wrapped in a Widget:</simpara>
             |]</programlisting>
 <simpara>And finally, if the user isn&#8217;t logged in, we&#8217;ll ask them to log in to use the
 chat app.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">        else do
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+        else do
             -- User isn't logged in, give a not-logged-in message.
             master &lt;- getYesod
             [whamlet|

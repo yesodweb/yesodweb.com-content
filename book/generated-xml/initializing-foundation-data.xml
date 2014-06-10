@@ -107,8 +107,8 @@ Create the visitor counter variable.
 </listitem>
 </orderedlist>
 <simpara>The code ends up being just as simple as those steps imply:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">main :: IO ()
-main = do
+<programlisting language="haskell" linenumbering="unnumbered">go :: IO ()
+go = do
     rawMarkdown &lt;- TLIO.readFile "homepage.md"
     countRef &lt;- newIORef 0
     warp 3000 App

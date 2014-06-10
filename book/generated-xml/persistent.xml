@@ -4,6 +4,9 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
+<articleinfo>
+    <date>2014-06-10</date>
+</articleinfo>
 <section id="persistent_persistent">
 <title>Persistent</title>
 <simpara>Forms deal with the boundary between the user and the application. Another
@@ -318,8 +321,28 @@ its constructors throughout Persistent, such as to ensure that when we apply a
 filter, the types of the filtering value match the field.</simpara>
 <simpara>We can use the generated <literal>Person</literal> type like any other Haskell type, and then
 pass it off to other Persistent functions.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">main = runSqlite ":memory:" $ do
-    michaelId &lt;- insert $ Person "Michael" 26
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls    #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE GADTs             #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Control.Monad.IO.Class  (liftIO)
+import           Database.Persist
+import           Database.Persist.Sqlite
+import           Database.Persist.TH
+
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+Person
+    name String
+    age Int Maybe
+    deriving Show
+|]
+
+main :: IO ()
+main = runSqlite ":memory:" $ do
+    michaelId &lt;- insert $ Person "Michael" $ Just 26
     michael &lt;- get michaelId
     liftIO $ print michael</programlisting>
 <simpara>We start off with some standard database connection code. In this case, we used
@@ -405,6 +428,7 @@ Person
     deriving Show
 |]
 
+main :: IO ()
 main = runSqlite ":memory:" $ do
     -- this line added: that's it!
     runMigration $ migrate entityDefs $ entityDef (Nothing :: Maybe Person)
@@ -435,6 +459,7 @@ Car
     deriving Show
 |]
 
+main :: IO ()
 main = runSqlite ":memory:" $ do runMigration migrateAll</programlisting>
 <simpara><literal>mkMigrate</literal> is a Template Haskell function which creates a new function that
 will automatically call <literal>migrate</literal> on all entities defined in the <literal>persist</literal>
@@ -529,6 +554,7 @@ Person
     deriving Show
 |]
 
+main :: IO ()
 main = runSqlite ":memory:" $ do
     runMigration migrateAll
     insert $ Person "Michael" "Snoyman" 26
@@ -915,11 +941,13 @@ Person
     deriving Show
 |]
 
+main :: IO ()
 main = runSqlite ":memory:" $ do
     time &lt;- liftIO getCurrentTime
     runMigration migrateAll
     insert $ Person "Michael" (Just 26) time
-    insert $ Person "Greg" Nothing time</programlisting>
+    insert $ Person "Greg" Nothing time
+    return ()</programlisting>
 <simpara><literal>Maybe</literal> is a built in, single word attribute. It makes the field optional. In
 Haskell, this means it is wrapped in a <literal>Maybe</literal>. In SQL, it makes the column
 nullable.</simpara>
@@ -943,6 +971,7 @@ Person
     deriving Show
 |]
 
+main :: IO ()
 main = runSqlite ":memory:" $ do
     runMigration migrateAll</programlisting>
 <note><simpara>The <literal>default</literal> attribute has absolutely no impact on the Haskell code
@@ -969,6 +998,7 @@ Person
     deriving Show
 |]
 
+main :: IO ()
 main = runSqlite ":memory:" $ do
     runMigration migrateAll</programlisting>
 <simpara>One last trick you can do with attributes is to specify the names to be used
@@ -1010,6 +1040,7 @@ Car
     deriving Show
 |]
 
+main :: IO ()
 main = runSqlite ":memory:" $ do
     runMigration migrateAll
     bruce &lt;- insert $ Person "Bruce Wayne"
@@ -1041,6 +1072,7 @@ PersonStore
     UniquePersonStore personId storeId
 |]
 
+main :: IO ()
 main = runSqlite ":memory:" $ do
     runMigration migrateAll
 
@@ -1055,7 +1087,9 @@ main = runSqlite ":memory:" $ do
     insert $ PersonStore bruce sevenEleven
 
     insert $ PersonStore michael target
-    insert $ PersonStore michael sevenEleven</programlisting>
+    insert $ PersonStore michael sevenEleven
+
+    return ()</programlisting>
 </section>
 <section id="persistent_closer_look_at_types">
 <title>Closer look at types</title>
@@ -1155,10 +1189,8 @@ import Database.Persist.TH
 
 data Employment = Employed | Unemployed | Retired
     deriving (Show, Read, Eq)
-derivePersistField "Employment"
-
--- @Main.hs
-{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+derivePersistField "Employment"</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
              OverloadedStrings, GADTs, FlexibleContexts #-}
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -1170,12 +1202,15 @@ Person
     employment Employment
 |]
 
+main :: IO ()
 main = runSqlite ":memory:" $ do
     runMigration migrateAll
 
     insert $ Person "Bruce Wayne" Retired
     insert $ Person "Peter Parker" Unemployed
-    insert $ Person "Michael" Employed</programlisting>
+    insert $ Person "Michael" Employed
+
+    return ()</programlisting>
 <simpara><literal>derivePersistField</literal> stores the data in the database using a string field, and
 performs marshaling using the <literal>Show</literal> and <literal>Read</literal> instances of the datatype. This
 may not be as efficient as storing via an integer, but it is much more future

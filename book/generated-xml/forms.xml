@@ -977,8 +977,6 @@ pull in values that don&#8217;t come from the user?</simpara>
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
-module Case where
-
 import           Control.Applicative
 import           Data.Text           (Text)
 import           Data.Time
