@@ -138,7 +138,7 @@ getReceiveR = do
     sendWaiResponse res</programlisting>
 <simpara>We use <literal>dupChan</literal> so that each new connection receives its own copy of newly
 generated messages. This is a standard method in concurrent Haskell of creating
-braodcast channels. The last three lines of our function expose the underlying
+broadcast channels. The last three lines of our function expose the underlying
 <literal>wai-eventsource</literal> application as a Yesod handler, by getting the raw WAI
 request, running the application on that request, and then sending the raw WAI
 response.</simpara>
@@ -164,8 +164,8 @@ chat library is a widget to be embedded inside a page which will provide chat
 functionality. By creating this as a widget, we can include all of our HTML,
 CSS, and Javascript as a reusable component.</simpara>
 <simpara>Our widget will need to take in one argument: a function to convert a <literal>Chat</literal>
-subsite URL into a master site URL. The reasoning here is that a application
-developet could place the chat subsite anywhere in the URL structure, and this
+subsite URL into a master site URL. The reasoning here is that an application
+developer could place the chat subsite anywhere in the URL structure, and this
 widget needs to be able to generate Javascript which will point at the correct
 URLs. Let&#8217;s start off our widget:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">chatWidget :: YesodChat master
@@ -174,7 +174,7 @@ URLs. Let&#8217;s start off our widget:</simpara>
 chatWidget toMaster = do</programlisting>
 <simpara>Next, we&#8217;re going to generate some identifiers to be used by our widget. It&#8217;s
 always good practice to let Yesod generate unique identifiers for you instead
-of creating them manually to avoid name collissions.</simpara>
+of creating them manually to avoid name collisions.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">    chat &lt;- newIdent   -- the containing div
     output &lt;- newIdent -- the box containing the messages
     input &lt;- newIdent  -- input field from the user</programlisting>
