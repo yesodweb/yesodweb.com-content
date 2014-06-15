@@ -1,3 +1,7 @@
+- time: 2014-06-15T14:15:00Z
+  author: michael
+  title: Three evil ways to avoid conditional compilation
+  path: 2014/06/evil-conditional-compile.md
 - time: 2014-06-10T05:15:00Z
   author: michael
   title: Exceptions and monad transformers
