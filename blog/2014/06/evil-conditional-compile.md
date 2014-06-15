@@ -76,7 +76,7 @@ add in ever harrier language extensions.
 ## Typeable
 
 This approach is for the Pythonista in you. Next time someone proudly states
-that Haskell has a statically typed language, just pull this one out:
+that Haskell is a statically typed language, just pull this one out:
 
 ```haskell
 module Typeable where
@@ -122,7 +122,7 @@ evil name = do
         _ -> error $ "Unknown type: " ++ show typ
 ```
 
-Notice how beautiful our pattern matching it. This combines the best (worst) of
+Notice how beautiful our pattern matching is. This combines the best (worst) of
 both worlds from above: we get full compile time checking, and can easily
 (hah!) pattern match on all possible signatures for the function at hand.
 
