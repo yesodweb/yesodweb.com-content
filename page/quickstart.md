@@ -56,14 +56,18 @@ Now I'm sure you want to test this out! The `yesod` executable has two important
     yesod init
     
 will ask
-you a few questions, and then generate a scaffolded site for you. Once you
-change into that directory, type
+you a few questions, and then generate a scaffolded site for you.
+At this point, you can follow the onscreen instructions to build and run your site. At the time of writing this page, the instructions are:
 
+    cabal sandbox init
+    cabal install --enable-tests . yesod-platform yesod-bin --max-backjumps=-1 --reorder-goals
     yesod devel
-    
-to start the development server.
-You can now access your site at
+
+which will set up a sandboxed environment, install all dependencies, and start the development server. After this is completed, you can access your site at
 [http://localhost:3000/](http://localhost:3000/).
+
+(Note: If the command line tool gives you different instructions, you should
+follow those instead.)
 
 ## Learn more
 
