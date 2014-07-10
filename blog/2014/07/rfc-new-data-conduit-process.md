@@ -33,7 +33,10 @@ main = do
     return ()
 ```
 
-Thus the motivation for fixing the problem in Data.Conduit.Process.
+Thus the motivation for fixing the problem in Data.Conduit.Process. Thanks go
+to Michael Sloan for discovering the severity of this race condition. In fact,
+the bug he ran into, combined with a separate process-conduit bug I ran up
+against, were the impetus for me getting this library written now.
 
 For the lazy, here's a copy of the content from School of Haskell:
 
