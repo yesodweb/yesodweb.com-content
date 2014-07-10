@@ -1,3 +1,7 @@
+- time: 2014-07-10T07:15:00Z
+  author: michael
+  title: 'RFC: New Data.Conduit.Process'
+  path: 2014/07/rfc-new-data-conduit-process.md
 - time: 2014-06-15T14:15:00Z
   author: michael
   title: Three evil ways to avoid conditional compilation
