@@ -612,7 +612,12 @@ We'll go into more details when we see integration with Yesod.
 +getBy+ is almost identical to +get+, except:
 
 . it takes a uniqueness constraint; that is, instead of an ID it takes a +Unique+ value.
-. it returns an +Entity+ instead of a value. An +Entity+ is a combination of database ID and value.
+. it returns an +Entity+ instead of a value. An +Entity+ is a combination of database ID and value. Essentially:
+
+[source, haskell]
+----
+data Entity b = Entity {entityKey :: Key, entityVal a}
+----
 
 [source, haskell]
 ----
