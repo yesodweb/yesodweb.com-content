@@ -357,6 +357,26 @@ production, external files are recommended for all but the shortest of inputs
 as it gives a nice separation of the non-Haskell syntax from your Haskell code.</simpara>
 </section>
 <section id="I_sect12_d1e851">
+<title>API Documentation</title>
+<simpara>The standard API documentation program in Haskell is called Haddock. The
+standard Haddock search tool is called Hoogle. My recommendation is to use
+<ulink url="https://www.fpcomplete.com/hoogle">FP Complete&#8217;s Hoogle search</ulink> and its
+accompanying Haddocks for searching and browsing documentation. The reason for
+this is that the FP Complete Hoogle database covers a very large number of open
+source Haskell packages, and the documentation provided is always fully
+generated and known to link to other working Haddocks.</simpara>
+<simpara>The more commonly used sources for these are
+<ulink url="http://hackage.haskell.org/">Hackage</ulink> itself, and
+<ulink url="http://www.haskell.org/hoogle">haskell.org&#8217;s Hoogle instance</ulink>. The
+downsides to these are that- based on build issues on the server- documentation
+is sometimes not generated, and the Hoogle search defaults to searching only a
+subset of available packages. Most importantly for us, Yesod is indexed by FP
+Complete&#8217;s Hoogle, but not by haskell.org&#8217;s.</simpara>
+<simpara>If when reading this book you run into types or functions that you do not
+understand, try doing a Hoogle search with FP Complete&#8217;s Hoogle to get more
+information.</simpara>
+</section>
+<section id="haskell_summary">
 <title>Summary</title>
 <simpara>You don&#8217;t need to be an expert in Haskell to use Yesod, a basic familiarity
 will suffice. This chapter hopefully gave you just enough extra information to
