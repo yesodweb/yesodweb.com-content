@@ -1,3 +1,5 @@
+== Yesod for Haskellers
+
 The majority of this book is built around giving practical information on how
 to get common tasks done, without drilling too much into the details of what's
 going on under the surface. While the book presumes knowledge of Haskell, it
@@ -9,7 +11,7 @@ In this appendix, we'll start off from a bare minimum web application, and
 build up to more complicated examples, explaining the components and their
 types along the way.
 
-== Hello Warp
+=== Hello Warp
 
 Let's start off with the most bare minimum application we can think of:
 
@@ -233,7 +235,7 @@ app _req = return $ responseFile
 
 There are many aspects of WAI we haven't covered here. One important topic is WAI middlewares, which we'll cover towards the end of this chapter. We also haven't inspected request bodies at all. But for the purposes of understanding Yesod, we've covered enough for the moment.
 
-== What about Yesod?
+=== What about Yesod?
 
 In all our excitement about WAI and Warp, we still haven't seen anything about Yesod! Since we just learnt all about WAI, our first question should be: how does Yesod interact with WAI. The answer to that is with one very important function:
 
@@ -354,7 +356,7 @@ off our application to Warp, just like we did in the past.
 Congratulations, you've now seen your first Yesod application! (Or, at least
 your first Yesod application in this appendix.)
 
-== The HandlerT monad transformer
+=== The HandlerT monad transformer
 
 While that example was technically using Yesod, it was incredibly uninspiring.
 There's no question that Yesod did nothing more than get in our way relative to
@@ -485,7 +487,7 @@ consume. +yesodRunner+ then converts that into a WAI response, setting the
 +Content-Type+ response header to the mime type, using a 200 OK status code,
 and sending the response body.
 
-=== (To)Content, (To)TypedContent
+==== (To)Content, (To)TypedContent
 
 At the very core of Yesod's content system are the following types:
 
@@ -540,7 +542,7 @@ And Yesod provides instances for many common data types, including +Text+,
 +getHomeR+ function was able to return +Html+: Yesod knows how to convert it to
 +TypedContent+, and from there it can be converted into a +WAI+ response.
 
-=== HasContentType and representations
+==== HasContentType and representations
 
 This typeclass approach allows for one other nice abstraction. For many types, the type system itself lets us know what the content-type for the content should be. For example, +Html+ will always be served with a +text/html+ content-type.
 
@@ -635,7 +637,7 @@ main = do
     run 3000 waiApp
 ----
 
-=== Convenience +warp+ function
+==== Convenience +warp+ function
 
 And one minor convenience you'll see quite a bit in the Yesod world. It's very
 common to call +toWaiApp+ to create a WAI +Application+, and then pass that to
@@ -657,7 +659,7 @@ There's also a +warpEnv+ function which reads the port number from the +PORT+
 environment variable, which is useful for working with platforms such as FP
 Haskell Center, or deployment tools like Keter.
 
-== Writing handlers
+=== Writing handlers
 
 Since the vast majority of your application will end up living in the
 +HandlerT+ monad transformer, it's not surprising that there are quite a few
@@ -674,7 +676,7 @@ functions is that, ultimately, they return a type which is an instance of
 This section is just a short overview of functionality. For more information,
 you should either look through the Haddocks, or read the rest of this book.
 
-=== Getting request parameters
+==== Getting request parameters
 
 There are a few pieces of information provided by the client in a request:
 
@@ -689,7 +691,7 @@ While you can use these functions directly for such purposes as processing
 forms, you usually will want to use the yesod-form library, which provides a
 higher level form abstraction based on applicative functors.
 
-=== Short circuiting
+==== Short circuiting
 
 In some cases, you'll want to short circuit the handling of a request. Reasons
 for doing this would be:
@@ -700,7 +702,7 @@ for doing this would be:
 * Send a special response, such as with +sendFile+ or +sendResponseStatus+ (to override the status 200 response code)
 * +sendWaiResponse+ to drop down a level of abstraction, bypass some Yesod abstractions, and use WAI itself.
 
-=== Streaming
+==== Streaming
 
 So far, the examples of +ToTypedContent+ instances I gave all involved
 non-streaming responses. +Html+, +Text+, and +Value+ all get converted into a
@@ -778,7 +780,7 @@ main :: IO ()
 main = warp 3000 App
 ----
 
-== Dynamic parameters
+=== Dynamic parameters
 
 Now that we've finished our detour into the details of the +HandlerT+
 transformer, let's get back to higher-level Yesod request processing. So far,
@@ -850,7 +852,7 @@ Notice our call to +redirect+ in +getHomeR+. We're able to use the route
 datatype as the parameter to +redirect+, and Yesod takes advantage of our
 +renderRoute+ function to create a textual link.
 
-== Routing with Template Haskell
+=== Routing with Template Haskell
 
 Now let's suppose we want to add a new route to our previous application. We'd
 have to make the following changes:
@@ -924,7 +926,7 @@ you'd rather avoid Template Haskell, you're free to do so. Every example so far
 in this appendix has done so, and you can follow those techniques. We also have
 another, simpler approach in the Yesod world: +LiteApp+.
 
-=== LiteApp
+==== LiteApp
 
 +LiteApp+ allows you to throw away type safe URLs and Template Haskell. It uses
 a simple routing DSL in pure Haskell. Once again, as a simple comparison, let's
@@ -957,7 +959,7 @@ use +fromPathPiece+ to convert the parameter for +getFibR+ from +Text+ to an
 +Int+, so any invalid parameter will be got by Yesod itself. It's just one less
 piece of checking that you have to perform.
 
-== Shakespeare
+=== Shakespeare
 
 While generating plain text pages can be fun, it's hardly what one normally
 expects from a web framework. As you'd hope, Yesod comes built in with support
@@ -1084,7 +1086,7 @@ main = warp 3000 $ liteApp $ do
     onStatic (pack "script.js") $ dispatchTo getScriptR
 ----
 
-=== URL rendering function
+==== URL rendering function
 
 Likely the most confusing part of this is the +giveUrlRenderer+ calls. This
 gets into one of the most powerful features of Yesod: type-safe URLs. If you
@@ -1107,7 +1109,7 @@ ignored entirely), but +giveUrlRenderer+ is a convenient way of doing this.
 As we'll see next, +giveUrlRenderer+ isn't really needed most of the time,
 since Widgets end up providing the renderer function for us automatically.
 
-== Widgets
+=== Widgets
 
 Dealing with HTML, CSS and Javascript as individual components can be nice in
 many cases. However, when you want to build up reusable components for a page,
@@ -1144,15 +1146,15 @@ look-and-feel for your website. Many built-in pieces of Yesod, such as error
 messages, take advantage of the widget system, so by using widgets, you get a
 consistent feel throughout your site.
 
-== Forms
+=== Forms
 
 FIXME
 
-== Persistent
+=== Persistent
 
 FIXME
 
-== WAI middlewares
+=== WAI middlewares
 
 FIXME
 
