@@ -46,7 +46,7 @@ request is similar to a pure function, which cannot have side effects. In
 practice, your +GET+ functions will probably perform +IO+, such as reading
 information from a database, logging user actions, and so on.
 
-See the routing and handlers chapter chapter for more information on the syntax
+See the routing and handlers chapter for more information on the syntax
 of defining handler functions for each request method.
 
 === Representations

@@ -171,7 +171,7 @@ data Name = Name
     }
 ----
 
-According the the XML namespace standard, two names are considered equivalent
+According the XML namespace standard, two names are considered equivalent
 if they have the same localname and namespace. In other words, the prefix is
 not important. Therefore, +xml-types+ defines +Eq+ and +Ord+ instances that
 ignore the prefix.
