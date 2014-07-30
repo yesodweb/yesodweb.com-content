@@ -147,7 +147,7 @@ record type:</simpara>
     , nameNamespace :: Maybe Text
     , namePrefix    :: Maybe Text
     }</programlisting>
-<simpara>According the the XML namespace standard, two names are considered equivalent
+<simpara>According the XML namespace standard, two names are considered equivalent
 if they have the same localname and namespace. In other words, the prefix is
 not important. Therefore, <literal>xml-types</literal> defines <literal>Eq</literal> and <literal>Ord</literal> instances that
 ignore the prefix.</simpara>

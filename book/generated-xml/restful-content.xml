@@ -81,7 +81,7 @@ multiple times should be OK.
 request is similar to a pure function, which cannot have side effects. In
 practice, your <literal>GET</literal> functions will probably perform <literal>IO</literal>, such as reading
 information from a database, logging user actions, and so on.</simpara>
-<simpara>See the routing and handlers chapter chapter for more information on the syntax
+<simpara>See the routing and handlers chapter for more information on the syntax
 of defining handler functions for each request method.</simpara>
 </section>
 <section id="restful-content_representations">

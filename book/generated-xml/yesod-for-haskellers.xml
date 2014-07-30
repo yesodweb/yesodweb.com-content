@@ -4,6 +4,8 @@
 <?asciidoc-numbered?>
 
 <article lang="en">
+<section id="yesod-for-haskellers_yesod_for_haskellers">
+<title>Yesod for Haskellers</title>
 <simpara>The majority of this book is built around giving practical information on how
 to get common tasks done, without drilling too much into the details of what&#8217;s
 going on under the surface. While the book presumes knowledge of Haskell, it
@@ -1118,5 +1120,6 @@ consistent feel throughout your site.</simpara>
 <title>WAI middlewares</title>
 <simpara>FIXME</simpara>
 <simpara>These are functions of type <literal>type Middleware = Application &#8594; Application</literal>, and they do some kind of arbitrary transformation to an application, such as enabling GZIP compression or logging requests.</simpara>
+</section>
 </section>
 </article>

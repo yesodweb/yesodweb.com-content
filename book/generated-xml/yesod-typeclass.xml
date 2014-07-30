@@ -562,7 +562,7 @@ shouldLog
 </term>
 <listitem>
 <simpara>
-Determines if a given log message (with associated source and and
+Determines if a given log message (with associated source and
 level) should be sent to the log. This allows you to put lots of debugging
 information into your app, but only turn it on as necessary.
 </simpara>
