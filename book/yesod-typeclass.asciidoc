@@ -474,7 +474,7 @@ the request. The two most common approaches are saving the files in memory, or
 streaming to temporary files. By default, small requests are kept in memory and
 large ones are stored to disk.
 
-shouldLog:: Determines if a given log message (with associated source and and
+shouldLog:: Determines if a given log message (with associated source and
 level) should be sent to the log. This allows you to put lots of debugging
 information into your app, but only turn it on as necessary.
 
