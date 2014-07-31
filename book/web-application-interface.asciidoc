@@ -6,7 +6,7 @@ cover WAI version 3.0 in the next iteration of the book (covering Yesod 1.4).
 
 It is a problem almost every language used for web development has dealt with:
 the low level interface between the web server and the application. The
-earliest example of a solution is the venerable and battle-worn CGI (CGI),
+earliest example of a solution is the venerable and battle-worn Common Gateway Interface (CGI),
 providing a language-agnostic interface using only standard input, standard
 output and environment variables.
 

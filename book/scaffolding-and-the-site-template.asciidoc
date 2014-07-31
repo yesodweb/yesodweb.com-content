@@ -122,7 +122,7 @@ things:
 
 The dispatch function refers to all of the handler functions, and therefore all
 of those must either be defined in the same file as the dispatch function, or
-be imported by the dispatch function.
+be imported into the module containing the dispatch function.
 
 Meanwhile, the handler functions will almost certainly refer to the route type.
 Therefore, _they_ must be either in the same file where the route type is
@@ -184,7 +184,7 @@ define our own functions as well, and then import this file in all handlers.
 ==== Handler modules
 
 Handler modules should go inside the _Handler_ folder. The site template
-includes one module: _Handler/Root.hs_. How you split up your handler functions
+includes one module: _Handler/Home.hs_. How you split up your handler functions
 into individual modules is your decision, but a good rule of thumb is:
 
 * Different methods for the same route should go in the same file, e.g.
@@ -214,7 +214,7 @@ If you have a handler function:
 
 [source, haskell]
 ----
-getRootR = defaultLayout $(widgetFile "homepage")
+getHomeR = defaultLayout $(widgetFile "homepage")
 ----
 
 , Yesod will look for the following files:

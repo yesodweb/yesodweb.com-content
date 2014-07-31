@@ -292,7 +292,7 @@ template, you can write:
 $(hamletFile "myfile.hamlet")
 
 (Hamlet is discussed in the Shakespeare chapter.) The dollar sign immediately
-followed by parantheses tell GHC that what follows is a Template Haskell
+followed by parentheses tell GHC that what follows is a Template Haskell
 function. The code inside is then run by the compiler and generates a Haskell
 AST, which is then compiled. And yes, it's even possible to
 link:http://www.yesodweb.com/blog/2010/09/yo-dawg-template-haskell[go meta
@@ -329,6 +329,12 @@ you. To do so, you should use the +-ddump-splices+ GHC option.
 NOTE: There are many other features of Template Haskell not covered here. For
 more information, see the
 link:http://www.haskell.org/haskellwiki/Template_Haskell[Haskell wiki page].
+
+One final note: Template Haskell introduces something called the stage
+restriction, which essentially means that code before a Template Haskell splice
+cannot refer to code in the Template Haskell, or what follows. This will
+sometimes require you to rearrange your code a bit. The same restriction
+applies to QuasiQuotes.
 
 [[I_sect12_d1e833]]
 

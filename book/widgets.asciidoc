@@ -130,7 +130,7 @@ to have five lorem ipsum blocks after all).
 
 The job of a widget is to hold onto these disparate components and apply proper
 logic for combining different widgets together. This consists of things like
-taking the first title set and ignoring others, filtering duplicates from the
+taking the last title set and ignoring others, filtering duplicates from the
 list of external scripts and stylesheets, and concatenating head and body
 content.
 

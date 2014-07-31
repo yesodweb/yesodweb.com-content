@@ -735,12 +735,9 @@ not all XHTML will be correct HTML. The following discrepancies exist:
 * The contents of +&lt;style&gt;+ and +&lt;script&gt;+ tags should not be
   escaped.
 
-That's where the xml2html package comes into play. It provides a ToHtml
-instance for ++Node++s, ++Document++s and ++Element++s. In order to use it,
-just import the Text.XML.Xml2Html module.
-
-__NOTE__ The ToHtml instance has since been moved into xml-conduit itself. This
-content needs to be updated.
+Fortunately, +xml-conduit+ provides +ToHtml+ instances for ++Node++s,
+++Document++s, and ++Element++s which respect these discrepancies. So by just
+using +toHtml+, we can get the correct output.
 
 [source, haskell]
 ----

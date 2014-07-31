@@ -78,9 +78,19 @@ application, and your application being hosted at the root of your domain. But
 if you have any use cases which demand absolute URLs (such as sending an
 email), it's best to use +ApprootStatic+.
 
-As is usually the case for commonly needed tweaks, the scaffolded site already
-takes this into account. If you use the scaffolding, you can modify the approot
-value from a config file.
+In addition to the +ApprootStatic+ constructor demonstrated above, you can also
+use the +ApprootMaster+ and +ApprootRequest+ constructors. The former allows
+you to determine the approot from the foundation value, which would let you
+load up the approot from a config file, for instance. The latter allows you to
+additionally use the request value to determine the approot; using this, you
+could for example provide a different domain name depending on how the user
+requested the site in the first place.
+
+The scaffolded site uses +ApprootMaster+ by default, and pulls your approot
+from a config file on launch. Additionally, it load different settings for
+developing, testing, staging, and production builds, so you can easily test on
+one domain- like localhost- and serve from a different domain. You can modify
+these values from the config file.
 
 ==== joinPath
 
@@ -465,7 +475,7 @@ examples in the auth chapter.
 Not everything in the Yesod typeclass is complicated. Some methods are simple
 functions. Let's just go through the list:
 
-maximumContentLength:: To prevent Denial of Server (DoS) attacks, Yesod will
+maximumContentLength:: To prevent Denial of Service (DoS) attacks, Yesod will
 limit the size of request bodies. Some of the time, you'll want to bump that
 limit for some routes (e.g., a file upload page). This is where you'd do that.
 
