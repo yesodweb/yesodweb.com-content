@@ -538,7 +538,7 @@ helps you out here:</simpara>
     code { background-color: grey; }
     p { text-indent: 2em; }
     a { text-decoration: none; }
-    &amp;gt; h1 { color: green; }
+    &gt; h1 { color: green; }
 }</programlisting>
 <simpara>Having Lucius variables allows you to avoid repeating yourself. A simple
 example would be to define a commonly used color:</simpara>

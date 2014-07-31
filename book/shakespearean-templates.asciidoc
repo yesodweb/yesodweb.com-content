@@ -633,7 +633,7 @@ article {
     code { background-color: grey; }
     p { text-indent: 2em; }
     a { text-decoration: none; }
-    &gt; h1 { color: green; }
+    > h1 { color: green; }
 }
 ----
 
