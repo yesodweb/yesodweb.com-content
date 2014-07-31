@@ -1130,7 +1130,7 @@ data MyExistingTypeEndingInId = ...
 type IdIsNotTheSuffix = MyExistingTypeEndingInId
 [persist|
 Person
-    someField IdIsNotTheSuffix</codeblock></note>
+    someField IdIsNotTheSuffix
 ----
 =====================
 
