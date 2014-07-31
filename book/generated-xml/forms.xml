@@ -607,7 +607,7 @@ there are a few things you should be aware of:</simpara>
 <simpara>
 There is an automatic instance of <literal>RenderMessage</literal> for <literal>Text</literal> in every site,
   so you can just use plain strings if you don&#8217;t care about i18n support.
-  However, you may need to use explicit type signatures occassionally.
+  However, you may need to use explicit type signatures occasionally.
 </simpara>
 </listitem>
 <listitem>
@@ -826,7 +826,7 @@ main = warp 3000 App</programlisting>
 <section id="forms_custom_fields">
 <title>Custom fields</title>
 <simpara>The fields that come built-in with Yesod will likely cover the vast majority of
-your form needs. But occassionally, you&#8217;ll need something more specialized.
+your form needs. But occasionally, you&#8217;ll need something more specialized.
 Fortunately, you can create new forms in Yesod yourself. The <literal>Field</literal> constructor
 has three values: <literal>fieldParse</literal> takes a list of values submitted by the user and
 returns one of three results:</simpara>

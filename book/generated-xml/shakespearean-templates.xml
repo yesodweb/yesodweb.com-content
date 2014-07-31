@@ -347,6 +347,43 @@ main = putStrLn $ renderHtml $ [hamlet|
     &lt;p&gt;This is my page.
     ^{footer}
 |] render</programlisting>
+<simpara>Additionally, there is a variant of URL interpolation which allows you to embed
+query string parameters. This can be useful, for example, for creating
+paginated responses. Instead of using <literal>@{&#8230;}</literal>, you add a question mark
+(<literal>@?{&#8230;}</literal>) to indicate the presence of a query string. The value you provide
+must be a two-tuple with the first value being a type-safe URL and the second
+being a list of query string parameter pairs. See the next code snippet for an
+example.</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE OverloadedStrings #-}
+import Text.Hamlet (HtmlUrl, hamlet)
+import Text.Blaze.Html.Renderer.String (renderHtml)
+import Data.Text (Text, append, pack)
+import Control.Arrow (second)
+import Network.HTTP.Types (renderQueryText)
+import Data.Text.Encoding (decodeUtf8)
+import Blaze.ByteString.Builder (toByteString)
+
+data MyRoute = SomePage
+
+render :: MyRoute -&gt; [(Text, Text)] -&gt; Text
+render SomePage params = "/home" `append`
+    decodeUtf8 (toByteString $ renderQueryText True (map (second Just) params))
+
+main :: IO ()
+main = do
+    let currPage = 2 :: Int
+    putStrLn $ renderHtml $ [hamlet|
+&lt;p&gt;
+    You are currently on page #{currPage}.
+    &lt;a href=@?{(SomePage, [("page", pack $ show $ currPage - 1)])}&gt;Previous
+    &lt;a href=@?{(SomePage, [("page", pack $ show $ currPage + 1)])}&gt;Next
+|] render</programlisting>
+<simpara>This generates the expected HTML:</simpara>
+<programlisting language="html" linenumbering="unnumbered">&lt;p&gt;You are currently on page 2.
+&lt;a href="/home?page=1"&gt;Previous&lt;/a&gt;
+&lt;a href="/home?page=3"&gt;Next&lt;/a&gt;
+&lt;/p&gt;</programlisting>
 </section>
 <section id="shakespearean-templates_attributes">
 <title>Attributes</title>
@@ -501,6 +538,7 @@ helps you out here:</simpara>
     code { background-color: grey; }
     p { text-indent: 2em; }
     a { text-decoration: none; }
+    &amp;gt; h1 { color: green; }
 }</programlisting>
 <simpara>Having Lucius variables allows you to avoid repeating yourself. A simple
 example would be to define a commonly used color:</simpara>

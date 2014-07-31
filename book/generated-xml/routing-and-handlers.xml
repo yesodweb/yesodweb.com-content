@@ -188,7 +188,7 @@ A single handler function for all request methods on a given route.
 <listitem>
 <simpara>
 A separate handler function for each request method on a given route. Any
-  other request method will generate a 405 Bad Method response.
+  other request method will generate a 405 Method Not Allowed response.
 </simpara>
 </listitem>
 <listitem>
@@ -214,7 +214,7 @@ resource line like:</simpara>
 <simpara>In this line, <literal>/static</literal> just says where in your URL structure to serve the
 static files from. There is nothing magical about the word static, you could
 easily replace it with <literal>/my/non-dynamic/files</literal>.</simpara>
-<simpara>The next word, <literal>StaticR</literal>, gives the resource name. The next two words are what
+<simpara>The next word, <literal>StaticR</literal>, gives the resource name. The next two words
 specify that we are using a subsite. <literal>Static</literal> is the name of the subsite
 foundation datatype, and <literal>getStatic</literal> is a function that gets a <literal>Static</literal> value
 from a value of your master foundation datatype.</simpara>
@@ -365,7 +365,7 @@ getUrlRender
 <simpara>
 Returns the URL rendering function, which converts a type-safe
 URL into a <literal>Text</literal>. Most of the time- like with Hamlet- Yesod calls this
-function for you, but you may occassionally need to call it directly.
+function for you, but you may occasionally need to call it directly.
 </simpara>
 </listitem>
 </varlistentry>

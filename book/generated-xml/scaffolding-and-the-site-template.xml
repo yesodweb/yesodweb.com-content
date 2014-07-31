@@ -159,7 +159,7 @@ Dispatch function
 </itemizedlist>
 <simpara>The dispatch function refers to all of the handler functions, and therefore all
 of those must either be defined in the same file as the dispatch function, or
-be imported by the dispatch function.</simpara>
+be imported into the module containing the dispatch function.</simpara>
 <simpara>Meanwhile, the handler functions will almost certainly refer to the route type.
 Therefore, <emphasis>they</emphasis> must be either in the same file where the route type is
 defined, or must import that file. If you follow the logic here, your entire
@@ -234,7 +234,7 @@ define our own functions as well, and then import this file in all handlers.</si
 <section id="scaffolding-and-the-site-template_handler_modules">
 <title>Handler modules</title>
 <simpara>Handler modules should go inside the <emphasis>Handler</emphasis> folder. The site template
-includes one module: <emphasis>Handler/Root.hs</emphasis>. How you split up your handler functions
+includes one module: <emphasis>Handler/Home.hs</emphasis>. How you split up your handler functions
 into individual modules is your decision, but a good rule of thumb is:</simpara>
 <itemizedlist>
 <listitem>
@@ -284,7 +284,7 @@ don&#8217;t want to have to remember to include those Lucius and Julius files
 manually every time you refer to a Hamlet file. For this, the site template
 provides the <literal>widgetFile</literal> function.</simpara>
 <simpara>If you have a handler function:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">getRootR = defaultLayout $(widgetFile "homepage")</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">getHomeR = defaultLayout $(widgetFile "homepage")</programlisting>
 <simpara>, Yesod will look for the following files:</simpara>
 <itemizedlist>
 <listitem>

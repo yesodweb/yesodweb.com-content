@@ -138,7 +138,7 @@ You decide you want to find the first 10 people alphabetically. No problem&#8230
 </simpara>
 </listitem>
 </itemizedlist>
-<simpara>In dynamic languages, the answers to these issues is unit testing. For
+<simpara>In dynamic languages, the answer to these issues is unit testing. For
 everything that <emphasis>can</emphasis> go wrong, make sure you write a test case. But as I am
 sure you are aware by now, that doesn&#8217;t jive well with the Yesod approach to
 things. We like to take advantage of Haskell&#8217;s strong typing to save us
@@ -573,6 +573,8 @@ some specific queries within your Haskell code, like the <literal>getBy</literal
 above. This happens via the <literal>Unique</literal> associated type. In the example above, we
 end up with a new constructor:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">PersonName :: String -&gt; String -&gt; Unique Person</programlisting>
+<note><simpara>With the MongoDB backend, a uniqueness constraint cannot be created: you
+must place a unique index on the field.</simpara></note>
 </section>
 <section id="persistent_queries">
 <title>Queries</title>
@@ -842,7 +844,7 @@ to better, less buggy code.</simpara>
 <simpara>But that&#8217;s not actually updating anything, it&#8217;s just creating a new <literal>Person</literal>
 value based on the old one. When we say update, we&#8217;re <emphasis>not</emphasis> talking about
 modifications to the values in Haskell. (We better not be of course, since
-Haskell data types are immutable.)</simpara>
+data in Haskell is immutable.)</simpara>
 <simpara>Instead, we&#8217;re looking at ways of modifying rows in a table. And the simplest
 way to do that is with the <literal>update</literal> function.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">    personId &lt;- insert $ Person "Michael" "Snoyman" 26
@@ -859,11 +861,11 @@ guarantees. Imagine the alternative: pull out a <literal>Person</literal>, incre
 and update the new value. If you have two threads/processes working on this
 database at the same time, you&#8217;re in for a world of hurt (hint: race
 conditions).</simpara>
-<simpara>Sometimes you&#8217;ll want to update many fields at once (give all your employees a
+<simpara>Sometimes you&#8217;ll want to update many rows at once (give all your employees a
 5% pay increase, for example). <literal>updateWhere</literal> takes two parameters: a list of
 filters, and a list of updates to apply.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">    updateWhere [PersonFirstName ==. "Michael"] [PersonAge *=. 2] -- it's been a long day</programlisting>
-<simpara>Occassionally, you&#8217;ll just want to completely replace the value in a database
+<simpara>Occasionally, you&#8217;ll just want to completely replace the value in a database
 with a different value. For that, you use (surprise) the <literal>replace</literal> function.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">    personId &lt;- insert $ Person "Michael" "Snoyman" 26
     replace personId $ Person "John" "Doe" 20</programlisting>
@@ -989,7 +991,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Person
     name String
     age Int Maybe
-    created UTCTime default=now()
+    created UTCTime default=CURRENT_TIME
     language String default='Haskell'
     country String "default='El Salvador'"
     deriving Show
@@ -1087,6 +1089,16 @@ main = runSqlite ":memory:" $ do
     insert $ PersonStore michael sevenEleven
 
     return ()</programlisting>
+<note>
+<simpara>Since the <literal>Id</literal> suffix on a type is used to indicate a foreign key relationship
+to Persistent, you currently cannot use non-key types that end in <literal>Id</literal>. A
+simple workaround is to define a type synonym with a different suffix, e.g.:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">data MyExistingTypeEndingInId = ...
+type IdIsNotTheSuffix = MyExistingTypeEndingInId
+[persist|
+Person
+    someField IdIsNotTheSuffix&lt;/codeblock&gt;&lt;/note&gt;</programlisting>
+</note>
 </section>
 <section id="persistent_closer_look_at_types">
 <title>Closer look at types</title>

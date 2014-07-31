@@ -238,7 +238,7 @@ followed by the route within the subsite (<literal>LoginR</literal> and <literal
 <section id="authentication-and-authorization_email">
 <title>Email</title>
 <simpara>For many use cases, third-party authentication of email will be sufficient.
-Occassionally, you&#8217;ll want users to actual create passwords on your site. The
+Occasionally, you&#8217;ll want users to actual create passwords on your site. The
 scaffolded site does not include this setup, because:</simpara>
 <itemizedlist>
 <listitem>
