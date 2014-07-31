@@ -170,8 +170,6 @@ accept header via a query string parameter. This can make it easier to test
 from your browser. To try this out, you can visit
 link:http://localhost:3000/?_accept=application/json[http://localhost:3000/?_accept=application/json].
 
-Notice that we ignore entirely the list of expected content types. A number of the built in representations (+RepHtml+, +RepPlain+, +RepJson+, +RepXml+) in fact only support a single representation, and therefore what the client requests in the +Accept+ header is irrelevant.
-
 ==== JSON conveniences
 
 Since JSON is such a commonly used data format in web applications today, we
