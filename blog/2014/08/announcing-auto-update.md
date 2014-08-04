@@ -132,3 +132,18 @@ Kazu and I have started using this library in a few places:
 * The Yesod scaffolding was able to get rid of [an annoying bit of commentary](https://github.com/yesodweb/yesod-scaffold/commit/eb3046107fb29d1d2651d4cb83dc5bb90250a65e#diff-4ff81c1023e92f161457e96254132f46L73).
 
 Hopefully others will enjoy and use this library as well.
+
+## Control.Reaper
+
+The second module in auto-update is `Control.Reaper`. This provides something
+similar, but slightly different, from `Control.AutoUpdate`. The goal is to
+spawn reaper/cleanup threads on demand. These threads can handle such things
+as:
+
+* Recycling resources in a resource pool.
+* Closing out unused connections in a connection pool.
+* Terminating threads that have overstayed a timeout.
+
+This module is currently being used in Warp for slowloris timeouts and file
+descriptor cache management, though I will likely use it in http-client in the
+near future as well for its connection manager management.
