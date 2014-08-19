@@ -9,7 +9,7 @@ fit in. I'll also explain some unfortunate complications with Stackage Server.
 
 Imagine a simpler Yesod installation path:
 
-1. `cabal yesod-bin`, which provides the `yesod` executable.
+1. `cabal install yesod-bin`, which provides the `yesod` executable.
 2. `yesod init` to create a scaffolding.
 3. `cabal install` inside that directory, which downloads and installs all of the necessary dependencies.
 
