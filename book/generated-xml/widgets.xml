@@ -158,8 +158,7 @@ content.</simpara>
 them. The most common way will be via the <literal>ToWidget</literal> typeclass, and its
 <literal>toWidget</literal> method. This allows you to convert your Shakespearean templates
 directly to a <literal>Widget</literal>: Hamlet code will appear in the body, Julius scripts
-inside a <literal>&lt;script&gt;</literal> tag in the head, and Cassius and Lucius in a
-<literal>&lt;style&gt;</literal> tag.</simpara>
+inside a <literal>&lt;script&gt;</literal>, and Cassius and Lucius in a <literal>&lt;style&gt;</literal> tag.</simpara>
 <note><simpara>You can actually override the default behavior and have the script and
 style code appear in a separate file. The scaffolded site provides this for you
 automatically.</simpara></note>

@@ -1097,7 +1097,7 @@ simple workaround is to define a type synonym with a different suffix, e.g.:</si
 type IdIsNotTheSuffix = MyExistingTypeEndingInId
 [persist|
 Person
-    someField IdIsNotTheSuffix&lt;/codeblock&gt;&lt;/note&gt;</programlisting>
+    someField IdIsNotTheSuffix</programlisting>
 </note>
 </section>
 <section id="persistent_closer_look_at_types">

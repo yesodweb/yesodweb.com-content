@@ -171,7 +171,6 @@ displayed. If an accept header is present, but we have no matches, then a 406
 accept header via a query string parameter. This can make it easier to test
 from your browser. To try this out, you can visit
 <ulink url="http://localhost:3000/?_accept=application/json">http://localhost:3000/?_accept=application/json</ulink>.</simpara>
-<simpara>Notice that we ignore entirely the list of expected content types. A number of the built in representations (<literal>RepHtml</literal>, <literal>RepPlain</literal>, <literal>RepJson</literal>, <literal>RepXml</literal>) in fact only support a single representation, and therefore what the client requests in the <literal>Accept</literal> header is irrelevant.</simpara>
 <section id="restful-content_json_conveniences">
 <title>JSON conveniences</title>
 <simpara>Since JSON is such a commonly used data format in web applications today, we
