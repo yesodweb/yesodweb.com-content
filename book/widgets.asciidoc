@@ -140,8 +140,7 @@ In order to use widgets, you'll obviously need to be able to get your hands on
 them. The most common way will be via the +ToWidget+ typeclass, and its
 +toWidget+ method. This allows you to convert your Shakespearean templates
 directly to a +Widget+: Hamlet code will appear in the body, Julius scripts
-inside a +<script>+ tag in the head, and Cassius and Lucius in a
-+<style>+ tag.
+inside a +<script>+, and Cassius and Lucius in a +<style>+ tag.
 
 
 NOTE: You can actually override the default behavior and have the script and
