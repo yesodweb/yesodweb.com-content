@@ -20,19 +20,16 @@ get a set of packages that are known to compile together and run correctly,
 instead of needing to find a working package set yourself. This avoids the
 oft-sited "cabal hell" users have faced in the past.
 
-The Stackage Server homepage has a getting started section with instructions on
-how to get GHC and cabal installed, and how to configure cabal to use an
-appropriate Stackage snapshot. Please follow those instructions first. Once
-you've done that, follow these instructions:
-
-1. Install prerequisite build tools: `cabal install alex happy`
-2. Install the `yesod` binary
-3. Run `yesod init` and answer its questions to create a new scaffolded application
-4. `cd` into the newly created directory
-5. Install all library dependencies with `cabal install --enable-tests --reorder-goals --max-backjumps=-1 -j`
+1. Make sure [your system is prepared to use Stackage Server](https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage).
+2. Choose a Stackage snapshot and configure your system to use it. See the Getting Started section [on the Stackage Server homepage](http://www.stackage.org/).
+3. Install prerequisite build tools: `cabal install alex happy`
+4. Install the `yesod` binary
+5. Run `yesod init` and answer its questions to create a new scaffolded application
+6. `cd` into the newly created directory
+7. Install all library dependencies with `cabal install --enable-tests --reorder-goals --max-backjumps=-1 -j`
     * Note: This can take a while. On a fast computer, it will take around 10 minutes. On a slower system, it can take up to 40.
-6. Start up the devel server with `yesod devel`.
-7. View your new site at [http://localhost:3000/](http://localhost:3000/).
+8. Start up the devel server with `yesod devel`.
+9. View your new site at [http://localhost:3000/](http://localhost:3000/).
 
 ## Learn more
 
