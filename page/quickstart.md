@@ -12,7 +12,53 @@ project](https://www.fpcomplete.com/school/project-templates/file-server).
 The rest of this page provides instructions for installing on your local
 system.
 
-## Getting Haskell
+## Stackage Server
+
+The recommended approach for installing Yesod on your local system is to use
+[Stackage Server](http://www.stackage.org/). Stackage Server ensures you will
+get a set of packages that are known to compile together and run correctly,
+instead of needing to find a working package set yourself. This avoids the
+oft-sited "cabal hell" users have faced in the past.
+
+The Stackage Server homepage has a getting started section with instructions on
+how to get GHC and cabal installed, and how to configure cabal to use an
+appropriate Stackage snapshot. Please follow those instructions first. Once
+you've done that, follow these instructions:
+
+1. Install prerequisite build tools: `cabal install alex happy`
+2. Install the `yesod` binary
+3. Run `yesod init` and answer its questions to create a new scaffolded application
+4. `cd` into the newly created directory
+5. Install all library dependencies with `cabal install --enable-tests --reorder-goals --max-backjumps=-1 -j`
+    * Note: This can take a while. On a fast computer, it will take around 10 minutes. On a slower system, it can take up to 40.
+6. Start up the devel server with `yesod devel`.
+7. View your new site at [http://localhost:3000/](http://localhost:3000/).
+
+## Learn more
+
+Now it's time to start coding! You can play around with the code right now, or
+if you want to learn more, check out these resources:
+
+* [Yesod tutorial](http://yannesposito.com/Scratch/en/blog/Yesod-tutorial-for-newbies/)
+* [Yesod book](/book)
+* [Screencasts](/page/screencasts)
+* [The Wiki](/wiki)
+* [Community](/page/community)
+
+## Without Stackage Server
+
+You are not required to use Stackage Server to install Yesod. If you would
+instead like to use regular Hackage, simply install your GHC and cabal-install
+as normal, and do not configure cabal to use a Stackage snapshot. Note that you
+will be more likely to run into dependency conflicts if you go this route.
+
+## Legacy instructions
+
+These instructions are prior to August 2014, when we switched to recommending
+Stackage Server. They are kept in case anyone needs to recreate an old build,
+or has issues using Stackage Server.
+
+### Getting Haskell
 
 You'll need two main tools: the Glasgow Haskell Compiler (GHC) and
 cabal-install, the package installer. The best way to get them is with the
@@ -37,7 +83,7 @@ for help with their `PATH` setting.
 
 __Note__: Mac users on Mavericks should be sure to read about the [clang wrapper script](http://www.haskell.org/platform/mac.html) to get CPP working correctly. It's highly recommended for now to [use GCC's CPP implementation](https://gist.github.com/cartazio/7131371).
 
-## Install Yesod
+### Install Yesod
 
 Building Yesod and all of its dependencies is a simple procedure. Just run:
 
@@ -49,7 +95,7 @@ while. (15 minutes on modern systems, up to 40 minutes on older systems.) This
 is a one time setup, and will have no impact on normal development or
 runtime performance.
 
-## Start a new site
+### Start a new site
 
 Now I'm sure you want to test this out! The `yesod` executable has two important commands.
 
@@ -68,14 +114,3 @@ which will set up a sandboxed environment, install all dependencies, and start t
 
 (Note: If the command line tool gives you different instructions, you should
 follow those instead.)
-
-## Learn more
-
-Now it's time to start coding! You can play around with the code right now, or
-if you want to learn more, check out these resources:
-
-* [Yesod tutorial](http://yannesposito.com/Scratch/en/blog/Yesod-tutorial-for-newbies/)
-* [Yesod book](/book)
-* [Screencasts](/page/screencasts)
-* [The Wiki](/wiki)
-* [Community](/page/community)
