@@ -1,5 +1,6 @@
 Title: Yesod quick start guide
 
+
 ## FP Haskell Center
 
 The easiest way to get started with Yesod is by using [FP Haskell
@@ -7,29 +8,43 @@ Center](https://www.fpcomplete.com/business/haskell-center/overview/). FP
 Haskell Center provides a web based development environment with all of the
 Haskell toolchain and Yesod libraries preinstalled. You can get started right
 away by [cloning an existing Yesod
-project](https://www.fpcomplete.com/school/project-templates/file-server).
+project](https://www.fpcomplete.com/school/project-templates/file-server)
+on FP Haskell Center.
 
 The rest of this page provides instructions for installing on your local
 system.
 
-## Stackage Server
+
+## Local install using Stackage
 
 The recommended approach for installing Yesod on your local system is to use
-[Stackage Server](http://www.stackage.org/). Stackage Server ensures you will
-get a set of packages that are known to compile together and run correctly,
-instead of needing to find a working package set yourself. This avoids the
-oft-sited "cabal hell" users have faced in the past.
+the [Stackage](http://www.stackage.org/) package repository.
+By default Haskell's packages are distributed by the [Hackage](https://hackage.haskell.org/)
+repository. Stackage is an alternative to Hackage that provides snapshots: separate repositories
+for package sets that are known to compile together and run correctly.
+This avoids the oft-sited "cabal hell" users have faced in the past.
 
-1. Make sure [your system is prepared to use Stackage Server](https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage).
+1. [Prepare your system to use a Stackage repository](https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage).
 2. Choose a Stackage snapshot and configure your system to use it. See the Getting Started section [on the Stackage Server homepage](http://www.stackage.org/).
 3. Install prerequisite build tools: `cabal install alex happy`
-4. Install the `yesod` binary
-5. Run `yesod init` and answer its questions to create a new scaffolded application
-6. `cd` into the newly created directory
-7. Install all library dependencies with `cabal install --enable-tests --reorder-goals --max-backjumps=-1 -j`
-    * Note: This can take a while. On a fast computer, it will take around 10 minutes. On a slower system, it can take up to 40.
-8. Start up the devel server with `yesod devel`.
-9. View your new site at [http://localhost:3000/](http://localhost:3000/).
+4. Make sure your `$PATH` contains the location cabal installs binaries to: `export PATH=~/.cabal/bin:$PATH`
+5. Install the `yesod` binary: `cabal install yesod-bin`
+6. Run `yesod init` and answer its questions to create a new scaffolded application.
+7. `cd` into the newly created directory.
+8. Install all library dependencies with `cabal install --enable-tests --reorder-goals --max-backjumps=-1 -j`
+    * Note: This can take a while. On a fast computer it will take around 10 minutes, on a slower system it may take up to 40.
+9. Start up the application in development mode: `yesod devel`
+10. Install all library dependencies with `cabal install --enable-tests --reorder-goals --max-backjumps=-1 -j`
+11. View the scaffolded application at [http://localhost:3000/](http://localhost:3000/).
+
+
+## Local install using Hackage
+
+You are not required to use Stackage Server to install Yesod. If you would
+instead like to use regular Hackage, simply install your GHC and cabal-install
+as normal, and do not configure cabal to use a Stackage snapshot. Note that you
+will be more likely to run into dependency conflicts if you go this route.
+
 
 ## Learn more
 
@@ -42,14 +57,12 @@ if you want to learn more, check out these resources:
 * [The Wiki](/wiki)
 * [Community](/page/community)
 
-## Without Stackage Server
 
-You are not required to use Stackage Server to install Yesod. If you would
-instead like to use regular Hackage, simply install your GHC and cabal-install
-as normal, and do not configure cabal to use a Stackage snapshot. Note that you
-will be more likely to run into dependency conflicts if you go this route.
 
-## Legacy instructions
+--------------------
+--------------------
+
+# Legacy instructions
 
 These instructions are prior to August 2014, when we switched to recommending
 Stackage Server. They are kept in case anyone needs to recreate an old build,
