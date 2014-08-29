@@ -1,8 +1,6 @@
 We are happy to announce the release of persistent 2.0
 
-persistent 2.0 adds a flexible key type and makes some breaking changes.
-
-2.0 is an unstable release that we want your feedback on for the soon to follow stable 2.1 release.
+persistent 2.0 adds a flexible key type and makes some breaking changes. 2.0 is an unstable release that we want your feedback on for the soon to follow stable 2.1 release.
 
 
 ## New Features
