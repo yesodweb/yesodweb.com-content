@@ -28,7 +28,7 @@ persistent 2.0 adds a flexible key type and makes some breaking changes. 2.0 is 
 ## Composite keys
 
 The biggest limitation of data modeling with persistent is an assumption of a simple (for current SQL backends an auto-increment) primary key.
-We learned from [Groundhog](https://github.com/lykyah/groundhog) that a more flexible primary key type is possible. Persistent adds a similar flexible key type while maintaining its existing invariant that a Key is tied to a particular table.
+We learned from [Groundhog](https://github.com/lykahb/groundhog) that a more flexible primary key type is possible. Persistent adds a similar flexible key type while maintaining its existing invariant that a Key is tied to a particular table.
 
 To understand the changes to the `Key` data type, lets look at a change in the test suite for persistent 2.
 
@@ -102,7 +102,7 @@ When the record namespace issue is dealt with in the GHC 7.10 release we plan on
 ## Ongoing: Database specific functionality
 
 We always look forward to see more databases adapters for persistent.
-In the last year, a [Redis](http://hackage.haskell.org/package/persistent-redis) and ODBC](https://github.com/gbwey/persistent-odbc) adapter were added.
+In the last year, a [Redis](http://hackage.haskell.org/package/persistent-redis) and [ODBC](https://github.com/gbwey/persistent-odbc) adapter were added.
 
 Every database is different though, and you also want to take advantage of your database-specific features.
 [esqueleto](http://hackage.haskell.org/package/esqueleto) and [persistent-mongoDB](http://hackage.haskell.org/package/persistent-mongoDB) have shown how to build database specific features in a type-safe way on top of persistent.
