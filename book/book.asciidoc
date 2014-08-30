@@ -69,6 +69,8 @@ include::single-process-pubsub.asciidoc[]
 
 include::environment-variables.asciidoc[]
 
+include::route-attributes.asciidoc[]
+
 [[I_part_d1e8717]]
 = Appendices
 
