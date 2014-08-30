@@ -63,6 +63,10 @@ include::json-web-service.asciidoc[]
 
 include::case-study-sphinx.asciidoc[]
 
+include::visitor-counter.asciidoc[]
+
+include::single-process-pubsub.asciidoc[]
+
 [[I_part_d1e8717]]
 = Appendices
 

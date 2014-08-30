@@ -180,7 +180,7 @@ handled. There are three options in Yesod:
 * A single handler function for all request methods on a given route.
 
 * A separate handler function for each request method on a given route. Any
-  other request method will generate a 405 Bad Method response.
+  other request method will generate a 405 Method Not Allowed response.
 
 * You want to pass off to a subsite.
 
@@ -209,7 +209,7 @@ In this line, +/static+ just says where in your URL structure to serve the
 static files from. There is nothing magical about the word static, you could
 easily replace it with +/my/non-dynamic/files+.
 
-The next word, +StaticR+, gives the resource name. The next two words are what
+The next word, +StaticR+, gives the resource name. The next two words
 specify that we are using a subsite. +Static+ is the name of the subsite
 foundation datatype, and +getStatic+ is a function that gets a +Static+ value
 from a value of your master foundation datatype.
@@ -386,7 +386,7 @@ values in your foundation, you will probably end up using this function a lot.
 
 getUrlRender:: Returns the URL rendering function, which converts a type-safe
 URL into a +Text+. Most of the time- like with Hamlet- Yesod calls this
-function for you, but you may occassionally need to call it directly.
+function for you, but you may occasionally need to call it directly.
 
 getUrlRenderParams:: A variant of +getUrlRender+ that converts both a type-safe
 URL and a list of query-string parameters. This function handles all

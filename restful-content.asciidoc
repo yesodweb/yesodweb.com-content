@@ -46,7 +46,7 @@ request is similar to a pure function, which cannot have side effects. In
 practice, your +GET+ functions will probably perform +IO+, such as reading
 information from a database, logging user actions, and so on.
 
-See the routing and handlers chapter chapter for more information on the syntax
+See the routing and handlers chapter for more information on the syntax
 of defining handler functions for each request method.
 
 === Representations
@@ -169,8 +169,6 @@ By default, Yesod provides a convenience middleware that lets you set the
 accept header via a query string parameter. This can make it easier to test
 from your browser. To try this out, you can visit
 link:http://localhost:3000/?_accept=application/json[http://localhost:3000/?_accept=application/json].
-
-Notice that we ignore entirely the list of expected content types. A number of the built in representations (+RepHtml+, +RepPlain+, +RepJson+, +RepXml+) in fact only support a single representation, and therefore what the client requests in the +Accept+ header is irrelevant.
 
 ==== JSON conveniences
 

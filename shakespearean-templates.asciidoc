@@ -419,6 +419,53 @@ main = putStrLn $ renderHtml $ [hamlet|
 |] render
 ----
 
+Additionally, there is a variant of URL interpolation which allows you to embed
+query string parameters. This can be useful, for example, for creating
+paginated responses. Instead of using +@{...}+, you add a question mark
+(+@?{...}+) to indicate the presence of a query string. The value you provide
+must be a two-tuple with the first value being a type-safe URL and the second
+being a list of query string parameter pairs. See the next code snippet for an
+example.
+
+[source, haskell]
+----
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE OverloadedStrings #-}
+import Text.Hamlet (HtmlUrl, hamlet)
+import Text.Blaze.Html.Renderer.String (renderHtml)
+import Data.Text (Text, append, pack)
+import Control.Arrow (second)
+import Network.HTTP.Types (renderQueryText)
+import Data.Text.Encoding (decodeUtf8)
+import Blaze.ByteString.Builder (toByteString)
+
+data MyRoute = SomePage
+
+render :: MyRoute -> [(Text, Text)] -> Text
+render SomePage params = "/home" `append`
+    decodeUtf8 (toByteString $ renderQueryText True (map (second Just) params))
+
+main :: IO ()
+main = do
+    let currPage = 2 :: Int
+    putStrLn $ renderHtml $ [hamlet|
+<p>
+    You are currently on page #{currPage}.
+    <a href=@?{(SomePage, [("page", pack $ show $ currPage - 1)])}>Previous
+    <a href=@?{(SomePage, [("page", pack $ show $ currPage + 1)])}>Next
+|] render
+----
+
+This generates the expected HTML:
+
+[source, html]
+----
+<p>You are currently on page 2.
+<a href="/home?page=1">Previous</a>
+<a href="/home?page=3">Next</a>
+</p>
+----
+
 ===== Attributes
 
 In that last example, we put an href attribute on the "a" tag. Let's elaborate on the syntax:
@@ -586,6 +633,7 @@ article {
     code { background-color: grey; }
     p { text-indent: 2em; }
     a { text-decoration: none; }
+    > h1 { color: green; }
 }
 ----
 

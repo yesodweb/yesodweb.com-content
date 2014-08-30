@@ -292,7 +292,7 @@ template, you can write:
 $(hamletFile "myfile.hamlet")
 
 (Hamlet is discussed in the Shakespeare chapter.) The dollar sign immediately
-followed by parantheses tell GHC that what follows is a Template Haskell
+followed by parentheses tell GHC that what follows is a Template Haskell
 function. The code inside is then run by the compiler and generates a Haskell
 AST, which is then compiled. And yes, it's even possible to
 link:http://www.yesodweb.com/blog/2010/09/yo-dawg-template-haskell[go meta
@@ -330,6 +330,12 @@ NOTE: There are many other features of Template Haskell not covered here. For
 more information, see the
 link:http://www.haskell.org/haskellwiki/Template_Haskell[Haskell wiki page].
 
+One final note: Template Haskell introduces something called the stage
+restriction, which essentially means that code before a Template Haskell splice
+cannot refer to code in the Template Haskell, or what follows. This will
+sometimes require you to rearrange your code a bit. The same restriction
+applies to QuasiQuotes.
+
 [[I_sect12_d1e833]]
 
 === QuasiQuotes
@@ -358,6 +364,28 @@ production, external files are recommended for all but the shortest of inputs
 as it gives a nice separation of the non-Haskell syntax from your Haskell code.
 
 [[I_sect12_d1e851]]
+
+=== API Documentation
+
+The standard API documentation program in Haskell is called Haddock. The
+standard Haddock search tool is called Hoogle. My recommendation is to use
+link:$$https://www.fpcomplete.com/hoogle$$[FP Complete's Hoogle search] and its
+accompanying Haddocks for searching and browsing documentation. The reason for
+this is that the FP Complete Hoogle database covers a very large number of open
+source Haskell packages, and the documentation provided is always fully
+generated and known to link to other working Haddocks.
+
+The more commonly used sources for these are
+link:$$http://hackage.haskell.org/$$[Hackage] itself, and
+link:$$http://www.haskell.org/hoogle$$[haskell.org's Hoogle instance]. The
+downsides to these are that- based on build issues on the server- documentation
+is sometimes not generated, and the Hoogle search defaults to searching only a
+subset of available packages. Most importantly for us, Yesod is indexed by FP
+Complete's Hoogle, but not by haskell.org's.
+
+If when reading this book you run into types or functions that you do not
+understand, try doing a Hoogle search with FP Complete's Hoogle to get more
+information.
 
 === Summary
 

@@ -220,7 +220,7 @@ image::images/after-login.png[]
 === Email
 
 For many use cases, third-party authentication of email will be sufficient.
-Occassionally, you'll want users to actual create passwords on your site. The
+Occasionally, you'll want users to actual create passwords on your site. The
 scaffolded site does not include this setup, because:
 
 * In order to securely accept passwords, you need to be running over SSL. Many

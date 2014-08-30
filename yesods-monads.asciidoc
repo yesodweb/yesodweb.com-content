@@ -365,6 +365,179 @@ overview of the approach we use:
 If you want to understand this more, please have a look at the definitions of
 +HandlerT+ and +WidgetT+ in +Yesod.Core.Types+.
 
+=== Adding a new monad transformer
+
+At times, you'll want to add your own monad transformer in part of your
+application. As a motivating example, let's consider the
+link:http://hackage.haskell.org/package/monadcryptorandom[monadcryptorandom]
+package from Hackage, which defines both a +MonadCRandom+ typeclass for monads
+which allow generating cryptographically-secure random values, and +CRandT+ as
+a concrete instance of that typeclass. You would like to write some code that
+generates a random bytestring, e.g.:
+
+[source, haskell]
+----
+import Control.Monad.CryptoRandom
+import Data.ByteString.Base16 (encode)
+import Data.Text.Encoding (decodeUtf8)
+
+getHomeR = do
+    randomBS <- getBytes 128
+    defaultLayout
+        [whamlet|
+            <p>Here's some random data: #{decodeUtf8 $ encode randomBS}
+        |]
+----
+
+However, this results in an error message along the lines of:
+
+[source, errormsg]
+----
+    No instance for (MonadCRandom e0 (HandlerT App IO))
+      arising from a use of ‘getBytes’
+    In a stmt of a 'do' block: randomBS <- getBytes 128
+----
+
+How do we get such an instance? One approach is to simply use the +CRandT+ monad transformer when we call +getBytes+. A complete example of doing so would be:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings, QuasiQuotes, TemplateHaskell, TypeFamilies #-}
+import Yesod
+import Crypto.Random (SystemRandom, newGenIO)
+import Control.Monad.CryptoRandom
+import Data.ByteString.Base16 (encode)
+import Data.Text.Encoding (decodeUtf8)
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+|]
+
+instance Yesod App
+
+getHomeR :: Handler Html
+getHomeR = do
+    gen <- liftIO newGenIO
+    eres <- evalCRandT (getBytes 16) (gen :: SystemRandom)
+    randomBS <-
+        case eres of
+            Left e -> error $ show (e :: GenError)
+            Right gen -> return gen
+    defaultLayout
+        [whamlet|
+            <p>Here's some random data: #{decodeUtf8 $ encode randomBS}
+        |]
+
+main :: IO ()
+main = warp 3000 App
+----
+
+Note that what we're doing is layering the +CRandT+ transformer on *top* of the
++HandlerT+ transformer. It does not work to do things the other way around:
+Yesod itself would ultimately have to unwrap the +CRandT+ transformer, and it
+has no knowledge of how to do so. Notice that this is the same approach we take
+with Persistent: its transformer goes on top of +HandlerT+.
+
+But there are two downsides to this approach:
+
+1. It requires you to jump into this alternate monad each time you want to work with random values.
+2. It's inefficient: you need to create a new random seed each time you enter this other monad.
+
+The second point could be worked around by storing the random seed in the
+foundation datatype, in a mutable reference like an +IORef+, and then
+atomically sampling it each time we enter the +CRandT+ transformer. But we can
+even go a step further, and use this trick to make our +Handler+ monad itself
+an instance of +MonadCRandom+! Let's look at the code, which is in fact a bit
+involved:
+
+[source, haskell]
+----
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeSynonymInstances  #-}
+import           Control.Monad              (join)
+import           Control.Monad.Catch        (catch, throwM)
+import           Control.Monad.CryptoRandom
+import           Control.Monad.Error.Class  (MonadError (..))
+import           Crypto.Random              (SystemRandom, newGenIO)
+import           Data.ByteString.Base16     (encode)
+import           Data.IORef
+import           Data.Text.Encoding         (decodeUtf8)
+import           Yesod
+
+data App = App
+    { randGen :: IORef SystemRandom
+    }
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+|]
+
+instance Yesod App
+
+getHomeR :: Handler Html
+getHomeR = do
+    randomBS <- getBytes 16
+    defaultLayout
+        [whamlet|
+            <p>Here's some random data: #{decodeUtf8 $ encode randomBS}
+        |]
+
+instance MonadError GenError Handler where
+    throwError = throwM
+    catchError = catch
+instance MonadCRandom GenError Handler where
+    getCRandom  = wrap crandom
+    {-# INLINE getCRandom #-}
+    getBytes i = wrap (genBytes i)
+    {-# INLINE getBytes #-}
+    getBytesWithEntropy i e = wrap (genBytesWithEntropy i e)
+    {-# INLINE getBytesWithEntropy #-}
+    doReseed bs = do
+        genRef <- fmap randGen getYesod
+        join $ liftIO $ atomicModifyIORef genRef $ \gen ->
+            case reseed bs gen of
+                Left e -> (gen, throwM e)
+                Right gen' -> (gen', return ())
+    {-# INLINE doReseed #-}
+
+wrap :: (SystemRandom -> Either GenError (a, SystemRandom)) -> Handler a
+wrap f = do
+    genRef <- fmap randGen getYesod
+    join $ liftIO $ atomicModifyIORef genRef $ \gen ->
+        case f gen of
+            Left e -> (gen, throwM e)
+            Right (x, gen') -> (gen', return x)
+
+main :: IO ()
+main = do
+    gen <- newGenIO
+    genRef <- newIORef gen
+    warp 3000 App
+        { randGen = genRef
+        }
+----
+
+This really comes down to a few different concepts:
+
+. We modify the +App+ datatype to have a field for an +IORef SystemRandom+.
+. Similarly, we modify the +main+ function to generate an +IORef SystemRandom+.
+. Our +getHomeR+ function became a lot simpler: we can now simply call +getBytes+ without playing with transformers.
+. However, we *have* gained some complexity in needing a +MonadCRandom+ instance. Since this is a book on Yesod, and not on +monadcryptorandom+, I'm not going to go into details on this instance, but I encourage you to inspect it, and if you're interested, compare it to the instance for +CRandT+.
+
+Hopefully, this helps get across an important point: the power of the
++HandlerT+ transformer. By just providing you with a readable environment,
+you're able to recreate a +StateT+ transformer by relying on mutable
+references. In fact, if you rely on the underlying +IO+ monad for runtime
+exceptions, you can implement most cases of +ReaderT+, +WriterT+, +StateT+, and
++ErrorT+ with this abstraction.
+
 === Summary
 
 If you completely ignore this chapter, you'll still be able to use Yesod to
