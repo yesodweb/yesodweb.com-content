@@ -6,8 +6,8 @@
 <article lang="en">
 <appendix id="web-application-interface_web_application_interface">
 <title>Web Application Interface</title>
-<note><simpara>This chapter currently covers WAI version 2.1. It will be updated to
-cover WAI version 3.0 in the next iteration of the book (covering Yesod 1.4).</simpara></note>
+<note><simpara>This chapter covers WAI version 3.0, which has a number of changes from
+previous versions.</simpara></note>
 <simpara>It is a problem almost every language used for web development has dealt with:
 the low level interface between the web server and the application. The
 earliest example of a solution is the venerable and battle-worn Common Gateway Interface (CGI),
@@ -55,6 +55,21 @@ is the recommended aproach for general Yesod development.</simpara></note>
 and returns a response. A response is an HTTP status, a list of headers and a
 response body. A request contains various information: the requested path,
 query string, request body, HTTP version, and so on.</simpara>
+<simpara>In order to handle resource management in an exception-safe manner, we use
+continuation passing style for returning the response, similar to how the
+<literal>bracket</literal> function works. This makes our definition of an application look
+like:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">type Application =
+    Request -&gt;
+    (Response -&gt; IO ResponseReceived) -&gt;
+    IO ResponseReceived</programlisting>
+<simpara>The first argument is a <literal>Request</literal>, which shouldn&#8217;t be too surprising. The
+second argument is the continuation, or what we should <emphasis role="strong">do</emphasis> with a <literal>Response</literal>.
+Generally speaking, this will just be sending it to the client. We use the
+special <literal>ResponseReceived</literal> type to ensure that the application does in fact
+call the continuation.</simpara>
+<simpara>This may seem a little strange, but usage is pretty straight-forward, as we&#8217;ll
+demonstrate below.</simpara>
 <section id="web-application-interface_response_body">
 <title>Response Body</title>
 <simpara>Haskell has a datatype known as a lazy bytestring. By utilizing laziness, you
@@ -66,28 +81,41 @@ only representation necessary for a response body.</simpara>
 values, the lazy I/O necessary to read a file introduces some non-determinism
 into our programs. When serving thousands of small files a second, the limiting
 factor is not memory, but file handles. Using lazy I/O, file handles may not be
-freed immediately, leading to resource exhaustion. To deal with this, WAI uses
-conduits.</simpara>
-<simpara>The data type relevant to us now is a source. A source produces a stream of
-data, producing a single chunk at a time. In the case of WAI, the request body
-would be a source passed to the application, and the response body would be a
-source returned from the application.</simpara>
-<simpara>There are two further optimizations: many systems provide a sendfile system
-call, which sends a file directly to a socket, bypassing a lot of the memory
-copying inherent in more general I/O system calls. Additionally, there is a
-datatype in Haskell called <literal>Builder</literal> which allows efficient copying of bytes
-into buffers.</simpara>
-<simpara>The WAI response body therefore has three constructors: one for pure builders
-(<literal>ResponseBuilder</literal>), one for a source of builders (<literal>ResponseSource</literal>) and one
-for files (<literal>ResponseFile</literal>).</simpara>
+freed immediately, leading to resource exhaustion. To deal with this, WAI
+provides its own streaming data interface.</simpara>
+<simpara>The core of this streaming interface is the <literal>Builder</literal>. A <literal>Builder</literal> represents
+an action to fill up a buffer with bytes of data. This is more efficient than
+simply passing <literal>ByteString</literal>s around, as it can avoid multiple copies of data.
+In many cases, an application needs only to provide a single <literal>Builder</literal> value.
+And for that simple case, we have the <literal>ResponseBuilder</literal> constructor.</simpara>
+<simpara>However, there are times when an <literal>Application</literal> will need to interleave <literal>IO</literal>
+actions with yielding of data to the client. For that case, we have
+<literal>ResponseStream</literal>. With <literal>ResponseStream</literal>, you provide a <emphasis role="strong">function</emphasis>. This
+function in turn takes two actions: a "yield more data" action, and a "flush
+the buffer" action. This allows you to yield data, perform <literal>IO</literal> actions, and
+flush, as many times as you need, and with any interleaving desired.</simpara>
+<simpara>There is one further optimization: many operating systems provide a sendfile
+system call, which sends a file directly to a socket, bypassing a lot of the
+memory copying inherent in more general I/O system calls. For that case, we
+have a <literal>ResponseFile</literal>.</simpara>
+<simpara>Finally, there are some cases where we need to break out of the HTTP mode
+entirely. Two examples are WebSockets, where we need to upgrade a half-duplex
+HTTP connection to a full-duplex connection, and HTTPS proxying, which requires
+our proxy server to establish a connection, and then become a dumb data
+transport agent. For these cases, we have the <literal>ResponseRaw</literal> constructor. Note
+that not all WAI handlers can in fact support <literal>ResponseRaw</literal>, though the most
+commonly used handler, Warp, does provide this support.</simpara>
 </section>
 <section id="web-application-interface_request_body">
 <title>Request Body</title>
-<simpara>In order to avoid the need to load the entire request body into memory, we use
-sources here as well. Since the purpose of these values are for reading (not
-writing), we use <literal>ByteString</literal>s in place of <literal>Builder</literal>s. There is a record
-inside <literal>Request</literal> called <literal>requestBody</literal>, with type <literal>Source IO ByteString</literal>. We can
-use all of the standard conduit functions to interact with this source.</simpara>
+<simpara>Like response bodies, we could theoretically use a lazy ByteString for request
+bodies, but in practice we want to avoid lazy I/O. Instead, the request body is
+represented with a <literal>IO ByteString</literal> action (<literal>ByteString</literal> here being a <emphasis role="strong">strict</emphasis>
+ByteString). Note that this does <emphasis role="strong">not</emphasis> return the entire request body, but
+rather just the next chunk of data. Once you&#8217;ve consumed the entire request
+body, further calls to this action will return an empty ByteString.</simpara>
+<simpara>Note that, unlike response bodies, we have no need for using <literal>Builder</literal>s on
+the request side, since our purpose is purely for reading.</simpara>
 <simpara>The request body could in theory contain any type of data, but the most common
 are URL encoded and multipart form data. The wai-extra package contains
 built-in support for parsing these in a memory-efficient manner.</simpara>
@@ -103,7 +131,7 @@ import Network.Wai
 import Network.HTTP.Types (status200)
 import Network.Wai.Handler.Warp (run)
 
-application _ = return $
+application _ respond = respond $
   responseLBS status200 [("Content-Type", "text/plain")] "Hello World"
 
 main = run 3000 application</programlisting>
@@ -112,9 +140,75 @@ and is the premiere WAI backend. WAI is also built on top of the http-types
 package, which provides a number of datatypes and convenience values, including
 <literal>status200</literal>.</simpara>
 <simpara>First we define our application. Since we don&#8217;t care about the specific request
-parameters, we ignore the argument to the function. For any request, we are
-returning a response with status code 200 ("OK"), and text/plain content type
+parameters, we ignore the first argument to the function, which contains the
+request value. The second argument is our "send a response" function, which we
+immediately use. The response value we send is built from a lazy ByteString
+(thus <literal>responseLBS</literal>), with status code 200 ("OK"), a text/plain content type,
 and a body containing the words "Hello World". Pretty straight-forward.</simpara>
+</section>
+<section id="web-application-interface_resource_allocation">
+<title>Resource allocation</title>
+<simpara>Let&#8217;s make this a little more interesting, and try to allocate a resource for
+our response. We&#8217;ll create an <literal>MVar</literal> in our <literal>main</literal> function to track the number
+of requests, and then hold that <literal>MVar</literal> while sending each response.</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
+import           Blaze.ByteString.Builder           (fromByteString)
+import           Blaze.ByteString.Builder.Char.Utf8 (fromShow)
+import           Control.Concurrent.MVar
+import           Data.Monoid                        ((&lt;&gt;))
+import           Network.HTTP.Types                 (status200)
+import           Network.Wai
+import           Network.Wai.Handler.Warp           (run)
+
+application countRef _ respond = do
+    modifyMVar countRef $ \count -&gt; do
+        let count' = count + 1
+            msg = fromByteString "You are visitor number: " &lt;&gt;
+                  fromShow count'
+        responseReceived &lt;- respond $ responseBuilder
+            status200
+            [("Content-Type", "text/plain")]
+            msg
+        return (count', responseReceived)
+
+main = do
+    visitorCount &lt;- newMVar 0
+    run 3000 $ application visitorCount</programlisting>
+<simpara>This is where WAI&#8217;s continuation interface shines. We&#8217;re able to use the
+standard <literal>modifyMVar</literal> function to acquire the <literal>MVar</literal> lock and send our
+response. Note how we thread the <literal>responseReceived</literal> value through, though we
+never actually use the value for anything. It is merely witness to the fact
+that we have, in fact, sent a response.</simpara>
+<simpara>Notice also how we take advantage of <literal>Builder</literal>s in constructing our <literal>msg</literal>
+value. Instead of concatenating two <literal>ByteString</literal>s together directly, we
+monoidally append two different <literal>Builder</literal> values. The advantage to this is that
+the results will end up being copied directly into the final output buffer,
+instead of first being copied into a temporary <literal>ByteString</literal> buffer to only
+later be copied into the final buffer.</simpara>
+</section>
+<section id="web-application-interface_streaming_response">
+<title>Streaming response</title>
+<simpara>Let&#8217;s give our streaming interface a test as well:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
+import           Blaze.ByteString.Builder (fromByteString)
+import           Control.Concurrent       (threadDelay)
+import           Network.HTTP.Types       (status200)
+import           Network.Wai
+import           Network.Wai.Handler.Warp (run)
+
+application _ respond = respond $ responseStream status200 [("Content-Type", "text/plain")]
+    $ \send flush -&gt; do
+        send $ fromByteString "Starting the response...\n"
+        flush
+        threadDelay 1000000
+        send $ fromByteString "All done!\n"
+
+main = run 3000 application</programlisting>
+<simpara>We use <literal>responseStream</literal>, and our third argument is a function which takes our
+"send a builder" and "flush the buffer" functions. Notice how we flush after
+our first chunk of data, to make sure the client sees the data immediately.
+However, there&#8217;s no need to flush at the end of a response. WAI requires that
+the handler automatically flush at the end of a stream.</simpara>
 </section>
 <section id="web-application-interface_middleware">
 <title>Middleware</title>
@@ -136,7 +230,7 @@ import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Gzip (gzip, def)
 import Network.HTTP.Types (status200)
 
-application _ = return $ responseLBS status200 [("Content-Type", "text/plain")]
+application _ respond = respond $ responseLBS status200 [("Content-Type", "text/plain")]
                        "Hello World"
 
 main = run 3000 $ gzip def application</programlisting>
