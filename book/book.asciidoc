@@ -67,6 +67,8 @@ include::visitor-counter.asciidoc[]
 
 include::single-process-pubsub.asciidoc[]
 
+include::environment-variables.asciidoc[]
+
 [[I_part_d1e8717]]
 = Appendices
 
