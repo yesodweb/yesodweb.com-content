@@ -374,7 +374,7 @@ getHomeR = do
             &lt;p&gt;Here's some random data: #{decodeUtf8 $ encode randomBS}
         |]</programlisting>
 <simpara>However, this results in an error message along the lines of:</simpara>
-    No instance for (MonadCRandom e0 (HandlerT App IO))
+<programlisting language="errormsg" linenumbering="unnumbered">    No instance for (MonadCRandom e0 (HandlerT App IO))
       arising from a use of ‘getBytes’
     In a stmt of a 'do' block: randomBS &lt;- getBytes 128</programlisting>
 <simpara>How do we get such an instance? One approach is to simply use the <literal>CRandT</literal> monad transformer when we call <literal>getBytes</literal>. A complete example of doing so would be:</simpara>

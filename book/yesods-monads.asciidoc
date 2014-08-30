@@ -391,7 +391,7 @@ getHomeR = do
 
 However, this results in an error message along the lines of:
 
-[source]
+[source, errormsg]
 ----
     No instance for (MonadCRandom e0 (HandlerT App IO))
       arising from a use of ‘getBytes’
