@@ -88,14 +88,14 @@ Before the 2.1 release I would like to look at doing some simple things to speed
 
 ## Medium-term improvement: better support for Haskell data types
 
-We want to add better support for modeling ADTs, particularly for MongoDB where this is actually very to do in the database itself. Persistent already support a [top-level entity Sum Type](https://github.com/yesodweb/persistent/blob/master/persistent-test/SumTypeTest.hs#L35) and a simple field ADT that is just an enumeration.
+We want to add better support for modeling ADTs, particularly for MongoDB where this is actually very easy to do in the database itself. Persistent already support a [top-level entity Sum Type](https://github.com/yesodweb/persistent/blob/master/persistent-test/SumTypeTest.hs#L35) and a simple field ADT that is just an enumeration.
 
 Another pain point is serializing types not declared in the schema. The declaration syntax in groundhog is very verbose but allows for this. So one possibility would be to allow the current DRY persistent declaration style and also a groundhog declaration style.
 
 
 ## Long-term improvements: Projections
 
-It would be possible to add projections now as groundhog or equeleto have done. However, the result is not as end-user friendly as we would like.
+It would be possible to add projections now as groundhog or esqueleto have done. However, the result is not as end-user friendly as we would like.
 When the record namespace issue is dealt with in the GHC 7.10 release we plan on adding projections to persistent.
 
 
