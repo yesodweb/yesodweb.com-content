@@ -532,6 +532,70 @@ main :: IO ()
 main = warp 3000 App
 ----
 
+=== Query string and hash fragments
+
+We've looked at a number of functions which work on URL-like things, such as +redirect+. These functions all work with type-safe URLs, but what else do they work with? There's a typeclass called +RedirectUrl+ which contains the logical for converting some type into a textual URL. This includes type-safe URLs, textual URLs, and two special instances:
+
+1. A tuple of a URL and a list of key/value pairs of query string parameters.
+2. The +Fragment+ datatype, used for adding a hash fragment to the end of a URL.
+
+Both of these instances allow you to "add on" extra information to a type-safe
+URL. Let's see some examples of how these can be used:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Data.Set         (member)
+import           Data.Text        (Text)
+import           Yesod
+import           Yesod.Auth
+import           Yesod.Auth.Dummy
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/      HomeR  GET
+/link1 Link1R GET
+/link2 Link2R GET
+/link3 Link3R GET
+/link4 Link4R GET
+|]
+
+instance Yesod App where
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout $ do
+    setTitle "Redirects"
+    [whamlet|
+        <p>
+            <a href=@{Link1R}>Click to start the redirect loop!
+    |]
+
+getLink1R, getLink2R, getLink3R :: Handler ()
+getLink1R = redirect Link2R -- /link1
+getLink2R = redirect (Link3R, [("foo", "bar")]) -- /link3?foo=bar
+getLink3R = redirect $ Link4R :#: ("baz" :: Text) -- /link4#baz
+
+getLink4R :: Handler Html
+getLink4R = defaultLayout
+    [whamlet|
+        <p>You made it!
+    |]
+
+main :: IO ()
+main = warp 3000 App
+----
+
+Of course, inside a Hamlet template this is usually not necessary, as you can simply include the hash after the URL directly, e.g.:
+
+[source, hamlet]
+----
+<a href=@{Link1R}#somehash>Link to hash
+----
+
 === Summary
 
 Routing and dispatch is arguably the core of Yesod: it is from here that our
