@@ -39,7 +39,7 @@ points below addresses that.
 
 So here are my proposed scaffolding changes:
 
-* Let's move away from config files entirely. I know that in my own sites, I almost always [use environment variables](http://12factor.net/config) for configuration, and the presence of a config file usually just gets in the way.
+* Let's move away from config files towards [environment variables](http://12factor.net/config) for configuration. A config file is still a convenient way to record configuration, but injecting that configuration through environment variables means configuration can also be stored in a database or elsewhere and injected through environment variables the same way.
 * Along the same lines, we would no longer need a command line argument to indicate which environment we're in (devel vs production, etc). All such settings would be controlled via environment variables.
 * To allow for easy development, we would have a single `YESOD_DEVEL` environment variables which would indicate if we're currently in development. If so, it would apply a number of default environment variable values to avoid the need to set these in your shell manually.
 * Finally, and I expect this to be controversial: let's use classy-prelude-yesod in the `Import` module, instead of just taking `Prelude` with a few objectionable functions filtered out.
