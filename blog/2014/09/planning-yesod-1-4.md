@@ -16,9 +16,14 @@ users. You can see these in [the detailed change
 list](https://github.com/yesodweb/yesod/wiki/Detailed-change-list#yesod-14).
 One change I'd like to call out is the updated routing system. This is a
 fundamental change to how yesod-routes works. The generated code is
-*drastically* simpler as a result. I would release this as part of 1.2, but it
-introduces a new requirement on the `ViewPatterns` language extension. So
-instead, I held it off for the 1.4 release.
+*drastically* simpler as a result. Instead of constructing a data structure
+that allows for efficient pattern matching of the request path and then
+attempting to parse the resulting pieces, the new code simply generates a
+series of clauses, one for each route, and ensures proper parsing using view
+patterns. In my initial benchmarking, this made routing twice as fast as Yesod
+1.2. I would release this as part of 1.2, but it introduces a new requirement
+on the `ViewPatterns` language extension. So instead, I held it off for the 1.4
+release.
 
 If there are other breaking changes that people would like to propose, now's
 the time to do it. But be aware that I'll likely push back hard on any
