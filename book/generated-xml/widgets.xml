@@ -165,7 +165,33 @@ automatically.</simpara></note>
 <simpara>But what if you want to add some <literal>&lt;meta&gt;</literal> tags, which need to appear in
 the head? Or if you want some Javascript to appear in the body instead of the
 head? For these purposes, Yesod provides two additional type classes:
-<literal>ToWidgetHead</literal> and <literal>ToWidgetBody</literal>. These work exactly as they seem they should.</simpara>
+<literal>ToWidgetHead</literal> and <literal>ToWidgetBody</literal>. These work exactly as they seem they should. One example use case for this is to have fine-grained control of where your <literal>&lt;script&gt;</literal> tags end up getting inserted.</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Yesod
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/      HomeR  GET
+|]
+
+instance Yesod App where
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout $ do
+    setTitle "toWidgetHead and toWidgetBody"
+    toWidgetBody
+        [hamlet|&lt;script src=/included-in-body.js&gt;|]
+    toWidgetHead
+        [hamlet|&lt;script src=/included-in-head.js&gt;|]
+
+main :: IO ()
+main = warp 3001 App</programlisting>
+<simpara>Note that even though <literal>toWidgetHead</literal> was called after <literal>toWidgetBody</literal>, the
+latter <literal>&lt;script&gt;</literal> tag appears first in the generated HTML.</simpara>
 <simpara>In addition, there are a number of other functions for creating specific kinds
 of Widgets:</simpara>
 <variablelist>

@@ -150,7 +150,38 @@ automatically.
 But what if you want to add some +<meta>+ tags, which need to appear in
 the head? Or if you want some Javascript to appear in the body instead of the
 head? For these purposes, Yesod provides two additional type classes:
-+ToWidgetHead+ and +ToWidgetBody+. These work exactly as they seem they should.
++ToWidgetHead+ and +ToWidgetBody+. These work exactly as they seem they should. One example use case for this is to have fine-grained control of where your +<script>+ tags end up getting inserted.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Yesod
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/      HomeR  GET
+|]
+
+instance Yesod App where
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout $ do
+    setTitle "toWidgetHead and toWidgetBody"
+    toWidgetBody
+        [hamlet|<script src=/included-in-body.js>|]
+    toWidgetHead
+        [hamlet|<script src=/included-in-head.js>|]
+
+main :: IO ()
+main = warp 3001 App
+----
+
+Note that even though +toWidgetHead+ was called after +toWidgetBody+, the
+latter +<script>+ tag appears first in the generated HTML.
 
 In addition, there are a number of other functions for creating specific kinds
 of Widgets:
