@@ -71,62 +71,33 @@ Haskell build tool. Not only do we use Cabal for building our local code, but
 it can automatically download and install dependencies from Hackage, the
 Haskell package repository.
 
-If you're on Windows or Mac, it is strongly recommended to download the
-link:$$http://hackage.haskell.org/platform/$$[Haskell Platform]. On Linux, many
-distributions include the Haskell Platform in their repositories. On
-Debian-based systems, for example, you can get started by running +sudo apt-get
-install haskell-platform+. If your distribution does not include the Haskell
-Platform, you can install it manually by following the instructions on the
-Haskell Platform's page.
+The Yesod website keeps an up-to-date
+link:http://www.yesodweb.com/page/quickstart[quick start guide] which includes
+information on how to install and configure the various tools. It's highly
+recommended that you follow those instructions.
 
-One important tool you'll need to update is _alex_. The Haskell Platform
-includes version 2, while the Javascript minifier Yesod uses, hjsmin, requires
-version three. Be sure to _cabal install alex_ after getting set up with the
-Haskell Platform, or you'll run into error messages about the
-language-javascript package.
+If you decide to install your tools yourself, please make sure to avoid these
+common pitfalls:
 
+. Some Javascript tools that ship with Yesod require the build tools +alex+ and +happy+ to be installed. These can be added with +cabal install alex happy+.
+. Cabal installs executable to a user-specific directory, which needs to be added to your +PATH+. The exact location is OS-specific; please make sure to link:https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage#set-path-to-include-cabals-bin-directory[get the correct directory added].
+. On Windows, it's difficult to install the +network+ package from source, as it requires a POSIX shell. Installing the link:http://hackage.haskell.org/platform/[Haskell Platform] avoids this issue.
+. On Mac OS X, there are multiple C preprocessors available: one from Clang, and one from GCC. Many Haskell libraries depend on the GCC preprocessor. Again, the Haskell Platform sets things up correctly.
+. Some Linux distributions- Ubuntu in particular- typically have outdated packages for GHC and Haskell Platform. These may no longer be supported by the current version of Yesod. Please check the quick start guide for minimum version requirements.
+. Make sure you have all necessary system libraries installed. This is usually handled automatically by Haskell Platform, but may require extra work on Linux distros. If you get error messages about missing libraries, you usually just need to +apt-get install+ or +yum install+ the relevant libraries.
 
-[NOTE]
-====
-Some people like to live in the bleeding edge and install the latest version of
-GHC before it is available in the Haskell Platform. We try to keep Yesod
-up-to-date with all current versions of GHC, but we only officially support the
-Haskell Platform. If you do go the route of manually install GHC, here are a
-few notes:
+Once you have your toolchain set up correctly, you'll need to install a number
+of Haskell libraries. For the vast majority of the book, the following command
+will install all the libraries you need:
 
-* You'll need to install some additional build tools, _alex_ and _happy_ in
-  particular.
-
-* Make sure to install all of the
-  link:$$http://www.vex.net/%7Etrebla/haskell/haskell-platform.xhtml$$[required
-  C libraries]. On Debian-based systems, you would need to run:
-+
+[source, shell]
 ----
-sudo apt-get install libedit-dev libbsd-dev libgmp3-dev zlib1g-dev freeglut3-dev
+cabal update && cabal install yesod yesod-bin persistent-sqlite yesod-static
 ----
-====
 
-Regardless of how you've installed your tools, you should sure to put +cabal+'s
-bin folder in your +PATH+ variable. On Mac and Linux, this will be
-+$HOME/.cabal/bin+ and on Windows it will be +%APPDATA%\cabal\bin+.
-
-+cabal+ has lots of different options available, but for now, just try out these
-commands:
-
-
-* +cabal update+ will download the most recent list of packages from Hackage.
-
-* +cabal install yesod-platform+ will install Yesod and all its dependencies.
-
-* +cabal install yesod-bin+ will install the Yesod command line tool.
-
-For more up-to-date information on installing the latest version of Yesod,
-please refer to the link:$$http://www.yesodweb.com/page/quickstart$$[quick
-start guide].
-
-[NOTE]
-You probably want to perform a sandboxed install of your Yesod project
-by using the cabal sandbox feature by running the command +cabal sandbox init+
+Again, please refer to the
+link:$$http://www.yesodweb.com/page/quickstart$$[quick start guide] for the
+most up to date and accurate information.
 
 [[I_sect12_d1e628]]
 
