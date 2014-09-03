@@ -2,9 +2,8 @@ Title: Yesod quick start guide
 
 ## FP Haskell Center
 
-The easiest way to get started with Yesod is by using [FP Haskell
-Center](https://www.fpcomplete.com/business/haskell-center/overview/). FP
-Haskell Center provides a web based development environment with all of the
+[FP Haskell Center](https://www.fpcomplete.com/business/haskell-center/overview/)
+provides a web based development environment with all of the
 Haskell toolchain and Yesod libraries preinstalled. You can get started right
 away by [cloning an existing Yesod
 project](https://www.fpcomplete.com/school/project-templates/file-server).
@@ -14,11 +13,13 @@ system.
 
 ## Stackage Server
 
-The recommended approach for installing Yesod on your local system is to use
-[Stackage Server](http://www.stackage.org/). Stackage Server ensures you will
+[Stackage Server](http://www.stackage.org/) ensures you will
 get a set of packages that are known to compile together and run correctly,
 instead of needing to find a working package set yourself. This avoids the
 oft-sited "cabal hell" users have faced in the past.
+
+If this is your first Haskell project, please use [Stackage Server](http://www.stackage.org/).
+The downside of this approach is that at the moment, all of your Haskell projects need to use Stackage server. This issue should be fixed soon, but if it is an issue for you, use the sandbox install instructions.
 
 1. Make sure [your system is prepared to use Stackage Server](https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage), and then set up Stackage following the Getting Started section [on the Stackage Server homepage](http://www.stackage.org/).
 2. Install necessary build tools: `cabal install alex happy yesod-bin`
@@ -44,18 +45,13 @@ if you want to learn more, check out these resources:
 * [The Wiki](/wiki)
 * [Community](/page/community)
 
-## Without Stackage Server
+## Sandbox install Without Stackage Server
 
 You are not required to use Stackage Server to install Yesod. If you would
 instead like to use regular Hackage, simply install your GHC and cabal-install
 as normal, and do not configure cabal to use a Stackage snapshot. Note that you
 will be more likely to run into dependency conflicts if you go this route.
 
-## Legacy instructions
-
-These instructions are prior to August 2014, when we switched to recommending
-Stackage Server. They are kept in case anyone needs to recreate an old build,
-or has issues using Stackage Server.
 
 ### Getting Haskell
 
@@ -87,7 +83,7 @@ __Note__: Mac users on Mavericks should be sure to read about the [clang wrapper
 Building Yesod and all of its dependencies is a simple procedure. Just run:
 
     cabal update
-    cabal install yesod-platform yesod-bin --max-backjumps=-1 --reorder-goals
+    cabal install yesod-bin --max-backjumps=-1 --reorder-goals
 
 Note that this will be installing a large number of packages, and may take a
 while. (15 minutes on modern systems, up to 40 minutes on older systems.) This
@@ -105,7 +101,7 @@ you a few questions, and then generate a scaffolded site for you.
 At this point, you can follow the onscreen instructions to build and run your site. At the time of writing this page, the instructions are:
 
     cabal sandbox init
-    cabal install --enable-tests . yesod-platform yesod-bin --max-backjumps=-1 --reorder-goals
+    cabal install -j --enable-tests . yesod-platform yesod-bin --max-backjumps=-1 --reorder-goals
     yesod devel
 
 which will set up a sandboxed environment, install all dependencies, and start the development server. After this is completed, you can access your site at
