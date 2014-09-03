@@ -20,16 +20,18 @@ get a set of packages that are known to compile together and run correctly,
 instead of needing to find a working package set yourself. This avoids the
 oft-sited "cabal hell" users have faced in the past.
 
-1. Make sure [your system is prepared to use Stackage Server](https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage).
-2. Choose a Stackage snapshot and configure your system to use it. See the Getting Started section [on the Stackage Server homepage](http://www.stackage.org/).
-3. Install prerequisite build tools: `cabal install alex happy`
-4. Install the `yesod` binary
-5. Run `yesod init` and answer its questions to create a new scaffolded application
-6. `cd` into the newly created directory
-7. Install all library dependencies with `cabal install --enable-tests --reorder-goals --max-backjumps=-1 -j`
+1. Make sure [your system is prepared to use Stackage Server](https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage), and then set up Stackage following the Getting Started section [on the Stackage Server homepage](http://www.stackage.org/).
+2. Install necessary build tools: `cabal install alex happy yesod-bin`
+
+You're now ready to start a new scaffolded site and build it:
+
+1. Run `yesod init` and answer its questions to create a new scaffolded application
+2. `cd` into the newly created directory
+3. Install all library dependencies with `cabal install --enable-tests --reorder-goals --max-backjumps=-1 -j`
     * Note: This can take a while. On a fast computer, it will take around 10 minutes. On a slower system, it can take up to 40.
-8. Start up the devel server with `yesod devel`.
-9. View your new site at [http://localhost:3000/](http://localhost:3000/).
+4. Start up the devel server with `yesod devel`.
+
+You've now got a running Yesod site at [http://localhost:3000/](http://localhost:3000/).
 
 ## Learn more
 
