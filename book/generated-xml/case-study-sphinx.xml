@@ -111,7 +111,7 @@ mkYesod "Searcher" [parseRoutes|
 instance Yesod Searcher
 
 instance YesodPersist Searcher where
-    type YesodPersistBackend Searcher = SqlPersistT
+    type YesodPersistBackend Searcher = SqlBackend
 
     runDB action = do
         Searcher pool &lt;- getYesod
@@ -248,7 +248,7 @@ getResults qstring = do
     sphinxRes' &lt;- liftIO $ S.query config "searcher" $ T.unpack qstring
     case sphinxRes' of
         ST.Ok sphinxRes -&gt; do
-            let docids = map (Key . PersistInt64 . ST.documentId) $ ST.matches sphinxRes
+            let docids = map (toSqlKey . ST.documentId) $ ST.matches sphinxRes
             fmap catMaybes $ runDB $ forM docids $ \docid -&gt; do
                 mdoc &lt;- get docid
                 case mdoc of
@@ -431,13 +431,14 @@ getXmlpipeR =
 </section>
 <section id="case-study-sphinx_full_code">
 <title>Full code</title>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE GADTs                 #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE QuasiQuotes           #-}
-{-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE TypeFamilies          #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import           Control.Applicative                     ((&lt;$&gt;), (&lt;*&gt;))
 import           Control.Monad                           (forM)
 import           Control.Monad.Logger                    (runStdoutLoggingT)
@@ -478,7 +479,7 @@ mkYesod "Searcher" [parseRoutes|
 instance Yesod Searcher
 
 instance YesodPersist Searcher where
-    type YesodPersistBackend Searcher = SqlPersistT
+    type YesodPersistBackend Searcher = SqlBackend
 
     runDB action = do
         Searcher pool &lt;- getYesod
@@ -586,7 +587,7 @@ getResults qstring = do
     sphinxRes' &lt;- liftIO $ S.query config "searcher" $ T.unpack qstring
     case sphinxRes' of
         ST.Ok sphinxRes -&gt; do
-            let docids = map (Key . PersistInt64 . ST.documentId) $ ST.matches sphinxRes
+            let docids = map (toSqlKey . ST.documentId) $ ST.matches sphinxRes
             fmap catMaybes $ runDB $ forM docids $ \docid -&gt; do
                 mdoc &lt;- get docid
                 case mdoc of
@@ -678,8 +679,8 @@ endEvents =
     ]
 
 main :: IO ()
-main = withSqlitePool "searcher.db3" 10 $ \pool -&gt; do
-    runStdoutLoggingT $ runSqlPool (runMigration migrateAll) pool
+main = runStdoutLoggingT $ withSqlitePool "searcher.db3" 10 $ \pool -&gt; liftIO $ do
+    runSqlPool (runMigration migrateAll) pool
     warp 3000 $ Searcher pool</programlisting>
 </section>
 </section>

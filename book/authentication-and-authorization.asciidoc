@@ -252,14 +252,15 @@ passwords in a Persistent SQLite database.
 
 [source, haskell]
 ----
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE GADTs                 #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE QuasiQuotes           #-}
-{-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import           Control.Monad            (join)
 import           Control.Monad.Logger (runNoLoggingT)
 import           Data.Maybe               (isJust)
@@ -303,7 +304,7 @@ instance RenderMessage App FormMessage where
 
 -- Set up Persistent
 instance YesodPersist App where
-    type YesodPersistBackend App = SqlPersistT
+    type YesodPersistBackend App = SqlBackend
     runDB f = do
         App conn <- getYesod
         runSqlConn f conn
@@ -409,8 +410,8 @@ getHomeR = do
         |]
 
 main :: IO ()
-main = withSqliteConn "email.db3" $ \conn -> do
-    runNoLoggingT $ runSqlConn (runMigration migrateAll) conn
+main = runNoLoggingT $ withSqliteConn "email.db3" $ \conn -> liftIO $ do
+    runSqlConn (runMigration migrateAll) conn
     warp 3000 $ App conn
 ----
 

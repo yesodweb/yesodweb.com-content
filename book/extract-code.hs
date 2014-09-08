@@ -32,11 +32,9 @@ handleXML fp = do
         snippets
             | isContinuous fp = [unlines snippets0]
             | otherwise = snippets0
-    mapM_ (print . take 1 . lines) snippets
     forM_ snippets $ \code -> forM_ (getFileName code) $ \(fp, code') -> do
         liftIO $ unlessM (isFile fp) $ do
             createTree $ directory fp
-            print fp
             writeFile fp $ filter (/= '\r') code'
         yield fp
 

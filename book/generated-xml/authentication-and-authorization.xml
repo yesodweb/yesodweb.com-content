@@ -275,14 +275,15 @@ passwords securely in the database and send a number of different emails to
 users (verify account, password retrieval, etc.).</simpara>
 <simpara>Let&#8217;s have a look at a site that provides email authentication, storing
 passwords in a Persistent SQLite database.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE GADTs                 #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE QuasiQuotes           #-}
-{-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE TypeFamilies          #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import           Control.Monad            (join)
 import           Control.Monad.Logger (runNoLoggingT)
 import           Data.Maybe               (isJust)
@@ -326,7 +327,7 @@ instance RenderMessage App FormMessage where
 
 -- Set up Persistent
 instance YesodPersist App where
-    type YesodPersistBackend App = SqlPersistT
+    type YesodPersistBackend App = SqlBackend
     runDB f = do
         App conn &lt;- getYesod
         runSqlConn f conn
@@ -432,8 +433,8 @@ getHomeR = do
         |]
 
 main :: IO ()
-main = withSqliteConn "email.db3" $ \conn -&gt; do
-    runNoLoggingT $ runSqlConn (runMigration migrateAll) conn
+main = runNoLoggingT $ withSqliteConn "email.db3" $ \conn -&gt; liftIO $ do
+    runSqlConn (runMigration migrateAll) conn
     warp 3000 $ App conn</programlisting>
 </section>
 <section id="authentication-and-authorization_authorization">

@@ -92,6 +92,7 @@ supported by persistent. For example, for SQL databases, there is a monad
 transformer <literal>SqlPersistT</literal>.  This means that you can run a SQL database with any
 underlying monad. The takeaway here is that we can layer our Persistent
 transformer on top of <literal>Handler</literal> or <literal>Widget</literal>.</simpara>
+<simpara>FIXME: Next paragraph is likely not correct any more.</simpara>
 <note><simpara>There actually are two requirements for the base monad of <literal>SqlPersistT</literal>:
 it must be an instance of <literal>MonadResource</literal> (to allow proper exception handling),
 and <literal>MonadLogger</literal> (to allow logging of SQL queries). Fortunately, both
@@ -122,13 +123,15 @@ our approach would have been to load up the data in a <literal>Handler</literal>
 that data into a <literal>Widget</literal>. Now, we&#8217;ll do the loading of data in the <literal>Widget</literal>
 itself. This is a boon for modularity, as this <literal>Widget</literal> can be used in any
 <literal>Handler</literal> we want, without any need to pass in the database contents.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE GADTs                 #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE QuasiQuotes           #-}
-{-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE TypeFamilies          #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
+import           Control.Monad.Logger    (runNoLoggingT)
 import           Data.Text               (Text)
 import           Data.Time
 import           Database.Persist.Sqlite
@@ -154,7 +157,7 @@ instance RenderMessage App FormMessage where
     renderMessage _ _ = defaultFormMessage
 
 instance YesodPersist App where
-    type YesodPersistBackend App = SqlPersistT
+    type YesodPersistBackend App = SqlBackend
     runDB db = do
         App pool &lt;- getYesod
         runSqlPool db pool
@@ -193,7 +196,7 @@ postAddLinkR = do
     redirect HomeR
 
 main :: IO ()
-main = withSqlitePool "links.db3" 10 $ \pool -&gt; do
+main = runNoLoggingT $ withSqlitePool "links.db3" 10 $ \pool -&gt; liftIO $ do
     runSqlPersistMPool (runMigration migrateAll) pool
     warp 3000 $ App pool</programlisting>
 <simpara>Pay attention in particular to the <literal>existingLinks</literal> function. Notice how all we

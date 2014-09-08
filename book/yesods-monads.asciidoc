@@ -91,6 +91,8 @@ transformer +SqlPersistT+.  This means that you can run a SQL database with any
 underlying monad. The takeaway here is that we can layer our Persistent
 transformer on top of +Handler+ or +Widget+.
 
+FIXME: Next paragraph is likely not correct any more.
+
 NOTE: There actually are two requirements for the base monad of +SqlPersistT+:
 it must be an instance of +MonadResource+ (to allow proper exception handling),
 and +MonadLogger+ (to allow logging of SQL queries). Fortunately, both
@@ -131,13 +133,15 @@ itself. This is a boon for modularity, as this +Widget+ can be used in any
 
 [source, haskell]
 ----
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE GADTs                 #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE QuasiQuotes           #-}
-{-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
+import           Control.Monad.Logger    (runNoLoggingT)
 import           Data.Text               (Text)
 import           Data.Time
 import           Database.Persist.Sqlite
@@ -163,7 +167,7 @@ instance RenderMessage App FormMessage where
     renderMessage _ _ = defaultFormMessage
 
 instance YesodPersist App where
-    type YesodPersistBackend App = SqlPersistT
+    type YesodPersistBackend App = SqlBackend
     runDB db = do
         App pool <- getYesod
         runSqlPool db pool
@@ -202,7 +206,7 @@ postAddLinkR = do
     redirect HomeR
 
 main :: IO ()
-main = withSqlitePool "links.db3" 10 $ \pool -> do
+main = runNoLoggingT $ withSqlitePool "links.db3" 10 $ \pool -> liftIO $ do
     runSqlPersistMPool (runMigration migrateAll) pool
     warp 3000 $ App pool
 ----

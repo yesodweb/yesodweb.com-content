@@ -6,6 +6,7 @@
 <article lang="en">
 <section id="yesod-for-haskellers_yesod_for_haskellers">
 <title>Yesod for Haskellers</title>
+<simpara>FIXME: This chapter needs to be reviewed for WAI 3.0/Yesod 1.4</simpara>
 <simpara>The majority of this book is built around giving practical information on how
 to get common tasks done, without drilling too much into the details of what&#8217;s
 going on under the surface. While the book presumes knowledge of Haskell, it
@@ -27,7 +28,7 @@ main :: IO ()
 main = run 3000 app
 
 app :: Application
-app _req = return $ responseLBS
+app _req sendResponse = sendResponse $ responseLBS
     status200
     [("Content-Type", "text/plain")]
     "Hello Warp!"</programlisting>
@@ -50,13 +51,13 @@ main :: IO ()
 main = run 3000 app
 
 app :: Application
-app req =
+app req sendResponse =
     case pathInfo req of
-        ["foo", "bar"] -&gt; return $ responseLBS
+        ["foo", "bar"] -&gt; sendResponse $ responseLBS
             status200
             [("Content-Type", "text/plain")]
             "You requested /foo/bar"
-        _ -&gt; return $ responseLBS
+        _ -&gt; sendResponse $ responseLBS
             status200
             [("Content-Type", "text/plain")]
             "You requested something else"</programlisting>
@@ -82,7 +83,7 @@ main :: IO ()
 main = run 3000 app
 
 app :: Application
-app _req = return $ responseBuilder
+app _req sendResponse = sendResponse $ responseBuilder
     status200
     [("Content-Type", "text/plain")]
     (fromByteString "Hello from blaze-builder!" :: Builder)</programlisting>
@@ -102,7 +103,7 @@ main :: IO ()
 main = run 3000 app
 
 app :: Application
-app _req = return $ responseBuilder
+app _req sendResponse = sendResponse $ responseBuilder
     status200
     [("Content-Type", "text/html")] -- yay!
     (renderHtmlBuilder myPage)
@@ -127,61 +128,63 @@ import           Blaze.ByteString.Builder.Char.Utf8 (fromShow)
 import           Control.Concurrent                 (threadDelay)
 import           Control.Monad                      (forM_)
 import           Control.Monad.Trans.Class          (lift)
-import           Data.Conduit                       (Flush (Chunk, Flush),
-                                                     Source, yield)
 import           Data.Monoid                        ((&lt;&gt;))
 import           Network.HTTP.Types                 (status200)
 import           Network.Wai                        (Application,
-                                                     responseSource)
+                                                     responseStream)
 import           Network.Wai.Handler.Warp           (run)
 
 main :: IO ()
 main = run 3000 app
 
 app :: Application
-app _req = return $ responseSource
+app _req sendResponse = sendResponse $ responseStream
     status200
     [("Content-Type", "text/plain")]
-    mySrc
+    myStream
 
-mySrc :: Source IO (Flush Builder)
-mySrc = do
-    yield $ Chunk $ fromByteString "Starting streaming response.\n"
-    yield $ Chunk $ fromByteString "Performing some I/O.\n"
-    yield Flush
+myStream :: (Builder -&gt; IO ()) -&gt; IO () -&gt; IO ()
+myStream send flush = do
+    send $ fromByteString "Starting streaming response.\n"
+    send $ fromByteString "Performing some I/O.\n"
+    flush
     -- pretend we're performing some I/O
-    lift $ threadDelay 1000000
-    yield $ Chunk $ fromByteString "I/O performed, here are some results.\n"
+    threadDelay 1000000
+    send $ fromByteString "I/O performed, here are some results.\n"
     forM_ [1..50 :: Int] $ \i -&gt; do
-        yield $ Chunk $ fromByteString "Got the value: " &lt;&gt;
-                        fromShow i &lt;&gt;
-                        fromByteString "\n"</programlisting>
+        send $ fromByteString "Got the value: " &lt;&gt;
+               fromShow i &lt;&gt;
+               fromByteString "\n"</programlisting>
 <simpara>Another common requirement when dealing with a streaming response is safely
 allocating a scarce resource- such as a file handle. By <emphasis role="strong">safely</emphasis>, I mean
 ensuring that the response will be released, even in the case of some
-exception. To deal with that, you can use <literal>responseSourceBracket</literal>:</simpara>
+exception. To deal with that, you can use <literal>responseSourceBracket</literal>: FIXME change prose</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
 import           Blaze.ByteString.Builder (fromByteString)
+import qualified Data.ByteString          as S
 import           Data.Conduit             (Flush (Chunk), ($=))
 import           Data.Conduit.Binary      (sourceHandle)
 import qualified Data.Conduit.List        as CL
 import           Network.HTTP.Types       (status200)
-import           Network.Wai              (Application, responseSourceBracket)
+import           Network.Wai              (Application, responseStream)
 import           Network.Wai.Handler.Warp (run)
-import           System.IO                (IOMode (ReadMode), hClose, openFile)
+import           System.IO                (IOMode (ReadMode), withFile)
 
 main :: IO ()
 main = run 3000 app
 
 app :: Application
-app _req = responseSourceBracket
-    (openFile "index.html" ReadMode)
-    hClose
-    $ \handle -&gt; return
-        ( status200
-        , [("Content-Type", "text/html")]
-        , sourceHandle handle $= CL.map (Chunk . fromByteString)
-        )</programlisting>
+app _req sendResponse = withFile "index.html" ReadMode $ \handle -&gt;
+    sendResponse $ responseStream
+        status200
+        [("Content-Type", "text/html")]
+        $ \send _flush -&gt;
+            let loop = do
+                    bs &lt;- S.hGet handle 4096
+                    if S.null bs
+                        then return ()
+                        else send (fromByteString bs) &gt;&gt; loop
+             in loop</programlisting>
 <simpara>But in the case of serving files, it&#8217;s more efficient to use <literal>responseFile</literal>,
 which can use the <literal>sendfile</literal> system call to avoid unnecessary buffer copies:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
@@ -193,7 +196,7 @@ main :: IO ()
 main = run 3000 app
 
 app :: Application
-app _req = return $ responseFile
+app _req sendResponse = sendResponse $ responseFile
     status200
     [("Content-Type", "text/html")]
     "index.html"
@@ -262,8 +265,8 @@ instance RenderRoute App where
                         )
 
 instance YesodDispatch App where
-    yesodDispatch (YesodRunnerEnv _logger site _sessionBackend) _req =
-        return $ responseBuilder
+    yesodDispatch (YesodRunnerEnv _logger site _sessionBackend) _req sendResponse =
+        sendResponse $ responseBuilder
             status200
             [("Content-Type", "text/html")]
             (renderHtmlBuilder $ welcomeMessage site)
@@ -376,7 +379,7 @@ getHomeR = do
     return $ welcomeMessage site
 
 instance YesodDispatch App where
-    yesodDispatch yesodRunnerEnv req =
+    yesodDispatch yesodRunnerEnv req sendResponse =
         let maybeRoute =
                 case pathInfo req of
                     [] -&gt; Just HomeR
@@ -385,7 +388,7 @@ instance YesodDispatch App where
                 case maybeRoute of
                     Nothing -&gt; notFound
                     Just HomeR -&gt; getHomeR
-         in yesodRunner handler yesodRunnerEnv maybeRoute req
+         in yesodRunner handler yesodRunnerEnv maybeRoute req sendResponse
 
 main :: IO ()
 main = do
@@ -562,7 +565,7 @@ getHomeR = do
         provideRep $ return $ welcomeMessageJson site
 
 instance YesodDispatch App where
-    yesodDispatch yesodRunnerEnv req =
+    yesodDispatch yesodRunnerEnv req sendResponse =
         let maybeRoute =
                 case pathInfo req of
                     [] -&gt; Just HomeR
@@ -571,7 +574,7 @@ instance YesodDispatch App where
                 case maybeRoute of
                     Nothing -&gt; notFound
                     Just HomeR -&gt; getHomeR
-         in yesodRunner handler yesodRunnerEnv maybeRoute req
+         in yesodRunner handler yesodRunnerEnv maybeRoute req sendResponse
 
 main :: IO ()
 main = do
@@ -743,7 +746,7 @@ getHomeR = respondSource "text/plain" $ do
                     fromByteString "\n"
 
 instance YesodDispatch App where
-    yesodDispatch yesodRunnerEnv req =
+    yesodDispatch yesodRunnerEnv req sendResponse =
         let maybeRoute =
                 case pathInfo req of
                     [] -&gt; Just HomeR
@@ -752,7 +755,7 @@ instance YesodDispatch App where
                 case maybeRoute of
                     Nothing -&gt; notFound
                     Just HomeR -&gt; getHomeR
-         in yesodRunner handler yesodRunnerEnv maybeRoute req
+         in yesodRunner handler yesodRunnerEnv maybeRoute req sendResponse
 
 main :: IO ()
 main = warp 3000 App</programlisting>
@@ -802,14 +805,14 @@ parseRoute' ["fib", i] = FibR &lt;$&gt; fromPathPiece i
 parseRoute' _ = Nothing</programlisting>
 <simpara>And then we can write our <literal>YesodDispatch</literal> typeclass instance:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">instance YesodDispatch App where
-    yesodDispatch yesodRunnerEnv req =
+    yesodDispatch yesodRunnerEnv req sendResponse =
         let maybeRoute = parseRoute' (pathInfo req)
             handler =
                 case maybeRoute of
                     Nothing -&gt; notFound
                     Just HomeR -&gt; getHomeR
                     Just (FibR i) -&gt; getFibR i
-         in yesodRunner handler yesodRunnerEnv maybeRoute req
+         in yesodRunner handler yesodRunnerEnv maybeRoute req sendResponse
 
 getHomeR = redirect (FibR 1)
 

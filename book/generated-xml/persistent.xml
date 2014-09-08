@@ -6,8 +6,6 @@
 <article lang="en">
 <section id="persistent_persistent">
 <title>Persistent</title>
-<note><simpara>This chapter currently covers persistent version 1.3. It will be updated to
-cover persistent version 2.0 in the next iteration of the book (covering Yesod 1.4).</simpara></note>
 <simpara>Forms deal with the boundary between the user and the application. Another
 boundary we need to deal with is between the application and the storage layer.
 Whether it be a SQL database, a YAML file, or a binary blob, odds are your
@@ -59,13 +57,14 @@ usable on its own as a standalone library. Most of this chapter will address
 Persistent on its own.</simpara>
 <section id="persistent_synopsis">
 <title>Synopsis</title>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls    #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TypeFamilies      #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
 import           Database.Persist.Sqlite
@@ -320,13 +319,14 @@ its constructors throughout Persistent, such as to ensure that when we apply a
 filter, the types of the filtering value match the field.</simpara>
 <simpara>We can use the generated <literal>Person</literal> type like any other Haskell type, and then
 pass it off to other Persistent functions.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls    #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TypeFamilies      #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
 import           Database.Persist.Sqlite
@@ -413,8 +413,14 @@ an error message about a missing table.</simpara>
 <simpara>For SQL databases, one of the major pains can be managing schema changes.
 Instead of leaving this to the user, Persistent steps in to help, but you have
 to <emphasis>ask</emphasis> it to help. Let&#8217;s see what this looks like:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.TH
 import Database.Persist.Sqlite
@@ -440,8 +446,14 @@ you to migrate multiple tables simultaneously.</simpara>
 <simpara>This works when dealing with just a few entities, but can quickly get tiresome
 once we are dealing with a dozen entities. Instead of repeating yourself,
 Persistent provides a helper function, <literal>mkMigrate</literal>:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -536,8 +548,14 @@ unique.</simpara>
 <simpara>While each field name must begin with a lowercase letter, the uniqueness
 constraints must begin with an uppercase letter, since it will be represented
 in Haskell as a data constructor.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -926,8 +944,14 @@ two words on a line.</simpara>
 <simpara>Suppose we want to have a <literal>Person</literal> entity with an (optional) age and the
 timestamp of when he/she was added to the system. For entities already in the
 database, we want to just use the current date-time for that timestamp.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -956,8 +980,14 @@ nullable.</simpara>
 understood by the database. In this case, it uses the database&#8217;s built-in
 <literal>CURRENT_TIME</literal> function. Suppose that we now want to add a field for a person&#8217;s
 favorite programming language:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -982,8 +1012,14 @@ database schema and automatic migrations.</simpara></note>
 properly interpret it. Finally, Persistent can use double quotes for containing
 white space, so if we want to set someone&#8217;s default home country to be El
 Salvador:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -1023,8 +1059,14 @@ Yesod wiki</ulink>.</simpara>
 <simpara>Persistent allows references between your data types in a manner that is
 consistent with supporting non-SQL databases. We do this by embedding an ID in
 the related entity. So if a person has many cars:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -1055,8 +1097,14 @@ many-to-many relationships, we need a join entity, which has a one-to-many
 relationship with each of the original tables. It is also a good idea to use
 uniqueness constraints on these. For example, to model a situation where we
 want to track which people have shopped in which stores:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -1201,8 +1249,14 @@ import Database.Persist.TH
 data Employment = Employed | Unemployed | Retired
     deriving (Show, Read, Eq)
 derivePersistField "Employment"</programlisting>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Employment
@@ -1243,8 +1297,14 @@ interface exclusively.)</simpara>
 <note><simpara>Actually, you <emphasis>can</emphasis> express a LIKE operator directly in the normal syntax
 due to a feature added in Persistent 0.6, which allows backend-specific
 operators. But this is still a good example, so let&#8217;s roll with it.</simpara></note>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings, TemplateHaskell, QuasiQuotes, TypeFamilies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving, GADTs, FlexibleContexts #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist.TH
 import Data.Text (Text)
 import Database.Persist.Sqlite
@@ -1283,8 +1343,14 @@ here to point out how it works under the surface.</simpara>
 <simpara>The yesod-persistent package provides the meeting point between Persistent and
 Yesod. It provides the <literal>YesodPersist</literal> typeclass, which standardizes access to
 the database via the <literal>runDB</literal> method. Let&#8217;s see this in action.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, FlexibleContexts #-}
-{-# LANGUAGE TemplateHaskell, OverloadedStrings, GADTs, MultiParamTypeClasses #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Yesod
 import Database.Persist.Sqlite
 import Control.Monad.Trans.Resource (runResourceT)
@@ -1317,7 +1383,7 @@ instance Yesod PersistTest
 -- Now we need to define a YesodPersist instance, which will keep track of
 -- which backend we're using and how to run an action.
 instance YesodPersist PersistTest where
-    type YesodPersistBackend PersistTest = SqlPersistT
+    type YesodPersistBackend PersistTest = SqlBackend
 
     runDB action = do
         PersistTest pool &lt;- getYesod
@@ -1346,8 +1412,8 @@ openConnectionCount :: Int
 openConnectionCount = 10
 
 main :: IO ()
-main = withSqlitePool "test.db3" openConnectionCount $ \pool -&gt; do
-    runResourceT $ runStderrLoggingT $ flip runSqlPool pool $ do
+main = runStderrLoggingT $ withSqlitePool "test.db3" openConnectionCount $ \pool -&gt; liftIO $ do
+    runResourceT $ flip runSqlPool pool $ do
         runMigration migrateAll
         insert $ Person "Michael" "Snoyman" 26
     warp 3000 $ PersistTest pool</programlisting>
@@ -1381,13 +1447,16 @@ Persistent knowledge should transfer over easily.</simpara>
 <section id="persistent_something_besides_sqlite">
 <title>Something besides SQLite</title>
 <simpara>To keep the examples in this chapter simple, we&#8217;ve used the SQLite backend. Just to round things out, here&#8217;s our original synopsis rewritten to work with PostgreSQL:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TypeFamilies      #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import           Control.Monad.IO.Class  (liftIO)
+import           Control.Monad.Logger    (runStderrLoggingT)
 import           Database.Persist
 import           Database.Persist.Postgresql
 import           Database.Persist.TH
@@ -1406,7 +1475,7 @@ BlogPost
 connStr = "host=localhost dbname=test user=test password=test port=5432"
 
 main :: IO ()
-main = withPostgresqlPool connStr 10 $ \pool -&gt; do
+main = runStderrLoggingT $ withPostgresqlPool connStr 10 $ \pool -&gt; liftIO $ do
     flip runSqlPersistMPool pool $ do
         runMigration migrateAll
 

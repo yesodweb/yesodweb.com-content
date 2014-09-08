@@ -1,5 +1,7 @@
 == Yesod for Haskellers
 
+FIXME: This chapter needs to be reviewed for WAI 3.0/Yesod 1.4
+
 The majority of this book is built around giving practical information on how
 to get common tasks done, without drilling too much into the details of what's
 going on under the surface. While the book presumes knowledge of Haskell, it
@@ -26,7 +28,7 @@ main :: IO ()
 main = run 3000 app
 
 app :: Application
-app _req = return $ responseLBS
+app _req sendResponse = sendResponse $ responseLBS
     status200
     [("Content-Type", "text/plain")]
     "Hello Warp!"
@@ -55,13 +57,13 @@ main :: IO ()
 main = run 3000 app
 
 app :: Application
-app req =
+app req sendResponse =
     case pathInfo req of
-        ["foo", "bar"] -> return $ responseLBS
+        ["foo", "bar"] -> sendResponse $ responseLBS
             status200
             [("Content-Type", "text/plain")]
             "You requested /foo/bar"
-        _ -> return $ responseLBS
+        _ -> sendResponse $ responseLBS
             status200
             [("Content-Type", "text/plain")]
             "You requested something else"
@@ -93,7 +95,7 @@ main :: IO ()
 main = run 3000 app
 
 app :: Application
-app _req = return $ responseBuilder
+app _req sendResponse = sendResponse $ responseBuilder
     status200
     [("Content-Type", "text/plain")]
     (fromByteString "Hello from blaze-builder!" :: Builder)
@@ -118,7 +120,7 @@ main :: IO ()
 main = run 3000 app
 
 app :: Application
-app _req = return $ responseBuilder
+app _req sendResponse = sendResponse $ responseBuilder
     status200
     [("Content-Type", "text/html")] -- yay!
     (renderHtmlBuilder myPage)
@@ -149,66 +151,68 @@ import           Blaze.ByteString.Builder.Char.Utf8 (fromShow)
 import           Control.Concurrent                 (threadDelay)
 import           Control.Monad                      (forM_)
 import           Control.Monad.Trans.Class          (lift)
-import           Data.Conduit                       (Flush (Chunk, Flush),
-                                                     Source, yield)
 import           Data.Monoid                        ((<>))
 import           Network.HTTP.Types                 (status200)
 import           Network.Wai                        (Application,
-                                                     responseSource)
+                                                     responseStream)
 import           Network.Wai.Handler.Warp           (run)
 
 main :: IO ()
 main = run 3000 app
 
 app :: Application
-app _req = return $ responseSource
+app _req sendResponse = sendResponse $ responseStream
     status200
     [("Content-Type", "text/plain")]
-    mySrc
+    myStream
 
-mySrc :: Source IO (Flush Builder)
-mySrc = do
-    yield $ Chunk $ fromByteString "Starting streaming response.\n"
-    yield $ Chunk $ fromByteString "Performing some I/O.\n"
-    yield Flush
+myStream :: (Builder -> IO ()) -> IO () -> IO ()
+myStream send flush = do
+    send $ fromByteString "Starting streaming response.\n"
+    send $ fromByteString "Performing some I/O.\n"
+    flush
     -- pretend we're performing some I/O
-    lift $ threadDelay 1000000
-    yield $ Chunk $ fromByteString "I/O performed, here are some results.\n"
+    threadDelay 1000000
+    send $ fromByteString "I/O performed, here are some results.\n"
     forM_ [1..50 :: Int] $ \i -> do
-        yield $ Chunk $ fromByteString "Got the value: " <>
-                        fromShow i <>
-                        fromByteString "\n"
+        send $ fromByteString "Got the value: " <>
+               fromShow i <>
+               fromByteString "\n"
 ----
 
 Another common requirement when dealing with a streaming response is safely
 allocating a scarce resource- such as a file handle. By *safely*, I mean
 ensuring that the response will be released, even in the case of some
-exception. To deal with that, you can use +responseSourceBracket+:
+exception. To deal with that, you can use +responseSourceBracket+: FIXME change prose
 
 [source, haskell]
 ----
 {-# LANGUAGE OverloadedStrings #-}
 import           Blaze.ByteString.Builder (fromByteString)
+import qualified Data.ByteString          as S
 import           Data.Conduit             (Flush (Chunk), ($=))
 import           Data.Conduit.Binary      (sourceHandle)
 import qualified Data.Conduit.List        as CL
 import           Network.HTTP.Types       (status200)
-import           Network.Wai              (Application, responseSourceBracket)
+import           Network.Wai              (Application, responseStream)
 import           Network.Wai.Handler.Warp (run)
-import           System.IO                (IOMode (ReadMode), hClose, openFile)
+import           System.IO                (IOMode (ReadMode), withFile)
 
 main :: IO ()
 main = run 3000 app
 
 app :: Application
-app _req = responseSourceBracket
-    (openFile "index.html" ReadMode)
-    hClose
-    $ \handle -> return
-        ( status200
-        , [("Content-Type", "text/html")]
-        , sourceHandle handle $= CL.map (Chunk . fromByteString)
-        )
+app _req sendResponse = withFile "index.html" ReadMode $ \handle ->
+    sendResponse $ responseStream
+        status200
+        [("Content-Type", "text/html")]
+        $ \send _flush ->
+            let loop = do
+                    bs <- S.hGet handle 4096
+                    if S.null bs
+                        then return ()
+                        else send (fromByteString bs) >> loop
+             in loop
 ----
 
 But in the case of serving files, it's more efficient to use +responseFile+,
@@ -225,7 +229,7 @@ main :: IO ()
 main = run 3000 app
 
 app :: Application
-app _req = return $ responseFile
+app _req sendResponse = sendResponse $ responseFile
     status200
     [("Content-Type", "text/html")]
     "index.html"
@@ -294,8 +298,8 @@ instance RenderRoute App where
                         )
 
 instance YesodDispatch App where
-    yesodDispatch (YesodRunnerEnv _logger site _sessionBackend) _req =
-        return $ responseBuilder
+    yesodDispatch (YesodRunnerEnv _logger site _sessionBackend) _req sendResponse =
+        sendResponse $ responseBuilder
             status200
             [("Content-Type", "text/html")]
             (renderHtmlBuilder $ welcomeMessage site)
@@ -409,7 +413,7 @@ getHomeR = do
     return $ welcomeMessage site
 
 instance YesodDispatch App where
-    yesodDispatch yesodRunnerEnv req =
+    yesodDispatch yesodRunnerEnv req sendResponse =
         let maybeRoute =
                 case pathInfo req of
                     [] -> Just HomeR
@@ -418,7 +422,7 @@ instance YesodDispatch App where
                 case maybeRoute of
                     Nothing -> notFound
                     Just HomeR -> getHomeR
-         in yesodRunner handler yesodRunnerEnv maybeRoute req
+         in yesodRunner handler yesodRunnerEnv maybeRoute req sendResponse
 
 main :: IO ()
 main = do
@@ -616,7 +620,7 @@ getHomeR = do
         provideRep $ return $ welcomeMessageJson site
 
 instance YesodDispatch App where
-    yesodDispatch yesodRunnerEnv req =
+    yesodDispatch yesodRunnerEnv req sendResponse =
         let maybeRoute =
                 case pathInfo req of
                     [] -> Just HomeR
@@ -625,7 +629,7 @@ instance YesodDispatch App where
                 case maybeRoute of
                     Nothing -> notFound
                     Just HomeR -> getHomeR
-         in yesodRunner handler yesodRunnerEnv maybeRoute req
+         in yesodRunner handler yesodRunnerEnv maybeRoute req sendResponse
 
 main :: IO ()
 main = do
@@ -765,7 +769,7 @@ getHomeR = respondSource "text/plain" $ do
                     fromByteString "\n"
 
 instance YesodDispatch App where
-    yesodDispatch yesodRunnerEnv req =
+    yesodDispatch yesodRunnerEnv req sendResponse =
         let maybeRoute =
                 case pathInfo req of
                     [] -> Just HomeR
@@ -774,7 +778,7 @@ instance YesodDispatch App where
                 case maybeRoute of
                     Nothing -> notFound
                     Just HomeR -> getHomeR
-         in yesodRunner handler yesodRunnerEnv maybeRoute req
+         in yesodRunner handler yesodRunnerEnv maybeRoute req sendResponse
 
 main :: IO ()
 main = warp 3000 App
@@ -831,14 +835,14 @@ And then we can write our +YesodDispatch+ typeclass instance:
 [source, haskell]
 ----
 instance YesodDispatch App where
-    yesodDispatch yesodRunnerEnv req =
+    yesodDispatch yesodRunnerEnv req sendResponse =
         let maybeRoute = parseRoute' (pathInfo req)
             handler =
                 case maybeRoute of
                     Nothing -> notFound
                     Just HomeR -> getHomeR
                     Just (FibR i) -> getFibR i
-         in yesodRunner handler yesodRunnerEnv maybeRoute req
+         in yesodRunner handler yesodRunnerEnv maybeRoute req sendResponse
 
 getHomeR = redirect (FibR 1)
 
