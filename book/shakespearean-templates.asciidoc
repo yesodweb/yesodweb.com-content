@@ -337,6 +337,24 @@ inner "i" tag will not. You are free to use whichever approach you want, there
 is no penalty for either choice. Be aware, however, that the *only* time you
 use closing tags in Hamlet is for such inline tags; normal tags are not closed.
 
+Another outcome of this is that any tags after the first tag do not have
+special treatment for IDs and classes. For example, the Hamlet snippet:
+
+[source, hamlet]
+----
+<p #firstid>Paragraph <i #secondid>italic end.
+----
+
+generates the HTML:
+
+[source, html]
+----
+<p id="firstid">Paragraph <i #secondid>italic</i> end.</p>
+----
+
+Notice how the +p+ tag is automatically closed, and its attributes get special
+treatment, whereas the +i+ tag is treated as plain text.
+
 ===== Interpolation
 
 What we have so far is a nice, simplified HTML, but it doesn't let us interact
@@ -826,8 +844,8 @@ The naming scheme for the functions is very consistent.
 So far, we've seen how to generate an +HtmlUrl+ value from Hamlet, which is a
 piece of HTML with embedded type-safe URLs. There are currently three other
 values we can generate using Hamlet: plain HTML, HTML with URLs *and*
-internationalized messages, and widgets. That last one will be covered in the
-widgets chapter.
+internationalized messages, and widgets. That last one will be covered in more
+detail in the widgets chapter.
 
 To generate plain HTML without any embedded URLs, we use "simplified Hamlet".
 There are a few changes:
