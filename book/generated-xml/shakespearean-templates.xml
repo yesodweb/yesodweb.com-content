@@ -69,14 +69,6 @@ syntactical preference.</simpara></note>
                     &lt;li&gt;#{name} (#{age} years old)
         &lt;footer&gt;^{copyright}</programlisting>
 </section>
-<section id="shakespearean-templates_cassius_css">
-<title>Cassius (CSS)</title>
-<programlisting language="cassius" linenumbering="unnumbered">#myid
-    color: #{red}
-    font-size: #{bodyFontSize}
-foo bar baz
-    background-image: url(@{MyBackgroundR})</programlisting>
-</section>
 <section id="shakespearean-templates_lucius_css">
 <title>Lucius (CSS)</title>
 <programlisting language="lucius" linenumbering="unnumbered">section.blog {
@@ -84,8 +76,19 @@ foo bar baz
     border: 1px solid #000;
     h1 {
         color: #{headingColor};
+        background-image: url(@{MyBackgroundR});
     }
 }</programlisting>
+</section>
+<section id="shakespearean-templates_cassius_css">
+<title>Cassius (CSS)</title>
+<simpara>The following is equivalent to the Lucius example above.</simpara>
+<programlisting language="cassius" linenumbering="unnumbered">section.blog
+    padding: 1em
+    border: 1px solid #000
+    h1
+        color: #{headingColor}
+        background-image: url(@{MyBackgroundR})</programlisting>
 </section>
 <section id="shakespearean-templates_julius_javascript">
 <title>Julius (Javascript)</title>

@@ -16,19 +16,69 @@ you to deploy your app with a single command.</simpara>
 for everyone. This chapter covers the different options you have for
 deployment, and gives some general recommendations on what you should choose in
 different situations.</simpara>
-<note><simpara>While the information in this chapter is not Yesod-version-dependent, I
-don&#8217;t necessarily believe that all of the recommendations given here are
-accurate given more recent developments, such as FP Complete&#8217;s
-application server, or the availability of Keter. I&#8217;ve left this chapter mostly
-unchanged, but will likely update it again in the coming months. (June 23,
-2013)</simpara></note>
+<section id="deploying-your-webapp_keter">
+<title>Keter</title>
+<simpara>The Yesod scaffolding comes with some built-in support for the Keter deployment
+engine, which is also written in Haskell and uses many of the same underlying
+technologies like WAI and http-client. Keter works as a reverse proxy to your
+applications, as well as a system for starting, monitoring, and redeploying
+running apps. If you&#8217;d like to deploy with Keter, follow these steps:</simpara>
+<orderedlist numeration="arabic">
+<listitem>
+<simpara>
+Edit the <literal>config/keter.yaml</literal> file in your scaffolded application as necessary.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Set up some kind of server for hosting yours apps. I recommend trying Ubuntu on Amazon EC2.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Install Keter on that machine. Please follow the instructions on the <ulink url="https://github.com/snoyberg/keter/">Keter website</ulink>, which will be the most up to date.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Run <literal>yesod keter</literal> to generate a Keter bundle, e.g., <literal>myapp.keter</literal>.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Copy <literal>myapp.keter</literal> to the <literal>/opt/keter/incoming</literal> directory on your server.
+</simpara>
+</listitem>
+</orderedlist>
+<simpara>If you&#8217;ve gotten things configured correctly, you should now be able to view
+your website, running in a production environment! In the future, upgrades can
+be handled by simply rerunning <literal>yesod keter</literal> and recopying the <literal>myapp.keter</literal>
+bundle to the server. Note that Keter will automatically detect the presence of
+the new file and reload your application.</simpara>
+<simpara>The rest of this chapter will go into so more details about various steps, and
+provide some alternatives for people looking to either not use the scaffolding
+or not use Keter.</simpara>
+</section>
 <section id="deploying-your-webapp_compiling">
 <title>Compiling</title>
-<simpara>First things first: how do you build your production application? If you&#8217;re
-using the scaffolded site, it&#8217;s as simple as <literal>cabal build</literal>. I also recommend
-cleaning beforehand to make sure there is no cached information, so a simple
-combination to build your executable is:</simpara>
-<screen>cabal clean &amp;&amp; cabal configure &amp;&amp; cabal build</screen>
+<simpara>The biggest advice I can give is: <emphasis role="strong">don&#8217;t compile on your server</emphasis>. It&#8217;s tempting to do so, as you have to just transfer source code around, and you avoid confusing dependency issues. However, compiling a Yesod application takes signficiant memory and CPU, which means:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+While you&#8217;re recompiling your app, your existing application will suffer performance-wise.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+You will need to get a much larger machine to handle compilation, and that capacity will likely sit idle most of the time, since Yesod applications tend to require far less CPU and memory than GHC itself.
+</simpara>
+</listitem>
+</itemizedlist>
+<simpara>Once you&#8217;re ready to compile, you should always make sure to <literal>cabal clean</literal>
+before a new production build, to make sure no old files are lying around.
+Then, you can run <literal>cabal configure &amp;&amp; cabal build</literal> to get an executable, which
+will be located at <literal>dist/build/myapp/myapp</literal>. (The <literal>yesod keter</literal> command does
+<literal>cabal clean</literal> for you automatically.)</simpara>
 </section>
 <section id="deploying-your-webapp_files_to_deploy">
 <title>Files to deploy</title>
@@ -141,31 +191,32 @@ because:</simpara>
 <itemizedlist>
 <listitem>
 <simpara>
-As fast as Warp is, it is still optimized as an application server, not a
-  static file server.
+Having a reverse proxy in front of your app makes it easier to deploy new versions.
 </simpara>
 </listitem>
 <listitem>
 <simpara>
-Using Nginx, you can set up virtual hosting to serve your static contents
-  from a separate domain. (It&#8217;s possible to do this with Warp, but a bit more
-  involved).
+Also, if you have a bug in your application, a reverse proxy can give slightly nicer error messages to users.
 </simpara>
 </listitem>
 <listitem>
 <simpara>
-You can use Nginx as either a load balancer or a SSL proxy. (Though with
-  warp-tls it&#8217;s entirely possible to run an https site on Warp alone.)
+You can host multiple applications from a single host via virtual hosting.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Your reverse proxy can function as both a load balancer or SSL proxy as well, simplifying your application.
 </simpara>
 </listitem>
 </itemizedlist>
-<simpara>So my final recommendation is: set up Nginx to reverse proxy to Warp.</simpara>
-<note><simpara>A number of people in the Yesod community disagree with me here, and
-believe that the increased performance and decreased complexity of skipping the
-Nginx step make standalone Warp a better choice. Feel free to follow either
-approach, they are both perfectly valid.</simpara></note>
-<section id="deploying-your-webapp_configuration">
-<title>Configuration</title>
+<simpara>As discussed above, Keter is a great way to get started. If you have an
+existing web server running like Nginx, Yesod will work just fine sitting
+behind it instead.</simpara>
+<section id="deploying-your-webapp_nginx_configuration">
+<title>Nginx Configuration</title>
+<simpara>Keter configuration is trivial, since it is designed to work with Yesod
+applications. But if you want to instead use Nginx, how do you set it up?</simpara>
 <simpara>In general, Nginx will listen on port 80 and your Yesod/Warp app will listen on
 some unprivileged port (lets say 4321). You will then need to provide a
 nginx.conf file, such as:</simpara>
@@ -246,8 +297,8 @@ exec /home/michael/sites/mysite/dist/build/mysite/mysite</screen>
 mysite</literal>.</simpara>
 </section>
 </section>
-<section id="deploying-your-webapp_fastcgi">
-<title>FastCGI</title>
+<section id="deploying-your-webapp_nginx_fastcgi">
+<title>Nginx + FastCGI</title>
 <simpara>Some people may prefer using FastCGI for deployment. In this case, you&#8217;ll need
 to add an extra tool to the mix. FastCGI works by receiving new connection from
 a file descriptor. The C library assumes that this file descriptor will be 0

@@ -56,17 +56,6 @@ $doctype 5
         <footer>^{copyright}
 ----
 
-==== Cassius (CSS)
-
-[source, cassius]
-----
-#myid
-    color: #{red}
-    font-size: #{bodyFontSize}
-foo bar baz
-    background-image: url(@{MyBackgroundR})
-----
-
 ==== Lucius (CSS)
 
 [source, lucius]
@@ -76,8 +65,23 @@ section.blog {
     border: 1px solid #000;
     h1 {
         color: #{headingColor};
+        background-image: url(@{MyBackgroundR});
     }
 }
+----
+
+==== Cassius (CSS)
+
+The following is equivalent to the Lucius example above.
+
+[source, cassius]
+----
+section.blog
+    padding: 1em
+    border: 1px solid #000
+    h1
+        color: #{headingColor}
+        background-image: url(@{MyBackgroundR})
 ----
 
 ==== Julius (Javascript)
