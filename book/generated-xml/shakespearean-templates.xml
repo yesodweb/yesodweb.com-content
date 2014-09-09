@@ -279,6 +279,13 @@ example above could also be written as:</simpara>
 inner "i" tag will not. You are free to use whichever approach you want, there
 is no penalty for either choice. Be aware, however, that the <emphasis role="strong">only</emphasis> time you
 use closing tags in Hamlet is for such inline tags; normal tags are not closed.</simpara>
+<simpara>Another outcome of this is that any tags after the first tag do not have
+special treatment for IDs and classes. For example, the Hamlet snippet:</simpara>
+<programlisting language="hamlet" linenumbering="unnumbered">&lt;p #firstid&gt;Paragraph &lt;i #secondid&gt;italic end.</programlisting>
+<simpara>generates the HTML:</simpara>
+<programlisting language="html" linenumbering="unnumbered">&lt;p id="firstid"&gt;Paragraph &lt;i #secondid&gt;italic&lt;/i&gt; end.&lt;/p&gt;</programlisting>
+<simpara>Notice how the <literal>p</literal> tag is automatically closed, and its attributes get special
+treatment, whereas the <literal>i</literal> tag is treated as plain text.</simpara>
 </section>
 <section id="shakespearean-templates_interpolation">
 <title>Interpolation</title>
@@ -769,8 +776,8 @@ rowsep="1" colsep="1"
 <simpara>So far, we&#8217;ve seen how to generate an <literal>HtmlUrl</literal> value from Hamlet, which is a
 piece of HTML with embedded type-safe URLs. There are currently three other
 values we can generate using Hamlet: plain HTML, HTML with URLs <emphasis role="strong">and</emphasis>
-internationalized messages, and widgets. That last one will be covered in the
-widgets chapter.</simpara>
+internationalized messages, and widgets. That last one will be covered in more
+detail in the widgets chapter.</simpara>
 <simpara>To generate plain HTML without any embedded URLs, we use "simplified Hamlet".
 There are a few changes:</simpara>
 <itemizedlist>
