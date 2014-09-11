@@ -13,3 +13,7 @@ So to rectify that, I think it's only fair that I write the following:
 * In other words, it's not my company, I just work here.
 
 Thanks Erik :)
+
+__UPDATE__ Please also read my [follow-up blog
+post](/blog/2014/09/clarification-previous-blog-post) clarifying this one, just
+in case you're confused.
