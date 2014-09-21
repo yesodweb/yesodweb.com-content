@@ -257,7 +257,7 @@ getHomeR = do
 ----
 
 Notice how similar the query looks to the SQL we wrote previously. One thing of
-particular interest is the +^.+ operator, which is a *projection*. +blog ^.
+particular interest is the +\^.+ operator, which is a *projection*. +blog ^.
 BlogAuthor+, for example, means "take the +author+ column of the +blog+ table."
 And thanks to the type safety of Esqueleto, you could never accidentally
 project +AuthorName+ from +blog+: the type system will stop you!

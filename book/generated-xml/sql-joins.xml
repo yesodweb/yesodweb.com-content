@@ -234,7 +234,7 @@ getHomeR = do
                         &lt;a href=@{BlogR blogid}&gt;#{title} by #{name}
         |]</programlisting>
 <simpara>Notice how similar the query looks to the SQL we wrote previously. One thing of
-particular interest is the <literal><superscript>.</literal> operator, which is a <emphasis role="strong">projection</emphasis>. <literal>blog </superscript>.
+particular interest is the <literal>^.</literal> operator, which is a <emphasis role="strong">projection</emphasis>. <literal>blog ^.
 BlogAuthor</literal>, for example, means "take the <literal>author</literal> column of the <literal>blog</literal> table."
 And thanks to the type safety of Esqueleto, you could never accidentally
 project <literal>AuthorName</literal> from <literal>blog</literal>: the type system will stop you!</simpara>
