@@ -1,0 +1,453 @@
+== SQL Joins
+
+Persistent touts itself as a database-agnostic interface. How, then, are you
+supposed to do things which are inherently backend-specific? This most often
+comes up in Yesod when you want to join two tables together. There are some
+pure-Haskell solutions that are completely backend-agonistic, but there are
+also more efficient methods at our disposal. In this chapter, we'll introduce a
+common problem you might want to solve, and then build up more sophisticated
+solutions.
+
+=== Multi-author blog
+
+Since blogs are a well understood problem domain, we'll use that for our
+problem setup. Consider a blog engine that allows you to have multiple authors
+in the database, and each blog post will have a single author. In Persistent,
+we may model this as:
+
+[source, persistent]
+----
+Author
+    name Text
+Blog
+    author AuthorId
+    title Text
+    content Html
+----
+
+Let's set up our initial Yesod application to show a blog post index indicating
+the blog title and the author:
+
+[source, haskell]
+----
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE ViewPatterns               #-}
+import           Control.Monad.Logger
+import           Data.Text               (Text)
+import           Database.Persist.Sqlite
+import           Yesod
+
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+Author
+    name Text
+Blog
+    author AuthorId
+    title Text
+    content Html
+|]
+
+data App = App
+    { persistConfig :: SqliteConf
+    , connPool      :: ConnectionPool
+    }
+instance Yesod App
+instance YesodPersist App where
+    type YesodPersistBackend App = SqlBackend
+    runDB = defaultRunDB persistConfig connPool
+instance YesodPersistRunner App where
+    getDBRunner = defaultGetDBRunner connPool
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+/blog/#BlogId BlogR GET
+|]
+
+getHomeR :: Handler Html
+getHomeR = do
+    blogs <- runDB $ selectList [] []
+
+    defaultLayout $ do
+        setTitle "Blog posts"
+        [whamlet|
+            <ul>
+                $forall Entity blogid blog <- blogs
+                    <li>
+                        <a href=@{BlogR blogid}>
+                            #{blogTitle blog} by #{show $ blogAuthor blog}
+        |]
+
+getBlogR :: BlogId -> Handler Html
+getBlogR _ = error "Implementation left as exercise to reader"
+
+main :: IO ()
+main = do
+    -- Use an in-memory database with 1 connection. Terrible for production,
+    -- but useful for testing.
+    let conf = SqliteConf ":memory:" 1
+    pool <- createPoolConfig conf
+    flip runSqlPersistMPool pool $ do
+        runMigration migrateAll
+
+        -- Fill in some testing data
+        alice <- insert $ Author "Alice"
+        bob   <- insert $ Author "Bob"
+
+        insert_ $ Blog alice "Alice's first post" "Hello World!"
+        insert_ $ Blog bob "Bob's first post" "Hello World!!!"
+        insert_ $ Blog alice "Alice's second post" "Goodbye World!"
+
+    warp 3000 App
+        { persistConfig = conf
+        , connPool      = pool
+        }
+----
+
+That's all well and good, but let's look at the output:
+
+.Authors appear as numeric identifiers
+image::images/blog-bad-author.png[]
+
+All we're doing is displaying the numeric identifier of each author, instead of
+the author's name. In order to fix this, we need to pull extra information from
+the +Author+ table as well. Let's dive in to getting that done.
+
+=== Database queries in Widgets
+
+I'll address this one right off the bat, since it catches many users by
+surprise. You might think that you can solve this problem in the Hamlet
+template itself, e.g.:
+
+[source, hamlet]
+----
+<ul>
+    $forall Entity blogid blog <- blogs
+        $with author <- runDB $ get404 $ blogAuthor
+            <li>
+                <a href=@{BlogR blogid}>
+                    #{blogTitle blog} by #{authorName author}
+----
+
+However, this isn't allowed, because Hamlet will *not* allow you to run
+database actions inside of it. One of the goals of Shakespearean templates is
+to help you keep your pure and impure code separated, with the idea being that
+all impure code needs to stay in Haskell.
+
+But we can actually tweak the above code to work in Yesod. The idea is to
+separate out the code for each blog entry into a +Widget+ function, and then
+perform the database action in the Haskell portion of the function:
+
+[source, haskell]
+----
+getHomeR :: Handler Html
+getHomeR = do
+    blogs <- runDB $ selectList [] []
+
+    defaultLayout $ do
+        setTitle "Blog posts"
+        [whamlet|
+            <ul>
+                $forall blogEntity <- blogs
+                    ^{showBlogLink blogEntity}
+        |]
+
+showBlogLink :: Entity Blog -> Widget
+showBlogLink (Entity blogid blog) = do
+    author <- handlerToWidget $ runDB $ get404 $ blogAuthor blog
+    [whamlet|
+        <li>
+            <a href=@{BlogR blogid}>
+                #{blogTitle blog} by #{authorName author}
+    |]
+----
+
+We need to use +handlerToWidget+ to turn our +Handler+ action into a +Widget+
+action, but otherwise the code is straightforward. And furthermore, we now get
+exactly the output we wanted:
+
+.Authors appear as names
+image::images/blog-good-author.png[]
+
+=== Joins
+
+If we have the exact result we're looking for, why isn't this chapter over? The
+problem is that this technique is highly inefficient. We're performing one
+database query to load up all of the blog posts, then a separate query for each
+blog post to get the author names. This is far less efficient than simply using
+a SQL join. The question is: how do we do a join in Persistent? We'll start off
+by writing some raw SQL:
+
+[source, haskell]
+----
+getHomeR :: Handler Html
+getHomeR = do
+    blogs <- runDB $ rawSql
+        "SELECT ??, ?? \
+        \FROM blog INNER JOIN author \
+        \ON blog.author=author.id"
+        []
+
+    defaultLayout $ do
+        setTitle "Blog posts"
+        [whamlet|
+            <ul>
+                $forall (Entity blogid blog, Entity _ author) <- blogs
+                    <li>
+                        <a href=@{BlogR blogid}>
+                            #{blogTitle blog} by #{authorName author}
+        |]
+----
+
+We pass the +rawSql+ function two parameters: a SQL query, and a list of
+additional parameters to replace placeholders in the query. That list is empty,
+since we're not using any placeholders. However, note that we're using +??+ in
+our +SELECT+ statement. This is a form of type inspection: +rawSql+ will detect
+the type of entities being demanded, and automatically fill in the fields that
+are necessary to make the query.
+
++rawSql+ is certainly powerful, but it's also unsafe. There's no syntax
+checking on your SQL query string, so you can get runtime errors. Also, it's
+easy to end up querying for the wrong type and end up with very confusing
+runtime error messages.
+
+=== Esqueleto
+
+Persistent has a companion library- Esqueleto- which provides an expressive,
+type safe DSL for writing SQL queries. It takes advantage of the Persistent
+types to ensure it generates valid SQL queries and produces the results
+requested by the program. In order to use Esqueleto, we're going to add some
+imports:
+
+[source, haskell]
+----
+import qualified Database.Esqueleto      as E
+import           Database.Esqueleto      ((^.))
+----
+
+And then write our query using Esqueleto:
+
+[source, haskell]
+----
+getHomeR :: Handler Html
+getHomeR = do
+    blogs <- runDB
+           $ E.select
+           $ E.from $ \(blog `E.InnerJoin` author) -> do
+                E.on $ blog ^. BlogAuthor E.==. author ^. AuthorId
+                return
+                    ( blog   ^. BlogId
+                    , blog   ^. BlogTitle
+                    , author ^. AuthorName
+                    )
+
+    defaultLayout $ do
+        setTitle "Blog posts"
+        [whamlet|
+            <ul>
+                $forall (E.Value blogid, E.Value title, E.Value name) <- blogs
+                    <li>
+                        <a href=@{BlogR blogid}>#{title} by #{name}
+        |]
+----
+
+Notice how similar the query looks to the SQL we wrote previously. One thing of
+particular interest is the +\^.+ operator, which is a *projection*. +blog ^.
+BlogAuthor+, for example, means "take the +author+ column of the +blog+ table."
+And thanks to the type safety of Esqueleto, you could never accidentally
+project +AuthorName+ from +blog+: the type system will stop you!
+
+In addition to safety, there's also a performance advantage to Esqueleto.
+Notice the ++return++ed tuple; it explicitly lists the three columns that we
+need to generate our listing. This can provide a huge performance boost: unlike
+all other examples we've had, this one does not require transferring the
+(potentially quite large) +content+ column of the blog post to generate the
+listing.
+
+NOTE: For the record, it's possible to achieve this with +rawSql+ as well, it's
+just a bit trickier.
+
+Esqueleto is really the gold standard in writing SQL queries in Persistent. The
+rule of thumb should be: if you're doing something that fits naturally into
+Persistent's query syntax, use Persistent, as it's database agnostic and a bit
+easier to use. But if you're doing something that would be more efficient with
+a SQL-specific feature, you should strongly consider Esqueleto.
+
+=== Streaming
+
+There's still a problem with our Esqueleto approach. If there are thousands of
+blog posts, then the workflow will be:
+
+. Read thousands of blog posts into memory on the server.
+. Render out the entire HTML page.
+. Send the HTML page to the client.
+
+This has two downsides: it uses a lot of memory, and it gives high latency for the user. If this is a bad approach, why does Yesod gear you towards it out of the box, instead of tending towards a streaming approach? Two reasons:
+
+* _Correctness_: imagine if there was an error reading the 243rd record from the database. By doing a non-streaming response, Yesod can catch the exception and send a meaningful 500 error response. If we were already streaming, the streaming body would simply stop in the middle of a misleading 200 OK respond.
+* _Ease of use_: it's usually easier to work with non-streaming bodies.
+
+The standard recommendation I'd give someone who wants to generate listings
+that may be large is to use pagination. This allows you to do less work on the
+server, write simple code, get the correctness guarantees Yesod provides out of
+the box, and reduce user latency. However, there are times when you'll really
+want to do a streaming response, so let's cover that here.
+
+Switching Esqueleto to a streaming response is easy: replace +select+ with
++selectSource+. The Esqueleto query itself remains unchanged. Then we'll use
+the +respondSourceDB+ function to generate a streaming database response, and
+manually construct our HTML to wrap up the listing.
+
+[source, haskell]
+----
+getHomeR :: Handler TypedContent
+getHomeR = do
+    let blogsSrc =
+             E.selectSource
+           $ E.from $ \(blog `E.InnerJoin` author) -> do
+                E.on $ blog ^. BlogAuthor E.==. author ^. AuthorId
+                return
+                    ( blog   ^. BlogId
+                    , blog   ^. BlogTitle
+                    , author ^. AuthorName
+                    )
+
+    render <- getUrlRenderParams
+    respondSourceDB typeHtml $ do
+        sendChunkText "<html><head><title>Blog posts</title></head><body><ul>"
+        blogsSrc $= CL.map (\(E.Value blogid, E.Value title, E.Value name) ->
+            toFlushBuilder $
+            [hamlet|
+                <li>
+                    <a href=@{BlogR blogid}>#{title} by #{name}
+            |] render
+            )
+        sendChunkText "</ul></body></html>"
+----
+
+Notice the usage of +sendChunkText+, which sends some raw +Text+ values over
+the network. We then take each of our blog tuples and use conduit's +map+
+function to create a streaming value. We use +hamlet+ to get templating, and
+then pass in our +render+ function to convert the type-safe URLs into their
+textual versions. Finally, +toFlushBuilder+ converts our +Html+ value into a
++Flush Builder+ value, as needed by Yesod's streaming framework.
+
+Unfortunately, we're no longer able to take advantage of Hamlet to do our
+overall page layout, since we need to explicit generate start and end tags
+separately. This introduces another point for possible bugs, if we accidentally
+create unbalanced tags. We also lose the ability to use +defaultLayout+, for
+exactly the same reason.
+
+Streaming HTML responses are a powerful tool, and are sometimes necessary. But
+generally speaking, I'd recommend sticking to safer options.
+
+=== Conclusion
+
+This chaper covered a number of ways of doing a SQL join:
+
+* Avoid the join entirely, and manually grab the associated data in Haskell. This is also known as an application level join.
+* Write the SQL explicitly with +rawSql+. While somewhat convenient, this loses a lot of Persistent's type safety.
+* Use Esqueleto's DSL functionality to create a type-safe SQL query.
+* And if you need it, you can even generate a streaming response from Esqueleto.
+
+For completeness, here's the entire body of the final, streaming example:
+
+[source, haskell]
+----
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE ViewPatterns               #-}
+import           Control.Monad.Logger
+import           Data.Text               (Text)
+import qualified Database.Esqueleto      as E
+import           Database.Esqueleto      ((^.))
+import           Database.Persist.Sqlite
+import           Yesod
+import qualified Data.Conduit.List as CL
+import Data.Conduit (($=))
+
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+Author
+    name Text
+Blog
+    author AuthorId
+    title Text
+    content Html
+|]
+
+data App = App
+    { persistConfig :: SqliteConf
+    , connPool      :: ConnectionPool
+    }
+instance Yesod App
+instance YesodPersist App where
+    type YesodPersistBackend App = SqlBackend
+    runDB = defaultRunDB persistConfig connPool
+instance YesodPersistRunner App where
+    getDBRunner = defaultGetDBRunner connPool
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+/blog/#BlogId BlogR GET
+|]
+
+getHomeR :: Handler TypedContent
+getHomeR = do
+    let blogsSrc =
+             E.selectSource
+           $ E.from $ \(blog `E.InnerJoin` author) -> do
+                E.on $ blog ^. BlogAuthor E.==. author ^. AuthorId
+                return
+                    ( blog   ^. BlogId
+                    , blog   ^. BlogTitle
+                    , author ^. AuthorName
+                    )
+
+    render <- getUrlRenderParams
+    respondSourceDB typeHtml $ do
+        sendChunkText "<html><head><title>Blog posts</title></head><body><ul>"
+        blogsSrc $= CL.map (\(E.Value blogid, E.Value title, E.Value name) ->
+            toFlushBuilder $
+            [hamlet|
+                <li>
+                    <a href=@{BlogR blogid}>#{title} by #{name}
+            |] render
+            )
+        sendChunkText "</ul></body></html>"
+
+getBlogR :: BlogId -> Handler Html
+getBlogR _ = error "Implementation left as exercise to reader"
+
+main :: IO ()
+main = do
+    -- Use an in-memory database with 1 connection. Terrible for production,
+    -- but useful for testing.
+    let conf = SqliteConf ":memory:" 1
+    pool <- createPoolConfig conf
+    flip runSqlPersistMPool pool $ do
+        runMigration migrateAll
+
+        -- Fill in some testing data
+        alice <- insert $ Author "Alice"
+        bob   <- insert $ Author "Bob"
+
+        insert_ $ Blog alice "Alice's first post" "Hello World!"
+        insert_ $ Blog bob "Bob's first post" "Hello World!!!"
+        insert_ $ Blog alice "Alice's second post" "Goodbye World!"
+
+    warp 3000 App
+        { persistConfig = conf
+        , connPool      = pool
+        }
+----

@@ -48,13 +48,14 @@ Persistent on its own.
 
 [source, haskell]
 ----
-{-# LANGUAGE EmptyDataDecls    #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
 import           Database.Persist.Sqlite
@@ -128,7 +129,7 @@ data store, and everything is generally awesome. Well, until:
   until you make a typo in your SQL. Once again, you don't find out until
   runtime.
 
-In dynamic languages, the answers to these issues is unit testing. For
+In dynamic languages, the answer to these issues is unit testing. For
 everything that _can_ go wrong, make sure you write a test case. But as I am
 sure you are aware by now, that doesn't jive well with the Yesod approach to
 things. We like to take advantage of Haskell's strong typing to save us
@@ -304,13 +305,14 @@ pass it off to other Persistent functions.
 
 [source, haskell]
 ----
-{-# LANGUAGE EmptyDataDecls    #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
 import           Database.Persist.Sqlite
@@ -404,8 +406,14 @@ to _ask_ it to help. Let's see what this looks like:
 
 [source, haskell]
 ----
-{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.TH
 import Database.Persist.Sqlite
@@ -438,8 +446,14 @@ Persistent provides a helper function, +mkMigrate+:
 
 [source, haskell]
 ----
-{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -526,8 +540,14 @@ in Haskell as a data constructor.
 
 [source, haskell]
 ----
-{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -573,6 +593,9 @@ end up with a new constructor:
 ----
 PersonName :: String -> String -> Unique Person
 ----
+
+NOTE: With the MongoDB backend, a uniqueness constraint cannot be created: you
+must place a unique index on the field.
 
 === Queries
 
@@ -828,7 +851,7 @@ let michael = Person "Michael" 26
 But that's not actually updating anything, it's just creating a new +Person+
 value based on the old one. When we say update, we're _not_ talking about
 modifications to the values in Haskell. (We better not be of course, since
-Haskell data types are immutable.)
+data in Haskell is immutable.)
 
 Instead, we're looking at ways of modifying rows in a table. And the simplest
 way to do that is with the +update+ function.
@@ -857,7 +880,7 @@ and update the new value. If you have two threads/processes working on this
 database at the same time, you're in for a world of hurt (hint: race
 conditions).
 
-Sometimes you'll want to update many fields at once (give all your employees a
+Sometimes you'll want to update many rows at once (give all your employees a
 5% pay increase, for example). +updateWhere+ takes two parameters: a list of
 filters, and a list of updates to apply.
 
@@ -866,7 +889,7 @@ filters, and a list of updates to apply.
     updateWhere [PersonFirstName ==. "Michael"] [PersonAge *=. 2] -- it's been a long day
 ----
 
-Occassionally, you'll just want to completely replace the value in a database
+Occasionally, you'll just want to completely replace the value in a database
 with a different value. For that, you use (surprise) the +replace+ function.
 
 [source, haskell]
@@ -916,8 +939,14 @@ database, we want to just use the current date-time for that timestamp.
 
 [source, haskell]
 ----
-{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -953,8 +982,14 @@ favorite programming language:
 
 [source, haskell]
 ----
-{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -987,8 +1022,14 @@ Salvador:
 
 [source, haskell]
 ----
-{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -998,7 +1039,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Person
     name String
     age Int Maybe
-    created UTCTime default=now()
+    created UTCTime default=CURRENT_TIME
     language String default='Haskell'
     country String "default='El Salvador'"
     deriving Show
@@ -1039,8 +1080,14 @@ the related entity. So if a person has many cars:
 
 [source, haskell]
 ----
-{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -1076,8 +1123,14 @@ want to track which people have shopped in which stores:
 
 [source, haskell]
 ----
-{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -1113,6 +1166,23 @@ main = runSqlite ":memory:" $ do
 
     return ()
 ----
+
+[NOTE]
+=====================
+
+Since the +Id+ suffix on a type is used to indicate a foreign key relationship
+to Persistent, you currently cannot use non-key types that end in +Id+. A
+simple workaround is to define a type synonym with a different suffix, e.g.:
+
+[source, haskell]
+----
+data MyExistingTypeEndingInId = ...
+type IdIsNotTheSuffix = MyExistingTypeEndingInId
+[persist|
+Person
+    someField IdIsNotTheSuffix
+----
+=====================
 
 === Closer look at types
 
@@ -1265,8 +1335,14 @@ derivePersistField "Employment"
 
 [source, haskell]
 ----
-{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
-             OverloadedStrings, GADTs, FlexibleContexts #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Employment
@@ -1315,8 +1391,14 @@ operators. But this is still a good example, so let's roll with it.
 
 [source, haskell]
 ----
-{-# LANGUAGE OverloadedStrings, TemplateHaskell, QuasiQuotes, TypeFamilies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving, GADTs, FlexibleContexts #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist.TH
 import Data.Text (Text)
 import Database.Persist.Sqlite
@@ -1361,8 +1443,14 @@ the database via the +runDB+ method. Let's see this in action.
 
 [source, haskell]
 ----
-{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, FlexibleContexts #-}
-{-# LANGUAGE TemplateHaskell, OverloadedStrings, GADTs, MultiParamTypeClasses #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Yesod
 import Database.Persist.Sqlite
 import Control.Monad.Trans.Resource (runResourceT)
@@ -1395,7 +1483,7 @@ instance Yesod PersistTest
 -- Now we need to define a YesodPersist instance, which will keep track of
 -- which backend we're using and how to run an action.
 instance YesodPersist PersistTest where
-    type YesodPersistBackend PersistTest = SqlPersistT
+    type YesodPersistBackend PersistTest = SqlBackend
 
     runDB action = do
         PersistTest pool <- getYesod
@@ -1424,8 +1512,8 @@ openConnectionCount :: Int
 openConnectionCount = 10
 
 main :: IO ()
-main = withSqlitePool "test.db3" openConnectionCount $ \pool -> do
-    runResourceT $ runStderrLoggingT $ flip runSqlPool pool $ do
+main = runStderrLoggingT $ withSqlitePool "test.db3" openConnectionCount $ \pool -> liftIO $ do
+    runResourceT $ flip runSqlPool pool $ do
         runMigration migrateAll
         insert $ Person "Michael" "Snoyman" 26
     warp 3000 $ PersistTest pool
@@ -1473,13 +1561,16 @@ To keep the examples in this chapter simple, we've used the SQLite backend. Just
 
 [source, haskell]
 ----
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import           Control.Monad.IO.Class  (liftIO)
+import           Control.Monad.Logger    (runStderrLoggingT)
 import           Database.Persist
 import           Database.Persist.Postgresql
 import           Database.Persist.TH
@@ -1498,7 +1589,7 @@ BlogPost
 connStr = "host=localhost dbname=test user=test password=test port=5432"
 
 main :: IO ()
-main = withPostgresqlPool connStr 10 $ \pool -> do
+main = runStderrLoggingT $ withPostgresqlPool connStr 10 $ \pool -> liftIO $ do
     flip runSqlPersistMPool pool $ do
         runMigration migrateAll
 

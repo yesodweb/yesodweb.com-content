@@ -13,23 +13,42 @@ for everyone. This chapter covers the different options you have for
 deployment, and gives some general recommendations on what you should choose in
 different situations.
 
-NOTE: While the information in this chapter is not Yesod-version-dependent, I
-don't necessarily believe that all of the recommendations given here are
-accurate given more recent developments, such as FP Complete's
-application server, or the availability of Keter. I've left this chapter mostly
-unchanged, but will likely update it again in the coming months. (June 23,
-2013)
+=== Keter
+
+The Yesod scaffolding comes with some built-in support for the Keter deployment
+engine, which is also written in Haskell and uses many of the same underlying
+technologies like WAI and http-client. Keter works as a reverse proxy to your
+applications, as well as a system for starting, monitoring, and redeploying
+running apps. If you'd like to deploy with Keter, follow these steps:
+
+. Edit the +config/keter.yaml+ file in your scaffolded application as necessary.
+. Set up some kind of server for hosting yours apps. I recommend trying Ubuntu on Amazon EC2.
+. Install Keter on that machine. Please follow the instructions on the link:https://github.com/snoyberg/keter/[Keter website], which will be the most up to date.
+. Run +yesod keter+ to generate a Keter bundle, e.g., +myapp.keter+.
+. Copy +myapp.keter+ to the +/opt/keter/incoming+ directory on your server.
+
+If you've gotten things configured correctly, you should now be able to view
+your website, running in a production environment! In the future, upgrades can
+be handled by simply rerunning +yesod keter+ and recopying the +myapp.keter+
+bundle to the server. Note that Keter will automatically detect the presence of
+the new file and reload your application.
+
+The rest of this chapter will go into so more details about various steps, and
+provide some alternatives for people looking to either not use the scaffolding
+or not use Keter.
 
 === Compiling
 
-First things first: how do you build your production application? If you're
-using the scaffolded site, it's as simple as +cabal build+. I also recommend
-cleaning beforehand to make sure there is no cached information, so a simple
-combination to build your executable is:
+The biggest advice I can give is: *don't compile on your server*. It's tempting to do so, as you have to just transfer source code around, and you avoid confusing dependency issues. However, compiling a Yesod application takes signficiant memory and CPU, which means:
 
-----
-cabal clean && cabal configure && cabal build
-----
+* While you're recompiling your app, your existing application will suffer performance-wise.
+* You will need to get a much larger machine to handle compilation, and that capacity will likely sit idle most of the time, since Yesod applications tend to require far less CPU and memory than GHC itself.
+
+Once you're ready to compile, you should always make sure to +cabal clean+
+before a new production build, to make sure no old files are lying around.
+Then, you can run +cabal configure && cabal build+ to get an executable, which
+will be located at +dist/build/myapp/myapp+. (The +yesod keter+ command does
++cabal clean+ for you automatically.)
 
 === Files to deploy
 
@@ -86,7 +105,6 @@ frontend web servers as Warp (via reverse proxying) or FastCGI.
 So between the two remaining choices, Warp gets a very strong recommendation
 because:
 
-
 * It is significantly faster.
 * Like FastCGI, it can run behind a frontend server like Nginx, using reverse
   HTTP proxy.
@@ -97,22 +115,19 @@ So that leaves one last question: should Warp run on its own, or via reverse
 proxy behind a frontend server? For most use cases, I recommend the latter,
 because:
 
-* As fast as Warp is, it is still optimized as an application server, not a
-  static file server.
-* Using Nginx, you can set up virtual hosting to serve your static contents
-  from a separate domain. (It's possible to do this with Warp, but a bit more
-  involved).
-* You can use Nginx as either a load balancer or a SSL proxy. (Though with
-  warp-tls it's entirely possible to run an https site on Warp alone.)
+* Having a reverse proxy in front of your app makes it easier to deploy new versions.
+* Also, if you have a bug in your application, a reverse proxy can give slightly nicer error messages to users.
+* You can host multiple applications from a single host via virtual hosting.
+* Your reverse proxy can function as both a load balancer or SSL proxy as well, simplifying your application.
 
-So my final recommendation is: set up Nginx to reverse proxy to Warp.
+As discussed above, Keter is a great way to get started. If you have an
+existing web server running like Nginx, Yesod will work just fine sitting
+behind it instead.
 
-NOTE: A number of people in the Yesod community disagree with me here, and
-believe that the increased performance and decreased complexity of skipping the
-Nginx step make standalone Warp a better choice. Feel free to follow either
-approach, they are both perfectly valid.
+==== Nginx Configuration
 
-==== Configuration
+Keter configuration is trivial, since it is designed to work with Yesod
+applications. But if you want to instead use Nginx, how do you set it up?
 
 In general, Nginx will listen on port 80 and your Yesod/Warp app will listen on
 some unprivileged port (lets say 4321). You will then need to provide a
@@ -213,7 +228,7 @@ exec /home/michael/sites/mysite/dist/build/mysite/mysite
 Once this is in place, bringing up your application is as simple as +sudo start
 mysite+.
 
-=== FastCGI
+=== Nginx + FastCGI
 
 Some people may prefer using FastCGI for deployment. In this case, you'll need
 to add an extra tool to the mix. FastCGI works by receiving new connection from
@@ -278,7 +293,6 @@ a convenient way to provide an offline version of your application.
 One of the very nice conveniences of Yesod for this is that your templates are
 all compiled into the executable, and thus do not need to be distributed with
 your application. Static files do, however.
-
 
 NOTE: There's actually support for embedding your static files directly in the
 executable as well, see the yesod-static docs for more details.

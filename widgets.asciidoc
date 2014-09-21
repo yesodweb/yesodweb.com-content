@@ -130,7 +130,7 @@ to have five lorem ipsum blocks after all).
 
 The job of a widget is to hold onto these disparate components and apply proper
 logic for combining different widgets together. This consists of things like
-taking the first title set and ignoring others, filtering duplicates from the
+taking the last title set and ignoring others, filtering duplicates from the
 list of external scripts and stylesheets, and concatenating head and body
 content.
 
@@ -140,8 +140,7 @@ In order to use widgets, you'll obviously need to be able to get your hands on
 them. The most common way will be via the +ToWidget+ typeclass, and its
 +toWidget+ method. This allows you to convert your Shakespearean templates
 directly to a +Widget+: Hamlet code will appear in the body, Julius scripts
-inside a +<script>+ tag in the head, and Cassius and Lucius in a
-+<style>+ tag.
+inside a +<script>+, and Cassius and Lucius in a +<style>+ tag.
 
 
 NOTE: You can actually override the default behavior and have the script and
@@ -151,7 +150,38 @@ automatically.
 But what if you want to add some +<meta>+ tags, which need to appear in
 the head? Or if you want some Javascript to appear in the body instead of the
 head? For these purposes, Yesod provides two additional type classes:
-+ToWidgetHead+ and +ToWidgetBody+. These work exactly as they seem they should.
++ToWidgetHead+ and +ToWidgetBody+. These work exactly as they seem they should. One example use case for this is to have fine-grained control of where your +<script>+ tags end up getting inserted.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Yesod
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/      HomeR  GET
+|]
+
+instance Yesod App where
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout $ do
+    setTitle "toWidgetHead and toWidgetBody"
+    toWidgetBody
+        [hamlet|<script src=/included-in-body.js>|]
+    toWidgetHead
+        [hamlet|<script src=/included-in-head.js>|]
+
+main :: IO ()
+main = warp 3001 App
+----
+
+Note that even though +toWidgetHead+ was called after +toWidgetBody+, the
+latter +<script>+ tag appears first in the generated HTML.
 
 In addition, there are a number of other functions for creating specific kinds
 of Widgets:

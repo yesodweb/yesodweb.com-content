@@ -25,24 +25,24 @@ import           Data.ByteString          (ByteString)
 import           Data.Conduit             (($$))
 import           Data.Conduit.Attoparsec  (sinkParser)
 import           Network.HTTP.Types       (status200, status400)
-import           Network.Wai              (Application, Response, requestBody,
-                                           responseLBS)
+import           Network.Wai              (Application, Response, responseLBS)
+import           Network.Wai.Conduit      (sourceRequestBody)
 import           Network.Wai.Handler.Warp (run)
 
 main :: IO ()
 main = run 3000 app
 
 app :: Application
-app req = handle invalidJson $ do
-    value <- requestBody req $$ sinkParser json
+app req sendResponse = handle (sendResponse . invalidJson) $ do
+    value <- sourceRequestBody req $$ sinkParser json
     newValue <- liftIO $ modValue value
-    return $ responseLBS
+    sendResponse $ responseLBS
         status200
         [("Content-Type", "application/json")]
         $ encode newValue
 
-invalidJson :: SomeException -> IO Response
-invalidJson ex = return $ responseLBS
+invalidJson :: SomeException -> Response
+invalidJson ex = responseLBS
     status400
     [("Content-Type", "application/json")]
     $ encode $ object

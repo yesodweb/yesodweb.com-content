@@ -1,0 +1,64 @@
+== Visitor counter
+
+Remember back in the good ol' days of the internet, where no website was
+complete without a little "you are visitor number 32" thingy? Ahh, those were
+the good times! Let's recreate that wonderful experience in Yesod!
+
+Now, if we wanted to do this properly, we'd store this information in some kind
+of persistent storage layer, like a database, so that the information could be
+shared across multiple horizontally-scaled web servers, and so that the
+information would survive an app restart.
+
+But our goal here isn't to demonstrate good practice (after all, if it was
+about good practice, I wouldn't be demonstrating a visitor counter, right?).
+Instead, this is meant to provide a simple example of sharing some state among
+multiple handlers. A real-world use case would be caching information across
+requests. Just remember that when you use the technique we'll be showing, you
+need to be careful about multiple app servers and app restarts.
+
+The technique is simple: we create a new field in the foundation datatype for a
+mutable reference to some data, and then access it in each handler. The
+technique is so simple, it's worth just diving into the code:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Data.IORef
+import           Yesod
+
+data App = App
+    { visitors :: IORef Int
+    }
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+|]
+
+instance Yesod App
+
+getHomeR :: Handler Html
+getHomeR = do
+    visitorsRef <- fmap visitors getYesod
+    visitors <-
+        liftIO $ atomicModifyIORef visitorsRef $ \i ->
+        (i + 1, i + 1)
+    defaultLayout
+        [whamlet|
+            <p>Welcome, you are visitor number #{visitors}.
+        |]
+
+main :: IO ()
+main = do
+    visitorsRef <- newIORef 0
+    warp 3000 App
+        { visitors = visitorsRef
+        }
+----
+
+I used +IORef+ here, since we didn't need anything more than it provided, but
+you're free to use ++MVar++s or ++TVar++s as well. In fact, a good exercise for
+the reader is to modify the above program to store the visitor count in a
++TVar+ instead.

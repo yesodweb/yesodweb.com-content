@@ -505,7 +505,7 @@ there are a few things you should be aware of:
 
 * There is an automatic instance of +RenderMessage+ for +Text+ in every site,
   so you can just use plain strings if you don't care about i18n support.
-  However, you may need to use explicit type signatures occassionally.
+  However, you may need to use explicit type signatures occasionally.
 
 *  +yesod-form+ expresses all of its messages in terms of the +FormMessage+ datatype. Therefore, to use +yesod-form+, you'll need to have an appropriate +RenderMessage+ instance. A simple one that uses the default English translations would be:
 [source, haskell]
@@ -727,7 +727,7 @@ main = warp 3000 App
 === Custom fields
 
 The fields that come built-in with Yesod will likely cover the vast majority of
-your form needs. But occassionally, you'll need something more specialized.
+your form needs. But occasionally, you'll need something more specialized.
 Fortunately, you can create new forms in Yesod yourself. The +Field+ constructor
 has three values: +fieldParse+ takes a list of values submitted by the user and
 returns one of three results:

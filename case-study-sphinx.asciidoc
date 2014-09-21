@@ -109,7 +109,7 @@ mkYesod "Searcher" [parseRoutes|
 instance Yesod Searcher
 
 instance YesodPersist Searcher where
-    type YesodPersistBackend Searcher = SqlPersistT
+    type YesodPersistBackend Searcher = SqlBackend
 
     runDB action = do
         Searcher pool <- getYesod
@@ -271,7 +271,7 @@ getResults qstring = do
     sphinxRes' <- liftIO $ S.query config "searcher" $ T.unpack qstring
     case sphinxRes' of
         ST.Ok sphinxRes -> do
-            let docids = map (Key . PersistInt64 . ST.documentId) $ ST.matches sphinxRes
+            let docids = map (toSqlKey . ST.documentId) $ ST.matches sphinxRes
             fmap catMaybes $ runDB $ forM docids $ \docid -> do
                 mdoc <- get docid
                 case mdoc of
@@ -512,13 +512,14 @@ getXmlpipeR =
 
 [source, haskell]
 ----
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE GADTs                 #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE QuasiQuotes           #-}
-{-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import           Control.Applicative                     ((<$>), (<*>))
 import           Control.Monad                           (forM)
 import           Control.Monad.Logger                    (runStdoutLoggingT)
@@ -559,7 +560,7 @@ mkYesod "Searcher" [parseRoutes|
 instance Yesod Searcher
 
 instance YesodPersist Searcher where
-    type YesodPersistBackend Searcher = SqlPersistT
+    type YesodPersistBackend Searcher = SqlBackend
 
     runDB action = do
         Searcher pool <- getYesod
@@ -667,7 +668,7 @@ getResults qstring = do
     sphinxRes' <- liftIO $ S.query config "searcher" $ T.unpack qstring
     case sphinxRes' of
         ST.Ok sphinxRes -> do
-            let docids = map (Key . PersistInt64 . ST.documentId) $ ST.matches sphinxRes
+            let docids = map (toSqlKey . ST.documentId) $ ST.matches sphinxRes
             fmap catMaybes $ runDB $ forM docids $ \docid -> do
                 mdoc <- get docid
                 case mdoc of
@@ -759,7 +760,7 @@ endEvents =
     ]
 
 main :: IO ()
-main = withSqlitePool "searcher.db3" 10 $ \pool -> do
-    runStdoutLoggingT $ runSqlPool (runMigration migrateAll) pool
+main = runStdoutLoggingT $ withSqlitePool "searcher.db3" 10 $ \pool -> liftIO $ do
+    runSqlPool (runMigration migrateAll) pool
     warp 3000 $ Searcher pool
 ----

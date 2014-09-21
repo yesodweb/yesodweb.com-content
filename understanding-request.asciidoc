@@ -261,7 +261,7 @@ getMySubsite :: App -> WaiSubsite
 getMySubsite _ =
     WaiSubsite app
   where
-    app req = return $ responseLBS
+    app req sendResponse = sendResponse $ responseLBS
         status200
         [("Content-Type", "text/plain")]
         $ L8.pack $ concat
@@ -557,7 +557,7 @@ getMySubsite :: App -> WaiSubsite
 getMySubsite _ =
     WaiSubsite app
   where
-    app req = return $ responseLBS
+    app req sendResponse = sendResponse $ responseLBS
         status200
         [("Content-Type", "text/plain")]
         $ L8.pack $ concat
