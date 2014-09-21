@@ -1,5 +1,8 @@
 == Persistent
 
+NOTE: This chapter currently covers persistent version 1.3. It will be updated to
+cover persistent version 2.0 in the next iteration of the book (covering Yesod 1.4).
+
 Forms deal with the boundary between the user and the application. Another
 boundary we need to deal with is between the application and the storage layer.
 Whether it be a SQL database, a YAML file, or a binary blob, odds are your
