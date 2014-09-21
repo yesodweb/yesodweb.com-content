@@ -399,8 +399,8 @@ data PageContent url = PageContent
 This is getting closer to what we need. We now have direct access to the HTML
 making up the head and body, as well as the title. At this point, we can use
 Hamlet to combine them all together into a single document, along with our site
-layout, and we use +giveUrlRenderer+ to convert that Hamlet result into actual
-HTML that's ready to be shown to the user. The next figure demonstrates this
+layout, and we use +withUrlRenderer+ to convert that Hamlet result into actual
+HTML that's ready to be shown to the user. The next example demonstrates this
 process.
 
 [source, haskell]
@@ -419,7 +419,7 @@ mkYesod "App" [parseRoutes|
 myLayout :: Widget -> Handler Html
 myLayout widget = do
     pc <- widgetToPageContent widget
-    giveUrlRenderer
+    withUrlRenderer
         [hamlet|
             $doctype 5
             <html>
@@ -446,8 +446,8 @@ main :: IO ()
 main = warp 3000 App
 ----
 
-This is all well and good, but there's one thing that bothers me: that +style+
-tag. There are a few problems with it:
+There's still one thing that bothers me: that +style+ tag. There are a few
+problems with it:
 
 * Unlike Lucius or Cassius, it doesn't get compile-time checked for
   correctness.
@@ -479,7 +479,7 @@ myLayout widget = do
     pc <- widgetToPageContent $ do
         widget
         toWidget [lucius| body { font-family: verdana } |]
-    giveUrlRenderer
+    withUrlRenderer
         [hamlet|
             $doctype 5
             <html>

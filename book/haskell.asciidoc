@@ -74,7 +74,9 @@ Haskell package repository.
 The Yesod website keeps an up-to-date
 link:http://www.yesodweb.com/page/quickstart[quick start guide] which includes
 information on how to install and configure the various tools. It's highly
-recommended that you follow those instructions.
+recommended that you follow those instructions. In particular, these steps make
+use of link:http://www.stackage.org/[Stackage] to avoid many common
+dependency-resolution issues.
 
 If you decide to install your tools yourself, please make sure to avoid these
 common pitfalls:
@@ -121,13 +123,16 @@ are two other common approaches:
 
 I personally never use the GHC command line argument approach. It's a personal
 preference, but I like to have my settings clearly stated in a file. In general
-it's recommended to avoid putting extensions in your +cabal+ file; however, in
-the Yesod scaffolded site we specifically use this approach to avoid the
+it's recommended to avoid putting extensions in your +cabal+ file; however,
+this rule mostly applies when writing publicly available libraries. When you're
+writing an application that you and your team will be working on, having all of
+your language extensions defined in a single location makes a lot of sense.
+The Yesod scaffolded site specifically uses this approach to avoid the
 boilerplate of specifying the same language pragmas in every source file.
 
-We'll end up using quite a few language extensions in this book (the
-scaffolding uses 11). We will not cover the meaning of all of them. Instead,
-please see the
+We'll end up using quite a few language extensions in this book (at the time of
+writing, the scaffolding uses 13). We will not cover the meaning of all of
+them. Instead, please see the
 link:$$http://www.haskell.org/ghc/docs/latest/html/users_guide/ghc-language-features.html$$[GHC
 documentation].
 
@@ -188,6 +193,10 @@ Will the program print out +String+ or +Text+? It's not clear. So instead,
 you'll need to give an explicit type annotation to specify whether +"hello"+
 should be treated as a +String+ or +Text+.
 
+NOTE: In some cases, you can overcome these problems by using the
++ExtendedDefaultRules+ language extension, though we'll instead try to be
+explicit in the book and not rely on defaulting.
+
 [[I_sect12_d1e753]]
 
 === Type Families
@@ -236,7 +245,7 @@ The new syntax is the ability to place a +type+ inside of a +class+ and
 instead of reference an existing one.
 
 
-NOTE: There are other ways to use associated types outside the context of a typeclass. However, in Yesod, all of our associated types are in fact part of a type class. For more information on type families, see link:$$http://www.haskell.org/haskellwiki/GHC/Type_families$$[the Haskell wiki page].
+NOTE: There are other ways to use associated types outside the context of a typeclass. For more information on type families, see link:$$http://www.haskell.org/haskellwiki/GHC/Type_families$$[the Haskell wiki page].
 
 [[I_sect12_d1e789]]
 
@@ -301,11 +310,15 @@ NOTE: There are many other features of Template Haskell not covered here. For
 more information, see the
 link:http://www.haskell.org/haskellwiki/Template_Haskell[Haskell wiki page].
 
-One final note: Template Haskell introduces something called the stage
+Template Haskell introduces something called the stage
 restriction, which essentially means that code before a Template Haskell splice
 cannot refer to code in the Template Haskell, or what follows. This will
 sometimes require you to rearrange your code a bit. The same restriction
 applies to QuasiQuotes.
+
+While out of the box, Yesod is really geared for using code generation to avoid
+boilerplate, it's perfectly acceptable to use Yesod in a Template Haskell-free
+way. There's more information on that in the "Yesod for Haskellers" chapter.
 
 [[I_sect12_d1e833]]
 
