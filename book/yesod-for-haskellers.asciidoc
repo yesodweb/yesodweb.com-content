@@ -1065,7 +1065,7 @@ import           Text.Lucius (Css)
 import           Yesod.Core
 
 getHomeR :: LiteHandler Html
-getHomeR = giveUrlRenderer $
+getHomeR = withUrlRenderer $
     [hamlet|
         $doctype 5
         <html>
@@ -1078,10 +1078,10 @@ getHomeR = giveUrlRenderer $
     |]
 
 getStyleR :: LiteHandler Css
-getStyleR = giveUrlRenderer [lucius|h1 { color: red }|]
+getStyleR = withUrlRenderer [lucius|h1 { color: red }|]
 
 getScriptR :: LiteHandler Javascript
-getScriptR = giveUrlRenderer [julius|alert('Yay, Javascript works too!');|]
+getScriptR = withUrlRenderer [julius|alert('Yay, Javascript works too!');|]
 
 main :: IO ()
 main = warp 3000 $ liteApp $ do
@@ -1092,7 +1092,7 @@ main = warp 3000 $ liteApp $ do
 
 ==== URL rendering function
 
-Likely the most confusing part of this is the +giveUrlRenderer+ calls. This
+Likely the most confusing part of this is the +withUrlRenderer+ calls. This
 gets into one of the most powerful features of Yesod: type-safe URLs. If you
 notice in our HTML, we're providing links to the CSS and Javascript URLs via
 strings. This leads to a duplication of that information, as in our +main+
@@ -1108,9 +1108,9 @@ URLs for free.
 In any event, the Shakespearean templates all expect to receive a function to
 handle the rendering of a type-safe URL. Since we don't actually use any
 type-safe URLs, just about any function would work here (the function will be
-ignored entirely), but +giveUrlRenderer+ is a convenient way of doing this.
+ignored entirely), but +withUrlRenderer+ is a convenient way of doing this.
 
-As we'll see next, +giveUrlRenderer+ isn't really needed most of the time,
+As we'll see next, +withUrlRenderer+ isn't really needed most of the time,
 since Widgets end up providing the renderer function for us automatically.
 
 === Widgets

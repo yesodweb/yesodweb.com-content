@@ -281,7 +281,7 @@ components (title, head data and body data) into the final output.
 
 [source, haskell]
 ----
-        giveUrlRenderer [hamlet|
+        withUrlRenderer [hamlet|
 $doctype 5
 <html>
     <head>
