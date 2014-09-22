@@ -348,7 +348,7 @@ generally speaking, I'd recommend sticking to safer options.
 
 === Conclusion
 
-This chaper covered a number of ways of doing a SQL join:
+This chapter covered a number of ways of doing a SQL join:
 
 * Avoid the join entirely, and manually grab the associated data in Haskell. This is also known as an application level join.
 * Write the SQL explicitly with +rawSql+. While somewhat convenient, this loses a lot of Persistent's type safety.
