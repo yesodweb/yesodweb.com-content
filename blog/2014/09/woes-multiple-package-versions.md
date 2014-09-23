@@ -57,18 +57,18 @@ that it can't unify the following two types:
     expected:                     Data.ByteString.Internal.ByteString
     actual:   bytestring-0.10.0.2:Data.ByteString.Internal.ByteString
 
-Well now the difference just jumps out at you: the *actual* type comes from the
+Now the difference just jumps out at you: the *actual* type comes from the
 bytestring-0.10.0.2 package, whereas the first comes from... well, somewhere
 else. As I'm sure you're guessing right now, that "somewhere else" is
 bytestring-0.10.4.0, but GHC doesn't bother telling us that, since including
-that level of information in every error messages would be overwhelming. To
+that level of information in every error message would be overwhelming. To
 step through why this came up exactly:
 
 * `text` is installed against bytestring-0.10.0.2 (it was the only version of bytestring available at the time you installed text).
 * Therefore, `encodeUtf8` will generate a `ByteString` value from version 0.10.0.2.
 * Your program imports `Data.ByteString.Char8`, which is provided by both bytestring-0.10.0.2 and bytestring-0.10.4.0.
 * GHC's default dependency resolution is: take the latest version of each package, in this case 0.10.4.0.
-* Now we have a `S8.putStrLn` function expected a 0.10.4.0 `ByteString`, but an `encodeUtf8` function returning a 0.10.0.2 `ByteString`.
+* Now we have a `S8.putStrLn` function expecting a 0.10.4.0 `ByteString`, but an `encodeUtf8` function returning a 0.10.0.2 `ByteString`.
 
 So how do we work around this problem? I can think of three ways:
 
@@ -82,7 +82,7 @@ hopefully not come as a surprise that that's exactly what I recommend most
 Haskell users use to get their packages installed.
 
 Let's demonstrate that second case of `MonadTrans`. This time, let's try it
-with GHC 7.8.3 (for reasons I'll make clear in a moment). GHC ships with
+with GHC 7.8.3. GHC ships with
 transformers-0.3.0.0. Next, we'll install the `either` package with `cabal
 install either`. Once again, someone comes along and tells us about a shiny new
 package, transformers-0.4.1.0. Dutifully, we upgrade with `cabal install
@@ -114,8 +114,8 @@ foo.hs:6:23:
 "But `EitherT` *is* an instance of `MonadTrans`!" you insist. That may be true, but it's an instance of the *wrong `MonadTrans`*. The `either` package is built against transformers-0.3.0.0, whereas you've imported `lift` from transformers-0.4.1.0. This can be worked around as above, with `runghc -package=transformers-0.3.0.0 foo.hs`. And yet again, my strong recommendation is: use Stackage.
 
 There's one more particularly painful thing I need to point out. Some packages
-are bundle with GHC, and are depended on by the `ghc` package. The special
-thing about the `ghc` package is that it can be reinstalled without installing
+are bundled with GHC, and are depended on by the `ghc` package. The special
+thing about the `ghc` package is that it cannot be reinstalled without installing
 a new version of GHC itself. Any packages depended on by the `ghc` package
 cannot be unregistered without breaking `ghc`, which would in turn break
 libraries like `doctest` and `hint`. If you follow these points to conclusion,
