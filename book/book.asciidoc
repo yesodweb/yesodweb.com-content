@@ -80,8 +80,6 @@ include::route-attributes.asciidoc[]
 
 include::monad-control.asciidoc[]
 
-include::conduits.asciidoc[]
-
 include::web-application-interface.asciidoc[]
 
 include::settings-types.asciidoc[]
