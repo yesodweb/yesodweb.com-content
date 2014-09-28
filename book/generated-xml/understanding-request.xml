@@ -227,6 +227,7 @@ start with a fairly typical Yesod application.</simpara>
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE ViewPatterns      #-}
 import qualified Data.ByteString.Lazy.Char8 as L8
 import           Network.HTTP.Types         (status200)
 import           Network.Wai                (pathInfo, rawPathInfo,
@@ -440,6 +441,7 @@ want to respond with a 404 not found.</simpara>
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE ViewPatterns      #-}
 import qualified Data.ByteString.Lazy.Char8 as L8
 import           Network.HTTP.Types         (status200)
 import           Network.Wai                (pathInfo, rawPathInfo,

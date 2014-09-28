@@ -889,6 +889,7 @@ previous example converted to the Template Haskell version:
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE ViewPatterns      #-}
 import           Yesod.Core (RenderRoute (..), Yesod, mkYesod, parseRoutes,
                              redirect, warp)
 

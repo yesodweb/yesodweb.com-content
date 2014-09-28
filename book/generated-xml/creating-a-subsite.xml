@@ -47,6 +47,7 @@ mkYesodSubData "HelloSub" [parseRoutes|
 <programlisting language="haskell" linenumbering="unnumbered">-- @HelloSub.hs
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 module HelloSub
@@ -63,9 +64,10 @@ getSubHomeR = lift $ defaultLayout [whamlet|Welcome to the subsite!|]
 
 instance Yesod master =&gt; YesodSubDispatch HelloSub (HandlerT master IO) where
     yesodSubDispatch = $(mkYesodSubDispatch resourcesHelloSub)</programlisting>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes     #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies    #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
 import           HelloSub
 import           Yesod
 

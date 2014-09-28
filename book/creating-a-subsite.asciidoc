@@ -52,6 +52,7 @@ mkYesodSubData "HelloSub" [parseRoutes|
 -- @HelloSub.hs
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 module HelloSub
@@ -72,9 +73,10 @@ instance Yesod master => YesodSubDispatch HelloSub (HandlerT master IO) where
 
 [source, haskell]
 ----
-{-# LANGUAGE QuasiQuotes     #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies    #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
 import           HelloSub
 import           Yesod
 

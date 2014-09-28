@@ -13,7 +13,8 @@ some of the basic concepts and terminology.</simpara>
 <title>Hello World</title>
 <simpara>Let&#8217;s get this book started properly: a simple web page that says Hello
 World:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes           #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
 import           Yesod

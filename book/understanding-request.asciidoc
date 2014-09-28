@@ -221,6 +221,7 @@ start with a fairly typical Yesod application.
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE ViewPatterns      #-}
 import qualified Data.ByteString.Lazy.Char8 as L8
 import           Network.HTTP.Types         (status200)
 import           Network.Wai                (pathInfo, rawPathInfo,
@@ -468,6 +469,7 @@ Following is the full code for the non-Template Haskell approach.
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE ViewPatterns      #-}
 import qualified Data.ByteString.Lazy.Char8 as L8
 import           Network.HTTP.Types         (status200)
 import           Network.Wai                (pathInfo, rawPathInfo,

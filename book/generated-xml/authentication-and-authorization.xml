@@ -310,7 +310,7 @@ User
     deriving Typeable
 |]
 
-data App = App Connection
+data App = App SqlBackend
 
 mkYesod "App" [parseRoutes|
 / HomeR GET
@@ -348,6 +348,8 @@ instance YesodAuth App where
                 Right userid -&gt; userid -- existing user
 
     authHttpManager = error "Email doesn't need an HTTP manager"
+
+instance YesodAuthPersist App
 
 -- Here's all of the email-specific code
 instance YesodAuthEmail App where
