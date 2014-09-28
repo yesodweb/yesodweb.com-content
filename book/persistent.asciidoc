@@ -112,7 +112,7 @@ like:
 ----
 data Person = Person
     { personName :: Text
-    , personAge :: Int
+    , personAge  :: Int
     }
 ----
 
@@ -144,11 +144,6 @@ access. It just requires a lot of monotonous, error prone, boiler plate code.
 As usual, this means we can use the type system to keep us honest. And to avoid
 some of the drudgery, we'll use a sprinkling of Template Haskell.
 
-NOTE: Earlier versions of Persistent made much heavier usage of Template
-Haskell. Starting with 0.6, there is a new architecture inspired by the
-groundhog package. This approach uses phantom types to carry a lot of the
-burden.
-
 +PersistValue+ is the basic building block of Persistent. It is a sum type that
 can represent data that gets sent to and from a database. Its definition is:
 
@@ -163,11 +158,11 @@ data PersistValue = PersistText Text
                   | PersistDay Day
                   | PersistTimeOfDay TimeOfDay
                   | PersistUTCTime UTCTime
-                  | PersistZonedTime ZT
                   | PersistNull
                   | PersistList [PersistValue]
                   | PersistMap [(Text, PersistValue)]
-                  | PersistObjectId ByteString -- ^ intended especially for MongoDB backend
+                  | PersistObjectId ByteString -- ^ Intended especially for MongoDB backend
+                  | PersistDbSpecific ByteString -- ^ Using 'PersistDbSpecific' allows you to use types specific to a particular backend
 ----
 
 Each Persistent backend needs to know how to translate the relevant values into
@@ -235,6 +230,7 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative
+import Data.Aeson (ToJSON, FromJSON)
 
 data Person = Person
     { personName :: !String
@@ -245,6 +241,8 @@ data Person = Person
 type PersonId = Key Person
 
 instance PersistEntity Person where
+    newtype Key Person = PersonKey (BackendKey SqlBackend)
+        deriving (ToJSON, FromJSON, PersistField, Show, Eq, Read, Ord)
     -- A Generalized Algebraic Datatype (GADT).
     -- This gives us a type-safe approach to matching fields with
     -- their datatypes.
@@ -274,7 +272,7 @@ instance PersistEntity Person where
         SqlInt64
         []
         True
-        Nothing
+        NoReference
     persistFieldDef PersonName = FieldDef
         (HaskellName "name")
         (DBName "name")
@@ -282,7 +280,7 @@ instance PersistEntity Person where
         SqlString
         []
         True
-        Nothing
+        NoReference
     persistFieldDef PersonAge = FieldDef
         (HaskellName "age")
         (DBName "age")
@@ -290,7 +288,7 @@ instance PersistEntity Person where
         SqlInt64
         []
         True
-        Nothing
+        NoReference
 ----
 
 As you might expect, our +Person+ datatype closely matches the definition we
@@ -298,7 +296,8 @@ gave in the original Template Haskell version. We also have a Generalized
 Algebraic Datatype (GADT) which gives a separate constructor for each field.
 This GADT encodes both the type of the entity and the type of the field. We use
 its constructors throughout Persistent, such as to ensure that when we apply a
-filter, the types of the filtering value match the field.
+filter, the types of the filtering value match the field. There's another
+associated newtype for the database primary key of this entity.
 
 We can use the generated +Person+ type like any other Haskell type, and then
 pass it off to other Persistent functions.
@@ -353,11 +352,11 @@ One last detail is left unexplained from the previous example: what exactly
 does +runSqlite+ do, and what is that monad that our database actions are
 running in?
 
-All database actions need to occur within an instance of +PersistStore+. As its
-name implies, every data store (PostgreSQL, SQLite, MongoDB) has an instance of
-+PersistStore+. This is where all the translations from +PersistValue+ to
-database-specific values occur, where SQL query generation happens, and so on.
-
+All database actions require a parameter which is an instance of
++PersistStore+. As its name implies, every data store (PostgreSQL, SQLite,
+MongoDB) has an instance of +PersistStore+. This is where all the translations
+from +PersistValue+ to database-specific values occur, where SQL query
+generation happens, and so on.
 
 NOTE: As you can imagine, even though +PersistStore+ provides a safe,
 well-typed interface to the outside world, there are a lot of database
@@ -368,8 +367,8 @@ make sure it is as bug-free as possible.
 +runSqlite+ creates a single connection to a database using its supplied
 connection string. For our test cases, we will use +:memory:+, which uses an
 in-memory database. All of the SQL backends share the same instance of
-+PersistStore+: +SqlPersist+. +runSqlite+ runs the +SqlPersist+ action by
-providing it with the connection value it generated.
++PersistStore+: +SqlBackend+. +runSqlite+ then provides the +SqlBackend+ value
+as an environment parameter to the action via +runReaderT+.
 
 NOTE: There are actually a few other typeclasses: +PersistUpdate+ and
 +PersistQuery+. Different typeclasses provide different functionality, which
@@ -617,11 +616,11 @@ Since this value may or may not exist, its return type is wrapped in a +Maybe+.
 
 [source, haskell]
 ----
-    personId <- insert $ Person "Michael" "Snoyman" 26
-    maybePerson <- get personId
-    case maybePerson of
-        Nothing -> liftIO $ putStrLn "Just kidding, not really there"
-        Just person -> liftIO $ print person
+personId <- insert $ Person "Michael" "Snoyman" 26
+maybePerson <- get personId
+case maybePerson of
+    Nothing -> liftIO $ putStrLn "Just kidding, not really there"
+    Just person -> liftIO $ print person
 ----
 
 This can be very useful for sites that provide URLs like _/person/5_. However,
@@ -639,11 +638,11 @@ We'll go into more details when we see integration with Yesod.
 
 [source, haskell]
 ----
-    personId <- insert $ Person "Michael" "Snoyman" 26
-    maybePerson <- getBy $ UniqueName "Michael" "Snoyman"
-    case maybePerson of
-        Nothing -> liftIO $ putStrLn "Just kidding, not really there"
-        Just (Entity personId person) -> liftIO $ print person
+personId <- insert $ Person "Michael" "Snoyman" 26
+maybePerson <- getBy $ UniqueName "Michael" "Snoyman"
+case maybePerson of
+    Nothing -> liftIO $ putStrLn "Just kidding, not really there"
+    Just (Entity personId person) -> liftIO $ print person
 ----
 
 Like +get404+, there is also a +getBy404+ function.
@@ -688,8 +687,8 @@ Let's jump straight into an example of filtering, and then analyze it.
 
 [source, haskell]
 ----
-    people <- selectList [PersonAge >. 25, PersonAge <=. 30] []
-    liftIO $ print people
+people <- selectList [PersonAge >. 25, PersonAge <=. 30] []
+liftIO $ print people
 ----
 
 As simple as that example is, we really need to cover three points:
@@ -703,7 +702,7 @@ the phantom part.)
 straight-forward: just tack a period to the end of what you'd expect. There are
 three gotchas here, I'll explain below.
 
-. The list of filters is ANDed together, so that our constraint means "age is
+. The list of filters is ++AND++ed together, so that our constraint means "age is
 greater than 25 AND age is less than or equal to 30". We'll describe ORing
 later.
 
@@ -713,18 +712,18 @@ if you use the wrong one, the compiler will catch you. The other two surprising
 operators are the "is member" and "is not member". They are, respectively,
 +<-.+ and +/<-.+ (both end with a period).
 
-And regarding ORs, we use the +||.+ operator. For example:
+And regarding ++OR++s, we use the +||.+ operator. For example:
 
 
 [source, haskell]
 ----
-    people <- selectList
-        (       [PersonAge >. 25, PersonAge <=. 30]
-            ||. [PersonFirstName /<-. ["Adam", "Bonny"]]
-            ||. ([PersonAge ==. 50] ||. [PersonAge ==. 60])
-        )
-        []
-    liftIO $ print people
+people <- selectList
+    (       [PersonAge >. 25, PersonAge <=. 30]
+        ||. [PersonFirstName /<-. ["Adam", "Bonny"]]
+        ||. ([PersonAge ==. 50] ||. [PersonAge ==. 60])
+    )
+    []
+liftIO $ print people
 ----
 
 This (completely nonsensical) example means: find people who are 26-30,
@@ -828,8 +827,8 @@ embedding +PersonId+ within +Person+ with a +Maybe+ wrapper means an extra
 runtime check for +Just+, instead of a more error-proof compile time check.
 
 Finally, there's a semantic mismatch with embedding the ID within the value.
-The +Person+ is the value. Two people are identical (in the context of a
-database) if all their fields are the same. By embedding the ID in the value,
+The +Person+ is the value. Two people are identical (in the context of
+Haskell) if all their fields are the same. By embedding the ID in the value,
 we're no longer talking about a person, but about a row in the database.
 Equality is no longer really equality, it's identity: is this the _same
 person_, as opposed to an equivalent person.
@@ -858,8 +857,8 @@ way to do that is with the +update+ function.
 
 [source, haskell]
 ----
-    personId <- insert $ Person "Michael" "Snoyman" 26
-    update personId [PersonAge =. 27]
+personId <- insert $ Person "Michael" "Snoyman" 26
+update personId [PersonAge =. 27]
 ----
 
 +update+ takes two arguments: an ID, and a list of ++Update++s. The simplest
@@ -886,7 +885,7 @@ filters, and a list of updates to apply.
 
 [source, haskell]
 ----
-    updateWhere [PersonFirstName ==. "Michael"] [PersonAge *=. 2] -- it's been a long day
+updateWhere [PersonFirstName ==. "Michael"] [PersonAge *=. 2] -- it's been a long day
 ----
 
 Occasionally, you'll just want to completely replace the value in a database
@@ -894,8 +893,8 @@ with a different value. For that, you use (surprise) the +replace+ function.
 
 [source, haskell]
 ----
-    personId <- insert $ Person "Michael" "Snoyman" 26
-    replace personId $ Person "John" "Doe" 20
+personId <- insert $ Person "Michael" "Snoyman" 26
+replace personId $ Person "John" "Doe" 20
 ----
 
 ==== Delete
@@ -910,13 +909,13 @@ deleteWhere:: Delete based on a set of filters
 
 [source, haskell]
 ----
-    personId <- insert $ Person "Michael" "Snoyman" 26
-    delete personId
-    deleteBy $ UniqueName "Michael" "Snoyman"
-    deleteWhere [PersonFirstName ==. "Michael"]
+personId <- insert $ Person "Michael" "Snoyman" 26
+delete personId
+deleteBy $ UniqueName "Michael" "Snoyman"
+deleteWhere [PersonFirstName ==. "Michael"]
 ----
 
-We can even use deleteWhere to wipe out all the records in a table, we just
+We can even use +deleteWhere+ to wipe out all the records in a table, we just
 need to give some hints to GHC as to what table we're interested in:
 
 [source, haskell]
@@ -1167,23 +1166,6 @@ main = runSqlite ":memory:" $ do
     return ()
 ----
 
-[NOTE]
-=====================
-
-Since the +Id+ suffix on a type is used to indicate a foreign key relationship
-to Persistent, you currently cannot use non-key types that end in +Id+. A
-simple workaround is to define a type synonym with a different suffix, e.g.:
-
-[source, haskell]
-----
-data MyExistingTypeEndingInId = ...
-type IdIsNotTheSuffix = MyExistingTypeEndingInId
-[persist|
-Person
-    someField IdIsNotTheSuffix
-----
-=====================
-
 === Closer look at types
 
 So far, we've spoken about +Person+ and +PersonId+ without really explaining
@@ -1191,7 +1173,7 @@ what they are. In the simplest sense, for a SQL-only system, the +PersonId+
 could just be +type PersonId = Int64+. However, that means there is nothing
 binding a +PersonId+ at the type level to the +Person+ entity. As a result, you
 could accidentally use a +PersonId+ and get a +Car+. In order to model this
-relationship, we use phantom types. So, our next naive step would be:
+relationship, we could use phantom types. So, our next naive step would be:
 
 [source, haskell]
 ----
@@ -1219,37 +1201,24 @@ arbitrary data: +PersistValue+:
 newtype Key entity = Key PersistValue
 ----
 
-But this has another problem. Let's say we have a web application that takes an
-ID as a parameter from the user. It will need to receive that parameter as
-+Text+ and then try to convert it to a +Key+. Well, that's simple: write a
-function to convert a +Text+ to a +PersistValue+, and then wrap the result in
-the +Key+ constructor, right?
-
-Wrong. We tried this, and there's a big problem. We end up getting ++Key++s
-that could never be. For example, if we're dealing with SQL, a key must be an
-integer. But the approach described above would allow arbitrary textual data
-in. The result was a bunch of 500 server errors as the database choked on
-comparing an integer column to text.
-
-So what we need is a way to convert text to a +Key+, but have it dependent on
-the rules of the backend in question. And once phrased that way, the answer is
-simple: just add another phantom. The real, actual definition of +Key+ in
-Persistent is:
+And this is (more or less) what Persistent did until version 2.0. However, this
+has a different problem: it throws away data. For example, when dealing with a
+SQL database, we know that the key type will be an +Int64+ (assuming defaults
+are being used). However, you can't assert that at the type level with this
+construction. So instead, starting with Persistent 2.0, we now use an
+associated datatype inside the +PersistEntity+ class:
 
 [source, haskell]
 ----
-newtype KeyBackend backend entity = Key { unKey :: PersistValue }
-type Key val = KeyBackend (PersistEntityBackend val) val
+class PersistEntity record where
+    data Key record
+    ...
 ----
 
-What this slightly intimidating formulation says is: we have a type
-+KeyBackend+ which is parameterized on both the backend and entity. However, we
-*also* have a simplified type +Key+ which assumes the same backend for both the
-entity and the key, which is almost always the correct assumption.
-
-In practice, this works great: we can have a +Text -> KeyBackend MongoDB
-entity+ function and a +Text -> KeyBackend SqlPersist entity+ function, and
-everything runs smoothly.
+When you're working with a SQL backend, and aren't using a custom key type,
+this becomes a newtype wrapper around an +Int64+, and the
++toSqlKey+/+fromSqlKey+ functions can perform that type-safe conversion for
+you. With MongoDB, on the other hand, it's a wrapper around a +ByteString+.
 
 ==== More complicated, more generic
 
@@ -1270,26 +1239,19 @@ Post
     blogId BlogId
 ----
 
-But what would that look like in terms of our +Key+ datatype?
+We know that +BlogId+ is just a type synonym for +Key Blog+, but how will +Key
+Blog+ be defined? We can't use an +Int64+, since that won't work for MongoDB.
+And we can't use +ByteString+, since that won't work for SQL databases.
 
-[source, haskell]
-----
-data Blog = Blog { blogTitle :: Text }
-data Post = Post { postTitle :: Text, postBlogId :: KeyBackend <what goes here?> Blog }
-----
-
-We need something to fill in as the backend. In theory, we could hardcode this
-to +SqlPersist+, or +Mongo+, but then our datatypes will only work for a single
-backend. For an individual application, that might be acceptable, but what
-about libraries defining datatypes to be used by multiple applications, using
-multiple backends?
-
-So things got a little more complicated. Our types are actually:
+To allow for this, once +mpsGeneric+ is set to +True+, out resulting datatypes have a type parameter to indicate the database backend they use, so that keys can be properly encoded. This looks like:
 
 [source, haskell]
 ----
 data BlogGeneric backend = Blog { blogTitle :: Text }
-data PostGeneric backend = Post { postTitle :: Text, postBlogId :: KeyBackend backend (BlogGeneric backend) }
+data PostGeneric backend = Post
+    { postTitle  :: Text
+    , postBlogId :: Key (BlogGeneric backend)
+    }
 ----
 
 Notice that we still keep the short names for the constructors and the records.
@@ -1298,15 +1260,15 @@ synonyms:
 
 [source, haskell]
 ----
-type Blog = BlogGeneric SqlPersist
-type BlogId = Key SqlPersist Blog
-type Post = PostGeneric SqlPersist
-type PostId = Key SqlPersist Post
+type Blog   = BlogGeneric SqlBackend
+type BlogId = Key Blog
+type Post   = PostGeneric SqlBackend
+type PostId = Key Post
 ----
 
-And no, +SqlPersist+ isn't hard-coded into Persistent anywhere. That
+And no, +SqlBackend+ isn't hard-coded into Persistent anywhere. That
 +sqlSettings+ parameter you've been passing to +mkPersist+ is what tells us to
-use +SqlPersist+. Mongo code will use +mongoSettings+ instead.
+use +SqlBackend+. Mongo code will use +mongoSettings+ instead.
 
 This might be quite complicated under the surface, but user code hardly ever
 touches this. Look back through this whole chapter: not once did we need to
@@ -1554,6 +1516,8 @@ support for writing type safe SQL queries, using the existing Persistent
 infrastructure. The Haddocks for that package provide a good introduction to
 its usage. And since it uses many Persistent concepts, most of your existing
 Persistent knowledge should transfer over easily.
+
+For a simple example of using Esqueleto, please see the SQL Joins chapter.
 
 === Something besides SQLite
 
