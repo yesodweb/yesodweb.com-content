@@ -112,7 +112,7 @@ database table, you would likely create a Haskell datatype that looks something
 like:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">data Person = Person
     { personName :: Text
-    , personAge :: Int
+    , personAge  :: Int
     }</programlisting>
 <simpara>It looks like everything is type safe: the database schema matches our Haskell
 datatypes, the database ensures that invalid data can never make it into our
@@ -151,10 +151,6 @@ wherever possible, and data storage is no exception.</simpara>
 access. It just requires a lot of monotonous, error prone, boiler plate code.
 As usual, this means we can use the type system to keep us honest. And to avoid
 some of the drudgery, we&#8217;ll use a sprinkling of Template Haskell.</simpara>
-<note><simpara>Earlier versions of Persistent made much heavier usage of Template
-Haskell. Starting with 0.6, there is a new architecture inspired by the
-groundhog package. This approach uses phantom types to carry a lot of the
-burden.</simpara></note>
 <simpara><literal>PersistValue</literal> is the basic building block of Persistent. It is a sum type that
 can represent data that gets sent to and from a database. Its definition is:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">data PersistValue = PersistText Text
@@ -166,11 +162,11 @@ can represent data that gets sent to and from a database. Its definition is:</si
                   | PersistDay Day
                   | PersistTimeOfDay TimeOfDay
                   | PersistUTCTime UTCTime
-                  | PersistZonedTime ZT
                   | PersistNull
                   | PersistList [PersistValue]
                   | PersistMap [(Text, PersistValue)]
-                  | PersistObjectId ByteString -- ^ intended especially for MongoDB backend</programlisting>
+                  | PersistObjectId ByteString -- ^ Intended especially for MongoDB backend
+                  | PersistDbSpecific ByteString -- ^ Using 'PersistDbSpecific' allows you to use types specific to a particular backend</programlisting>
 <simpara>Each Persistent backend needs to know how to translate the relevant values into
 something the database can understand. However, it would be awkward to have to
 express all of our data simply in terms of these basic types. The next layer is
@@ -255,6 +251,7 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative
+import Data.Aeson (ToJSON, FromJSON)
 
 data Person = Person
     { personName :: !String
@@ -265,6 +262,8 @@ data Person = Person
 type PersonId = Key Person
 
 instance PersistEntity Person where
+    newtype Key Person = PersonKey (BackendKey SqlBackend)
+        deriving (ToJSON, FromJSON, PersistField, Show, Eq, Read, Ord)
     -- A Generalized Algebraic Datatype (GADT).
     -- This gives us a type-safe approach to matching fields with
     -- their datatypes.
@@ -294,7 +293,7 @@ instance PersistEntity Person where
         SqlInt64
         []
         True
-        Nothing
+        NoReference
     persistFieldDef PersonName = FieldDef
         (HaskellName "name")
         (DBName "name")
@@ -302,7 +301,7 @@ instance PersistEntity Person where
         SqlString
         []
         True
-        Nothing
+        NoReference
     persistFieldDef PersonAge = FieldDef
         (HaskellName "age")
         (DBName "age")
@@ -310,13 +309,14 @@ instance PersistEntity Person where
         SqlInt64
         []
         True
-        Nothing</programlisting>
+        NoReference</programlisting>
 <simpara>As you might expect, our <literal>Person</literal> datatype closely matches the definition we
 gave in the original Template Haskell version. We also have a Generalized
 Algebraic Datatype (GADT) which gives a separate constructor for each field.
 This GADT encodes both the type of the entity and the type of the field. We use
 its constructors throughout Persistent, such as to ensure that when we apply a
-filter, the types of the filtering value match the field.</simpara>
+filter, the types of the filtering value match the field. There&#8217;s another
+associated newtype for the database primary key of this entity.</simpara>
 <simpara>We can use the generated <literal>Person</literal> type like any other Haskell type, and then
 pass it off to other Persistent functions.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
@@ -362,10 +362,11 @@ using the key from the wrong table: trying to load up a different entity (like
 <simpara>One last detail is left unexplained from the previous example: what exactly
 does <literal>runSqlite</literal> do, and what is that monad that our database actions are
 running in?</simpara>
-<simpara>All database actions need to occur within an instance of <literal>PersistStore</literal>. As its
-name implies, every data store (PostgreSQL, SQLite, MongoDB) has an instance of
-<literal>PersistStore</literal>. This is where all the translations from <literal>PersistValue</literal> to
-database-specific values occur, where SQL query generation happens, and so on.</simpara>
+<simpara>All database actions require a parameter which is an instance of
+<literal>PersistStore</literal>. As its name implies, every data store (PostgreSQL, SQLite,
+MongoDB) has an instance of <literal>PersistStore</literal>. This is where all the translations
+from <literal>PersistValue</literal> to database-specific values occur, where SQL query
+generation happens, and so on.</simpara>
 <note><simpara>As you can imagine, even though <literal>PersistStore</literal> provides a safe,
 well-typed interface to the outside world, there are a lot of database
 interactions that could go wrong. However, by testing this code automatically
@@ -374,8 +375,8 @@ make sure it is as bug-free as possible.</simpara></note>
 <simpara><literal>runSqlite</literal> creates a single connection to a database using its supplied
 connection string. For our test cases, we will use <literal>:memory:</literal>, which uses an
 in-memory database. All of the SQL backends share the same instance of
-<literal>PersistStore</literal>: <literal>SqlPersist</literal>. <literal>runSqlite</literal> runs the <literal>SqlPersist</literal> action by
-providing it with the connection value it generated.</simpara>
+<literal>PersistStore</literal>: <literal>SqlBackend</literal>. <literal>runSqlite</literal> then provides the <literal>SqlBackend</literal> value
+as an environment parameter to the action via <literal>runReaderT</literal>.</simpara>
 <note><simpara>There are actually a few other typeclasses: <literal>PersistUpdate</literal> and
 <literal>PersistQuery</literal>. Different typeclasses provide different functionality, which
 allows us to write backends that use simpler data stores (e.g., Redis) even
@@ -611,11 +612,11 @@ returning many results will return a list.</simpara>
 <title>Fetching by ID</title>
 <simpara>The simplest query you can perform in Persistent is getting based on an ID.
 Since this value may or may not exist, its return type is wrapped in a <literal>Maybe</literal>.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">    personId &lt;- insert $ Person "Michael" "Snoyman" 26
-    maybePerson &lt;- get personId
-    case maybePerson of
-        Nothing -&gt; liftIO $ putStrLn "Just kidding, not really there"
-        Just person -&gt; liftIO $ print person</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">personId &lt;- insert $ Person "Michael" "Snoyman" 26
+maybePerson &lt;- get personId
+case maybePerson of
+    Nothing -&gt; liftIO $ putStrLn "Just kidding, not really there"
+    Just person -&gt; liftIO $ print person</programlisting>
 <simpara>This can be very useful for sites that provide URLs like <emphasis>/person/5</emphasis>. However,
 in such a case, we don&#8217;t usually care about the <literal>Maybe</literal> wrapper, and just want
 the value, returning a 404 message if it is not found. Fortunately, the
@@ -637,11 +638,11 @@ it returns an <literal>Entity</literal> instead of a value. An <literal>Entity</
 </simpara>
 </listitem>
 </orderedlist>
-<programlisting language="haskell" linenumbering="unnumbered">    personId &lt;- insert $ Person "Michael" "Snoyman" 26
-    maybePerson &lt;- getBy $ UniqueName "Michael" "Snoyman"
-    case maybePerson of
-        Nothing -&gt; liftIO $ putStrLn "Just kidding, not really there"
-        Just (Entity personId person) -&gt; liftIO $ print person</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">personId &lt;- insert $ Person "Michael" "Snoyman" 26
+maybePerson &lt;- getBy $ UniqueName "Michael" "Snoyman"
+case maybePerson of
+    Nothing -&gt; liftIO $ putStrLn "Just kidding, not really there"
+    Just (Entity personId person) -&gt; liftIO $ print person</programlisting>
 <simpara>Like <literal>get404</literal>, there is also a <literal>getBy404</literal> function.</simpara>
 </section>
 <section id="persistent_select_functions">
@@ -698,8 +699,8 @@ rows.</simpara>
 <note><simpara>The combination of limits and offsets is very important; it allows for
 efficient pagination in your webapps.</simpara></note>
 <simpara>Let&#8217;s jump straight into an example of filtering, and then analyze it.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">    people &lt;- selectList [PersonAge &gt;. 25, PersonAge &lt;=. 30] []
-    liftIO $ print people</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">people &lt;- selectList [PersonAge &gt;. 25, PersonAge &lt;=. 30] []
+liftIO $ print people</programlisting>
 <simpara>As simple as that example is, we really need to cover three points:</simpara>
 <orderedlist numeration="arabic">
 <listitem>
@@ -719,7 +720,7 @@ three gotchas here, I&#8217;ll explain below.
 </listitem>
 <listitem>
 <simpara>
-The list of filters is ANDed together, so that our constraint means "age is
+The list of filters is <literal>AND</literal>ed together, so that our constraint means "age is
 greater than 25 AND age is less than or equal to 30". We&#8217;ll describe ORing
 later.
 </simpara>
@@ -730,14 +731,14 @@ later.
 if you use the wrong one, the compiler will catch you. The other two surprising
 operators are the "is member" and "is not member". They are, respectively,
 <literal>&#8592;.</literal> and <literal>/&#8592;.</literal> (both end with a period).</simpara>
-<simpara>And regarding ORs, we use the <literal>||.</literal> operator. For example:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">    people &lt;- selectList
-        (       [PersonAge &gt;. 25, PersonAge &lt;=. 30]
-            ||. [PersonFirstName /&lt;-. ["Adam", "Bonny"]]
-            ||. ([PersonAge ==. 50] ||. [PersonAge ==. 60])
-        )
-        []
-    liftIO $ print people</programlisting>
+<simpara>And regarding <literal>OR</literal>s, we use the <literal>||.</literal> operator. For example:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">people &lt;- selectList
+    (       [PersonAge &gt;. 25, PersonAge &lt;=. 30]
+        ||. [PersonFirstName /&lt;-. ["Adam", "Bonny"]]
+        ||. ([PersonAge ==. 50] ||. [PersonAge ==. 60])
+    )
+    []
+liftIO $ print people</programlisting>
 <simpara>This (completely nonsensical) example means: find people who are 26-30,
 inclusive, OR whose names are neither Adam or Bonny, OR whose age is either 50
 or 60.</simpara>
@@ -847,8 +848,8 @@ The <literal>Entity Person</literal> form gives us unambiguous access to that in
 embedding <literal>PersonId</literal> within <literal>Person</literal> with a <literal>Maybe</literal> wrapper means an extra
 runtime check for <literal>Just</literal>, instead of a more error-proof compile time check.</simpara>
 <simpara>Finally, there&#8217;s a semantic mismatch with embedding the ID within the value.
-The <literal>Person</literal> is the value. Two people are identical (in the context of a
-database) if all their fields are the same. By embedding the ID in the value,
+The <literal>Person</literal> is the value. Two people are identical (in the context of
+Haskell) if all their fields are the same. By embedding the ID in the value,
 we&#8217;re no longer talking about a person, but about a row in the database.
 Equality is no longer really equality, it&#8217;s identity: is this the <emphasis>same
 person</emphasis>, as opposed to an equivalent person.</simpara>
@@ -867,8 +868,8 @@ modifications to the values in Haskell. (We better not be of course, since
 data in Haskell is immutable.)</simpara>
 <simpara>Instead, we&#8217;re looking at ways of modifying rows in a table. And the simplest
 way to do that is with the <literal>update</literal> function.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">    personId &lt;- insert $ Person "Michael" "Snoyman" 26
-    update personId [PersonAge =. 27]</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">personId &lt;- insert $ Person "Michael" "Snoyman" 26
+update personId [PersonAge =. 27]</programlisting>
 <simpara><literal>update</literal> takes two arguments: an ID, and a list of <literal>Update</literal>s. The simplest
 update is assignment, but it&#8217;s not always the best. What if you want to
 increase someone&#8217;s age by 1, but you don&#8217;t have their current age? Persistent
@@ -884,11 +885,11 @@ conditions).</simpara>
 <simpara>Sometimes you&#8217;ll want to update many rows at once (give all your employees a
 5% pay increase, for example). <literal>updateWhere</literal> takes two parameters: a list of
 filters, and a list of updates to apply.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">    updateWhere [PersonFirstName ==. "Michael"] [PersonAge *=. 2] -- it's been a long day</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">updateWhere [PersonFirstName ==. "Michael"] [PersonAge *=. 2] -- it's been a long day</programlisting>
 <simpara>Occasionally, you&#8217;ll just want to completely replace the value in a database
 with a different value. For that, you use (surprise) the <literal>replace</literal> function.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">    personId &lt;- insert $ Person "Michael" "Snoyman" 26
-    replace personId $ Person "John" "Doe" 20</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">personId &lt;- insert $ Person "Michael" "Snoyman" 26
+replace personId $ Person "John" "Doe" 20</programlisting>
 </section>
 <section id="persistent_delete">
 <title>Delete</title>
@@ -925,11 +926,11 @@ Delete based on a set of filters
 </listitem>
 </varlistentry>
 </variablelist>
-<programlisting language="haskell" linenumbering="unnumbered">    personId &lt;- insert $ Person "Michael" "Snoyman" 26
-    delete personId
-    deleteBy $ UniqueName "Michael" "Snoyman"
-    deleteWhere [PersonFirstName ==. "Michael"]</programlisting>
-<simpara>We can even use deleteWhere to wipe out all the records in a table, we just
+<programlisting language="haskell" linenumbering="unnumbered">personId &lt;- insert $ Person "Michael" "Snoyman" 26
+delete personId
+deleteBy $ UniqueName "Michael" "Snoyman"
+deleteWhere [PersonFirstName ==. "Michael"]</programlisting>
+<simpara>We can even use <literal>deleteWhere</literal> to wipe out all the records in a table, we just
 need to give some hints to GHC as to what table we&#8217;re interested in:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">    deleteWhere ([] :: [Filter Person])</programlisting>
 </section>
@@ -1139,16 +1140,6 @@ main = runSqlite ":memory:" $ do
     insert $ PersonStore michael sevenEleven
 
     return ()</programlisting>
-<note>
-<simpara>Since the <literal>Id</literal> suffix on a type is used to indicate a foreign key relationship
-to Persistent, you currently cannot use non-key types that end in <literal>Id</literal>. A
-simple workaround is to define a type synonym with a different suffix, e.g.:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">data MyExistingTypeEndingInId = ...
-type IdIsNotTheSuffix = MyExistingTypeEndingInId
-[persist|
-Person
-    someField IdIsNotTheSuffix</programlisting>
-</note>
 </section>
 <section id="persistent_closer_look_at_types">
 <title>Closer look at types</title>
@@ -1157,7 +1148,7 @@ what they are. In the simplest sense, for a SQL-only system, the <literal>Person
 could just be <literal>type PersonId = Int64</literal>. However, that means there is nothing
 binding a <literal>PersonId</literal> at the type level to the <literal>Person</literal> entity. As a result, you
 could accidentally use a <literal>PersonId</literal> and get a <literal>Car</literal>. In order to model this
-relationship, we use phantom types. So, our next naive step would be:</simpara>
+relationship, we could use phantom types. So, our next naive step would be:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">newtype Key entity = Key Int64
 type PersonId = Key Person</programlisting>
 <simpara>And that works out really well, until you get to a backend that doesn&#8217;t use
@@ -1170,29 +1161,19 @@ timestamps, so we&#8217;ll need to add another constructor to <literal>Key</lite
 for a while. Fortunately, we already have a sum type intended for representing
 arbitrary data: <literal>PersistValue</literal>:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">newtype Key entity = Key PersistValue</programlisting>
-<simpara>But this has another problem. Let&#8217;s say we have a web application that takes an
-ID as a parameter from the user. It will need to receive that parameter as
-<literal>Text</literal> and then try to convert it to a <literal>Key</literal>. Well, that&#8217;s simple: write a
-function to convert a <literal>Text</literal> to a <literal>PersistValue</literal>, and then wrap the result in
-the <literal>Key</literal> constructor, right?</simpara>
-<simpara>Wrong. We tried this, and there&#8217;s a big problem. We end up getting <literal>Key</literal>s
-that could never be. For example, if we&#8217;re dealing with SQL, a key must be an
-integer. But the approach described above would allow arbitrary textual data
-in. The result was a bunch of 500 server errors as the database choked on
-comparing an integer column to text.</simpara>
-<simpara>So what we need is a way to convert text to a <literal>Key</literal>, but have it dependent on
-the rules of the backend in question. And once phrased that way, the answer is
-simple: just add another phantom. The real, actual definition of <literal>Key</literal> in
-Persistent is:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">newtype KeyBackend backend entity = Key { unKey :: PersistValue }
-type Key val = KeyBackend (PersistEntityBackend val) val</programlisting>
-<simpara>What this slightly intimidating formulation says is: we have a type
-<literal>KeyBackend</literal> which is parameterized on both the backend and entity. However, we
-<emphasis role="strong">also</emphasis> have a simplified type <literal>Key</literal> which assumes the same backend for both the
-entity and the key, which is almost always the correct assumption.</simpara>
-<simpara>In practice, this works great: we can have a <literal>Text &#8594; KeyBackend MongoDB
-entity</literal> function and a <literal>Text &#8594; KeyBackend SqlPersist entity</literal> function, and
-everything runs smoothly.</simpara>
+<simpara>And this is (more or less) what Persistent did until version 2.0. However, this
+has a different problem: it throws away data. For example, when dealing with a
+SQL database, we know that the key type will be an <literal>Int64</literal> (assuming defaults
+are being used). However, you can&#8217;t assert that at the type level with this
+construction. So instead, starting with Persistent 2.0, we now use an
+associated datatype inside the <literal>PersistEntity</literal> class:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">class PersistEntity record where
+    data Key record
+    ...</programlisting>
+<simpara>When you&#8217;re working with a SQL backend, and aren&#8217;t using a custom key type,
+this becomes a newtype wrapper around an <literal>Int64</literal>, and the
+<literal>toSqlKey</literal>/<literal>fromSqlKey</literal> functions can perform that type-safe conversion for
+you. With MongoDB, on the other hand, it&#8217;s a wrapper around a <literal>ByteString</literal>.</simpara>
 <section id="persistent_more_complicated_more_generic">
 <title>More complicated, more generic</title>
 <simpara>By default, Persistent will hard-code your datatypes to work with a specific
@@ -1207,27 +1188,25 @@ represent blogs and blog posts. We would use the entity definition:</simpara>
 Post
     title Text
     blogId BlogId</screen>
-<simpara>But what would that look like in terms of our <literal>Key</literal> datatype?</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">data Blog = Blog { blogTitle :: Text }
-data Post = Post { postTitle :: Text, postBlogId :: KeyBackend &lt;what goes here?&gt; Blog }</programlisting>
-<simpara>We need something to fill in as the backend. In theory, we could hardcode this
-to <literal>SqlPersist</literal>, or <literal>Mongo</literal>, but then our datatypes will only work for a single
-backend. For an individual application, that might be acceptable, but what
-about libraries defining datatypes to be used by multiple applications, using
-multiple backends?</simpara>
-<simpara>So things got a little more complicated. Our types are actually:</simpara>
+<simpara>We know that <literal>BlogId</literal> is just a type synonym for <literal>Key Blog</literal>, but how will <literal>Key
+Blog</literal> be defined? We can&#8217;t use an <literal>Int64</literal>, since that won&#8217;t work for MongoDB.
+And we can&#8217;t use <literal>ByteString</literal>, since that won&#8217;t work for SQL databases.</simpara>
+<simpara>To allow for this, once <literal>mpsGeneric</literal> is set to <literal>True</literal>, out resulting datatypes have a type parameter to indicate the database backend they use, so that keys can be properly encoded. This looks like:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">data BlogGeneric backend = Blog { blogTitle :: Text }
-data PostGeneric backend = Post { postTitle :: Text, postBlogId :: KeyBackend backend (BlogGeneric backend) }</programlisting>
+data PostGeneric backend = Post
+    { postTitle  :: Text
+    , postBlogId :: Key (BlogGeneric backend)
+    }</programlisting>
 <simpara>Notice that we still keep the short names for the constructors and the records.
 Finally, to give a simple interface for normal code, we define some type
 synonyms:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">type Blog = BlogGeneric SqlPersist
-type BlogId = Key SqlPersist Blog
-type Post = PostGeneric SqlPersist
-type PostId = Key SqlPersist Post</programlisting>
-<simpara>And no, <literal>SqlPersist</literal> isn&#8217;t hard-coded into Persistent anywhere. That
+<programlisting language="haskell" linenumbering="unnumbered">type Blog   = BlogGeneric SqlBackend
+type BlogId = Key Blog
+type Post   = PostGeneric SqlBackend
+type PostId = Key Post</programlisting>
+<simpara>And no, <literal>SqlBackend</literal> isn&#8217;t hard-coded into Persistent anywhere. That
 <literal>sqlSettings</literal> parameter you&#8217;ve been passing to <literal>mkPersist</literal> is what tells us to
-use <literal>SqlPersist</literal>. Mongo code will use <literal>mongoSettings</literal> instead.</simpara>
+use <literal>SqlBackend</literal>. Mongo code will use <literal>mongoSettings</literal> instead.</simpara>
 <simpara>This might be quite complicated under the surface, but user code hardly ever
 touches this. Look back through this whole chapter: not once did we need to
 deal with the <literal>Key</literal> or <literal>Generic</literal> stuff directly. The most common place for it
@@ -1443,6 +1422,7 @@ support for writing type safe SQL queries, using the existing Persistent
 infrastructure. The Haddocks for that package provide a good introduction to
 its usage. And since it uses many Persistent concepts, most of your existing
 Persistent knowledge should transfer over easily.</simpara>
+<simpara>For a simple example of using Esqueleto, please see the SQL Joins chapter.</simpara>
 </section>
 <section id="persistent_something_besides_sqlite">
 <title>Something besides SQLite</title>

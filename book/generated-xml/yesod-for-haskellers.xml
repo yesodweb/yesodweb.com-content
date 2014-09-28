@@ -1036,7 +1036,7 @@ import           Text.Lucius (Css)
 import           Yesod.Core
 
 getHomeR :: LiteHandler Html
-getHomeR = giveUrlRenderer $
+getHomeR = withUrlRenderer $
     [hamlet|
         $doctype 5
         &lt;html&gt;
@@ -1049,10 +1049,10 @@ getHomeR = giveUrlRenderer $
     |]
 
 getStyleR :: LiteHandler Css
-getStyleR = giveUrlRenderer [lucius|h1 { color: red }|]
+getStyleR = withUrlRenderer [lucius|h1 { color: red }|]
 
 getScriptR :: LiteHandler Javascript
-getScriptR = giveUrlRenderer [julius|alert('Yay, Javascript works too!');|]
+getScriptR = withUrlRenderer [julius|alert('Yay, Javascript works too!');|]
 
 main :: IO ()
 main = warp 3000 $ liteApp $ do
@@ -1061,7 +1061,7 @@ main = warp 3000 $ liteApp $ do
     onStatic (pack "script.js") $ dispatchTo getScriptR</programlisting>
 <section id="yesod-for-haskellers_url_rendering_function">
 <title>URL rendering function</title>
-<simpara>Likely the most confusing part of this is the <literal>giveUrlRenderer</literal> calls. This
+<simpara>Likely the most confusing part of this is the <literal>withUrlRenderer</literal> calls. This
 gets into one of the most powerful features of Yesod: type-safe URLs. If you
 notice in our HTML, we&#8217;re providing links to the CSS and Javascript URLs via
 strings. This leads to a duplication of that information, as in our <literal>main</literal>
@@ -1075,8 +1075,8 @@ URLs for free.</simpara>
 <simpara>In any event, the Shakespearean templates all expect to receive a function to
 handle the rendering of a type-safe URL. Since we don&#8217;t actually use any
 type-safe URLs, just about any function would work here (the function will be
-ignored entirely), but <literal>giveUrlRenderer</literal> is a convenient way of doing this.</simpara>
-<simpara>As we&#8217;ll see next, <literal>giveUrlRenderer</literal> isn&#8217;t really needed most of the time,
+ignored entirely), but <literal>withUrlRenderer</literal> is a convenient way of doing this.</simpara>
+<simpara>As we&#8217;ll see next, <literal>withUrlRenderer</literal> isn&#8217;t really needed most of the time,
 since Widgets end up providing the renderer function for us automatically.</simpara>
 </section>
 </section>

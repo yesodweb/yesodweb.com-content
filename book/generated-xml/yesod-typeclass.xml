@@ -7,8 +7,9 @@
 <section id="yesod-typeclass_yesod_typeclass">
 <title>Yesod Typeclass</title>
 <simpara>Every one of our Yesod applications requires an instance of the <literal>Yesod</literal>
-typeclass. So far, we&#8217;ve only seen <literal>defaultLayout</literal>. In this chapter, we&#8217;ll
-explore the meaning of many of the methods of the <literal>Yesod</literal> typeclass.</simpara>
+typeclass. So far, we&#8217;ve just relied on default implementations of these
+methods. In this chapter, we&#8217;ll explore the meaning of many of the methods of
+the <literal>Yesod</literal> typeclass.</simpara>
 <simpara>The <literal>Yesod</literal> typeclass gives us a central place for defining settings for our
 application. Everything has a default definition which is often the
 right thing. But in order to build a powerful, customized application, you&#8217;ll
@@ -79,10 +80,11 @@ additionally use the request value to determine the approot; using this, you
 could for example provide a different domain name depending on how the user
 requested the site in the first place.</simpara>
 <simpara>The scaffolded site uses <literal>ApprootMaster</literal> by default, and pulls your approot
-from a config file on launch. Additionally, it load different settings for
-developing, testing, staging, and production builds, so you can easily test on
-one domain- like localhost- and serve from a different domain. You can modify
-these values from the config file.</simpara>
+from either the <literal>APPROOT</literal> environment variable or a config file on launch.
+Additionally, it load different settings for developing, testing, staging, and
+production builds, so you can easily test on one domain- like localhost- and
+serve from a different domain. You can modify these values from the config
+file.</simpara>
 <section id="yesod-typeclass_joinpath">
 <title>joinPath</title>
 <simpara>In order to convert a type-safe URL into a text value, Yesod uses two helper
@@ -249,7 +251,7 @@ easily define your own function and call that instead, when you override
 <literal>defaultLayout</literal> all of the Yesod-generated pages (error pages, authentication
 pages) automatically get this style.</simpara>
 <simpara>Overriding is very straight-forward: we use <literal>widgetToPageContent</literal> to convert a
-<literal>Widget</literal> to a title, head tags and body tags, and then use <literal>giveUrlRenderer</literal> to
+<literal>Widget</literal> to a title, head tags and body tags, and then use <literal>withUrlRenderer</literal> to
 convert a Hamlet template into an <literal>Html</literal> value. We can even add extra widget
 components, like a Lucius template, from within <literal>defaultLayout</literal>. For more
 information, see the previous chapter on widgets.</simpara>
@@ -285,7 +287,7 @@ instance Yesod App where
     defaultLayout contents = do
         PageContent title headTags bodyTags &lt;- widgetToPageContent contents
         mmsg &lt;- getMessage
-        giveUrlRenderer [hamlet|
+        withUrlRenderer [hamlet|
             $doctype 5
 
             &lt;html&gt;
@@ -423,7 +425,7 @@ recommended approach for most applications, and is provided by the scaffolded
 site by default.</simpara>
 <note><simpara>You might be wondering: if this is the recommended approach, why isn&#8217;t it
 the default? The problem is that it makes a number of assumptions that don&#8217;t
-universally hold: your application has a static subsite, and the location of
+universally hold, such as the presence of a static subsite and the location of
 your static files.</simpara></note>
 <simpara>The scaffolded <literal>addStaticContent</literal> does a number of intelligent things to help
 you out:</simpara>

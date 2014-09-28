@@ -88,6 +88,9 @@ instance YesodDispatch HelloWorld where
                         _     -&gt; badMethod
 
 type Handler = HandlerT HelloWorld IO</programlisting>
+<note><simpara>In addition to using <literal>-ddump-splices</literal>, it can often be useful to generate
+Haddock documentation for your application to see which functions and data
+types were generated for you.</simpara></note>
 <simpara>We can see that the <literal>RenderRoute</literal> class defines an <emphasis role="strong">associated data type</emphasis>
 providing the routes for our application. In this simple example, we have just
 one route: <literal>HomeR</literal>. In real life applications, we&#8217;ll have many more, and they
@@ -125,10 +128,10 @@ function names, which we&#8217;ll describe in the next section.</simpara>
 <simpara>Finally, we have a simple type synonym defining <literal>Handler</literal> to make our code a
 little easier to write.</simpara>
 <simpara>There&#8217;s a lot more going on here than we&#8217;ve described. The generated dispatch
-code actually uses a far more efficient data structure, more type class
-instances are created, and there are other cases to handle such as subsites.
-We&#8217;ll get into the details as we go through the book, especially in the
-&#8220;Understanding a Request&#8221; chapter.</simpara>
+code actually uses the view patterns language extension for efficiency, more
+type class instances are created, and there are other cases to handle such as
+subsites.  We&#8217;ll get into the details as we go through the book, especially in
+the &#8220;Understanding a Request&#8221; chapter.</simpara>
 </section>
 <section id="basics_handler_function">
 <title>Handler function</title>

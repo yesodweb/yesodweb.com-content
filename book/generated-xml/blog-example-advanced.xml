@@ -193,7 +193,7 @@ textarea {
             inside</programlisting>
 <simpara>And finally we&#8217;ll use a new Hamlet template to wrap up the individual
 components (title, head data and body data) into the final output.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">        giveUrlRenderer [hamlet|
+<programlisting language="haskell" linenumbering="unnumbered">        withUrlRenderer [hamlet|
 $doctype 5
 &lt;html&gt;
     &lt;head&gt;

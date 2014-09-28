@@ -112,6 +112,9 @@ file structure or wikis with arbitrary hierarchies.
 </listitem>
 </varlistentry>
 </variablelist>
+<note><simpara>Since Yesod 1.4, you can additionally use a <literal>\</literal>+ to indicate a dynamic
+multi. This is important since the C preprocessor can be confused by the <literal>/*</literal>
+character combination.</simpara></note>
 <simpara>Let us take a look at some standard kinds of resource patterns you may want to
 write. Starting simply, the root of an application will just be <literal>/</literal>. Similarly,
 you may want to place your FAQ at <literal>/page/faq</literal>.</simpara>
@@ -147,6 +150,39 @@ instance PathMultiPiece Page where
     toPathMultiPiece (Page x y z) = x : y : z
     fromPathMultiPiece (x:y:z) = Just $ Page x y z
     fromPathMultiPiece _ = Nothing</programlisting>
+</section>
+<section id="routing-and-handlers_overlap_checking">
+<title>Overlap checking</title>
+<simpara>By default, Yesod will ensure that no two routes have the potential to overlap
+with each other. So, for example, consider the following routes:</simpara>
+<programlisting language="routes" linenumbering="unnumbered">/foo/bar   Foo1R GET
+/foo/#Text Foo2R GET</programlisting>
+<simpara>This route declaration will be rejected as overlapping, since <literal>/foo/bar</literal> will
+match both routes. However, there are two cases where we may wish to allow
+overlapping:</simpara>
+<orderedlist numeration="arabic">
+<listitem>
+<simpara>
+We know by the definition of our datatype that the overlap can never happen. For example, if you replace <literal>Text</literal> with <literal>Int</literal> above, it&#8217;s easy to convince yourself that there&#8217;s no route that exists that will overlap. Yesod is currently not capable of performing such an analysis.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+You have some extra knowledge about how your application operates, and know that such a situation should never be allowed. For example, if the <literal>Foo2R</literal> route should never be allowed to receive the parameter <literal>bar</literal>.
+</simpara>
+</listitem>
+</orderedlist>
+<simpara>You can turn off overlap checking by using the exclamation mark at the
+beginning of your route. For example, the following will be accepted by Yesod:</simpara>
+<programlisting language="routes" linenumbering="unnumbered">/foo/bar    Foo1R GET
+!/foo/#Int  Foo2R GET
+!/foo/#Text Foo3R GET</programlisting>
+<note><simpara>You can also place the exclamation point at the beginning of any of the
+path pieces, or following the <literal>#</literal>, <literal>*</literal>, or <literal>\</literal>+ characters. However, this newer
+syntax should be preferred as it&#8217;s clearer what the goal is.</simpara></note>
+<simpara>One issue that overlapping routes introduce is ambiguity. In the example above,
+should <literal>/foo/bar</literal> route to <literal>Foo1R</literal> or <literal>Foo3R</literal>? And should <literal>/foo/42</literal> route to
+<literal>Foo2R</literal> or <literal>Foo3R</literal>? Yesod&#8217;s rule for this is simple: first route wins.</simpara>
 </section>
 </section>
 <section id="routing-and-handlers_resource_name">
@@ -241,7 +277,7 @@ type signatures should be.</simpara>
 
 getHomeR :: Handler Html
 getHomeR = defaultLayout [whamlet|&lt;h1&gt;This is simple|]</programlisting>
-<simpara>There are two components to this returns type: <literal>Handler</literal> and <literal>Html</literal>. Let&#8217;s
+<simpara>There are two components to this return type: <literal>Handler</literal> and <literal>Html</literal>. Let&#8217;s
 analyze each in more depth.</simpara>
 <section id="routing-and-handlers_handler_monad">
 <title>Handler monad</title>
@@ -269,7 +305,7 @@ should remember that the function can be used in your <literal>Handler</literal>
 <title>Html</title>
 <simpara>There&#8217;s nothing too surprising about this type. This function returns some HTML
 content, represented by the <literal>Html</literal> data type. But clearly Yesod would not be
-useful if it only allowed HTML responses to be generated. We want respond with
+useful if it only allowed HTML responses to be generated. We want to respond with
 CSS, Javascript, JSON, images, and more. So the question is: what data types
 can be returned?</simpara>
 <simpara>In order to generate a response, we need to know two pieces of information:
@@ -354,6 +390,8 @@ getYesod
 <simpara>
 Returns your applicaton foundation value. If you store configuration
 values in your foundation, you will probably end up using this function a lot.
+(If you&#8217;re so inclined, you can also use <literal>ask</literal> from <literal>Control.Monad.Reader</literal>;
+<literal>getYesod</literal> is simply a type-constrained synonym for it.)
 </simpara>
 </listitem>
 </varlistentry>

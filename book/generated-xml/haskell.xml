@@ -110,7 +110,9 @@ Haskell package repository.</simpara>
 <simpara>The Yesod website keeps an up-to-date
 <ulink url="http://www.yesodweb.com/page/quickstart">quick start guide</ulink> which includes
 information on how to install and configure the various tools. It&#8217;s highly
-recommended that you follow those instructions.</simpara>
+recommended that you follow those instructions. In particular, these steps make
+use of <ulink url="http://www.stackage.org/">Stackage</ulink> to avoid many common
+dependency-resolution issues.</simpara>
 <simpara>If you decide to install your tools yourself, please make sure to avoid these
 common pitfalls:</simpara>
 <orderedlist numeration="arabic">
@@ -177,12 +179,15 @@ In your <literal>cabal</literal> file, add an <literal>extensions</literal> bloc
 </itemizedlist>
 <simpara>I personally never use the GHC command line argument approach. It&#8217;s a personal
 preference, but I like to have my settings clearly stated in a file. In general
-it&#8217;s recommended to avoid putting extensions in your <literal>cabal</literal> file; however, in
-the Yesod scaffolded site we specifically use this approach to avoid the
+it&#8217;s recommended to avoid putting extensions in your <literal>cabal</literal> file; however,
+this rule mostly applies when writing publicly available libraries. When you&#8217;re
+writing an application that you and your team will be working on, having all of
+your language extensions defined in a single location makes a lot of sense.
+The Yesod scaffolded site specifically uses this approach to avoid the
 boilerplate of specifying the same language pragmas in every source file.</simpara>
-<simpara>We&#8217;ll end up using quite a few language extensions in this book (the
-scaffolding uses 11). We will not cover the meaning of all of them. Instead,
-please see the
+<simpara>We&#8217;ll end up using quite a few language extensions in this book (at the time of
+writing, the scaffolding uses 13). We will not cover the meaning of all of
+them. Instead, please see the
 <ulink url="http://www.haskell.org/ghc/docs/latest/html/users_guide/ghc-language-features.html">GHC
 documentation</ulink>.</simpara>
 </section>
@@ -235,6 +240,9 @@ myFunc = something "hello"</programlisting>
 <simpara>Will the program print out <literal>String</literal> or <literal>Text</literal>? It&#8217;s not clear. So instead,
 you&#8217;ll need to give an explicit type annotation to specify whether <literal>"hello"</literal>
 should be treated as a <literal>String</literal> or <literal>Text</literal>.</simpara>
+<note><simpara>In some cases, you can overcome these problems by using the
+<literal>ExtendedDefaultRules</literal> language extension, though we&#8217;ll instead try to be
+explicit in the book and not rely on defaulting.</simpara></note>
 </section>
 <section id="I_sect12_d1e753">
 <title>Type Families</title>
@@ -274,7 +282,7 @@ main = do
 <simpara>The new syntax is the ability to place a <literal>type</literal> inside of a <literal>class</literal> and
 <literal>instance</literal>. We can also use <literal>data</literal> instead, which will create a new datatype
 instead of reference an existing one.</simpara>
-<note><simpara>There are other ways to use associated types outside the context of a typeclass. However, in Yesod, all of our associated types are in fact part of a type class. For more information on type families, see <ulink url="http://www.haskell.org/haskellwiki/GHC/Type_families">the Haskell wiki page</ulink>.</simpara></note>
+<note><simpara>There are other ways to use associated types outside the context of a typeclass. For more information on type families, see <ulink url="http://www.haskell.org/haskellwiki/GHC/Type_families">the Haskell wiki page</ulink>.</simpara></note>
 </section>
 <section id="I_sect12_d1e789">
 <title>Template Haskell</title>
@@ -320,11 +328,14 @@ you. To do so, you should use the <literal>-ddump-splices</literal> GHC option.<
 <note><simpara>There are many other features of Template Haskell not covered here. For
 more information, see the
 <ulink url="http://www.haskell.org/haskellwiki/Template_Haskell">Haskell wiki page</ulink>.</simpara></note>
-<simpara>One final note: Template Haskell introduces something called the stage
+<simpara>Template Haskell introduces something called the stage
 restriction, which essentially means that code before a Template Haskell splice
 cannot refer to code in the Template Haskell, or what follows. This will
 sometimes require you to rearrange your code a bit. The same restriction
 applies to QuasiQuotes.</simpara>
+<simpara>While out of the box, Yesod is really geared for using code generation to avoid
+boilerplate, it&#8217;s perfectly acceptable to use Yesod in a Template Haskell-free
+way. There&#8217;s more information on that in the "Yesod for Haskellers" chapter.</simpara>
 </section>
 <section id="I_sect12_d1e833">
 <title>QuasiQuotes</title>
