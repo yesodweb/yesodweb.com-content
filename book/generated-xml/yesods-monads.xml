@@ -75,7 +75,7 @@ often see code that looks like <literal>liftIO $ putStrLn "Hello There!"</litera
 </section>
 <section id="yesods-monads_the_three_transformers">
 <title>The Three Transformers</title>
-<note><simpara>In previous versions of Yesod, <literal>Handler</literal> and <literal>Widget</literal> were far more
+<note><simpara>In earlier versions of Yesod, <literal>Handler</literal> and <literal>Widget</literal> were far more
 magical and scary. Since version 1.2, things are much simplified. So if you
 remember reading some scary stuff about fake transformers and subsite
 parameters, rest assured: you haven&#8217;t gone crazy, things have actually changed
@@ -88,21 +88,18 @@ used base monad is <literal>IO</literal>.</simpara>
 <simpara>In persistent, we have a typeclass called <literal>PersistStore</literal>. This typeclass
 defines all of the primitive operations you can perform on a database, like
 <literal>get</literal>. There are instances of this typeclass for each database backend
-supported by persistent. For example, for SQL databases, there is a monad
-transformer <literal>SqlPersistT</literal>.  This means that you can run a SQL database with any
-underlying monad. The takeaway here is that we can layer our Persistent
-transformer on top of <literal>Handler</literal> or <literal>Widget</literal>.</simpara>
-<simpara>FIXME: Next paragraph is likely not correct any more.</simpara>
-<note><simpara>There actually are two requirements for the base monad of <literal>SqlPersistT</literal>:
-it must be an instance of <literal>MonadResource</literal> (to allow proper exception handling),
-and <literal>MonadLogger</literal> (to allow logging of SQL queries). Fortunately, both
-<literal>Handler</literal> and <literal>Widget</literal> fulfill both of these requirements.</simpara></note>
+supported by persistent. For example, for SQL databases, there is a datatype
+called <literal>SqlBackend</literal>. We then use a standard <literal>ReaderT</literal> transformer to provide
+that <literal>SqlBackend</literal> value to all of our operations.  This means that you can run
+a SQL database with any underlying monad which is an instance of <literal>MonadIO</literal>. The
+takeaway here is that we can layer our Persistent transformer on top of
+<literal>Handler</literal> or <literal>Widget</literal>.</simpara>
 <simpara>In order to make it simpler to refer to the relevant Persistent transformer,
 the yesod-persistent package defines the <literal>YesodPersistBackend</literal> associated type.
 For example, if I have a site called <literal>MyApp</literal> and it uses SQL, I would define
-something like <literal>type instance YesodPersistBackend MyApp = SqlPersistT</literal>. And for
+something like <literal>type instance YesodPersistBackend MyApp = SqlBackend</literal>. And for
 more convenience, we have a type synonym called <literal>YesodDB</literal> which is defined as:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">type YesodDB site = YesodPersistBackend site (HandlerT site IO)</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">type YesodDB site = ReaderT (YesodPersistBackend site) (HandlerT site IO)</programlisting>
 <simpara>Our database actions will then have types that look like <literal>YesodDB MyApp
 SomeResult</literal>. In order to run these, we can use the standard Persistent unwrap
 functions (like <literal>runSqlPool</literal>) to run the action and get back a normal

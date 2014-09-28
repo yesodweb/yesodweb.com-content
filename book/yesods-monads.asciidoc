@@ -71,7 +71,7 @@ often see code that looks like +liftIO $ putStrLn "Hello There!"+.
 
 === The Three Transformers
 
-NOTE: In previous versions of Yesod, +Handler+ and +Widget+ were far more
+NOTE: In earlier versions of Yesod, +Handler+ and +Widget+ were far more
 magical and scary. Since version 1.2, things are much simplified. So if you
 remember reading some scary stuff about fake transformers and subsite
 parameters, rest assured: you haven't gone crazy, things have actually changed
@@ -86,27 +86,22 @@ used base monad is +IO+.
 In persistent, we have a typeclass called +PersistStore+. This typeclass
 defines all of the primitive operations you can perform on a database, like
 +get+. There are instances of this typeclass for each database backend
-supported by persistent. For example, for SQL databases, there is a monad
-transformer +SqlPersistT+.  This means that you can run a SQL database with any
-underlying monad. The takeaway here is that we can layer our Persistent
-transformer on top of +Handler+ or +Widget+.
-
-FIXME: Next paragraph is likely not correct any more.
-
-NOTE: There actually are two requirements for the base monad of +SqlPersistT+:
-it must be an instance of +MonadResource+ (to allow proper exception handling),
-and +MonadLogger+ (to allow logging of SQL queries). Fortunately, both
-+Handler+ and +Widget+ fulfill both of these requirements.
+supported by persistent. For example, for SQL databases, there is a datatype
+called +SqlBackend+. We then use a standard +ReaderT+ transformer to provide
+that +SqlBackend+ value to all of our operations.  This means that you can run
+a SQL database with any underlying monad which is an instance of +MonadIO+. The
+takeaway here is that we can layer our Persistent transformer on top of
++Handler+ or +Widget+.
 
 In order to make it simpler to refer to the relevant Persistent transformer,
 the yesod-persistent package defines the +YesodPersistBackend+ associated type.
 For example, if I have a site called +MyApp+ and it uses SQL, I would define
-something like +type instance YesodPersistBackend MyApp = SqlPersistT+. And for
+something like +type instance YesodPersistBackend MyApp = SqlBackend+. And for
 more convenience, we have a type synonym called +YesodDB+ which is defined as:
 
 [source, haskell]
 ----
-type YesodDB site = YesodPersistBackend site (HandlerT site IO)
+type YesodDB site = ReaderT (YesodPersistBackend site) (HandlerT site IO)
 ----
 
 Our database actions will then have types that look like +YesodDB MyApp
