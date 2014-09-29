@@ -134,7 +134,7 @@ The persistent-sqlite backend has fully implemented these features.
 * persistent-redis is in the process of being upgraded to 2.1
 * There are several other persistent packages out there that I have not had the chance to check on yet. Feel free to ask for help.
 
-All of the above packages except persistent-mysql are being well maintained, but just developing new features at their own pace. persistent-mysql is in the need of a dedicated maintainer.
+All of the above packages except persistent-mysql are being well maintained, but just developing new features at their own pace. persistent-mysql is in the need of a dedicated maintainer. There are some major defects in the migration code that have gone unresolved for a long time now.
 
 
 ### Persistent 2.1: dealing with more complex changes
