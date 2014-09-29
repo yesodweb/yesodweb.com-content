@@ -58,22 +58,26 @@ This may require updating tests to expect 303 instead of 302 redirects.
 
 ### Type-based caching with keys.
 
-The Type caching code was moved into a [separate module](https://github.com/yesodweb/yesod/blob/yesod-1.4/yesod-core/Yesod/Core/TypeCache.hs) without Yesod dependencies and documented. If there is interest in seeing this as a separate package let us know, but it is also pretty easy to just copy the module.
+The Type-based caching code was moved into a [separate module](https://github.com/yesodweb/yesod/blob/yesod-1.4/yesod-core/Yesod/Core/TypeCache.hs) without Yesod dependencies and documented. If there is interest in seeing this as a separate package let us know, but it is also pretty easy to just copy the module.
 
-Type-based caching seems like a very Haskell was of doing things, but at the same time we are showing the naughty side of the language by using Data.Dynamic.
+To me, TypeCache is a beautiful demonstration of Haskell's advanced type system that shows how you can get the best of both worlds in a strongly typed language.
 
 ``` haskell
 type TypeMap      = HashMap TypeRep Dynamic
+```
 
+Above we have the wonderful juxtaposition of Haskell's strong typing in the Key, and dynamic typing in the value. This HashMap is used to cache the result of a monadic action.
+
+``` haskell
 cached :: (Monad m, Typeable a) 
        => TypeMap
        -> m a                       -- ^ cache the result of this action
        -> m (Either (TypeMap, a) a) -- ^ Left is a cache miss, Right is a hit
 ```
 
-Dynamic is used to have a HashMap with arbitrary value types.
+Dynamic is used to have a HashMap of arbitrary value types.
 TypeRep is used to create a unique key for the cache.
-Yesod uses this to cache the authentication lookup of the database.
+Yesod uses this to cache the authentication lookup of the database for the duration of the request.
 
 ``` haskell
 newtype CachedMaybeAuth val = CachedMaybeAuth { unCachedMaybeAuth :: Maybe val }
@@ -86,13 +90,14 @@ cachedAuth
     . getAuthEntity
 ```
 
-`CachedMaybeAuth` is a newtype that isn't exported. `TypeRep` is specific to a module, so this pattern is guaranteed that your cache key will not conflict outside of your module.
+`CachedMaybeAuth` is a newtype that isn't exported. `TypeRep` is specific to a module, so this pattern guarantees that your cache key will not conflict outside of your module.
 
-This functionality was in yesod-1.2 even if it was not separated out.
- 1.4 adds the ability to cache multiple values per type
+This functionality was in yesod-1.2 even though the code was not separated into a new module.
+The 1.4 release adds the ability to cache multiple values per type
 
 ``` haskell
 type KeyedTypeMap = HashMap (TypeRep, ByteString) Dynamic
+
 cachedBy :: (Monad m, Typeable a)
          => KeyedTypeMap
          -> ByteString                     -- ^ a cache key
@@ -100,12 +105,13 @@ cachedBy :: (Monad m, Typeable a)
          -> m (Either (KeyedTypeMap, a) a) -- ^ Left is a cache miss, Right is a hit
 ```
 
+This is useful if your monadic action has inputs: if you serialize them to a ByteString you can use thm as a key.
 
-## Persistent 2.1
+
+## Upgrade guide
 
 The most significant set of changes in the Yesod ecosystem actually landed in
-Persistent 2. However, these were mostly internal changes with new features that maintain backwards compatibility,
-so many users will be unaffected.
+Persistent 2. However, these were mostly internal changes with new features that maintain backwards compatibility, so many users will be unaffected.
 
 To kickoff the upgrade process, you need to change update your cabal file to allow yesod version 1.4.
 If you had constraints on persistent, update them to > 2.1
@@ -123,81 +129,7 @@ In sum:
 * Add `instance YesodAuthPersist App` to `Foundation.hs`.
 * Add the `ViewPatterns` language extension.
 
+If you have more complex persistent code you may have more to do.
+Look at the previous post on persistent-2.1
 
-### Persistent 2.1 library support
-
-The persistent and persistent-template libraries should support any kind of Key type that you need.
-The persistent-sqlite backend has fully implemented these features.
-
-* persistent-postgres and persitent-mysql don't yet support changing the type of the id field
-* persistent-mongoDB does not yet support composite primary keys
-
-All of the above packages except persistent-mysql are being well maintained, but just developing new features at their own pace. persistent-mysql is in the need of a dedicated maintainer. There are some major defects in the migration code that have gone unresolved for a long time now.
-
-* persistent-redis is in the process of being upgraded to 2.1
-* [persistent-zookeeper](http://hackage.haskell.org/package/persistent-zookeeper) was just released, but it is still on persistent 1.3.*
-* There are other persistent packages out there that I have not had the chance to check on yet, most noteably persistent-odbc. Feel free to ask for help when upgrading.
-
-
-
-### Persistent 2.1: dealing with more complex changes
-
-The big change to Persistent is that now that the Key type is now flexible.
-So if you have functions that have `Key` in the type signature and are not specific to one PersistEntity,
-You may need to constrain them to the `BackendKey` type.
-An easy way to do this is using `ConstraintKinds`.
-
-``` haskell
-type DBEntity record =
-    ( PersistEntityBackend record ~ MongoContext
-    , PersistEntity record
-    , ToBackendKey MongoContext record
-    )
-```
-
-A Sql user would use `SqlBackend` instead of `MongoContext`. So you can change your type signature:
-
-``` haskell
-- PersistEntity record => Key record
-+ DBEntity record => Key record
-```
-
-Haskellers has zero code existing outside of Handler and its persistent usage is pretty simple.
-But Persistent 2 did change its monad stack.
-So if you separated out model code so that it can be ran somewhere else besides just the Handler, you may also need to make some changes.
-
-Here is one possible approach, again specialized to MongoDB, that requires `Rank2Types`.
-
-``` haskell
-type ControlIO m = ( MonadIO m , MonadBaseControl IO m)
-type LogIO m = ( MonadLogger m , ControlIO m)
-
--- these are actually types, not constraints
--- with persistent-2 things work out a lot easier this way
-type DB    a =  LogIO m => ReaderT MongoContext m a
-type DBM m a =  LogIO m => ReaderT MongoContext m a
-
--- The constraint version of the above
--- This requires you to use Database.MongoDB.liftDB
-type Mongo m = (LogIO m, MonadReader MongoContext m)
-```
-
-so now your basic type signature is just `DB ()`
-For working with different monad stacks, you can use DBM.
-If you are using conduits, you will have `MonadResource m => DBM m ()`.
-Here is another example:
-
-``` haskell
-class Monad m => HasApp m where
-    getApp :: m App 
-instance HasApp Handler where
-    getApp = getYesod
-instance HasApp hasApp => HasApp (ReaderT MongoContext hasApp) where
-    getApp = lift $ getApp
-instance MonadIO m => HasApp (ReaderT App m) where
-    getApp = ask 
-
--- | synonym for DB plus HasApp operations
-type DBApp    a = HasApp m => DBM m a 
-type DBAppM m a = HasApp m => DBM m a 
-```
+TODO link
