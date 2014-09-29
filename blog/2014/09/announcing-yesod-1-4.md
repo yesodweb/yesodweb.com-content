@@ -131,10 +131,13 @@ The persistent-sqlite backend has fully implemented these features.
 
 * persistent-postgres and persitent-mysql don't yet support changing the type of the id field
 * persistent-mongoDB does not yet support composite primary keys
-* persistent-redis is in the process of being upgraded to 2.1
-* There are several other persistent packages out there that I have not had the chance to check on yet. Feel free to ask for help.
 
 All of the above packages except persistent-mysql are being well maintained, but just developing new features at their own pace. persistent-mysql is in the need of a dedicated maintainer. There are some major defects in the migration code that have gone unresolved for a long time now.
+
+* persistent-redis is in the process of being upgraded to 2.1
+* [persistent-zookeeper](http://hackage.haskell.org/package/persistent-zookeeper) was just released, but it is still on persistent 1.3.*
+* There are other persistent packages out there that I have not had the chance to check on yet, most noteably persistent-odbc. Feel free to ask for help when upgrading.
+
 
 
 ### Persistent 2.1: dealing with more complex changes
