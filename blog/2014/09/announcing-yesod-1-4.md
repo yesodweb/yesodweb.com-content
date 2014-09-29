@@ -124,6 +124,19 @@ In sum:
 * Add the `ViewPatterns` language extension.
 
 
+### Persistent 2.1 library support
+
+The persistent and persistent-template libraries should support any kind of Key type that you need.
+The persistent-sqlite backend has fully implemented these features.
+
+* persistent-postgres and persitent-mysql don't yet support changing the type of the id field
+* persistent-mongoDB does not yet support composite primary keys
+* persistent-redis is in the process of being upgraded to 2.1
+* There are several other persistent packages out there that I have not had the chance to check on yet. Feel free to ask for help.
+
+All of the above packages except persistent-mysql are being well maintained, but just developing new features at their own pace. persistent-mysql is in the need of a dedicated maintainer.
+
+
 ### Persistent 2.1: dealing with more complex changes
 
 The big change to Persistent is that now that the Key type is now flexible.
