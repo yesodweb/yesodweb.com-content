@@ -1,8 +1,8 @@
 Persistent 2.1, a stable release of the next generation of persistent is released to Hackage.
 
-persistent is an ORM for Haskell that keeps everything type-safe.
+Persistent is an ORM for Haskell that keeps everything type-safe.
 
-persistent 2.1 features
+Persistent 2.1 features
 
 * a flexible, yet more type-safe Key type
 * a simplified monad stack
@@ -47,7 +47,7 @@ type DBEntity record =
     )
 ```
 
-A Sql user would use `SqlBackend` instead of `MongoContext`. So you can now change the type signature of your functions:
+A SQL user would use `SqlBackend` instead of `MongoContext`. So you can now change the type signature of your functions:
 
 ``` haskell
 - PersistEntity record => Key record
@@ -55,9 +55,8 @@ A Sql user would use `SqlBackend` instead of `MongoContext`. So you can now chan
 ```
 
 Depending on how you setup your monad stacks, you may need some changes.
-Here is one possible approach to creating small but flexible Monad stack type signagures
-that requires `Rank2Types`.
-Again this is specialized to MongoDB. 
+Here is one possible approach to creating small but flexible Monad stack type signatures.
+It requires `Rank2Types`, and the code show is specialized to MongoDB. 
 
 ``` haskell
 type ControlIO m = ( MonadIO m , MonadBaseControl IO m)
@@ -69,7 +68,7 @@ type DB    a =  LogIO m => ReaderT MongoContext m a
 type DBM m a =  LogIO m => ReaderT MongoContext m a
 ```
 
-so now your basic type signature is just `DB ()`
+The basic type signature is just `DB ()` (no constraints required).
 For working with different monad stacks, you can use DBM.
 If you are using conduits, you will have `MonadResource m => DBM m ()`.
 Here is another example:
