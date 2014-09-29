@@ -1,4 +1,10 @@
-The Yesod team is very happy to announce the release of Yesod 1.4. What I'm
+The Yesod team is very happy to announce the release of Yesod 1.4. This includes:
+
+* Releases of all Yesod packages to support version 1.4.
+* The book content on yesodweb.com is completely updated for Yesod 1.4, with all snippets confirmed to compile and most of the text proofread from scratch for accuracy (I'll finish the rest in the next week).
+* A new Stackage snapshot available at: FIXME.
+
+What I'm
 most excited to report is that this was a very minor change to Yesod, and
 therefore almost all code should be upgradeable with minor changes. First, the
 changelog:
