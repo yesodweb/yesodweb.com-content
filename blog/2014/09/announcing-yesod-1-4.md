@@ -2,7 +2,7 @@ We are happy to announce the release of Yesod 1.4. This includes:
 
 * Releases of all Yesod packages to support version 1.4.
 * The book content on yesodweb.com is completely updated for Yesod 1.4, with all snippets confirmed to compile and most of the text proofread from scratch for accuracy (in the next week the rest will be finished).
-* A new Stackage snapshot available at: FIXME.
+* A new Stackage snapshot available [for GHC 7.8.3](http://www.stackage.org/stackage/23593406b773a232ea760d2e50bf5d56d0a99c4e).
 
 Its worth mentioning that there have been a ton of improvements to Yesod since version 1.2, they just didn't need any breaking changes.
 
@@ -46,7 +46,7 @@ There is better support for non-persistent backends in yesod-auth. See [pull req
 
 yesod-auth already released a breaking change to be able to accept JSON everywhere.
 That bumped the version to 1.3
-We like to keep the yesod-* packages in sync, so now everything is getting bumped to 1.4 together.
+We like to keep the yesod-\* packages in sync, so now everything is getting bumped to 1.4 together.
 
 In the 1.4 release, we also fixed requireAuth and and requireAuthId to return a 401 response when a JSON response is requested. See [pull request 783](https://github.com/yesodweb/yesod/pull/783).
 
@@ -130,6 +130,4 @@ In sum:
 * Add the `ViewPatterns` language extension.
 
 If you have more complex persistent code you may have more to do.
-Look at the previous post on persistent-2.1
-
-TODO link
+Look at [the previous post on persistent-2.1](http://www.yesodweb.com/blog/2014/09/persistent-2)
