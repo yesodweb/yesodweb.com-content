@@ -32,8 +32,14 @@ handleXML fp = do
         snippets
             | isContinuous fp = [unlines snippets0]
             | otherwise = snippets0
-    forM_ snippets $ \code -> forM_ (getFileName code) $ \(fp, code') -> do
-        liftIO $ unlessM (isFile fp) $ do
+    let fileMap = asMap $ map unlines $ unionsWith (++)
+          $ map (maybe
+                    mempty
+                    (\(x, y) -> singletonMap x (opoint y))
+                . getFileName)
+            snippets
+    forM_ (mapToList fileMap) $ \(fp, code') -> do
+        liftIO $ whenM (fileChanged fp code') $ do
             createTree $ directory fp
             writeFile fp $ filter (/= '\r') code'
         yield fp
@@ -45,8 +51,18 @@ isContinuous fp =
   where
     names = asSet $ setFromList
         [ "blog-example-advanced"
-        , "wiki-chat-example"
         ]
+
+fileChanged fp new
+    | isHashName fp = not <$> isFile fp
+    | otherwise = do
+        eold <- tryIO $ ClassyPrelude.Conduit.readFile fp
+        return $ case eold of
+            Left _ -> True
+            Right old -> old /= new
+
+isHashName :: FilePath -> Bool
+isHashName t = "Extracted_" `isInfixOf` fpToText t
 
 getFileName :: Text -> Maybe (FilePath, Text)
 getFileName orig
