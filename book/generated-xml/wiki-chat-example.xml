@@ -301,6 +301,7 @@ representation. Each Wiki page is indicated by a list of names, and the contents
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE ViewPatterns          #-}
 module ChatMain where
 
 import           Chat
