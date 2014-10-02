@@ -57,8 +57,7 @@ Purchase: קנה
 ItemCount count: קנית #{showInt count} #{plural count "דבר" "דברים"}.
 SwitchLanguage: החלף שפה ל:
 Switch: החלף</programlisting>
-<programlisting language="haskell" linenumbering="unnumbered">-- @i18n-synopsis.hs
-{-# LANGUAGE MultiParamTypeClasses #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
