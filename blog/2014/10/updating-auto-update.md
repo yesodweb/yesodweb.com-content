@@ -1,11 +1,11 @@
 A few weeks back, Kazu and I received an email from Martin Bailey, who was
-interesting in working with us to further optimize Warp. The subject at the
+interested in working with us to further optimize Warp. The subject at the
 time was reduced buffer copying and allocations. That subject is very
-interesting itself, and one finalized, will get its own blog post as well. But
+interesting in itself, and once finalized, will get its own blog post as well. But
 that's *not* the subject of this blog post.
 
 After working on some ideas, Kazu benchmarked Warp, and found a massive
-performance degredation which had already slipped onto Hackage. The problem
+performance degradation which had already slipped onto Hackage. The problem
 only appears under highly concurrent requests (which is exactly what Kazu's
 benchmark was testing). That bug has now been resolved, and users are
 recommended to upgrade to the newest versions of auto-update and warp. (We also
@@ -39,7 +39,7 @@ forkIO $ forever $ do
 return $ readIORef nowFormatted
 ```
 
-We fork a single thread that recalculates the formatted time every one second,
+We fork a single thread that recalculates the formatted time every second,
 and updates a mutable reference.  This means that, regardless of how many
 clients connect, we will always run this computation at most once per second.
 And reading the current time requires no system calls, formatting, or
@@ -50,7 +50,7 @@ allocation: it's just a memory read.
 The problem with this approach is that, even if there are zero requests, we're
 still going to run this computation once a second. This doesn't hurt our
 performance too much (it's a relatively cheap operation). However, it does mean
-that our process never stops working, which is bad for power conservation. So
+that our process never stops working, which is bad for power consumption. So
 we needed a way to let that worker thread turn off when it wasn't needed
 anymore, and start up again on demand.
 
