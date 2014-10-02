@@ -245,7 +245,7 @@ a list of matches, and <literal>buildExcerpts</literal> will return the highligh
 Let&#8217;s first look at <literal>getResults</literal>:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">getResults :: Text -&gt; Handler [Result]
 getResults qstring = do
-    sphinxRes' &lt;- liftIO $ S.query config "searcher" $ T.unpack qstring
+    sphinxRes' &lt;- liftIO $ S.query config "searcher" qstring
     case sphinxRes' of
         ST.Ok sphinxRes -&gt; do
             let docids = map (toSqlKey . ST.documentId) $ ST.matches sphinxRes
@@ -278,12 +278,12 @@ when <emphasis>any</emphasis> term matches the document.</simpara>
 getResult docid doc qstring = do
     excerpt' &lt;- S.buildExcerpts
         excerptConfig
-        [T.unpack $ escape $ docContent doc]
+        [escape $ docContent doc]
         "searcher"
-        (T.unpack qstring)
+        qstring
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedToHtml $ decodeUtf8 $ mconcat bss
+                ST.Ok texts -&gt; preEscapedToHtml $ mconcat texts
                 _ -&gt; ""
     return Result
         { resultId = docid
@@ -559,12 +559,12 @@ getResult :: DocId -&gt; Doc -&gt; Text -&gt; IO Result
 getResult docid doc qstring = do
     excerpt' &lt;- S.buildExcerpts
         excerptConfig
-        [T.unpack $ escape $ docContent doc]
+        [escape $ docContent doc]
         "searcher"
-        (T.unpack qstring)
+        qstring
     let excerpt =
             case excerpt' of
-                ST.Ok bss -&gt; preEscapedToHtml $ decodeUtf8 $ mconcat bss
+                ST.Ok texts -&gt; preEscapedToHtml $ mconcat texts
                 _ -&gt; ""
     return Result
         { resultId = docid
@@ -585,7 +585,7 @@ escape =
 
 getResults :: Text -&gt; Handler [Result]
 getResults qstring = do
-    sphinxRes' &lt;- liftIO $ S.query config "searcher" $ T.unpack qstring
+    sphinxRes' &lt;- liftIO $ S.query config "searcher" qstring
     case sphinxRes' of
         ST.Ok sphinxRes -&gt; do
             let docids = map (toSqlKey . ST.documentId) $ ST.matches sphinxRes
