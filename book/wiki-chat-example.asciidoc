@@ -164,13 +164,9 @@ getReceiveR = do
 
 We use +dupChan+ so that each new connection receives its own copy of newly
 generated messages. This is a standard method in concurrent Haskell of creating
-broadcast channels. The last three lines of our function expose the underlying
-+wai-eventsource+ application as a Yesod handler, by getting the raw WAI
-request, running the application on that request, and then sending the raw WAI
-response.
-
-NOTE: Starting with WAI 2.0, instead of using +liftResourceT+, you need to use
-+liftIO+.
+broadcast channels. The last line in our function exposes the underlying
++wai-eventsource+ application as a Yesod handler, using the
++sendWaiApplication+ function to promote a WAI application to a Yesod handler.
 
 Now that we've defined our handler functions, we can set up our dispatch. In a
 normal application, dispatching is handled by calling +mkYesod+, which creates
