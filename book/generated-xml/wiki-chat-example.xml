@@ -19,10 +19,21 @@ subsite, the same as we would do for a normal Yesod application. In our case,
 we want to keep a channel of all the events to be sent to the individual
 participants of a chat. This ends up looking like:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
 module Chat.Data where
 
-import           Control.Concurrent.Chan (Chan)
-import           Network.Wai.EventSource (ServerEvent)
+import           Blaze.ByteString.Builder.Char.Utf8  (fromText)
+import           Control.Concurrent.Chan
+import           Data.Monoid                         ((&lt;&gt;))
+import           Data.Text                           (Text)
+import           Network.Wai.EventSource
+import           Network.Wai.EventSource.EventStream
 import           Yesod
 
 -- | Our subsite foundation. We keep a channel of events that all connections
@@ -139,9 +150,7 @@ getReceiveR :: ChatHandler ()
 getReceiveR = do
     Chat chan0 &lt;- getYesod
     chan &lt;- liftIO $ dupChan chan0
-    req &lt;- waiRequest
-    res &lt;- liftResourceT $ eventSourceAppChan chan req
-    sendWaiResponse res</programlisting>
+    sendWaiApplication $ eventSourceAppChan chan</programlisting>
 <simpara>We use <literal>dupChan</literal> so that each new connection receives its own copy of newly
 generated messages. This is a standard method in concurrent Haskell of creating
 broadcast channels. The last three lines of our function expose the underlying
@@ -155,7 +164,20 @@ normal application, dispatching is handled by calling <literal>mkYesod</literal>
 the appropriate <literal>YesodDispatch</literal> instance. In subsites, things are a little bit
 more complicated, since you&#8217;ll often want to place constraints on the master
 site. The formula we use is the following:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat.hs
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+module Chat where
+
+import           Chat.Data
+import           Yesod
+
 instance YesodChat master =&gt; YesodSubDispatch Chat (HandlerT master IO) where
     yesodSubDispatch = $(mkYesodSubDispatch resourcesChat)</programlisting>
 <simpara>We&#8217;re stating that our <literal>Chat</literal> subsite can live on top of any master site which
@@ -175,7 +197,7 @@ subsite URL into a master site URL. The reasoning here is that an application
 developer could place the chat subsite anywhere in the URL structure, and this
 widget needs to be able to generate Javascript which will point at the correct
 URLs. Let&#8217;s start off our widget:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat.hs
 chatWidget :: YesodChat master
            =&gt; (Route Chat -&gt; Route master)
            -&gt; WidgetT master IO ()
@@ -183,19 +205,19 @@ chatWidget toMaster = do</programlisting>
 <simpara>Next, we&#8217;re going to generate some identifiers to be used by our widget. It&#8217;s
 always good practice to let Yesod generate unique identifiers for you instead
 of creating them manually to avoid name collisions.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat.hs
     chat &lt;- newIdent   -- the containing div
     output &lt;- newIdent -- the box containing the messages
     input &lt;- newIdent  -- input field from the user</programlisting>
 <simpara>And next we need to check if the user is logged in, using the <literal>isLoggedIn</literal>
 function in our <literal>YesodChat</literal> typeclass. Since we&#8217;re in a <literal>Widget</literal> and that
 function lives in the <literal>Handler</literal> monad, we need to use <literal>handlerToWidget</literal>:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat.hs
     ili &lt;- handlerToWidget isLoggedIn  -- check if we're already logged in</programlisting>
 <simpara>If the user is logged in, we want to display the chat box, style it with some
 CSS, and then make it interactive using some Javascript. This is mostly
 client-side code wrapped in a Widget:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat.hs
     if ili
         then do
             -- Logged in: show the widget
@@ -252,7 +274,7 @@ client-side code wrapped in a Widget:</simpara>
             |]</programlisting>
 <simpara>And finally, if the user isn&#8217;t logged in, we&#8217;ll ask them to log in to use the
 chat app.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
+<programlisting language="haskell" linenumbering="unnumbered">-- @Chat.hs
         else do
             -- User isn't logged in, give a not-logged-in message.
             master &lt;- getYesod
@@ -273,12 +295,34 @@ include the chat subsite and a wiki. The first thing we need to consider is how
 to store the wiki contents. Normally, we&#8217;d want to put this in some kind of a
 Persistent database. For simplicity, we&#8217;ll just use an in-memory
 representation. Each Wiki page is indicated by a list of names, and the contents of each page is going to be a piece of <literal>Text</literal>. So our full foundation datatype is:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">data App = App
+<programlisting language="haskell" linenumbering="unnumbered">-- @ChatMain.hs
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+module ChatMain where
+
+import           Chat
+import           Chat.Data
+import           Control.Concurrent.Chan (newChan)
+import           Data.IORef
+import           Data.Map                (Map)
+import qualified Data.Map                as Map
+import           Data.Text               (Text)
+import qualified Data.Text.Lazy          as TL
+import           Text.Markdown
+import           Yesod
+import           Yesod.Auth
+import           Yesod.Auth.Dummy
+
+data App = App
     { getChat     :: Chat
-    , wikiContent :: IORef (Map.Map [Text] Text)
+    , wikiContent :: IORef (Map [Text] Text)
     }</programlisting>
 <simpara>Next we want to set up our routes:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">mkYesod "App" [parseRoutes|
+<programlisting language="haskell" linenumbering="unnumbered">-- @ChatMain.hs
+mkYesod "App" [parseRoutes|
 /            HomeR GET      -- the homepage
 /wiki/*Texts WikiR GET POST -- note the multipiece for the wiki hierarchy
 
@@ -293,7 +337,8 @@ want to provide an implementation of <literal>authRoute</literal>, so that our c
 widget can provide a proper link to a login page. Secondly, we&#8217;ll provide a
 override to the <literal>defaultLayout</literal>. Besides providing login/logout links, this
 function will add in the chat widget on every page.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">instance Yesod App where
+<programlisting language="haskell" linenumbering="unnumbered">-- @ChatMain.hs
+instance Yesod App where
     authRoute _ = Just $ AuthR LoginR -- get a working login link
 
     -- Our custom defaultLayout will add the chat widget to every page.
@@ -303,7 +348,7 @@ function will add in the chat widget on every page.</simpara>
             widget
             chatWidget ChatR
         mmsg &lt;- getMessage
-        giveUrlRenderer
+        withUrlRenderer
             [hamlet|
                 $doctype 5
                 &lt;html&gt;
@@ -321,7 +366,8 @@ function will add in the chat widget on every page.</simpara>
             |]</programlisting>
 <simpara>Since we&#8217;re using the chat subsite, we have to provide an instance of
 <literal>YesodChat</literal>.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">instance YesodChat App where
+<programlisting language="haskell" linenumbering="unnumbered">-- @ChatMain.hs
+instance YesodChat App where
     getUserName = do
         muid &lt;- maybeAuthId
         case muid of
@@ -334,7 +380,8 @@ function will add in the chat widget on every page.</simpara>
         return $ maybe False (const True) ma</programlisting>
 <simpara>Our <literal>YesodAuth</literal> and <literal>RenderMessage</literal> instances, as well as the homepage handler,
 are rather bland:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">-- Fairly standard YesodAuth instance. We'll use the dummy plugin so that you
+<programlisting language="haskell" linenumbering="unnumbered">-- @ChatMain.hs
+-- Fairly standard YesodAuth instance. We'll use the dummy plugin so that you
 -- can create any name you want, and store the login name as the AuthId.
 instance YesodAuth App where
     type AuthId App = Text
@@ -364,7 +411,8 @@ getHomeR = defaultLayout
 <simpara>Now it&#8217;s time to write our wiki handlers: a GET for displaying a page, and a
 POST for updating a page. We&#8217;ll also define a <literal>wikiForm</literal> function to be used on
 both handlers:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">-- A form for getting wiki content
+<programlisting language="haskell" linenumbering="unnumbered">-- @ChatMain.hs
+-- A form for getting wiki content
 wikiForm :: Maybe Textarea -&gt; Html -&gt; MForm Handler (FormResult Textarea, Widget)
 wikiForm mtext = renderDivs $ areq textareaField "Page body" mtext
 
@@ -375,7 +423,7 @@ getWikiR page = do
     icontent &lt;- fmap wikiContent getYesod
 
     -- And read the map from inside the reference
-    content &lt;- liftIO $ I.readIORef icontent
+    content &lt;- liftIO $ readIORef icontent
 
     -- Lookup the contents of the current page, if available
     let mtext = Map.lookup page content
@@ -401,12 +449,12 @@ getWikiR page = do
 postWikiR :: [Text] -&gt; Handler Html
 postWikiR page = do
     icontent &lt;- fmap wikiContent getYesod
-    content &lt;- liftIO $ I.readIORef icontent
+    content &lt;- liftIO $ readIORef icontent
     let mtext = Map.lookup page content
     ((res, form), _) &lt;- runFormPost $ wikiForm $ fmap Textarea mtext
     case res of
         FormSuccess (Textarea t) -&gt; do
-            liftIO $ I.atomicModifyIORef icontent $
+            liftIO $ atomicModifyIORef icontent $
                 \m -&gt; (Map.insert page t m, ())
             setMessage "Page updated"
             redirect $ WikiR page
@@ -425,13 +473,14 @@ examples in this book, we need to perform some real initialization in the
 <literal>main</literal> function. The <literal>Chat</literal> subsite requires an empty <literal>Chan</literal> to be created, and
 we need to create a mutable variable to hold the wiki contents. Once we have
 those values, we can create an <literal>App</literal> value and pass it to the <literal>warp</literal> function.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">main :: IO ()
+<programlisting language="haskell" linenumbering="unnumbered">-- @ChatMain.hs
+main :: IO ()
 main = do
     -- Create our server event channel
     chan &lt;- newChan
 
     -- Initially have a blank database of wiki pages
-    icontent &lt;- I.newIORef Map.empty
+    icontent &lt;- newIORef Map.empty
 
     -- Run our app
     warpEnv App
