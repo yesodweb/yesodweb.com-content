@@ -45,7 +45,7 @@ I want to point out that classy-prelude solved some of this issue by [exporting 
 
 ## Iterating the new design
 
-One proposed remedy for dealing with change is trying to release the new prelude in an iterative way.
+One proposed remedy for dealing with change is trying to release the new Prelude in an iterative way.
 This could be a good idea, but in practice it is very difficult to implement: most users are still going to `import Prelude` rather than trying out something different and giving their feedback.
 A better approach than holding it back is to use a design that makes it easier for new releases to make backwards incompatible changes.
 One approach to this could be at the package level the way that `base-compat` operates.
@@ -85,11 +85,11 @@ But Haskell programmers are still specializing a lot of their interfaces.
 It is taken by many to be a truism that programming everything with lists makes things simpler or at least easier for new Haskell programmers.
 I have found this statement to be no different than 99% of things given the glorious "simple" label: the "simplicity" is not extensible, does not even live up to its original use case, and ends up creating its own incidental complexity.
 
-I used to warp the function I wrote to fit the mold of Haskell's list.
+I used to frequently warp the functions I wrote to fit the mold of Haskell's list.
 Now that I use classy-prelude I think about the data structure that is needed. Or often I start with a list, eventually discover that something such as appending is needed, and I am able to quickly change the function to operate on a different data structure.
 
 Using an associative list is an extreme example of using the wrong data structure where lookup is O(n) instead of constant or O(log(n)).
-But by warping a function I am really talking about writing a function in a way to reduce list appends or doing a double reverse instead of using a more natural DList or a Seq.
+But by warping a function I am really talking about writing a function in a way to reduce list appends or doing a double reverse instead of using a more natural [DList](http://hackage.haskell.org/package/dlist) or a [Seq](http://hackage.haskell.org/package/containers/docs/Data-Sequence.html).
 This warping process probably involves performing recursion by hand instead of re-using higher-order functions. 
 As a library developer, I would like to start exposing interfaces that allow my users to use different data structures, but I know that it is also going to cause some inconvenience because of the current state of the Prelude.
 
@@ -100,7 +100,7 @@ I have taken over a project which made extensive use of the generalised traverse
 ```
 
 This kind of report is very worrying and it is something we should take very seriously.
-You cannot tell someone that their actual experience was wrong.
+Any you certainly cannot tell someone that their actual experience was wrong.
 However, it is human nature to over-generalize our experiences just as it was the nature of the code author in question to over-generalize functions.
 In order to have a productive discussion about this, we need to see (at least a sample or example of) the code in question.
 Otherwise we are only left guessing at what mistakes the author made.
@@ -109,7 +109,7 @@ In general I would suggest specializing your application code to lists or other 
 
 It would be really great to start having these discussions now based off of actual code examples and to have a community guide that explains the missing common sense for how to use abstractions appropriately.
 
-The uncertainty discussed here is the heart of the matter, and that talking about what is good for beginners is largely a distraction.
+The uncertainty discussed here is the heart of the matter, and talking about what is good for beginners is largely a distraction.
 
 
 ## Haskell is for programmers first, students in their first class in functional programming second
@@ -133,7 +133,7 @@ The [most up-voted comment on Reddit](http://www.reddit.com/r/haskell/comments/2
 What other languages have different standard libraries for people learning and people not learning? What could be a greater way to confuse learners, waste their time and make them think this language is a joke than presenting them with n different standard libraries?
 ```
 
-I will add my own assertion here: Haskell *is* confusing today because the Prelude is in a backward state that no longer reflects several important best practices (this is why Neil created the Safe package!) and it does not hold up once you write more than a trivial amount of code in your module.
+I will add my own assertion here: Haskell *is* confusing today because the Prelude is in a backward state that no longer reflects several important best practices (for example, Neil had to create the Safe package!) and it does not hold up once you write more than a trivial amount of code in your module.
 
 We also need to keep in mind that using Haskell can be difficult for beginners precisely for some of the same reasons that it is painful for experts.
 And the same reason these new changes will be more difficult for beginners (mental overhead of using the Foldable/Traversable abstraction instead of just lists) will also create difficulties for non-beginners.
@@ -149,7 +149,7 @@ We also need to empower committees to make forward progress rather than letting 
 Some have expressed being surprised to learn about what is going on in the Haskell libraries committee at a late stage.
 On the other hand, I doubt that hearing more objections earlier would actually be helpful, because the libraries process has not learned from GHC.
 
-Take a look at the extensive documentation around proposed changes to improve Haskell's [https://ghc.haskell.org/trac/ghc/wiki/Records](record system).
+Take a look at the extensive documentation around proposed changes to improve Haskell's [record system](https://ghc.haskell.org/trac/ghc/wiki/Records).
 Creating a solution to Haskell's problem with records was a very difficult process.
 There were several designs that looked good in a rough sketch form, but that had issues when explored in thorough detail on the wiki.
 More importantly, the wiki helped summarize and explain a discussion that was extremely laborious to read and impossible to understand by looking through a mail list.
