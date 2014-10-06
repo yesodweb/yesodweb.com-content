@@ -77,7 +77,7 @@ I think this would be a great change to Haskell, but the idea was rejected by Si
 So the only practical option I know of is to focus on #2.
 Being able to write generic code is an important issue in of itself.
 Programmers in most other mainstream languages write code that operates on multiple data structures of a particular shape,
-But Haskell programmers are still specializing a lot of their interfaces.
+but Haskell programmers are still specializing a lot of their interfaces.
 
 
 ## Lists are holding Haskell back
