@@ -10,7 +10,7 @@ Lets discuss these concerns
 
 ## Stability and the Prelude design space
 
-Neil Mitchell writes
+[Neil Mitchell writes](http://neilmitchell.blogspot.co.uk/2014/10/why-traversablefoldable-should-not-be.html):
 
 ```
 Step 3: Incorporate feedback
@@ -20,7 +20,7 @@ I expect that will result in a significant number of revisions, and perhaps sign
 
 As a contributor to and user of classy-prelude, I wanted to point out something about this statement. Most of these revisions are minor and backwards compatible consisting of bug-fixes or something like adding a non-default implementation of a typeclass method or an additional typeclass instance. A better data point is the number of major revision releases. classy-prelude is at release 0.10 now, so that would be 10.
 
-Neil mentions classy-prelude a second time:
+Neil [mentions classy-prelude a second time](http://neilmitchell.blogspot.it/2014/10/how-to-rewrite-prelude.html):
 
 ```
 The classy-prelude work has gone in that direction, and I wish them luck, but the significant changes they've already iterated through suggest the design space is quite large.
