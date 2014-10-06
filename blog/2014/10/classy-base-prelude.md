@@ -72,7 +72,7 @@ For Haskell to move forward and be as convenient to use as other programming lan
 
 Changing the language so that module qualification is not needed is arguably a much better approach.
 This is the case in Object-Oriented languages, and possible in languages very similar to Haskell such as Frege that figure out how to disambiguate a function based on the data type being used.
-I think this would be a great change to Haskell, but the idea was rejected by Simon Peyton Jones himself during the discussion on fixing Haskell records because it is not compatible with how Haskell's type system operates today. Simon did propose [Type directed name resolution](https://ghc.haskell.org/trac/haskell-prime/wiki/TypeDirectedNameResolution) which I always though was a great idea, but that proposal was not able to get off the ground in part because changing Haskell's dot operator proved too contreversial.
+I think this would be a great change to Haskell, but the idea was rejected by Simon Peyton Jones himself during the discussion on fixing Haskell records because it is not compatible with how Haskell's type system operates today. Simon did propose [Type directed name resolution](https://ghc.haskell.org/trac/haskell-prime/wiki/TypeDirectedNameResolution) which I always though was a great idea, but that proposal was not able to get off the ground in part because changing Haskell's dot operator proved too controversial.
 
 So the only practical option I know of is to focus on #2.
 Being able to write generic code is an important issue in of itself.
