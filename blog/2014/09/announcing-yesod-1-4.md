@@ -36,7 +36,7 @@ Overlap checking can be turned off for multipieces, entire routes, and parent ro
 ### Dropped backwards compatibility with older versions of dependencies
 
 In particular, persistent-1 and wai-2. We will talk more about persistent 2.
-wai-3 uses a CPS style that will require some middleware to have an additional CPS paramter.
+wai-3 uses a CPS style that will require some middleware to have an additional CPS parameter.
 Looking at the wai-extra source code can help with upgrading, but it should just be adding an extra parameter.
 
 
