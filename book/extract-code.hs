@@ -30,7 +30,9 @@ handleXML fp = do
     let cursor = fromDocument doc
         snippets0 = map (filter (/= '\r')) $ cursor $// element "programlisting" &/ content
         snippets
-            | isContinuous fp = [unlines snippets0]
+            | isContinuous fp
+                = unlines (filter (not . hasPath) snippets0)
+                : filter hasPath snippets0
             | otherwise = snippets0
     let fileMap = asMap $ map unlines $ unionsWith (++)
           $ map (maybe
