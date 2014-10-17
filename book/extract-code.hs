@@ -66,6 +66,8 @@ fileChanged fp new
 isHashName :: FilePath -> Bool
 isHashName t = "Extracted_" `isInfixOf` fpToText t
 
+hasPath = ("-- @" `isPrefixOf`)
+
 getFileName :: Text -> Maybe (FilePath, Text)
 getFileName orig
     | Just fp <- listToMaybe (mapMaybe (stripPrefix "-- @") lorig) =
