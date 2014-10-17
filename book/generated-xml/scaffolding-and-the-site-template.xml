@@ -56,15 +56,13 @@ dependencies, giving you a leaner overall site. The remainder of this chapter
 will focus on the scaffoldings for one of the database backends. There will be
 minor differences for the simple backend.</simpara>
 <simpara>After creating your files, the scaffolder will print a message about getting
-started. The suggested command runs <emphasis>cabal sandbox init</emphasis>. This will ensure
-that your packages are installed only to your project directory,
-avoiding conflicts with other projects.
-Note that you really do need to use the <emphasis>cabal install --only-dependencies</emphasis>
-command. Most likely, you do not yet
+started. You should follow those instruction to ensure a reliable installation.
+In particular, the commands provided will ensure that any missing dependencies are built and installed.
+Even if you&#8217;ve installed the <literal>yesod</literal> package, you most likely do not yet
 have all the dependencies in place needed by your site. For example, none of
 the database backends, nor the Javascript minifier (hjsmin) are installed when
 installing the <literal>yesod</literal> package.</simpara>
-<simpara>Finally, to launch your development site, you would use <emphasis>yesod devel</emphasis>.
+<simpara>Finally, to launch your development site, you would use <literal>yesod devel</literal>.
 This site will automatically rebuild and reload whenever
 you change your code.</simpara>
 </section>
@@ -75,13 +73,13 @@ to source files, config files, templates, and static files are produced as
 well.</simpara>
 <section id="scaffolding-and-the-site-template_cabal_file">
 <title>Cabal file</title>
-<simpara>Whether directly using <emphasis>cabal</emphasis>, or indirectly using <emphasis>yesod devel</emphasis>, building
+<simpara>Whether directly using <literal>cabal</literal>, or indirectly using <literal>yesod devel</literal>, building
 your code will always go through the cabal file. If you open the file, you&#8217;ll
 see that there are both library and executable blocks. If the <literal>library-only</literal>
-flag is turned on, then the executable block is not built.  This is how <emphasis>yesod
-devel</emphasis> calls your app. Otherwise, the executable is built.</simpara>
-<simpara>The <literal>library-only</literal> flag should only be used by <emphasis>yesod devel</emphasis>; you should never
-be explicitly passing it into <emphasis>cabal</emphasis>. There is an additional flag, <literal>dev</literal>, that
+flag is turned on, then the executable block is not built.  This is how <literal>yesod
+devel</literal> calls your app. Otherwise, the executable is built.</simpara>
+<simpara>The <literal>library-only</literal> flag should only be used by <literal>yesod devel</literal>; you should never
+be explicitly passing it into <literal>cabal</literal>. There is an additional flag, <literal>dev</literal>, that
 allows cabal to build an executable, but turns on some of the same features as
 the library-only flag, i.e., no optimizations and reload versions of the
 Shakespearean template functions.</simpara>
@@ -89,14 +87,14 @@ Shakespearean template functions.</simpara>
 <itemizedlist>
 <listitem>
 <simpara>
-When developing, use <emphasis>yesod devel</emphasis> exclusively.
+When developing, use <literal>yesod devel</literal> exclusively.
 </simpara>
 </listitem>
 <listitem>
 <simpara>
-When building a production build, perform <emphasis>cabal clean &amp;&amp; cabal
-  configure &amp;&amp; cabal build</emphasis>. This will produce an optimized executable
-  in your <emphasis>dist</emphasis> folder.
+When building a production build, perform <literal>cabal clean &amp;&amp; cabal
+  configure &amp;&amp; cabal build</literal>. This will produce an optimized executable
+  in your <literal>dist</literal> folder. (You can also use the <literal>yesod keter</literal> command for this.)
 </simpara>
 </listitem>
 </itemizedlist>
@@ -111,19 +109,19 @@ message from yesod devel.</simpara>
 </section>
 <section id="scaffolding-and-the-site-template_routes_and_entities">
 <title>Routes and entities</title>
-<simpara>Multiple times in this book, you&#8217;ve seen a comment like "We&#8217;re declaring our
+<simpara>Multiple times in this book, you&#8217;ve seen a comment like &#8220;We&#8217;re declaring our
 routes/entities with quasiquotes for convenience. In a production site, you
-should use an external file." The scaffolding uses such an external file.</simpara>
-<simpara>Routes are defined in <emphasis>config/routes</emphasis>, and entities in <emphasis>config/models</emphasis>. They
+should use an external file.&#8221; The scaffolding uses such an external file.</simpara>
+<simpara>Routes are defined in <literal>config/routes</literal>, and entities in <literal>config/models</literal>. They
 have the exact same syntax as the quasiquoting you&#8217;ve seen throughout the book,
-and <emphasis>yesod devel</emphasis> knows to automatically recompile the appropriate modules when
+and <literal>yesod devel</literal> knows to automatically recompile the appropriate modules when
 these files change.</simpara>
-<simpara>The <emphasis>models</emphasis> files is referenced by <literal>Model.hs</literal>. You are free to declare
+<simpara>The <literal>models</literal> files is referenced by <literal>Model.hs</literal>. You are free to declare
 whatever you like in this file, but here are some guidelines:</simpara>
 <itemizedlist>
 <listitem>
 <simpara>
-Any data types used in <emphasis>entities</emphasis> <emphasis role="strong">must</emphasis> be imported/declared in <emphasis>Model.hs</emphasis>,
+Any data types used in <emphasis>entities</emphasis> <emphasis role="strong">must</emphasis> be imported/declared in <literal>Model.hs</literal>,
   above the <literal>persistFile</literal> call.
 </simpara>
 </listitem>
@@ -131,7 +129,7 @@ Any data types used in <emphasis>entities</emphasis> <emphasis role="strong">mus
 <simpara>
 Helper utilities should either be declared in <literal>Import.hs</literal> or, if very
   model-centric, in a file within the <literal>Model</literal> folder and imported into
-  <emphasis>Import.hs</emphasis>.
+  <literal>Import.hs</literal>.
 </simpara>
 </listitem>
 </itemizedlist>
@@ -173,10 +171,10 @@ not declare the dispatch function, the handler functions need not be in scope.
 <simpara>In <literal>Application.hs</literal>, we call <literal>mkYesodDispatch</literal>, which creates our dispatch
 function. For this to work, all handler functions must be in scope, so be sure
 to add an import statement for any new handler modules you create.</simpara>
-<simpara>Other than that, <emphasis>Application.hs</emphasis> is pretty simple. It provides two primary
-functions: <literal>getApplicationDev</literal> is used by <emphasis>yesod devel</emphasis> to launch your app, and
+<simpara>Other than that, <literal>Application.hs</literal> is pretty simple. It provides two primary
+functions: <literal>getApplicationDev</literal> is used by <literal>yesod devel</literal> to launch your app, and
 <literal>makeApplication</literal> is used by the executable to launch.</simpara>
-<simpara><emphasis>Foundation.hs</emphasis> is much more exciting. It:</simpara>
+<simpara><literal>Foundation.hs</literal> is much more exciting. It:</simpara>
 <itemizedlist>
 <listitem>
 <simpara>
@@ -193,7 +191,7 @@ Declares a number of instances, such as <literal>Yesod</literal>, <literal>Yesod
 <simpara>
 Imports the messages files. If you look for the line starting with
   <literal>mkMessage</literal>, you will see that it specifies the folder containing the
-  messages (<emphasis>messages</emphasis>) and the default language (en, for English).
+  messages (<literal>messages/</literal>) and the default language (<literal>en</literal>, for English).
 </simpara>
 </listitem>
 </itemizedlist>
@@ -230,11 +228,15 @@ I want to make sure I never use some evil function (<literal>head</literal>, <li
 <simpara>The solution is to turn on the <literal>NoImplicitPrelude</literal> language extension,
 re-export the parts of <literal>Prelude</literal> we want, add in all the other stuff we want,
 define our own functions as well, and then import this file in all handlers.</simpara>
+<note><simpara>It is likely that, at some point after publishing this chapter, the
+scaffolded site will switch to an alternative prelude, such as
+<literal>classy-prelude-yesod</literal>. Don&#8217;t be surprised if <literal>Import</literal> looks quite different
+than it is described here.</simpara></note>
 </section>
 <section id="scaffolding-and-the-site-template_handler_modules">
 <title>Handler modules</title>
-<simpara>Handler modules should go inside the <emphasis>Handler</emphasis> folder. The site template
-includes one module: <emphasis>Handler/Home.hs</emphasis>. How you split up your handler functions
+<simpara>Handler modules should go inside the <literal>Handler</literal> folder. The site template
+includes one module: <literal>Handler/Home.hs</literal>. How you split up your handler functions
 into individual modules is your decision, but a good rule of thumb is:</simpara>
 <itemizedlist>
 <listitem>
@@ -265,7 +267,7 @@ Add it to the cabal file.
 </listitem>
 <listitem>
 <simpara>
-Add it to the <emphasis>Application.hs</emphasis> file.
+Add it to the <literal>Application.hs</literal> file.
 </simpara>
 </listitem>
 <listitem>
@@ -274,7 +276,7 @@ Put a module statement at the top, and an <literal>import Import</literal> line 
 </simpara>
 </listitem>
 </itemizedlist>
-<simpara>You can use the <emphasis>yesod add-handler</emphasis> command to automate the last three steps.</simpara>
+<simpara>You can use the <literal>yesod add-handler</literal> command to automate the last three steps.</simpara>
 </section>
 </section>
 <section id="scaffolding-and-the-site-template_widgetfile">
@@ -289,32 +291,32 @@ provides the <literal>widgetFile</literal> function.</simpara>
 <itemizedlist>
 <listitem>
 <simpara>
-<emphasis>templates/homepage.hamlet</emphasis>
+<literal>templates/homepage.hamlet</literal>
 </simpara>
 </listitem>
 <listitem>
 <simpara>
-<emphasis>templates/homepage.lucius</emphasis>
+<literal>templates/homepage.lucius</literal>
 </simpara>
 </listitem>
 <listitem>
 <simpara>
-<emphasis>templates/homepage.cassius</emphasis>
+<literal>templates/homepage.cassius</literal>
 </simpara>
 </listitem>
 <listitem>
 <simpara>
-<emphasis>templates/homepage.julius</emphasis>
+<literal>templates/homepage.julius</literal>
 </simpara>
 </listitem>
 </itemizedlist>
 <simpara>If any of those files are present, they will be automatically included in the
 output.</simpara>
-<note><simpara>Due to the nature of how this works, if you launch your app with <emphasis>yesod
-devel</emphasis>, and then create a new file (e.g., <emphasis>templates/homepage.julius</emphasis>), the
+<note><simpara>Due to the nature of how this works, if you launch your app with <literal>yesod devel</literal>,
+and then create a new file (e.g., <literal>templates/homepage.julius</literal>), the
 contents will <emphasis>not</emphasis> be included until the file calling <literal>widgetFile</literal> is
 recompiled. In such a case, you may need to force a save of that file to get
-<emphasis>yesod devel</emphasis> to recompile.</simpara></note>
+<literal>yesod devel</literal> to recompile.</simpara></note>
 </section>
 <section id="scaffolding-and-the-site-template_defaultlayout">
 <title>defaultLayout</title>
@@ -323,7 +325,7 @@ site. The layout is actually broken up into two files:</simpara>
 <itemizedlist>
 <listitem>
 <simpara>
-<emphasis>templates/default-layout-wrapper.hamlet</emphasis> contains just the basic shell of a
+<literal>templates/default-layout-wrapper.hamlet</literal> contains just the basic shell of a
    page. This file is interpreted as plain Hamlet, not as a Widget, and
    therefore cannot refer to other widgets, embed i18n strings, or add extra
    CSS/JS.
@@ -331,14 +333,14 @@ site. The layout is actually broken up into two files:</simpara>
 </listitem>
 <listitem>
 <simpara>
-<emphasis>templates/default-layout.hamlet</emphasis> is where you would put the bulk of your
+<literal>templates/default-layout.hamlet</literal> is where you would put the bulk of your
    page. You <emphasis role="strong">must</emphasis> remember to include the <literal>widget</literal> value in the page, as that
    contains the per-page contents. This file is interpreted as a Widget.
 </simpara>
 </listitem>
 </itemizedlist>
 <simpara>Also, since default-layout is included via the <literal>widgetFile</literal> function, any
-Lucius, Cassius, or Julius files named <emphasis>default-layout.*</emphasis> will automatically be
+Lucius, Cassius, or Julius files named <literal>default-layout.*</literal> will automatically be
 included as well.</simpara>
 </section>
 <section id="scaffolding-and-the-site-template_static_files">
@@ -349,7 +351,7 @@ What this means is that:</simpara>
 <itemizedlist>
 <listitem>
 <simpara>
-When your static file identifiers are generated (e.g., <emphasis>static/mylogo.png</emphasis>
+When your static file identifiers are generated (e.g., <literal>static/mylogo.png</literal>
   becomes <literal>mylogo_png</literal>), a query-string parameter is added to it with a hash of
   the contents of the file. All of this happens at compile time.
 </simpara>
@@ -369,7 +371,7 @@ Whenever you embed a link to <literal>mylogo_png</literal>, the rendering includ
 </simpara>
 </listitem>
 </itemizedlist>
-<simpara>Additionally, you can set a specific static root in your <emphasis>Settings.hs</emphasis> file to
+<simpara>Additionally, you can set a specific static root in your <literal>Settings.hs</literal> file to
 serve from a different domain name. This has the advantage of not requiring
 transmission of cookies for static file requests, and also lets you offload
 static file hosting to a CDN or a service like Amazon S3. See the comments in

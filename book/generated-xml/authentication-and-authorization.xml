@@ -37,7 +37,7 @@ his/her <literal>AuthId</literal>. This <literal>AuthId</literal> is usually a P
 for keeping track of users.</simpara>
 <simpara>There are a few functions available for querying a user&#8217;s <literal>AuthId</literal>, most
 commonly <literal>maybeAuthId</literal>, <literal>requireAuthId</literal>, <literal>maybeAuth</literal> and <literal>requireAuth</literal>. The
-require versions will redirect to a login page if the user is not logged in,
+&#8220;require&#8221; versions will redirect to a login page if the user is not logged in,
 while the second set of functions (the ones <emphasis role="strong">not</emphasis> ending in <literal>Id</literal>) give both the
 table ID <emphasis>and</emphasis> entity value.</simpara>
 <simpara>Since all of the storage of <literal>AuthId</literal> is built on top of sessions, all of the
@@ -47,8 +47,8 @@ configurable period of inactivity. Additionally, since there is no server-side
 component to sessions, logging out simply deletes the data from the session
 cookie; if a user reuses an older cookie value, the session will still be
 valid.</simpara>
-<note><simpara>There are plans to add in a server-side component to sessions which would
-allow forced logout.</simpara></note>
+<note><simpara>You can replace the default client-side sessions with server side
+sessions, to provide a forced logout capability, if this is desired.</simpara></note>
 <simpara>On the flip side, authorization is handled by a few methods inside the <literal>Yesod</literal>
 typeclass. For every request, these methods are run to determine if access
 should be allowed, denied, or if the user needs to be authenticated. By
@@ -65,9 +65,9 @@ of the benefits of a declarative authorization system.</simpara>
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
-import           Data.Default           (def)
-import           Data.Text              (Text)
-import           Network.HTTP.Conduit   (Manager, conduitManagerSettings, newManager)
+import           Data.Default                (def)
+import           Data.Text                   (Text)
+import           Network.HTTP.Client.Conduit (Manager, newManager)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.BrowserId
@@ -124,7 +124,7 @@ getHomeR = do
 
 main :: IO ()
 main = do
-    man &lt;- newManager conduitManagerSettings
+    man &lt;- newManager
     warp 3000 $ App man</programlisting>
 <simpara>We&#8217;ll start with the route declarations. First we declare our standard <literal>HomeR</literal>
 route, and then we set up the authentication subsite. Remember that a subsite
@@ -140,7 +140,7 @@ specify these settings in a separate typeclass, <literal>YesodAuth</literal>.</s
 <note><simpara>Why not use the subsite value? There are a number of settings we would
 like to give for an auth subsite, and doing so from a record type would be
 inconvenient. Also, since we want to have an <literal>AuthId</literal> associated type, a
-typeclass is more natural.On the flip side, why not use a typeclass for all
+typeclass is more natural. And why not use a typeclass for all
 subsites? It comes with a downside: you can then only have a single instance
 per site, disallowing serving different sets of static files from different
 routes. Also, the subsite value works better when we want to load data at app
@@ -203,7 +203,7 @@ They use email addresses as identifiers, which people are comfortable with, as o
 <simpara>In addition to these six methods, there are other methods available to control
 other behavior of the authentication system, such as what the login page looks
 like. For more information, please
-<ulink url="http://hackage.haskell.org/package/yesod-auth-1.2.5.2/docs/Yesod-Auth.html#t:YesodAuth">see
+<ulink url="http://haddocks.fpcomplete.com/fp/7.8/20140916-162/yesod-auth/Yesod-Auth.html">see
 the API documentation</ulink>.</simpara>
 <simpara>In our <literal>HomeR</literal> handler, we have some simple links to the login and logout
 pages, depending on whether or not the user is logged in. Notice how we
@@ -267,7 +267,8 @@ If you would like to avoid the hassle of dealing with an email server yourself,
 you can use Amazon SES. There is a package called
 <ulink url="http://hackage.haskell.org/package/mime-mail-ses">mime-mail-ses</ulink> which
 provides a drop-in replacement for the sendmail code used below. This is the
-approach we use on the Haskellers.com site.</simpara></note>
+approach I generally recommend, and what I use on most of my sites, including
+FP Haskell Center and Haskellers.com.</simpara></note>
 <simpara>But assuming you are able to meet these demands, and you want to have a
 separate password login specifically for your site, Yesod offers a built-in
 backend. It requires quite a bit of code to set up, since it needs to store

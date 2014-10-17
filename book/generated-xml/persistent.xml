@@ -644,7 +644,7 @@ it returns an <literal>Entity</literal> instead of a value. An <literal>Entity</
 </listitem>
 </orderedlist>
 <programlisting language="haskell" linenumbering="unnumbered">personId &lt;- insert $ Person "Michael" "Snoyman" 26
-maybePerson &lt;- getBy $ UniqueName "Michael" "Snoyman"
+maybePerson &lt;- getBy $ PersonName "Michael" "Snoyman"
 case maybePerson of
     Nothing -&gt; liftIO $ putStrLn "Just kidding, not really there"
     Just (Entity personId person) -&gt; liftIO $ print person</programlisting>
@@ -933,7 +933,7 @@ Delete based on a set of filters
 </variablelist>
 <programlisting language="haskell" linenumbering="unnumbered">personId &lt;- insert $ Person "Michael" "Snoyman" 26
 delete personId
-deleteBy $ UniqueName "Michael" "Snoyman"
+deleteBy $ PersonName "Michael" "Snoyman"
 deleteWhere [PersonFirstName ==. "Michael"]</programlisting>
 <simpara>We can even use <literal>deleteWhere</literal> to wipe out all the records in a table, we just
 need to give some hints to GHC as to what table we&#8217;re interested in:</simpara>
@@ -1055,7 +1055,7 @@ Person sql=the-person-table id=numeric_id
     firstName String sql=first_name
     lastName String sql=fldLastName
     age Int "sql=The Age of the Person"
-    UniqueName firstName lastName
+    PersonName firstName lastName
     deriving Show
 |]</programlisting>
 <simpara>There are a number of other features to the entity definition syntax. An
