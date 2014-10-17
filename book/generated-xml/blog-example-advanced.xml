@@ -18,7 +18,8 @@ extensions are specified in the cabal file, so you won&#8217;t need to put this 
 your individual Haskell files.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
              TemplateHaskell, GADTs, FlexibleContexts,
-             MultiParamTypeClasses, DeriveDataTypeable #-}</programlisting>
+             MultiParamTypeClasses, DeriveDataTypeable,
+             GeneralizedNewtypeDeriving, ViewPatterns #-}</programlisting>
 <simpara>Now our imports.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">import Yesod
 import Yesod.Auth
@@ -28,17 +29,18 @@ import Data.Text (Text)
 import Network.HTTP.Client (defaultManagerSettings)
 import Network.HTTP.Conduit (Manager, newManager)
 import Database.Persist.Sqlite
-    ( ConnectionPool, SqlPersistT, runSqlPool, runMigration
-    , createSqlitePool, runSqlPersistMPool
+    ( ConnectionPool, SqlBackend, runSqlPool, runMigration
+    , createSqlitePool, runSqlPersistPool
     )
 import Data.Time (UTCTime, getCurrentTime)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;), pure)
-import Data.Typeable (Typeable)</programlisting>
+import Data.Typeable (Typeable)
+import Control.Monad.Logger (runStdoutLoggingT)</programlisting>
 <simpara>First we&#8217;ll set up our Persistent entities. We&#8217;re going to both create our data
 types (via mkPersist) and create a migration function, which will automatically
 create and update our SQL schema. If you were using the MongoDB backend,
 migration would not be needed.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">share [mkPersist sqlOnlySettings, mkMigrate "migrateAll"] [persistLowerCase|</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|</programlisting>
 <simpara>Keeps track of users. In a more robust application, we would also keep account
 creation date, display name, etc.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">User
@@ -213,7 +215,7 @@ isAdmin user = userEmail user == "michael@snoyman.com"</programlisting>
 <simpara>In order to access the database, we need to create a YesodPersist instance,
 which says which backend we&#8217;re using and how to run an action.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">instance YesodPersist Blog where
-   type YesodPersistBackend Blog = SqlPersistT
+   type YesodPersistBackend Blog = SqlBackend
    runDB f = do
        master &lt;- getYesod
        let pool = connPool master
@@ -247,6 +249,8 @@ and gives back a UserId.</simpara>
             user = User email
         res &lt;- runDB $ insertBy user
         return $ Just $ either entityKey id res</programlisting>
+<simpara>We also need to provide a <literal>YesodAuthPersist</literal> instance to work with Persistent.</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">instance YesodAuthPersist Blog</programlisting>
 <simpara>Homepage handler. The one important detail here is our usage of <literal>setTitleI</literal>,
 which allows us to use i18n messages for the title. We also use this message
 with a <literal>_{Msg&#8230;}</literal> interpolation in Hamlet.</simpara>
@@ -390,9 +394,9 @@ postEntryR entryId = do
 <simpara>Finally our main function.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">main :: IO ()
 main = do
-    pool &lt;- createSqlitePool "blog.db3" 10 -- create a new pool
+    pool &lt;- runStdoutLoggingT $ createSqlitePool "blog.db3" 10 -- create a new pool
     -- perform any necessary migration
-    runSqlPersistMPool (runMigration migrateAll) pool
+    runSqlPersistPool (runMigration migrateAll) pool
     manager &lt;- newManager defaultManagerSettings -- create a new HTTP manager
     warp 3000 $ Blog pool manager -- start our server</programlisting>
 </section>
