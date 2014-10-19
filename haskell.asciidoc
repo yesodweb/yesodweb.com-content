@@ -64,7 +64,7 @@ this case, +a+ is a type variable.
 
 === Tools
 
-There are two main tools you'll need to Haskell development. The Glasgow
+There are two main tools you'll need for Haskell development. The Glasgow
 Haskell Compiler (GHC) is the standard Haskell compiler, and the only one
 officially supported by Yesod. You'll also need Cabal, which is the standard
 Haskell build tool. Not only do we use Cabal for building our local code, but
