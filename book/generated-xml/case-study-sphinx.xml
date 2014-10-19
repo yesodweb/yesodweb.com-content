@@ -57,7 +57,7 @@ Yesod concepts.</simpara>
 simultaneously, which allows it to provide search for multiple services at
 once. Each index will have a source it pulls from.</simpara>
 <simpara>In our case, we&#8217;re going to provide a URL from our application
-(/search/xmlpipe) that provides the XML file required by Sphinx, and then pipe
+(<literal>/search/xmlpipe</literal>) that provides the XML file required by Sphinx, and then pipe
 that through to the indexer. So we&#8217;ll add the following to our Sphinx config
 file:</simpara>
 <programlisting language="sphinxconf" linenumbering="unnumbered">source searcher_src
@@ -81,7 +81,7 @@ searchd
 }</programlisting>
 <simpara>In order to build your search index, you would run <literal>indexer searcher</literal>.
 Obviously this won&#8217;t work until you have your web app running. For a production
-site, it would make sense to run this command via a crontab script so the index
+site, it would make sense to run this command via a cron job so the index
 is regularly updated.</simpara>
 </section>
 <section id="case-study-sphinx_basic_yesod_setup">
@@ -263,10 +263,9 @@ getResults qstring = do
 <simpara><literal>query</literal> takes three parameters: the configuration options, the index to search
 against (searcher in this case) and the search string. It returns a list of
 document IDs that contain the search string. The tricky bit here is that those
-documents are returned as <literal>Int64</literal> values, whereas we need <literal>DocId</literal>s. We&#8217;re
-taking advantage of the fact that the SQL Persistent backends use a
-<literal>PersistInt64</literal> constructor for their IDs, and simply wrap up the values
-appropriately.</simpara>
+documents are returned as <literal>Int64</literal> values, whereas we need <literal>DocId</literal>s.
+Fortunately, for the SQL Persist backends, we can just use the <literal>toSqlKey</literal>
+function to perform the conversion.</simpara>
 <note><simpara>If you&#8217;re dealing with a backend that has non-numeric IDs, like MongoDB,
 you&#8217;ll need to work out something a bit more clever than this.</simpara></note>
 <simpara>We then loop over the resulting IDs to get a <literal>[Maybe Result]</literal> value, and use
@@ -334,7 +333,7 @@ to huge memory usage and slow response times.</simpara>
 <simpara>So how exactly do we create a streaming response? Yesod provides a helper
 function for this case: <literal>responseSourceDB</literal>. This function takes two arguments:
 a content type, and a conduit <literal>Source</literal> providing a stream of blaze-builder
-<literal>Builder</literal>s. Yesod that handles all of the issues of grabbing a database
+<literal>Builder</literal>s. Yesod then handles all of the issues of grabbing a database
 connection from the connection pool, starting a transaction, and streaming the
 response to the user.</simpara>
 <simpara>Now we know we want to create a stream of <literal>Builder</literal>s from some XML content.
@@ -365,6 +364,10 @@ such a document:</simpara>
         &lt;content&gt;foo bar baz&lt;/content&gt;
     &lt;/sphinx:document&gt;
 &lt;/sphinx:docset&gt;</programlisting>
+<note><simpara>If you&#8217;re not familiar with XML namespaces, the <literal>xmlns:</literal> syntax and
+<literal>sphinx:</literal> prefixes may look pretty weird. I don&#8217;t want to get into an XML
+tutorial in this chapter, so I&#8217;ll avoid an explanation. If you&#8217;re curious, feel
+free to look up the XML namespace specification.</simpara></note>
 <simpara>Every document is going to start off with the same events (start the docset,
 start the schema, etc) and end with the same event (end the docset). We&#8217;ll
 start off by defining those:</simpara>
@@ -393,7 +396,7 @@ endEvents =
     ]</programlisting>
 <simpara>Now that we have the shell of our document, we need to get the <literal>Event</literal>s for
 each individual document. This is actually a fairly simple function:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">entityToEvents :: (Entity Doc) -&gt; [X.Event]
+<programlisting language="haskell" linenumbering="unnumbered">entityToEvents :: Entity Doc -&gt; [X.Event]
 entityToEvents (Entity docid doc) =
     [ X.EventBeginElement document [("id", [X.ContentText $ toPathPiece docid])]
     , X.EventBeginElement content []

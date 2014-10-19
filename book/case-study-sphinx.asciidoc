@@ -47,7 +47,7 @@ simultaneously, which allows it to provide search for multiple services at
 once. Each index will have a source it pulls from.
 
 In our case, we're going to provide a URL from our application
-(/search/xmlpipe) that provides the XML file required by Sphinx, and then pipe
+(+/search/xmlpipe+) that provides the XML file required by Sphinx, and then pipe
 that through to the indexer. So we'll add the following to our Sphinx config
 file:
 
@@ -76,7 +76,7 @@ searchd
 
 In order to build your search index, you would run +indexer searcher+.
 Obviously this won't work until you have your web app running. For a production
-site, it would make sense to run this command via a crontab script so the index
+site, it would make sense to run this command via a cron job so the index
 is regularly updated.
 
 === Basic Yesod Setup
@@ -288,10 +288,9 @@ getResults qstring = do
 +query+ takes three parameters: the configuration options, the index to search
 against (searcher in this case) and the search string. It returns a list of
 document IDs that contain the search string. The tricky bit here is that those
-documents are returned as +Int64+ values, whereas we need ++DocId++s. We're
-taking advantage of the fact that the SQL Persistent backends use a
-+PersistInt64+ constructor for their IDs, and simply wrap up the values
-appropriately.
+documents are returned as +Int64+ values, whereas we need ++DocId++s.
+Fortunately, for the SQL Persist backends, we can just use the +toSqlKey+
+function to perform the conversion.
 
 NOTE: If you're dealing with a backend that has non-numeric IDs, like MongoDB,
 you'll need to work out something a bit more clever than this.
@@ -375,7 +374,7 @@ to huge memory usage and slow response times.
 So how exactly do we create a streaming response? Yesod provides a helper
 function for this case: +responseSourceDB+. This function takes two arguments:
 a content type, and a conduit +Source+ providing a stream of blaze-builder
-++Builder++s. Yesod that handles all of the issues of grabbing a database
+++Builder++s. Yesod then handles all of the issues of grabbing a database
 connection from the connection pool, starting a transaction, and streaming the
 response to the user.
 
@@ -418,6 +417,11 @@ such a document:
 </sphinx:docset>
 ----
 
+NOTE: If you're not familiar with XML namespaces, the +xmlns:+ syntax and
++sphinx:+ prefixes may look pretty weird. I don't want to get into an XML
+tutorial in this chapter, so I'll avoid an explanation. If you're curious, feel
+free to look up the XML namespace specification.
+
 Every document is going to start off with the same events (start the docset,
 start the schema, etc) and end with the same event (end the docset). We'll
 start off by defining those:
@@ -454,7 +458,7 @@ each individual document. This is actually a fairly simple function:
 
 [source, haskell]
 ----
-entityToEvents :: (Entity Doc) -> [X.Event]
+entityToEvents :: Entity Doc -> [X.Event]
 entityToEvents (Entity docid doc) =
     [ X.EventBeginElement document [("id", [X.ContentText $ toPathPiece docid])]
     , X.EventBeginElement content []
