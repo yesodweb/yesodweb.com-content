@@ -1,0 +1,1020 @@
+== Shakespearean Templates
+
+Yesod uses the Shakespearean family of template languages as its standard
+approach to HTML, CSS and Javascript creation. This language family shares some
+common syntax, as well as overarching principles:
+
+* As little interference to the underlying language as possible, while
+providing conveniences where unobtrusive.
+
+* Compile-time guarantees on well-formed content.
+
+* Static type safety, greatly helping the prevention of
+  link:http://en.wikipedia.org/wiki/Cross-site_scripting[XSS (cross-site
+  scripting)] attacks.
+
+* Automated checking of valid URLs, whenever possible, through type-safe
+  URLs.
+
+There is nothing inherently tying Yesod to these languages, or the other way
+around: each can be used independently of the other. This chapter will address
+these template languages on their own, while the remainder of the book will use
+them to enhance Yesod application development.
+
+=== Synopsis
+
+There are four main languages at play: Hamlet is an HTML templating language,
+Julius is for Javascript, and Cassius and Lucius are both for CSS. Hamlet and
+Cassius are both whitespace-sensitive formats, using indentation to denote
+nesting. By contrast, Lucius is a superset of CSS, keeping CSS's braces for
+denoting nesting. Julius is a simple passthrough language for producing
+Javascript; the only added feature is variable interpolation.
+
+NOTE: Cassius is in fact just an alternate syntax for Lucius. They both use the
+same processing engine underneath, but Cassius files have indentation converted
+into braces before processing. The choice between the two is purely one of
+syntactical preference.
+
+==== Hamlet (HTML)
+
+[source, hamlet]
+----
+$doctype 5
+<html>
+    <head>
+        <title>#{pageTitle} - My Site
+        <link rel=stylesheet href=@{Stylesheet}>
+    <body>
+        <h1 .page-title>#{pageTitle}
+        <p>Here is a list of your friends:
+        $if null friends
+            <p>Sorry, I lied, you don't have any friends.
+        $else
+            <ul>
+                $forall Friend name age <- friends
+                    <li>#{name} (#{age} years old)
+        <footer>^{copyright}
+----
+
+==== Lucius (CSS)
+
+[source, lucius]
+----
+section.blog {
+    padding: 1em;
+    border: 1px solid #000;
+    h1 {
+        color: #{headingColor};
+        background-image: url(@{MyBackgroundR});
+    }
+}
+----
+
+==== Cassius (CSS)
+
+The following is equivalent to the Lucius example above.
+
+[source, cassius]
+----
+section.blog
+    padding: 1em
+    border: 1px solid #000
+    h1
+        color: #{headingColor}
+        background-image: url(@{MyBackgroundR})
+----
+
+==== Julius (Javascript)
+
+[source, julius]
+----
+$(function(){
+    $("section.#{sectionClass}").hide();
+    $("#mybutton").click(function(){document.location = "@{SomeRouteR}";});
+    ^{addBling}
+});
+----
+
+=== Types
+
+Before we jump into syntax, let's take a look at the various types involved. We
+mentioned in the introduction that types help protect us from XSS attacks. For
+example, let's say that we have an HTML template that should display someone's
+name. It might look like this:
+
+[source, hamlet]
+----
+<p>Hello, my name is #{name}
+----
+
+ 
+NOTE: +#{...}+ is how we do variable interpolation in Shakespeare.
+
+What should happen to +name+, and what should its datatype be? A naive approach
+would be to use a +Text+ value, and insert it verbatim. But that would give us
+quite a problem when +name+ is equal to something like:
+
+----
+<script src='http://nefarious.com/evil.js'></script>
+----
+
+What we want is to be able to entity-encode the name, so that +&lt;+ becomes +&amp;lt;+.
+
+An equally naive approach is to simply entity-encode *every* piece of text that
+gets embedded. What happens when you have some preexisting HTML generated from
+another process? For example, on the Yesod website, all Haskell code snippets
+are run through a colorizing function that wraps up words in appropriate +span+
+tags. If we entity escaped everything, code snippets would be completely
+unreadable!
+
+Instead, we have an +Html+ datatype. In order to generate an +Html+ value, we
+have two options for APIs: the +ToMarkup+ typeclass provides a way to convert
++String+ and +Text+ values into +Html+, via its +toHtml+ function,
+automatically escaping entities along the way. This would be the approach we'd
+want for the name above. For the code snippet example, we would use the
++preEscapedToMarkup+ function.
+
+When you use variable interpolation in Hamlet (the HTML Shakespeare language),
+it automatically applies a +toHtml+ call to the value inside. So if you
+interpolate a +String+, it will be entity-escaped. But if you provide an +Html+
+value, it will appear unmodified. In the code snippet example, we might
+interpolate with something like +#{preEscapedToMarkup myHaskellHtml}+.
+
+NOTE: The +Html+ datatype, as well as the functions mentioned, are all provided
+by the blaze-html package. This allows Hamlet to interact with all other
+blaze-html packages, and lets Hamlet provide a general solution for producing
+blaze-html values. Also, we get to take advantage of blaze-html's amazing
+performance.
+
+Similarly, we have +Css+/+ToCss+, as well as +Javascript+/+ToJavascript+. These
+provide some compile-time sanity checks that we haven't accidentally stuck some
+HTML in our CSS.
+
+[NOTE]
+====
+One other advantage on the CSS side is some helper datatypes for colors and units. For example:
+
+[source, lucius]
+----
+.red { color: #{colorRed} }
+----
+
+Please see the Haddock documentation for more details.
+====
+
+==== Type-safe URLs
+
+Possibly the most unique feature in Yesod is type-safe URLs, and the ability to
+use them conveniently is provided directly by Shakespeare. Usage is nearly
+identical to variable interpolation; we just use the at-sign (@) instead of the
+hash (#). We'll cover the syntax later; first, let's clarify the intuition.
+
+Suppose we have an application with two routes:
+_http://example.com/profile/home_ is the homepage, and
+_http://example.com/display/time_ displays the current time. And let's say we
+want to link from the homepage to the time. I can think of three different ways
+of constructing the URL:
+
+. As a relative link: _../display/time_ 
+
+. As an absolute link, without a domain: _/display/time_ 
+
+. As an absolute link, with a domain: _http://example.com/display/time_ 
+
+There are problems with each approach: the first will break if either URL
+changes. Also, it's not suitable for all use cases; RSS and Atom feeds, for
+instance, require absolute URLs. The second is more resilient to change than
+the first, but still won't be acceptable for RSS and Atom. And while the third
+works fine for all use cases, you'll need to update every single URL in your
+application whenever your domain name changes. You think that doesn't happen
+often? Just wait till you move from your development to staging and finally
+production server.
+
+But more importantly, there is one huge problem with all approaches: if you
+change your routes at all, the compiler won't warn you about the broken links.
+Not to mention that typos can wreak havoc as well.
+
+The goal of type-safe URLs is to let the compiler check things for us as much
+as possible. In order to facilitate this, our first step must be to move away
+from plain old text, which the compiler doesn't understand, to some well
+defined datatypes. For our simple application, let's model our routes with a
+sum type:
+
+[source, haskell]
+----
+data MyRoute = Home | Time
+----
+
+Instead of placing a link like /display/time in our template, we can use the
++Time+ constructor. But at the end of the day, HTML is made up of text, not
+data types, so we need some way to convert these values to text. We call this a
+URL rendering function, and a simple one is:
+
+[source, haskell]
+----
+renderMyRoute :: MyRoute -> Text
+renderMyRoute Home = "http://example.com/profile/home"
+renderMyRoute Time = "http://example.com/display/time"
+----
+ 
+[NOTE]
+====
+URL rendering functions are actually a bit more complicated than this. They
+need to address query string parameters, handle records within the constructor,
+and more intelligently handle the domain name. But in practice, you don't need
+to worry about this, since Yesod will automatically create your render
+functions. The one thing to point out is that the type signature is actually a
+little more complicated to handle query strings:
+
+[source, haskell]
+----
+type Query = [(Text, Text)]
+type Render url = url -> Query -> Text
+renderMyRoute :: Render MyRoute
+renderMyRoute Home _ = ...
+renderMyRoute Time _ = ...
+----
+====
+
+OK, we have our render function, and we have type-safe URLs embedded in the
+templates. How does this fit together exactly? Instead of generating an +Html+
+(or +Css+ or +Javascript+) value directly, Shakespearean templates actually
+produce a function, which takes this render function and produces HTML. To see
+this better, let's have a quick (fake) peek at how Hamlet would work under the
+surface. Supposing we had a template:
+
+[source,hamlet]
+----
+<a href=@{Time}>The time
+----
+
+this would translate roughly into the Haskell code:
+
+[source, haskell]
+----
+\render -> mconcat ["<a href='", render Time, "'>The time</a>"]
+----
+
+=== Syntax
+
+All Shakespearean languages share the same interpolation syntax, and are able
+to utilize type-safe URLs. They differ in the syntax specific for their target
+language (HTML, CSS, or Javascript).
+
+==== Hamlet Syntax
+
+Hamlet is the most sophisticated of the languages. Not only does it provide
+syntax for generating HTML, it also allows for basic control structures:
+conditionals, looping, and maybes.
+
+===== Tags
+
+Obviously tags will play an important part of any HTML template language. In
+Hamlet, we try to stick very close to existing HTML syntax to make the language
+more comfortable. However, instead of using closing tags to denote nesting, we
+use indentation. So something like this in HTML:
+
+[source,html]
+----
+<body>
+<p>Some paragraph.</p>
+<ul>
+<li>Item 1</li>
+<li>Item 2</li>
+</ul>
+</body>
+----
+
+would be
+
+[source, hamlet]
+----
+<body>
+    <p>Some paragraph.
+    <ul>
+        <li>Item 1
+        <li>Item 2
+----
+
+In general, we find this to be easier to follow than HTML once you get
+accustomed to it. The only tricky part comes with dealing with whitespace
+before and after tags. For example, let's say you want to create the HTML
+
+[source, html]
+----
+<p>Paragraph <i>italic</i> end.</p>
+----
+
+We want to make sure that there is a whitespace preserved after the word
+"Paragraph" and before the word "end". To do so, we use two simple escape
+characters:
+
+[source, hamlet]
+----
+<p>
+    Paragraph #
+    <i>italic
+    \ end.
+----
+
+The whitespace escape rules are actually quite simple:
+
+. If the first non-space character in a line is a backslash, the backslash is ignored. (Note: this will also cause any tag on this line to be treated as plain text.)
+
+. If the last character in a line is a hash, it is ignored.
+
+One other thing. Hamlet does *not* escape entities within its content. This is
+done on purpose to allow existing HTML to be more easily copied in. So the
+example above could also be written as:
+
+[source, hamlet]
+----
+<p>Paragraph <i>italic</i> end.
+----
+
+Notice that the first tag will be automatically closed by Hamlet, while the
+inner "i" tag will not. You are free to use whichever approach you want, there
+is no penalty for either choice. Be aware, however, that the *only* time you
+use closing tags in Hamlet is for such inline tags; normal tags are not closed.
+
+Another outcome of this is that any tags after the first tag do not have
+special treatment for IDs and classes. For example, the Hamlet snippet:
+
+[source, hamlet]
+----
+<p #firstid>Paragraph <i #secondid>italic end.
+----
+
+generates the HTML:
+
+[source, html]
+----
+<p id="firstid">Paragraph <i #secondid>italic</i> end.</p>
+----
+
+Notice how the +p+ tag is automatically closed, and its attributes get special
+treatment, whereas the +i+ tag is treated as plain text.
+
+===== Interpolation
+
+What we have so far is a nice, simplified HTML, but it doesn't let us interact
+with our Haskell code at all. How do we pass in variables? Simple: with
+interpolation:
+
+[source, hamlet]
+----
+<head>
+    <title>#{title}
+----
+
+The hash followed by a pair of braces denotes *variable interpolation*. In the
+case above, the +title+ variable from the scope in which the template was
+called will be used. Let me state that again: Hamlet automatically has access
+to the variables in scope when it's called. There is no need to specifically
+pass variables in.
+
+You can apply functions within an interpolation. You can use string and numeric
+literals in an interpolation. You can use qualified modules. Both parentheses
+and the dollar sign can be used to group statements together. And at the end,
+the +toHtml+ function is applied to the result, meaning _any_ instance of
++ToHtml+ can be interpolated. Take, for instance, the following code.
+
+[source, haskell]
+----
+-- Just ignore the quasiquote stuff for now, and that shamlet thing.
+-- It will be explained later.
+{-# LANGUAGE QuasiQuotes #-}
+import Text.Hamlet (shamlet)
+import Text.Blaze.Html.Renderer.String (renderHtml)
+import Data.Char (toLower)
+import Data.List (sort)
+
+data Person = Person
+    { name :: String
+    , age  :: Int
+    }
+
+main :: IO ()
+main = putStrLn $ renderHtml [shamlet|
+<p>Hello, my name is #{name person} and I am #{show $ age person}.
+<p>
+    Let's do some funny stuff with my name: #
+    <b>#{sort $ map toLower (name person)}
+<p>Oh, and in 5 years I'll be #{show ((+) 5 (age person))} years old.
+|]
+  where
+    person = Person "Michael" 26
+----
+
+What about our much-touted type-safe URLs? They are almost identical to
+variable interpolation in every way, except they start with an at-sign (+@+)
+instead. In addition, there is embedding via a caret (+^+) which allows you to
+embed another template of the same type. The next code sample demonstrates both
+of these.
+
+[source, haskell]
+----
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE OverloadedStrings #-}
+import Text.Hamlet (HtmlUrl, hamlet)
+import Text.Blaze.Html.Renderer.String (renderHtml)
+import Data.Text (Text)
+
+data MyRoute = Home
+
+render :: MyRoute -> [(Text, Text)] -> Text
+render Home _ = "/home"
+
+footer :: HtmlUrl MyRoute
+footer = [hamlet|
+<footer>
+    Return to #
+    <a href=@{Home}>Homepage
+    .
+|]
+
+main :: IO ()
+main = putStrLn $ renderHtml $ [hamlet|
+<body>
+    <p>This is my page.
+    ^{footer}
+|] render
+----
+
+Additionally, there is a variant of URL interpolation which allows you to embed
+query string parameters. This can be useful, for example, for creating
+paginated responses. Instead of using +@{...}+, you add a question mark
+(+@?{...}+) to indicate the presence of a query string. The value you provide
+must be a two-tuple with the first value being a type-safe URL and the second
+being a list of query string parameter pairs. See the next code snippet for an
+example.
+
+[source, haskell]
+----
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE OverloadedStrings #-}
+import Text.Hamlet (HtmlUrl, hamlet)
+import Text.Blaze.Html.Renderer.String (renderHtml)
+import Data.Text (Text, append, pack)
+import Control.Arrow (second)
+import Network.HTTP.Types (renderQueryText)
+import Data.Text.Encoding (decodeUtf8)
+import Blaze.ByteString.Builder (toByteString)
+
+data MyRoute = SomePage
+
+render :: MyRoute -> [(Text, Text)] -> Text
+render SomePage params = "/home" `append`
+    decodeUtf8 (toByteString $ renderQueryText True (map (second Just) params))
+
+main :: IO ()
+main = do
+    let currPage = 2 :: Int
+    putStrLn $ renderHtml $ [hamlet|
+<p>
+    You are currently on page #{currPage}.
+    <a href=@?{(SomePage, [("page", pack $ show $ currPage - 1)])}>Previous
+    <a href=@?{(SomePage, [("page", pack $ show $ currPage + 1)])}>Next
+|] render
+----
+
+This generates the expected HTML:
+
+[source, html]
+----
+<p>You are currently on page 2.
+<a href="/home?page=1">Previous</a>
+<a href="/home?page=3">Next</a>
+</p>
+----
+
+===== Attributes
+
+In that last example, we put an href attribute on the "a" tag. Let's elaborate on the syntax:
+
+* You can have interpolations within the attribute value.
+
+
+* The equals sign and value for an attribute are optional, just like in HTML.
+  So +<input type=checkbox checked>+ is perfectly valid.
+
+
+* There are two convenience attributes: for id, you can use the hash, and for
+  classes, the period. In other words, +<p #paragraphid .class1 .class2>+.
+
+
+* While quotes around the attribute value are optional, they are required if
+  you want to embed spaces.
+
+
+* You can add an attribute optionally by using colons. To make a checkbox only
+  checked if the variable isChecked is True, you would write
+  +<input type=checkbox :isChecked:checked>+. To have a paragraph be optionally red,
+  you could use +<p :isRed:style="color:red">+.
+
+===== Conditionals
+
+Eventually, you'll want to put in some logic in your page. The goal of Hamlet
+is to make the logic as minimalistic as possible, pushing the heavy lifting
+into Haskell. As such, our logical statements are very basic... so basic, that
+it's +if+, +elseif+, and +else+.
+
+[source, hamlet]
+----
+$if isAdmin
+    <p>Welcome to the admin section.
+$elseif isLoggedIn
+    <p>You are not the administrator.
+$else
+    <p>I don't know who you are. Please log in so I can decide if you get access.
+----
+
+All the same rules of normal interpolation apply to the content of the conditionals.
+
+===== Maybe
+
+Similarly, we have a special construct for dealing with Maybe values. This
+could technically be dealt with using +if+, +isJust+ and +fromJust+, but this
+is more convenient and avoids partial functions.
+
+[source, hamlet]
+----
+$maybe name <- maybeName
+    <p>Your name is #{name}
+$nothing
+    <p>I don't know your name.
+----
+
+In addition to simple identifiers, you can use a few other, more complicated
+values on the left hand side, such as constructors and tuples.
+
+[source, hamlet]
+----
+$maybe Person firstName lastName <- maybePerson
+    <p>Your name is #{firstName} #{lastName}
+----
+
+The right-hand-side follows the same rules as interpolations, allow variables,
+function application, and so on.
+
+===== Forall
+
+And what about looping over lists? We have you covered there too:
+
+[source, hamlet]
+----
+$if null people
+    <p>No people.
+$else
+    <ul>
+        $forall person <- people
+            <li>#{person}
+----
+
+===== Case
+
+Pattern matching is one of the great strengths of Haskell. Sum types let you
+cleanly model many real-world types, and +case+ statements let you safely
+match, letting the compiler warn you if you missed a case. Hamlet gives you the
+same power.
+
+[source, hamlet]
+----
+$case foo
+    $of Left bar
+        <p>It was left: #{bar}
+    $of Right baz
+        <p>It was right: #{baz}
+----
+
+===== With
+
+Rounding out our statements, we have +with+. It's basically just a convenience
+for declaring a synonym for a long expression.
+
+[source, hamlet]
+----
+$with foo <- some very (long ugly) expression that $ should only $ happen once
+    <p>But I'm going to use #{foo} multiple times. #{foo}
+----
+
+===== Doctype
+
+Last bit of syntactic sugar: the doctype statement. We have support for a
+number of different versions of a +doctype+, though we recommend +$doctype 5+
+for modern web applications, which generates +<!DOCTYPE html>+.
+
+[source, hamlet]
+----
+$doctype 5
+<html>
+    <head>
+        <title>Hamlet is Awesome
+    <body>
+        <p>All done.
+----
+
+ 
+NOTE: There is an older and still supported syntax: three exclamation points
+(+!!!+). You may still see this in code out there. We have no plans to remove
+support for this, but in general find the +$doctype+ approach easier to read.
+
+==== Lucius Syntax
+
+Lucius is one of two CSS templating languages in the Shakespeare family. It is
+intended to be a superset of CSS, leveraging the existing syntax while adding
+in a few more features.
+
+* Like Hamlet, we allow both variable and URL interpolation.
+
+* CSS blocks are allowed to nest.
+
+* You can declare variables in your templates.
+
+* A set of CSS properties can be created as a mixin, and reused in multiple
+  declarations. 
+
+Starting with the second point: let's say you want to have some special styling
+for some tags within your +article+. In plain ol' CSS, you'd have to write:
+
+[source, css]
+----
+article code { background-color: grey; }
+article p { text-indent: 2em; }
+article a { text-decoration: none; }
+----
+
+In this case, there aren't that many clauses, but having to type out article
+each time is still a bit of a nuisance. Imagine if you had a dozen or so of
+these. Not the worst thing in the world, but a bit of an annoyance. Lucius
+helps you out here:
+
+[source, lucius]
+----
+article {
+    code { background-color: grey; }
+    p { text-indent: 2em; }
+    a { text-decoration: none; }
+    > h1 { color: green; }
+}
+----
+
+Having Lucius variables allows you to avoid repeating yourself. A simple
+example would be to define a commonly used color:
+
+[source, lucius]
+----
+@textcolor: #ccc; /* just because we hate our users */
+body { color: #{textcolor} }
+a:link, a:visited { color: #{textcolor} }
+----
+
+Mixins are a relatively new addition to Lucius. The idea is to declare a mixin
+providing a collection of properties, and then embed that mixin in a template
+using caret interpolation (+^+). The following example demonstrates how we
+could use a mixin to deal with vendor prefixes.
+
+[source, haskell]
+----
+{-# LANGUAGE QuasiQuotes #-}
+import Text.Lucius
+import qualified Data.Text.Lazy.IO as TLIO
+
+-- Dummy render function.
+render = undefined
+
+-- Our mixin, which provides a number of vendor prefixes for transitions.
+transition val =
+    [luciusMixin|
+        -webkit-transition: #{val};
+        -moz-transition: #{val};
+        -ms-transition: #{val};
+        -o-transition: #{val};
+        transition: #{val};
+    |]
+
+-- Our actual Lucius template, which uses the mixin.
+myCSS =
+    [lucius|
+        .some-class {
+            ^{transition "all 4s ease"}
+        }
+    |]
+
+main = TLIO.putStrLn $ renderCss $ myCSS render
+----
+
+==== Cassius Syntax
+
+Cassius is a whitespace-sensitive alternative to Lucius. As mentioned in the
+synopsis, it uses the same processing engine as Lucius, but preprocesses all
+input to insert braces to enclose subblocks and semicolons to terminate lines.
+This means you can leverage all features of Lucius when writing Cassius. As a
+simple example:
+
+[source, cassius]
+----
+#banner
+    border: 1px solid #{bannerColor}
+    background-image: url(@{BannerImageR})
+----
+
+==== Julius Syntax
+
+Julius is the simplest of the languages discussed here. In fact, some might
+even say it's really just Javascript. Julius allows the three forms of
+interpolation we've mentioned so far, and otherwise applies no transformations
+to your content.
+
+NOTE: If you use Julius with the scaffolded Yesod site, you may notice that
+your Javascript is automatically minified. This is not a feature of Julius;
+instead, Yesod uses the hjsmin package to minify Julius output.
+
+=== Calling Shakespeare
+
+The question of course arises at some point: how do I actually use this stuff?
+There are three different ways to call out to Shakespeare from your Haskell
+code:
+
+Quasiquotes:: Quasiquotes allow you to embed arbitrary content within your Haskell, and for it to be converted into Haskell code at compile time.
+
+External file:: In this case, the template code is in a separate file which is referenced via Template Haskell.
+
+Reload mode:: Both of the above modes require a full recompile to see any changes. In reload mode, your template is kept in a separate file and referenced via Template Haskell. But at runtime, the external file is reparsed from scratch each time.
+
+NOTE: Reload mode is not available for Hamlet, only for Cassius, Lucius and
+Julius. There are too many sophisticated features in Hamlet that rely directly
+on the Haskell compiler and could not feasible be reimplemented at runtime.
+
+One of the first two approaches should be used in production. They both embed
+the entirety of the template in the final executable, simplifying deployment
+and increasing performance. The advantage of the quasiquoter is the simplicity:
+everything stays in a single file. For short templates, this can be a very good
+fit. However, in general, the external file approach is recommended because:
+
+* It follows nicely in the tradition of separate logic from presentation.
+
+* You can easily switch between external file and debug mode with some simple
+  CPP macros, meaning you can keep rapid development and still achieve high
+  performance in production.
+
+Since these are special QuasiQuoters and Template Haskell functions, you need
+to be sure to enable the appropriate language extensions and use correct
+syntax. You can see a simple example of each in the following code snippets.
+
+.Quasiquoter
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-} -- we're using Text below
+{-# LANGUAGE QuasiQuotes #-}
+import Text.Hamlet (HtmlUrl, hamlet)
+import Data.Text (Text)
+import Text.Blaze.Html.Renderer.String (renderHtml)
+
+data MyRoute = Home | Time | Stylesheet
+
+render :: MyRoute -> [(Text, Text)] -> Text
+render Home _ = "/home"
+render Time _ = "/time"
+render Stylesheet _ = "/style.css"
+
+template :: Text -> HtmlUrl MyRoute
+template title = [hamlet|
+$doctype 5
+<html>
+    <head>
+        <title>#{title}
+        <link rel=stylesheet href=@{Stylesheet}>
+    <body>
+        <h1>#{title}
+|]
+
+main :: IO ()
+main = putStrLn $ renderHtml $ template "My Title" render
+----
+
+.External file
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-} -- we're using Text below
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE CPP #-} -- to control production versus debug
+import Text.Lucius (CssUrl, luciusFile, luciusFileDebug, renderCss)
+import Data.Text (Text)
+import qualified Data.Text.Lazy.IO as TLIO
+
+data MyRoute = Home | Time | Stylesheet
+
+render :: MyRoute -> [(Text, Text)] -> Text
+render Home _ = "/home"
+render Time _ = "/time"
+render Stylesheet _ = "/style.css"
+
+template :: CssUrl MyRoute
+#if PRODUCTION
+template = $(luciusFile "template.lucius")
+#else
+template = $(luciusFileDebug "template.lucius")
+#endif
+
+main :: IO ()
+main = TLIO.putStrLn $ renderCss $ template render
+----
+
+[source, lucius]
+----
+-- @template.lucius
+foo { bar: baz }
+----
+
+The naming scheme for the functions is very consistent.
+
+[options="header"]
+|===============
+|Language|Quasiquoter|External file|Reload
+|Hamlet|hamlet|+hamletFile+|_N/A_
+|Cassius|+cassius+|+cassiusFile+|+cassiusFileReload+
+|Lucius|+lucius+|+luciusFile+|+luciusFileReload+
+|Julius|+julius+|+juliusFile+|+juliusFileReload+
+
+|===============
+
+==== Alternate Hamlet Types
+
+So far, we've seen how to generate an +HtmlUrl+ value from Hamlet, which is a
+piece of HTML with embedded type-safe URLs. There are currently three other
+values we can generate using Hamlet: plain HTML, HTML with URLs *and*
+internationalized messages, and widgets. That last one will be covered in more
+detail in the widgets chapter.
+
+To generate plain HTML without any embedded URLs, we use "simplified Hamlet".
+There are a few changes:
+
+* We use a different set of functions, prefixed with an "s". So the quasiquoter
+  is +shamlet+ and the external file function is +shamletFile+. How we
+  pronounce those is still up for debate.
+
+* No URL interpolation is allowed. Doing so will result in a compile-time
+  error.
+
+* Embedding (the caret-interpolator) no longer allows arbitrary +HtmlUrl+
+  values. The rule is that the embedded value must have the same type as the
+  template itself, so in this case it must be +Html+. That means that for
+  +shamlet+, embedding can be completely replaced with normal variable
+  interpolation (with a hash).
+
+Dealing with internationalization (i18n) in Hamlet is a bit complicated. Hamlet
+supports i18n via a message datatype, very similar in concept and
+implementation to a type-safe URL. As a motivating example, let's say we want
+to have an application that tells you hello and how many apples you have eaten.
+We could represent those messages with a datatype.
+
+[source, haskell]
+----
+data Msg = Hello | Apples Int
+----
+
+Next, we would want to be able to convert that into something human-readable,
+so we define some render functions:
+
+[source, haskell]
+----
+renderEnglish :: Msg -> Text
+renderEnglish Hello = "Hello"
+renderEnglish (Apples 0) = "You did not buy any apples."
+renderEnglish (Apples 1) = "You bought 1 apple."
+renderEnglish (Apples i) = T.concat ["You bought ", T.pack $ show i, " apples."]
+----
+
+Now we want to interpolate those Msg values directly in the template. For that, we use underscore interpolation.
+
+[source, hamlet]
+----
+$doctype 5
+<html>
+    <head>
+        <title>i18n
+    <body>
+        <h1>_{Hello}
+        <p>_{Apples count}
+----
+
+ 
+
+This kind of a template now needs some way to turn those values into HTML. So
+just like type-safe URLs, we pass in a render function. To represent this, we
+define a new type synonym:
+
+[source, haskell]
+----
+type Render url = url -> [(Text, Text)] -> Text
+type Translate msg = msg -> Html
+type HtmlUrlI18n msg url = Translate msg -> Render url -> Html
+----
+
+At this point, you can pass +renderEnglish+, +renderSpanish+, or
++renderKlingon+ to this template, and it will generate nicely translated output
+(depending, of course, on the quality of your translators). The complete
+program is:
+
+[source, haskell]
+----
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE OverloadedStrings #-}
+import Data.Text (Text)
+import qualified Data.Text as T
+import Text.Hamlet (HtmlUrlI18n, ihamlet)
+import Text.Blaze.Html (toHtml)
+import Text.Blaze.Html.Renderer.String (renderHtml)
+
+data MyRoute = Home | Time | Stylesheet
+
+renderUrl :: MyRoute -> [(Text, Text)] -> Text
+renderUrl Home _ = "/home"
+renderUrl Time _ = "/time"
+renderUrl Stylesheet _ = "/style.css"
+
+data Msg = Hello | Apples Int
+
+renderEnglish :: Msg -> Text
+renderEnglish Hello = "Hello"
+renderEnglish (Apples 0) = "You did not buy any apples."
+renderEnglish (Apples 1) = "You bought 1 apple."
+renderEnglish (Apples i) = T.concat ["You bought ", T.pack $ show i, " apples."]
+
+template :: Int -> HtmlUrlI18n Msg MyRoute
+template count = [ihamlet|
+$doctype 5
+<html>
+    <head>
+        <title>i18n
+    <body>
+        <h1>_{Hello}
+        <p>_{Apples count}
+|]
+
+main :: IO ()
+main = putStrLn $ renderHtml
+     $ (template 5) (toHtml . renderEnglish) renderUrl
+----
+
+=== Other Shakespeare
+
+In addition to HTML, CSS and Javascript helpers, there is also some more
+general-purpose Shakespeare available. shakespeare-text provides a simple way
+to create interpolated strings, much like people are accustomed to in scripting
+languages like Ruby and Python. This package's utility is definitely not
+limited to Yesod.
+
+[source, haskell]
+----
+{-# LANGUAGE QuasiQuotes, OverloadedStrings #-}
+import Text.Shakespeare.Text
+import qualified Data.Text.Lazy.IO as TLIO
+import Data.Text (Text)
+import Control.Monad (forM_)
+
+data Item = Item
+    { itemName :: Text
+    , itemQty :: Int
+    }
+
+items :: [Item]
+items =
+    [ Item "apples" 5
+    , Item "bananas" 10
+    ]
+
+main :: IO ()
+main = forM_ items $ \item -> TLIO.putStrLn
+    [lt|You have #{show $ itemQty item} #{itemName item}.|]
+----
+
+Some quick points about this simple example:
+
+* Notice that we have three different textual datatypes involved (+String+,
+  strict +Text+ and lazy +Text+). They all play together well.
+
+* We use a quasiquoter named +lt+, which generates lazy text. There is also
+  +st+.
+
+* Also, there are longer names for these quasiquoters (+ltext+ and +stext+).
+
+=== General Recommendations
+
+Here are some general hints from the Yesod community on how to get the most out
+of Shakespeare.
+
+
+* For actual sites, use external files. For libraries, it's OK to use
+  quasiquoters, assuming they aren't too long.
+
+
+* Patrick Brisbin has put together a
+  link:https://github.com/pbrisbin/html-template-syntax[Vim code
+  highlighter] that can help out immensely.
+
+
+* You should almost always start Hamlet tags on their own line instead of
+  embedding start/end tags after an existing tag. The only exception to this is
+  the occasional +<i>+ or +<b>+ tag inside a large block of text.

@@ -1,0 +1,507 @@
+== Yesod Typeclass
+
+Every one of our Yesod applications requires an instance of the +Yesod+
+typeclass. So far, we've just relied on default implementations of these
+methods. In this chapter, we'll explore the meaning of many of the methods of
+the +Yesod+ typeclass.
+
+The +Yesod+ typeclass gives us a central place for defining settings for our
+application. Everything has a default definition which is often the
+right thing. But in order to build a powerful, customized application, you'll
+usually end up wanting to override at least a few of these methods.
+
+[NOTE]
+====
+A common question we get is, "Why use a typeclass instead of a record type?" There are two main advantages:
+
+* The methods of the Yesod type class may wish to call other methods. With type
+  classes, this kind of usage is trivial. It becomes slightly more complicated
+  with a record type.
+
+* Simplicity of syntax. We want to provide default implementations and allow
+  users to override just the necessary functionality. Type classes make this
+  both easy and syntactically nice. Records have a slightly larger overhead.
+
+====
+
+=== Rendering and Parsing URLs
+
+We've already mentioned how Yesod is able to automatically render type-safe
+URLs into a textual URL that can be inserted into an HTML page. Let's say we
+have a route definition that looks like:
+
+[source, haskell]
+----
+mkYesod "MyApp" [parseRoutes|
+/some/path SomePathR GET
+]
+----
+
+If we place +SomePathR+ into a hamlet template, how does Yesod render it? Yesod
+always tries to construct _absolute_ URLs. This is especially useful once we
+start creating XML sitemaps and Atom feeds, or sending emails. But in order to
+construct an absolute URL, we need to know the domain name of the application.
+
+You might think we could get that information from the user's request, but we
+still need to deal with ports. And even if we get the port number from the
+request, are we using HTTP or HTTPS? And even if you know _that_, such an
+approach would mean that, depending on how the user submitted a request would
+generate different URLs. For example, we would generate different URLs
+depending if the user connected to "example.com" or "www.example.com". For
+Search Engine Optimization, we want to be able to consolidate on a single
+canonical URL.
+
+And finally, Yesod doesn't make any assumption about _where_ you host your
+application. For example, I may have a mostly static site
+(http://static.example.com/), but I'd like to stick a Yesod-powered Wiki at
+/wiki/. There is no reliable way for an application to determine what subpath
+it is being hosted from. So instead of doing all of this guesswork, Yesod needs
+you to tell it the application root.
+
+Using the wiki example, you would write your +Yesod+ instance as:
+
+
+[source, haskell]
+----
+instance Yesod MyWiki where
+    approot = ApprootStatic "http://static.example.com/wiki"
+----
+
+Notice that there is no trailing slash there. Next, when Yesod wants to
+construct a URL for +SomePathR+, it determines that the relative path for
++SomePathR+ is +/some/path+, appends that to your approot and creates
++http://static.example.com/wiki/some/path+.
+
+The default value of +approot+ is +ApprootRelative+, which essentially means
+``don't add any prefix.'' In that case, the generated URL would be
++/some/path+. This works fine for the common case of a link within your
+application, and your application being hosted at the root of your domain. But
+if you have any use cases which demand absolute URLs (such as sending an
+email), it's best to use +ApprootStatic+.
+
+In addition to the +ApprootStatic+ constructor demonstrated above, you can also
+use the +ApprootMaster+ and +ApprootRequest+ constructors. The former allows
+you to determine the approot from the foundation value, which would let you
+load up the approot from a config file, for instance. The latter allows you to
+additionally use the request value to determine the approot; using this, you
+could for example provide a different domain name depending on how the user
+requested the site in the first place.
+
+The scaffolded site uses +ApprootMaster+ by default, and pulls your approot
+from either the +APPROOT+ environment variable or a config file on launch.
+Additionally, it load different settings for developing, testing, staging, and
+production builds, so you can easily test on one domain- like localhost- and
+serve from a different domain. You can modify these values from the config
+file.
+
+==== joinPath
+
+In order to convert a type-safe URL into a text value, Yesod uses two helper
+functions. The first is the +renderRoute+ method of the +RenderRoute+
+typeclass. Every type-safe URL is an instance of this typeclass. +renderRoute+
+converts a value into a list of path pieces. For example, our +SomePathR+ from
+above would be converted into +["some", "path"]+.
+
+NOTE: Actually, +renderRoute+ produces both the path pieces and a list of
+query-string parameters. The default instances of +renderRoute+ always provide
+an empty list of query string parameters. However, it is possible to override
+this. One notable case is the static subsite, which puts a hash of the file
+contents in the query string for caching purposes.
+
+The other function is the +joinPath+ method of the Yesod typeclass. This function takes four arguments:
+
+* The foundation value
+* The application root
+* A list of path segments
+* A list of query string parameters
+
+It returns a textual URL. The default implementation does the ``right thing'':
+it separates the path pieces by forward slashes, prepends the application root,
+and appends the query string.
+
+If you are happy with default URL rendering, you should not need to modify it.
+However, if you want to modify URL rendering to do things like append a
+trailing slash, this would be the place to do it.
+
+==== cleanPath
+
+The flip side of +joinPath+ is +cleanPath+. Let's look at how it gets used in
+the dispatch process:
+
+. The path info requested by the user is split into a series of path pieces.
+
+. We pass the path pieces to the +cleanPath+ function.
+
+. If +cleanPath+ indicates a redirect (a +Left+ response), then a 301 response
+is sent to the client. This is used to force canonical URLs (eg, remove extra
+slashes).
+
+. Otherwise, we try to dispatch using the response from +cleanPath+ (a
++Right+). If this works, we return a response. Otherwise, we return a 404.
+
+This combination allows subsites to retain full control of how their URLs
+appear, yet allows master sites to have modified URLs. As a simple example,
+let's see how we could modify Yesod to always produce trailing slashes on URLs:
+
+[source, haskell]
+----
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+import           Blaze.ByteString.Builder.Char.Utf8 (fromText)
+import           Control.Arrow                      ((***))
+import           Data.Monoid                        (mappend)
+import qualified Data.Text                          as T
+import qualified Data.Text.Encoding                 as TE
+import           Network.HTTP.Types                 (encodePath)
+import           Yesod
+
+data Slash = Slash
+
+mkYesod "Slash" [parseRoutes|
+/ RootR GET
+/foo FooR GET
+|]
+
+instance Yesod Slash where
+    joinPath _ ar pieces' qs' =
+        fromText ar `mappend` encodePath pieces qs
+      where
+        qs = map (TE.encodeUtf8 *** go) qs'
+        go "" = Nothing
+        go x = Just $ TE.encodeUtf8 x
+        pieces = pieces' ++ [""]
+
+    -- We want to keep canonical URLs. Therefore, if the URL is missing a
+    -- trailing slash, redirect. But the empty set of pieces always stays the
+    -- same.
+    cleanPath _ [] = Right []
+    cleanPath _ s
+        | dropWhile (not . T.null) s == [""] = -- the only empty string is the last one
+            Right $ init s
+        -- Since joinPath will append the missing trailing slash, we simply
+        -- remove empty pieces.
+        | otherwise = Left $ filter (not . T.null) s
+
+getRootR :: Handler Html
+getRootR = defaultLayout
+    [whamlet|
+        <p>
+            <a href=@{RootR}>RootR
+        <p>
+            <a href=@{FooR}>FooR
+    |]
+
+getFooR :: Handler Html
+getFooR = getRootR
+
+main :: IO ()
+main = warp 3000 Slash
+----
+
+First, let's look at our +joinPath+ implementation. This is copied almost
+verbatim from the default Yesod implementation, with one difference: we append
+an extra empty string to the end. When dealing with path pieces, an empty
+string will append another slash. So adding an extra empty string will force a
+trailing slash.
+
++cleanPath+ is a little bit trickier. First, we check for the empty path like
+before, and if so pass it through as-is. We use Right to indicate that a
+redirect is not necessary. The next clause is actually checking for two
+different possible URL issues:
+
+* There is a double slash, which would show up as an empty string in the middle
+  of our paths.
+* There is a missing trailing slash, which would show up as the last piece not
+  being an empty string.
+
+Assuming neither of those conditions hold, then only the last piece is empty,
+and we should dispatch based on all but the last piece. However, if this is not
+the case, we want to redirect to a canonical URL. In this case, we strip out
+all empty pieces and do not bother appending a trailing slash, since +joinPath+
+will do that for us.
+
+=== defaultLayout
+
+Most websites like to apply some general template to all of their pages.
++defaultLayout+ is the recommended approach for this. While you could just as
+easily define your own function and call that instead, when you override
++defaultLayout+ all of the Yesod-generated pages (error pages, authentication
+pages) automatically get this style.
+
+Overriding is very straight-forward: we use +widgetToPageContent+ to convert a
++Widget+ to a title, head tags and body tags, and then use +withUrlRenderer+ to
+convert a Hamlet template into an +Html+ value. We can even add extra widget
+components, like a Lucius template, from within +defaultLayout+. For more
+information, see the previous chapter on widgets.
+
+If you are using the scaffolded site, you can modify the files
++templates/default-layout.hamlet+ and
++templates/default-layout-wrapper.hamlet+.
+
+==== getMessage
+
+Even though we haven't covered sessions yet, I'd like to mention +getMessage+
+here. A common pattern in web development is setting a message in one handler
+and displaying it in another. For example, if a user ++POST++s a form, you may
+want to redirect him/her to another page along with a ``Form submission
+complete'' message. This is commonly known as
+link:http://en.wikipedia.org/wiki/Post/Redirect/Get[Post/Redirect/Get].
+
+To facilitate this, Yesod comes built in with a pair of functions: +setMessage+
+sets a message in the user session, and +getMessage+ retrieves the message (and
+clears it, so it doesn't appear a second time). It's recommended that you put
+the result of +getMessage+ into your +defaultLayout+. For example:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+import           Yesod
+import Data.Time (getCurrentTime)
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+|]
+
+instance Yesod App where
+    defaultLayout contents = do
+        PageContent title headTags bodyTags <- widgetToPageContent contents
+        mmsg <- getMessage
+        withUrlRenderer [hamlet|
+            $doctype 5
+
+            <html>
+                <head>
+                    <title>#{title}
+                    ^{headTags}
+                <body>
+                    $maybe msg <- mmsg
+                        <div #message>#{msg}
+                    ^{bodyTags}
+        |]
+
+getHomeR :: Handler Html
+getHomeR = do
+    now <- liftIO getCurrentTime
+    setMessage $ toHtml $ "You previously visited at: " ++ show now
+    defaultLayout [whamlet|<p>Try refreshing|]
+
+main :: IO ()
+main = warp 3000 App
+----
+
+We'll cover +getMessage+/+setMessage+ in more detail when we discuss sessions.
+
+=== Custom error pages
+
+One of the marks of a professional web site is a properly designed error page.
+Yesod gets you a long way there by automatically using your +defaultLayout+ for
+displaying error pages. But sometimes, you'll want to go even further. For
+this, you'll want to override the +errorHandler+ method:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+import           Yesod
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+/error ErrorR GET
+/not-found NotFoundR GET
+|]
+
+instance Yesod App where
+    errorHandler NotFound = fmap toTypedContent $ defaultLayout $ do
+        setTitle "Request page not located"
+        toWidget [hamlet|
+<h1>Not Found
+<p>We apologize for the inconvenience, but the requested page could not be located.
+|]
+    errorHandler other = defaultErrorHandler other
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout
+    [whamlet|
+        <p>
+            <a href=@{ErrorR}>Internal server error
+            <a href=@{NotFoundR}>Not found
+    |]
+
+getErrorR :: Handler ()
+getErrorR = error "This is an error"
+
+getNotFoundR :: Handler ()
+getNotFoundR = notFound
+
+main :: IO ()
+main = warp 3000 App
+----
+
+Here we specify a custom 404 error page. We can also use the
++defaultErrorHandler+ when we don't want to write a custom handler for each
+error type. Due to type constraints, we need to start off our methods with
++fmap toTypedContent+, but otherwise you can write a typical handler function.
+(We'll learn more about +TypedContent+ in the next chapter.)
+
+In fact, you could even use special responses like redirects:
+
+[source, haskell]
+----
+    errorHandler NotFound = redirect HomeR
+    errorHandler other = defaultErrorHandler other
+----
+
+
+NOTE: Even though you _can_ do this, I don't actually recommend such practices.
+A 404 should be a 404.
+
+=== External CSS and Javascript
+
+NOTE: The functionality described here is automatically included in the scaffolded site, so you don't need to worry about implementing this yourself.
+
+One of the most powerful, and most intimidating, methods in the Yesod typeclass
+is +addStaticContent+. Remember that a Widget consists of multiple components,
+including CSS and Javascript. How exactly does that CSS/JS arrive in the user's
+browser? By default, they are served in the +<head>+ of the page, inside
++<style>+ and +<script>+ tags, respectively.
+
+That might be simple, but it's far from efficient. Every page load will now
+require loading up the CSS/JS from scratch, even if nothing changed! What we
+really want is to store this content in an external file and then refer to it
+from the HTML.
+
+This is where +addStaticContent+ comes in. It takes three arguments: the
+filename extension of the content (+css+ or +js+), the mime-type of the content
+(+text/css+ or +text/javascript+) and the content itself. It will then return
+one of three possible results:
+
+Nothing:: No static file saving occurred; embed this content directly in the
+HTML. This is the default behavior.
+
+Just (Left Text):: This content was saved in an external file, and use the
+given textual link to refer to it.
+
+Just (Right (Route a, Query)):: Same, but now use a type-safe URL along with
+some query string parameters.
+
+The +Left+ result is useful if you want to store your static files on an
+external server, such as a CDN or memory-backed server. The +Right+ result is
+more commonly used, and ties in very well with the static subsite. This is the
+recommended approach for most applications, and is provided by the scaffolded
+site by default.
+
+NOTE: You might be wondering: if this is the recommended approach, why isn't it
+the default? The problem is that it makes a number of assumptions that don't
+universally hold, such as the presence of a static subsite and the location of
+your static files.
+
+The scaffolded +addStaticContent+ does a number of intelligent things to help
+you out:
+
+
+* It automatically minifies your Javascript using the hjsmin package.
+* It names the output files based on a hash of the file contents. This means
+  you can set your cache headers to far in the future without fears of stale
+  content.
+* Also, since filenames are based on hashes, you can be guaranteed that a file
+  doesn't need to be written if a file with the same name already exists. The
+  scaffold code automatically checks for the existence of that file, and avoids
+  the costly disk I/O of a write if it's not necessary.
+
+=== Smarter Static Files
+
+Google recommends an important optimization:
+link:http://code.google.com/speed/page-speed/docs/request.html#ServeFromCookielessDomain[serve
+static files from a separate domain]. The advantage to this approach is that
+cookies set on your main domain are not sent when retrieving static files, thus
+saving on a bit of bandwidth.
+
+To facilitate this, we have the +urlRenderOverride+ method. This method
+intercepts the normal URL rendering and sets a special value for some routes.
+For example, the scaffolding defines this method as:
+
+
+[source, haskell]
+----
+urlRenderOverride y (StaticR s) =
+    Just $ uncurry (joinPath y (Settings.staticRoot $ settings y)) $ renderRoute s
+
+urlRenderOverride _ _ = Nothing
+----
+
+This means that static routes are served from a special static root, which you
+can configure to be a different domain. This is a great example of the power
+and flexibility of type-safe URLs: with a single line of code you're able to
+change the rendering of static routes throughout all of your handlers.
+
+=== Authentication/Authorization
+
+For simple applications, checking permissions inside each handler function can
+be a simple, convenient approach. However, it doesn't scale well. Eventually,
+you're going to want to have a more declarative approach. Many systems out
+there define ACLs, special config files, and a lot of other hocus-pocus. In
+Yesod, it's just plain old Haskell. There are three methods involved:
+
+isWriteRequest:: Determine if the current request is a "read" or "write" operations. By default, Yesod follows RESTful principles, and assumes +GET+, +HEAD+, +OPTIONS+, and +TRACE+ requests are read-only, while all others are can write.
+
+isAuthorized:: Takes a route (i.e., type-safe URL) and a boolean indicating whether or not the request is a write request. It returns an +AuthResult+, which can have one of three values:
+*  +Authorized+ 
+*  +AuthenticationRequired+ 
+*  +Unauthorized+ 
+
+By default, it returns +Authorized+ for all requests.
+
+authRoute:: If +isAuthorized+ returns +AuthenticationRequired+, then redirect
+to the given route. If no route is provided (the default), return a 401
+``authentication required'' message.
+
+These methods tie in nicely with the yesod-auth package, which is used by the
+scaffolded site to provide a number of authentication options, such as OpenID,
+Mozilla Persona, email, username and Twitter. We'll cover more concrete
+examples in the auth chapter.
+
+=== Some Simple Settings
+
+Not everything in the Yesod typeclass is complicated. Some methods are simple
+functions. Let's just go through the list:
+
+maximumContentLength:: To prevent Denial of Service (DoS) attacks, Yesod will
+limit the size of request bodies. Some of the time, you'll want to bump that
+limit for some routes (e.g., a file upload page). This is where you'd do that.
+
+fileUpload:: Determines how uploaded files and treated, based on the size of
+the request. The two most common approaches are saving the files in memory, or
+streaming to temporary files. By default, small requests are kept in memory and
+large ones are stored to disk.
+
+shouldLog:: Determines if a given log message (with associated source and
+level) should be sent to the log. This allows you to put lots of debugging
+information into your app, but only turn it on as necessary.
+
+For the most up-to-date information, please see the Haddock API documentation
+for the Yesod typeclass.
+
+=== Summary
+
+The Yesod typeclass has a number of overrideable methods that allow you to
+configure your application. They are all optional, and provide sensible
+defaults. By using built-in Yesod constructs like +defaultLayout+ and
++getMessage+, you'll get a consistent look-and-feel throughout your site,
+including pages automatically generated by Yesod such as error pages and
+authentication.
+
+We haven't covered all the methods in the Yesod typeclass in this chapter. For
+a full listing of methods available, you should consult the Haddock
+documentation.

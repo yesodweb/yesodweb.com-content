@@ -1,0 +1,378 @@
+[[I_chapter2_d1e408]]
+
+== Haskell
+
+In order to use Yesod, you're going to have to know at least the basics of
+Haskell. Additionally, Yesod uses some features of Haskell that aren't covered
+in most introductory texts. While this book assumes the reader has a basic
+familiarity with Haskell, this chapter is intended to fill in the gaps.
+
+If you are already fluent in Haskell, feel free to completely skip this
+chapter. Also, if you would prefer to start off by getting your feet wet with
+Yesod, you can always come back to this chapter later as a reference.
+
+If you are looking for a more thorough introduction to Haskell, I would
+recommend either Real World Haskell or Learn You a Haskell.
+
+[[I_sect12_d1e423]]
+
+=== Terminology
+
+Even for those familiar with Haskell as a language, there can sometimes be some
+confusion about terminology. Let's establish some base terms that we can use
+throughout this book.
+
+Data type::
+This is one of the core building blocks for a strongly typed
+language like Haskell. Some data types, like +Int+, can be treated as primitive
+values, while other data types will build on top of these to create more
+complicated values. For example, you might represent a person with:
++   
+[source, haskell]
+data Person = Person Text Int
++    
+Here, the +Text+ would give the person's name, and the +Int+ would give the
+person's age. Due to its simplicity, this specific example type will recur
+throughout the book. There are essentially three ways you can create a new data
+type:
+
+* A +type+ declaration such as +type GearCount = Int+ merely creates a
+  synonym for an existing type. The type system will do nothing to prevent
+  you from using an +Int+ where you asked for a +GearCount+. Using this can
+  make your code more self-documenting.
+
+* A +newtype+ declaration such as +newtype Make = Make Text+. In this case,
+  you cannot accidentally use a +Text+ in place of a +Make+; the compiler
+  will stop you. The newtype wrapper always disappears during compilation,
+  and will introduce no overhead.
+
+* A +data+ declaration, such as +Person+ above. You can also create
+  Algebraic Data Types (ADTs), such as +data Vehicle = Bicycle GearCount |
+  Car Make Model+.
+
+
+Data constructor:: In our examples above, +Person+, +Make+, +Bicycle+, and
++Car+ are all data constructors.
+
+Type constructor:: In our examples above, +Person+, +Make+, and +Vehicle+ are
+all type constructors.
+
+Type variables:: Consider the data type +data Maybe a = Just a | Nothing+. In
+this case, +a+ is a type variable.
+
+[[I_sect12_d1e535]]
+
+=== Tools
+
+There are two main tools you'll need to Haskell development. The Glasgow
+Haskell Compiler (GHC) is the standard Haskell compiler, and the only one
+officially supported by Yesod. You'll also need Cabal, which is the standard
+Haskell build tool. Not only do we use Cabal for building our local code, but
+it can automatically download and install dependencies from Hackage, the
+Haskell package repository.
+
+The Yesod website keeps an up-to-date
+link:http://www.yesodweb.com/page/quickstart[quick start guide] which includes
+information on how to install and configure the various tools. It's highly
+recommended that you follow those instructions. In particular, these steps make
+use of link:http://www.stackage.org/[Stackage] to avoid many common
+dependency-resolution issues.
+
+If you decide to install your tools yourself, please make sure to avoid these
+common pitfalls:
+
+. Some Javascript tools that ship with Yesod require the build tools +alex+ and +happy+ to be installed. These can be added with +cabal install alex happy+.
+. Cabal installs executable to a user-specific directory, which needs to be added to your +PATH+. The exact location is OS-specific; please make sure to link:https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage#set-path-to-include-cabals-bin-directory[get the correct directory added].
+. On Windows, it's difficult to install the +network+ package from source, as it requires a POSIX shell. Installing the link:http://hackage.haskell.org/platform/[Haskell Platform] avoids this issue.
+. On Mac OS X, there are multiple C preprocessors available: one from Clang, and one from GCC. Many Haskell libraries depend on the GCC preprocessor. Again, the Haskell Platform sets things up correctly.
+. Some Linux distributions- Ubuntu in particular- typically have outdated packages for GHC and Haskell Platform. These may no longer be supported by the current version of Yesod. Please check the quick start guide for minimum version requirements.
+. Make sure you have all necessary system libraries installed. This is usually handled automatically by Haskell Platform, but may require extra work on Linux distros. If you get error messages about missing libraries, you usually just need to +apt-get install+ or +yum install+ the relevant libraries.
+
+Once you have your toolchain set up correctly, you'll need to install a number
+of Haskell libraries. For the vast majority of the book, the following command
+will install all the libraries you need:
+
+[source, shell]
+----
+cabal update && cabal install yesod yesod-bin persistent-sqlite yesod-static
+----
+
+Again, please refer to the
+link:$$http://www.yesodweb.com/page/quickstart$$[quick start guide] for the
+most up to date and accurate information.
+
+[[I_sect12_d1e628]]
+
+=== Language Pragmas
+
+GHC will run by default in something very close to Haskell98 mode. It also
+ships with a large number of language extensions, allowing more powerful type
+classes, syntax changes, and more. There are multiple ways to tell GHC to turn
+on these extensions. For most of the code snippets in this book, you'll see
+language pragmas, which look like this:
+
+[source, haskell]
+{-# LANGUAGE MyLanguageExtension #-}
+
+These should always appear at the top of your source file. Additionally, there
+are two other common approaches:
+
+* On the GHC command line, pass an extra argument +-XMyLanguageExtension+.
+
+* In your +cabal+ file, add an +extensions+ block.
+
+I personally never use the GHC command line argument approach. It's a personal
+preference, but I like to have my settings clearly stated in a file. In general
+it's recommended to avoid putting extensions in your +cabal+ file; however,
+this rule mostly applies when writing publicly available libraries. When you're
+writing an application that you and your team will be working on, having all of
+your language extensions defined in a single location makes a lot of sense.
+The Yesod scaffolded site specifically uses this approach to avoid the
+boilerplate of specifying the same language pragmas in every source file.
+
+We'll end up using quite a few language extensions in this book (at the time of
+writing, the scaffolding uses 13). We will not cover the meaning of all of
+them. Instead, please see the
+link:$$http://www.haskell.org/ghc/docs/latest/html/users_guide/ghc-language-features.html$$[GHC
+documentation].
+
+[[I_sect12_d1e671]]
+
+=== Overloaded Strings
+
+What's the type of +"hello"+? Traditionally, it's +String+, which is defined as
++type String = [Char]+. Unfortunately, there are a number of limitations with
+this:
+
+* It's a very inefficient implementation of textual data. We need to allocate
+  extra memory for each cons cell, plus the characters themselves each take up
+  a full machine word.
+
+
+* Sometimes we have string-like data that's not actually text, such as
+  ++ByteString++s and HTML.
+
+To work around these limitations, GHC has a language extension called
++OverloadedStrings+. When enabled, literal strings no longer have the
+monomorphic type +String+; instead, they have the type +IsString a => a+,
+where +IsString+ is defined as:
+
+
+[source, haskell]
+class IsString a where
+    fromString :: String -> a
+
+There are +IsString+ instances available for a number of types in Haskell, such
+as +Text+ (a much more efficient packed +String+ type), +ByteString+, and
++Html+. Virtually every example in this book will assume that this language
+extension is turned on.
+
+Unfortunately, there is one drawback to this extension: it can sometimes
+confuse GHC's type checker. Imagine we have:
+
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings, TypeSynonymInstances, FlexibleInstances #-}
+import Data.Text (Text)
+
+class DoSomething a where
+    something :: a -> IO ()
+
+instance DoSomething String where
+    something _ = putStrLn "String"
+
+instance DoSomething Text where
+    something _ = putStrLn "Text"
+
+myFunc :: IO ()
+myFunc = something "hello"
+----
+
+Will the program print out +String+ or +Text+? It's not clear. So instead,
+you'll need to give an explicit type annotation to specify whether +"hello"+
+should be treated as a +String+ or +Text+.
+
+NOTE: In some cases, you can overcome these problems by using the
++ExtendedDefaultRules+ language extension, though we'll instead try to be
+explicit in the book and not rely on defaulting.
+
+[[I_sect12_d1e753]]
+
+=== Type Families
+
+The basic idea of a type family is to state some association between two
+different types. Suppose we want to write a function that will safely take the
+first element of a list. But we don't want it to work just on lists; we'd like
+it to treat a +ByteString+ like a list of ++Word8++s. To do so, we need to
+introduce some associated type to specify what the contents of a certain type
+are.
+
+
+[source, haskell]
+----
+{-# LANGUAGE TypeFamilies, OverloadedStrings #-}
+import Data.Word (Word8)
+import qualified Data.ByteString as S
+import Data.ByteString.Char8 () -- get an orphan IsString instance
+
+class SafeHead a where
+    type Content a
+    safeHead :: a -> Maybe (Content a)
+
+instance SafeHead [a] where
+    type Content [a] = a
+    safeHead [] = Nothing
+    safeHead (x:_) = Just x
+
+instance SafeHead S.ByteString where
+    type Content S.ByteString = Word8
+    safeHead bs
+        | S.null bs = Nothing
+        | otherwise = Just $ S.head bs
+
+main :: IO ()
+main = do
+    print $ safeHead ("" :: String)
+    print $ safeHead ("hello" :: String)
+
+    print $ safeHead ("" :: S.ByteString)
+    print $ safeHead ("hello" :: S.ByteString)
+----
+
+The new syntax is the ability to place a +type+ inside of a +class+ and
++instance+. We can also use +data+ instead, which will create a new datatype
+instead of reference an existing one.
+
+
+NOTE: There are other ways to use associated types outside the context of a typeclass. For more information on type families, see link:$$http://www.haskell.org/haskellwiki/GHC/Type_families$$[the Haskell wiki page].
+
+[[I_sect12_d1e789]]
+
+=== Template Haskell
+
+Template Haskell (TH) is an approach to _code generation_. We use it in Yesod
+in a number of places to reduce boilerplate, and to ensure that the generated
+code is correct. Template Haskell is essentially Haskell which generates a
+Haskell Abstract Syntax Tree (AST).
+
+
+NOTE: There's actually more power in TH than that, as it can actually
+introspect code. We don't use these facilities in Yesod, however.
+
+Writing TH code can be tricky, and unfortunately there isn't very much type
+safety involved. You can easily write TH that will generate code that won't
+compile. This is only an issue for the developers of Yesod, not for its users.
+During development, we use a large collection of unit tests to ensure that the
+generated code is correct. As a user, all you need to do is call these already
+existing functions. For example, to include an externally defined Hamlet
+template, you can write:
+
+[source, haskell]
+$(hamletFile "myfile.hamlet")
+
+(Hamlet is discussed in the Shakespeare chapter.) The dollar sign immediately
+followed by parentheses tell GHC that what follows is a Template Haskell
+function. The code inside is then run by the compiler and generates a Haskell
+AST, which is then compiled. And yes, it's even possible to
+link:http://www.yesodweb.com/blog/2010/09/yo-dawg-template-haskell[go meta
+with this].
+
+A nice trick is that TH code is allowed to perform arbitrary +IO+ actions, and
+therefore we can place some input in external files and have it parsed at
+compile time. One example usage is to have compile-time checked HTML, CSS, and
+Javascript templates.
+
+If your Template Haskell code is being used to generate declarations, and is
+being placed at the top level of our file, we can leave off the dollar sign and
+parentheses. In other words:
+
+
+[source, haskell]
+----
+{-# LANGUAGE TemplateHaskell #-}
+
+-- Normal function declaration, nothing special
+myFunction = ...
+
+-- Include some TH code
+$(myThCode)
+
+-- Or equivalently
+myThCode
+----
+
+It can be useful to see what code is being generated by Template Haskell for
+you. To do so, you should use the +-ddump-splices+ GHC option.
+
+
+NOTE: There are many other features of Template Haskell not covered here. For
+more information, see the
+link:http://www.haskell.org/haskellwiki/Template_Haskell[Haskell wiki page].
+
+Template Haskell introduces something called the stage
+restriction, which essentially means that code before a Template Haskell splice
+cannot refer to code in the Template Haskell, or what follows. This will
+sometimes require you to rearrange your code a bit. The same restriction
+applies to QuasiQuotes.
+
+While out of the box, Yesod is really geared for using code generation to avoid
+boilerplate, it's perfectly acceptable to use Yesod in a Template Haskell-free
+way. There's more information on that in the "Yesod for Haskellers" chapter.
+
+[[I_sect12_d1e833]]
+
+=== QuasiQuotes
+
+QuasiQuotes (QQ) are a minor extension of Template Haskell that let us embed
+arbitrary content within our Haskell source files. For example, we mentioned
+previously the +hamletFile+ TH function, which reads the template contents from
+an external file. We also have a quasi-quoter named +hamlet+ that takes the
+content inline:
+
+
+[source, haskell]
+----
+{-# LANGUAGE QuasiQuotes #-}
+
+[hamlet|<p>This is quasi-quoted Hamlet.|]
+----
+
+The syntax is set off using square brackets and pipes. The name of the
+quasi-quoter is given between the opening bracket and the first pipe, and the
+content is given between the pipes.
+
+Throughout the book, we will often times use the QQ-approach over a TH-powered
+external file since the former is simpler to copy-and-paste. However, in
+production, external files are recommended for all but the shortest of inputs
+as it gives a nice separation of the non-Haskell syntax from your Haskell code.
+
+[[I_sect12_d1e851]]
+
+=== API Documentation
+
+The standard API documentation program in Haskell is called Haddock. The
+standard Haddock search tool is called Hoogle. My recommendation is to use
+link:$$https://www.fpcomplete.com/hoogle$$[FP Complete's Hoogle search] and its
+accompanying Haddocks for searching and browsing documentation. The reason for
+this is that the FP Complete Hoogle database covers a very large number of open
+source Haskell packages, and the documentation provided is always fully
+generated and known to link to other working Haddocks.
+
+The more commonly used sources for these are
+link:$$http://hackage.haskell.org/$$[Hackage] itself, and
+link:$$http://www.haskell.org/hoogle$$[haskell.org's Hoogle instance]. The
+downsides to these are that- based on build issues on the server- documentation
+is sometimes not generated, and the Hoogle search defaults to searching only a
+subset of available packages. Most importantly for us, Yesod is indexed by FP
+Complete's Hoogle, but not by haskell.org's.
+
+If when reading this book you run into types or functions that you do not
+understand, try doing a Hoogle search with FP Complete's Hoogle to get more
+information.
+
+=== Summary
+
+You don't need to be an expert in Haskell to use Yesod, a basic familiarity
+will suffice. This chapter hopefully gave you just enough extra information to
+feel more comfortable following the rest of the book.

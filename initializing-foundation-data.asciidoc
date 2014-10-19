@@ -1,0 +1,150 @@
+== Initializing data in the foundation datatype
+
+This example is meant to demonstrate a relatively simple concept: performing
+some initialization of data to be kept in the foundation datatype. There are
+various reasons to do this, though the two most important are:
+
+* Efficiency: by initializing data once, at process startup, you can avoid
+  having to recompute the same value in each request.
+
+* Persistence: we want to store some information in a mutable location which
+  will be persisted between individual requests. Often times, this is done via
+  an external database, but it can also be done via an in-memory mutable
+  variable.
+
+NOTE: While mutable variables can be a convenient storage mechanism, remember
+that they have some downsides. If your process dies, you lose your data. Also,
+if you scale horizontally to more than one process, you'll need some way to
+synchronize the data between processes. We'll punt on both of those issues for
+this example, but the problems are real. This is one of the reasons Yesod puts
+such a strong emphasis on using an external database for persistence.
+
+To demonstrate, we'll implement a very simple website. It will contain a single
+route, and will serve content stored in a Markdown file. In addition to serving
+that content, we'll also display an old-school visitor counter indicating how
+many visitors have been to the site.
+
+=== Step 1: define your foundation
+
+We've identified two pieces of information to be initialized: the Markdown
+content to be display on the homepage, and a mutable variable holding the
+visitor count. Remember that our goal is to perform as much of the work in the
+initialization phase as possible and thereby avoid performing the same work in
+the handlers themselves. Therefore, we want to preprocess the Markdown content
+into HTML. As for the visitor count, a simple +IORef+ should be sufficient. So
+our foundation data type is:
+
+[source, haskell]
+----
+data App = App
+    { homepageContent :: Html
+    , visitorCount    :: IORef Int
+    }
+----
+
+=== Step 2: use the foundation
+
+For this trivial example, we only have one route: the homepage. All we need to do is:
+
+. Increment the visitor count.
+. Get the new visitor count.
+. Display the Markdown content together with the visitor count.
+
+One trick we'll use to make the code a bit shorter is to utilize record
+wildcard syntax: ++App {..}++. This is convenient when we want to deal with a
+number of different fields in a datatype.
+
+[source, haskell]
+----
+getHomeR :: Handler Html
+getHomeR = do
+    App {..} <- getYesod
+    currentCount <- liftIO $ atomicModifyIORef visitorCount
+        $ \i -> (i + 1, i + 1)
+    defaultLayout $ do
+        setTitle "Homepage"
+        [whamlet|
+            <article>#{homepageContent}
+            <p>You are visitor number: #{currentCount}.
+        |]
+----
+
+=== Step 3: create the foundation value
+
+When we initialize our application, we'll now need to provide values for the
+two fields we described above. This is normal +IO+ code, and can perform any
+arbitrary actions needed. In our case, we need to:
+
+. Read the Markdown from the file.
+. Convert that Markdown to HTML.
+. Create the visitor counter variable. 
+
+The code ends up being just as simple as those steps imply:
+
+[source, haskell]
+----
+go :: IO ()
+go = do
+    rawMarkdown <- TLIO.readFile "homepage.md"
+    countRef <- newIORef 0
+    warp 3000 App
+        { homepageContent = markdown def rawMarkdown
+        , visitorCount    = countRef
+        }
+----
+
+=== Conclusion
+
+There's no rocket science involved in this example, just very straightforward
+programming. The purpose of this chapter is to demonstrate the commonly used
+best practice for achieving these often needed objectives. In your own
+applications, the initialization steps will likely be much more complicated:
+setting up database connection pools, starting background jobs to batch process
+large data, or anything else. After reading this chapter, you should now have a
+good idea of where to place your application-specific initialization code.
+
+Below is the full source code for the example described above:
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Data.IORef
+import qualified Data.Text.Lazy.IO as TLIO
+import           Text.Markdown
+import           Yesod
+
+data App = App
+    { homepageContent :: Html
+    , visitorCount    :: IORef Int
+    }
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+|]
+instance Yesod App
+
+getHomeR :: Handler Html
+getHomeR = do
+    App {..} <- getYesod
+    currentCount <- liftIO $ atomicModifyIORef visitorCount
+        $ \i -> (i + 1, i + 1)
+    defaultLayout $ do
+        setTitle "Homepage"
+        [whamlet|
+            <article>#{homepageContent}
+            <p>You are visitor number: #{currentCount}.
+        |]
+
+main :: IO ()
+main = do
+    rawMarkdown <- TLIO.readFile "homepage.md"
+    countRef <- newIORef 0
+    warp 3000 App
+        { homepageContent = markdown def rawMarkdown
+        , visitorCount    = countRef
+        }
+----

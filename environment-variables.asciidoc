@@ -1,0 +1,62 @@
+== Environment variables for configuration
+
+There's a recent move, perhaps most prominently advocated by
+link:http://12factor.net/config[the twelve-factor app], to store all app
+configuration in environment variables, instead of using config files or
+hard-coding them into the application source code (you don't do that, right?).
+
+Yesod's scaffolding comes built in with some support for this, most
+specifically for respecting the +APPROOT+ environment variable to indicate how
+URLs should be generated, the +PORT+ environment variable for which port to
+listen for requests on, and database connection settings. (Incidentally, this
+ties in nicely with link:https://github.com/snoyberg/keter[the Keter deployment
+manager].)
+
+The technique for doing this is quite easy: just do the environment variable
+lookup in your +main+ funciton. This example demonstrates this technique, along
+with the slightly special handling necessary for setting the application root.
+
+[source, haskell]
+----
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Data.Text          (Text, pack)
+import           System.Environment
+import           Yesod
+
+data App = App
+    { myApproot      :: Text
+    , welcomeMessage :: Text
+    }
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+|]
+
+instance Yesod App where
+    approot = ApprootMaster myApproot
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout $ do
+    App {..} <- getYesod
+    setTitle "Environment variables"
+    [whamlet|
+        <p>Here's the welcome message: #{welcomeMessage}
+        <p>
+            <a href=@{HomeR}>And a link to: @{HomeR}
+    |]
+
+main :: IO ()
+main = do
+    myApproot <- fmap pack $ getEnv "APPROOT"
+    welcomeMessage <- fmap pack $ getEnv "WELCOME_MESSAGE"
+    warp 3000 App {..}
+----
+
+The only tricky things here are:
+
+. You need to convert the +String+ value returned by +getEnv+ into a +Text+ by using +pack+.
+. We use the +ApprootMaster+ constructor for +approot+, which says "apply this function to the foundation datatype to get the actual applicaiton root."
