@@ -17,7 +17,8 @@ your individual Haskell files.
 ----
 {-# LANGUAGE OverloadedStrings, TypeFamilies, QuasiQuotes,
              TemplateHaskell, GADTs, FlexibleContexts,
-             MultiParamTypeClasses, DeriveDataTypeable #-}
+             MultiParamTypeClasses, DeriveDataTypeable,
+             GeneralizedNewtypeDeriving, ViewPatterns #-}
 ----
 
 Now our imports.
@@ -32,12 +33,13 @@ import Data.Text (Text)
 import Network.HTTP.Client (defaultManagerSettings)
 import Network.HTTP.Conduit (Manager, newManager)
 import Database.Persist.Sqlite
-    ( ConnectionPool, SqlPersistT, runSqlPool, runMigration
+    ( ConnectionPool, SqlBackend, runSqlPool, runMigration
     , createSqlitePool, runSqlPersistMPool
     )
 import Data.Time (UTCTime, getCurrentTime)
 import Control.Applicative ((<$>), (<*>), pure)
 import Data.Typeable (Typeable)
+import Control.Monad.Logger (runStdoutLoggingT)
 ----
 
 First we'll set up our Persistent entities. We're going to both create our data
@@ -47,7 +49,7 @@ migration would not be needed.
 
 [source, haskell]
 ----
-share [mkPersist sqlOnlySettings, mkMigrate "migrateAll"] [persistLowerCase|
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 ----
 
 Keeps track of users. In a more robust application, we would also keep account
@@ -281,7 +283,7 @@ components (title, head data and body data) into the final output.
 
 [source, haskell]
 ----
-        giveUrlRenderer [hamlet|
+        withUrlRenderer [hamlet|
 $doctype 5
 <html>
     <head>
@@ -311,7 +313,7 @@ which says which backend we're using and how to run an action.
 [source, haskell]
 ----
 instance YesodPersist Blog where
-   type YesodPersistBackend Blog = SqlPersistT
+   type YesodPersistBackend Blog = SqlBackend
    runDB f = do 
        master <- getYesod
        let pool = connPool master
@@ -375,6 +377,13 @@ and gives back a UserId.
             user = User email
         res <- runDB $ insertBy user
         return $ Just $ either entityKey id res
+----
+
+We also need to provide a +YesodAuthPersist+ instance to work with Persistent.
+
+[source, haskell]
+----
+instance YesodAuthPersist Blog
 ----
 
 Homepage handler. The one important detail here is our usage of +setTitleI+,
@@ -564,7 +573,7 @@ Finally our main function.
 ----
 main :: IO ()
 main = do
-    pool <- createSqlitePool "blog.db3" 10 -- create a new pool
+    pool <- runStdoutLoggingT $ createSqlitePool "blog.db3" 10 -- create a new pool
     -- perform any necessary migration
     runSqlPersistMPool (runMigration migrateAll) pool
     manager <- newManager defaultManagerSettings -- create a new HTTP manager

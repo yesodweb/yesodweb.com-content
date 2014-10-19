@@ -9,13 +9,13 @@ threats, the stateless nature of HTTP, the multiple languages (HTML, CSS,
 Javascript) necessary to create a powerful web application, and more.
 
 Yesod attempts to ease the web development process by playing to the strengths
-of the Haskell programming language. Haskell&rsquo;s strong compile-time guarantees
+of the Haskell programming language. Haskell&#8217;s strong compile-time guarantees
 of correctness not only encompass types; referential transparency ensures that
-we don&rsquo;t have any unintended side effects. Pattern matching on algebraic data
-types can help guarantee we&rsquo;ve accounted for every possible case. By building
+we don&#8217;t have any unintended side effects. Pattern matching on algebraic data
+types can help guarantee we&#8217;ve accounted for every possible case. By building
 upon Haskell, entire classes of bugs disappear.
 
-Unfortunately, using Haskell isn&rsquo;t enough. The web, by its very nature, is
+Unfortunately, using Haskell isn&#8217;t enough. The web, by its very nature, is
 _not_ type safe. Even the simplest case of distinguishing between an integer
 and string is impossible: all data on the web is transferred as raw bytes,
 evading our best efforts at type safety. Every app writer is left with the task

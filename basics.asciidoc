@@ -13,6 +13,7 @@ World:
 
 [source, haskell]
 ----
+{-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
@@ -111,6 +112,10 @@ instance YesodDispatch HelloWorld where
 type Handler = HandlerT HelloWorld IO
 ----
 
+NOTE: In addition to using +-ddump-splices+, it can often be useful to generate
+Haddock documentation for your application to see which functions and data
+types were generated for you.
+
 We can see that the +RenderRoute+ class defines an *associated data type*
 providing the routes for our application. In this simple example, we have just
 one route: +HomeR+. In real life applications, we'll have many more, and they
@@ -141,10 +146,10 @@ Finally, we have a simple type synonym defining +Handler+ to make our code a
 little easier to write.
 
 There's a lot more going on here than we've described. The generated dispatch
-code actually uses a far more efficient data structure, more type class
-instances are created, and there are other cases to handle such as subsites.
-We'll get into the details as we go through the book, especially in the
-``Understanding a Request'' chapter.
+code actually uses the view patterns language extension for efficiency, more
+type class instances are created, and there are other cases to handle such as
+subsites.  We'll get into the details as we go through the book, especially in
+the ``Understanding a Request'' chapter.
 
 === Handler function
 

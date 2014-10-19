@@ -37,7 +37,7 @@ for keeping track of users.
 
 There are a few functions available for querying a user's +AuthId+, most
 commonly +maybeAuthId+, +requireAuthId+, +maybeAuth+ and +requireAuth+. The
-require versions will redirect to a login page if the user is not logged in,
+``require'' versions will redirect to a login page if the user is not logged in,
 while the second set of functions (the ones *not* ending in +Id+) give both the
 table ID _and_ entity value.
 
@@ -49,9 +49,8 @@ component to sessions, logging out simply deletes the data from the session
 cookie; if a user reuses an older cookie value, the session will still be
 valid.
 
-
-NOTE: There are plans to add in a server-side component to sessions which would
-allow forced logout.
+NOTE: You can replace the default client-side sessions with server side
+sessions, to provide a forced logout capability, if this is desired.
 
 On the flip side, authorization is handled by a few methods inside the +Yesod+
 typeclass. For every request, these methods are run to determine if access
@@ -72,9 +71,9 @@ Let's jump right in with an example of authentication.
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
-import           Data.Default           (def)
-import           Data.Text              (Text)
-import           Network.HTTP.Conduit   (Manager, conduitManagerSettings, newManager)
+import           Data.Default                (def)
+import           Data.Text                   (Text)
+import           Network.HTTP.Client.Conduit (Manager, newManager)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.BrowserId
@@ -131,7 +130,7 @@ getHomeR = do
 
 main :: IO ()
 main = do
-    man <- newManager conduitManagerSettings
+    man <- newManager
     warp 3000 $ App man
 ----
 
@@ -155,7 +154,7 @@ specify these settings in a separate typeclass, +YesodAuth+.
 NOTE: Why not use the subsite value? There are a number of settings we would
 like to give for an auth subsite, and doing so from a record type would be
 inconvenient. Also, since we want to have an +AuthId+ associated type, a
-typeclass is more natural.On the flip side, why not use a typeclass for all
+typeclass is more natural. And why not use a typeclass for all
 subsites? It comes with a downside: you can then only have a single instance
 per site, disallowing serving different sets of static files from different
 routes. Also, the subsite value works better when we want to load data at app
@@ -192,7 +191,7 @@ So what exactly goes in this +YesodAuth+ instance? There are six required declar
 In addition to these six methods, there are other methods available to control
 other behavior of the authentication system, such as what the login page looks
 like. For more information, please
-link:http://hackage.haskell.org/package/yesod-auth-1.2.5.2/docs/Yesod-Auth.html#t:YesodAuth[see
+link:http://haddocks.fpcomplete.com/fp/7.8/20140916-162/yesod-auth/Yesod-Auth.html[see
 the API documentation].
 
 In our +HomeR+ handler, we have some simple links to the login and logout
@@ -239,7 +238,8 @@ If you would like to avoid the hassle of dealing with an email server yourself,
 you can use Amazon SES. There is a package called
 link:http://hackage.haskell.org/package/mime-mail-ses[mime-mail-ses] which
 provides a drop-in replacement for the sendmail code used below. This is the
-approach we use on the Haskellers.com site.
+approach I generally recommend, and what I use on most of my sites, including
+FP Haskell Center and Haskellers.com.
 
 But assuming you are able to meet these demands, and you want to have a
 separate password login specifically for your site, Yesod offers a built-in
@@ -287,7 +287,7 @@ User
     deriving Typeable
 |]
 
-data App = App Connection
+data App = App SqlBackend
 
 mkYesod "App" [parseRoutes|
 / HomeR GET
@@ -325,6 +325,8 @@ instance YesodAuth App where
                 Right userid -> userid -- existing user
 
     authHttpManager = error "Email doesn't need an HTTP manager"
+
+instance YesodAuthPersist App
 
 -- Here's all of the email-specific code
 instance YesodAuthEmail App where

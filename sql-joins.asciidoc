@@ -34,6 +34,7 @@ the blog title and the author:
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
@@ -348,7 +349,7 @@ generally speaking, I'd recommend sticking to safer options.
 
 === Conclusion
 
-This chaper covered a number of ways of doing a SQL join:
+This chapter covered a number of ways of doing a SQL join:
 
 * Avoid the join entirely, and manually grab the associated data in Haskell. This is also known as an application level join.
 * Write the SQL explicitly with +rawSql+. While somewhat convenient, this loses a lot of Persistent's type safety.
@@ -363,6 +364,7 @@ For completeness, here's the entire body of the final, streaming example:
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}

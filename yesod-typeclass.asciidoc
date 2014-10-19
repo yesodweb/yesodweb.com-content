@@ -1,8 +1,9 @@
 == Yesod Typeclass
 
 Every one of our Yesod applications requires an instance of the +Yesod+
-typeclass. So far, we've only seen +defaultLayout+. In this chapter, we'll
-explore the meaning of many of the methods of the +Yesod+ typeclass.
+typeclass. So far, we've just relied on default implementations of these
+methods. In this chapter, we'll explore the meaning of many of the methods of
+the +Yesod+ typeclass.
 
 The +Yesod+ typeclass gives us a central place for defining settings for our
 application. Everything has a default definition which is often the
@@ -87,10 +88,11 @@ could for example provide a different domain name depending on how the user
 requested the site in the first place.
 
 The scaffolded site uses +ApprootMaster+ by default, and pulls your approot
-from a config file on launch. Additionally, it load different settings for
-developing, testing, staging, and production builds, so you can easily test on
-one domain- like localhost- and serve from a different domain. You can modify
-these values from the config file.
+from either the +APPROOT+ environment variable or a config file on launch.
+Additionally, it load different settings for developing, testing, staging, and
+production builds, so you can easily test on one domain- like localhost- and
+serve from a different domain. You can modify these values from the config
+file.
 
 ==== joinPath
 
@@ -230,7 +232,7 @@ easily define your own function and call that instead, when you override
 pages) automatically get this style.
 
 Overriding is very straight-forward: we use +widgetToPageContent+ to convert a
-+Widget+ to a title, head tags and body tags, and then use +giveUrlRenderer+ to
++Widget+ to a title, head tags and body tags, and then use +withUrlRenderer+ to
 convert a Hamlet template into an +Html+ value. We can even add extra widget
 components, like a Lucius template, from within +defaultLayout+. For more
 information, see the previous chapter on widgets.
@@ -272,7 +274,7 @@ instance Yesod App where
     defaultLayout contents = do
         PageContent title headTags bodyTags <- widgetToPageContent contents
         mmsg <- getMessage
-        giveUrlRenderer [hamlet|
+        withUrlRenderer [hamlet|
             $doctype 5
 
             <html>
@@ -402,7 +404,7 @@ site by default.
 
 NOTE: You might be wondering: if this is the recommended approach, why isn't it
 the default? The problem is that it makes a number of assumptions that don't
-universally hold: your application has a static subsite, and the location of
+universally hold, such as the presence of a static subsite and the location of
 your static files.
 
 The scaffolded +addStaticContent+ does a number of intelligent things to help

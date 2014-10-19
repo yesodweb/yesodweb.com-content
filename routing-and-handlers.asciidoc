@@ -90,6 +90,10 @@ asterisk (*) followed by a datatype, which must be an instance of
 are very important for implementing features like static trees representing
 file structure or wikis with arbitrary hierarchies.
 
+NOTE: Since Yesod 1.4, you can additionally use a +\++ to indicate a dynamic
+multi. This is important since the C preprocessor can be confused by the +/*+
+character combination.
+
 Let us take a look at some standard kinds of resource patterns you may want to
 write. Starting simply, the root of an application will just be +/+. Similarly,
 you may want to place your FAQ at +/page/faq+.
@@ -137,6 +141,42 @@ instance PathMultiPiece Page where
     fromPathMultiPiece (x:y:z) = Just $ Page x y z
     fromPathMultiPiece _ = Nothing
 ----
+
+===== Overlap checking
+
+By default, Yesod will ensure that no two routes have the potential to overlap
+with each other. So, for example, consider the following routes:
+
+[source, routes]
+----
+/foo/bar   Foo1R GET
+/foo/#Text Foo2R GET
+----
+
+This route declaration will be rejected as overlapping, since +/foo/bar+ will
+match both routes. However, there are two cases where we may wish to allow
+overlapping:
+
+. We know by the definition of our datatype that the overlap can never happen. For example, if you replace +Text+ with +Int+ above, it's easy to convince yourself that there's no route that exists that will overlap. Yesod is currently not capable of performing such an analysis.
+. You have some extra knowledge about how your application operates, and know that such a situation should never be allowed. For example, if the +Foo2R+ route should never be allowed to receive the parameter +bar+.
+
+You can turn off overlap checking by using the exclamation mark at the
+beginning of your route. For example, the following will be accepted by Yesod:
+
+[source, routes]
+----
+/foo/bar    Foo1R GET
+!/foo/#Int  Foo2R GET
+!/foo/#Text Foo3R GET
+----
+
+NOTE: You can also place the exclamation point at the beginning of any of the
+path pieces, or following the +#+, +*+, or +\++ characters. However, this newer
+syntax should be preferred as it's clearer what the goal is.
+
+One issue that overlapping routes introduce is ambiguity. In the example above,
+should +/foo/bar+ route to +Foo1R+ or +Foo3R+? And should +/foo/42+ route to
++Foo2R+ or +Foo3R+? Yesod's rule for this is simple: first route wins.
 
 ==== Resource name
 
@@ -243,7 +283,7 @@ getHomeR :: Handler Html
 getHomeR = defaultLayout [whamlet|<h1>This is simple|]
 ----
 
-There are two components to this returns type: +Handler+ and +Html+. Let's
+There are two components to this return type: +Handler+ and +Html+. Let's
 analyze each in more depth.
 
 ===== Handler monad
@@ -284,7 +324,7 @@ should remember that the function can be used in your +Handler+ functions.
 
 There's nothing too surprising about this type. This function returns some HTML
 content, represented by the +Html+ data type. But clearly Yesod would not be
-useful if it only allowed HTML responses to be generated. We want respond with
+useful if it only allowed HTML responses to be generated. We want to respond with
 CSS, Javascript, JSON, images, and more. So the question is: what data types
 can be returned?
 
@@ -335,6 +375,7 @@ For example:
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE ViewPatterns      #-}
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Yesod
@@ -383,6 +424,8 @@ are:
 
 getYesod:: Returns your applicaton foundation value. If you store configuration
 values in your foundation, you will probably end up using this function a lot.
+(If you're so inclined, you can also use +ask+ from +Control.Monad.Reader+;
++getYesod+ is simply a type-constrained synonym for it.)
 
 getUrlRender:: Returns the URL rendering function, which converts a type-safe
 URL into a +Text+. Most of the time- like with Hamlet- Yesod calls this

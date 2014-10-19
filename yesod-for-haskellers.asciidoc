@@ -1,15 +1,13 @@
 == Yesod for Haskellers
 
-FIXME: This chapter needs to be reviewed for WAI 3.0/Yesod 1.4
-
 The majority of this book is built around giving practical information on how
 to get common tasks done, without drilling too much into the details of what's
 going on under the surface. While the book presumes knowledge of Haskell, it
 does not follow the typical style of many Haskell libraries introductions. Many
 seasoned Haskellers are put off by this hiding of implementation details. The
-purpose of this appendix is to address those concerns.
+purpose of this chapter is to address those concerns.
 
-In this appendix, we'll start off from a bare minimum web application, and
+In this chapter, we'll start off from a bare minimum web application, and
 build up to more complicated examples, explaining the components and their
 types along the way.
 
@@ -41,10 +39,20 @@ web server or a test framework, and a web *application*. In our case, the
 handler is Warp, a high performance web server, and our application is the
 +app+ function.
 
-What's this mysterious +Application+ type? It's a simple synonym for +type
-Application = Request -> IO Response+. The +Request+ value contains information
-such as the requested path, query string, request headers, request body, and
-the IP address of the client. We can use this to do some simple dispatching:
+What's this mysterious +Application+ type? It's a type synonym defined as:
+
+[source, haskell]
+type Application = Request
+                -> (Response -> IO ResponseReceived)
+                -> IO ResponseReceived
+
+The +Request+ value contains information such as the requested path, query
+string, request headers, request body, and the IP address of the client. The
+second argument is the ``send response'' function. Instead of simply having the
+application return an +IO Response+, WAI uses continuation passing style to
+allow for full exception safety, similar to how the +bracket+ function works.
+
+We can use this to do some simple dispatching:
 
 [source, haskell]
 ----
@@ -139,9 +147,9 @@ evaluation, that's not as bad as it sounds, since not all of the body will live 
 memory at once. However, if we need to perform some I/O to generate our
 response body (such as reading data from a database), we'll be in trouble.
 
-To deal with that situation, WAI uses conduit to represent a streaming response
-body. It also allows explicit control of flushing the stream by wrapping values
-in the +Flush+ data type. Let's see how this works.
+To deal with that situation, WAI provides a means for generating streaming
+response bodies. It also allows explicit control of flushing the stream.  Let's
+see how this works.
 
 [source, haskell]
 ----
@@ -180,10 +188,15 @@ myStream send flush = do
                fromByteString "\n"
 ----
 
+NOTE: wai previously relied on the conduit library for its streaming data
+abstraction, but has since gotten rid of that dependency. However, conduit is
+still well supported in the WAI ecosystem, via the wai-conduit helper package.
+
 Another common requirement when dealing with a streaming response is safely
 allocating a scarce resource- such as a file handle. By *safely*, I mean
 ensuring that the response will be released, even in the case of some
-exception. To deal with that, you can use +responseSourceBracket+: FIXME change prose
+exception. This is where the continuation passing style mentioned above comes
+into play:
 
 [source, haskell]
 ----
@@ -215,6 +228,9 @@ app _req sendResponse = withFile "index.html" ReadMode $ \handle ->
              in loop
 ----
 
+Notice how we're able to take advantage of existing exception safe functions
+like +withFile+ to deal with exceptions properly.
+
 But in the case of serving files, it's more efficient to use +responseFile+,
 which can use the +sendfile+ system call to avoid unnecessary buffer copies:
 
@@ -237,11 +253,11 @@ app _req sendResponse = sendResponse $ responseFile
             -- you can also serve specific ranges in the file
 ----
 
-There are many aspects of WAI we haven't covered here. One important topic is WAI middlewares, which we'll cover towards the end of this chapter. We also haven't inspected request bodies at all. But for the purposes of understanding Yesod, we've covered enough for the moment.
+There are many aspects of WAI we haven't covered here. One important topic is WAI middlewares. We also haven't inspected request bodies at all. But for the purposes of understanding Yesod, we've covered enough for the moment.
 
 === What about Yesod?
 
-In all our excitement about WAI and Warp, we still haven't seen anything about Yesod! Since we just learnt all about WAI, our first question should be: how does Yesod interact with WAI. The answer to that is with one very important function:
+In all our excitement about WAI and Warp, we still haven't seen anything about Yesod! Since we just learnt all about WAI, our first question should be: how does Yesod interact with WAI. The answer to that is one very important function:
 
 [source, haskell]
 ----
@@ -265,7 +281,7 @@ core of each application, and is used in three important ways:
 * Typeclass instances provide even more information about your application. The +Yesod+ typeclass has various settings, such as what the default template of your app should be, or the maximum allowed request body size. The +YesodDispatch+ class indicates how incoming requests should be dispatched to handler functions. And there are a number of typeclasses commonly used in Yesod helper libraries, such as +RenderMessage+ for i18n support or +YesodJquery+ for providing the shared location of the jQuery Javascript library.
 * Associated types (i.e., type families) are used to create a related *route data type* for each application. This is a simple ADT that represents all legal routes in your application. But using this intermediate data type instead of dealing directly with strings, Yesod applications can take advantage of the compiler to prevent creating invalid links. This feature is known as *type safe URLs*.
 
-In keeping with the spirit of this appendix, we're going to create our first
+In keeping with the spirit of this chapter, we're going to create our first
 Yesod application the hard way, by writing everything manually. We'll
 progressively add more convenience helpers on top as we go along.
 
@@ -347,7 +363,7 @@ applications, as you'll see shortly, you don't need to interact with these
 values directly, but it's informative to understand what's under the surface.
 
 The return type of +yesodDispatch+ is +Application+ from WAI. But as we saw
-earlier, +Application+ is simply a function from +Request+ to +IO Response+. So
+earlier, +Application+ is simply a CPSed function from +Request+ to +Response+. So
 our implementation of +yesodDispatch+ is able to use everything we learned
 about WAI above. Notice also how we accessed the +welcomeMessage+ from our
 foundation data type.
@@ -358,7 +374,7 @@ welcome message. We use +toWaiApp+ to obtain a WAI application, and then pass
 off our application to Warp, just like we did in the past.
 
 Congratulations, you've now seen your first Yesod application! (Or, at least
-your first Yesod application in this appendix.)
+your first Yesod application in this chapter.)
 
 === The HandlerT monad transformer
 
@@ -465,7 +481,7 @@ The +Maybe (Route site)+ is a bit interesting, and gives us more insight into
 how type-safe URLs work. Until now, we only saw the rendering side of these
 URLs. But just as important is the *parsing* side: converting a requested path
 into a route value. In our example, this code is just a few lines, and we store
-the result in +maybeRoute.
+the result in +maybeRoute+.
 
 NOTE: It's true that our current parse function is small, but in a larger
 application it would need to be more complex, also dealing with issues like
@@ -485,7 +501,7 @@ This almost all makes sense, except for one issue: what's that +ToTypedContent+
 typeclass, and what does it have to do with our +Html+ response? Let's start by
 answering my question from above: no, Yesod does *not* in any way hard code
 support for +Html+. A handler function can return any value that has an
-instance of +ToTypedContent+. This typeclass (which will examine in a moment)
+instance of +ToTypedContent+. This typeclass (which we will examine in a moment)
 provides both a mime-type and a representation of the data that WAI can
 consume. +yesodRunner+ then converts that into a WAI response, setting the
 +Content-Type+ response header to the mime type, using a 200 OK status code,
@@ -507,7 +523,7 @@ data TypedContent = TypedContent !ContentType !Content
 ----
 
 +Content+ should remind you a bit of the WAI response types. +ContentBuilder+
-is similar to +responseBuilder+, +ContentSource+ is like +responseSource+, and
+is similar to +responseBuilder+, +ContentSource+ is like +responseStream+ but specialized to conduit, and
 +ContentFile+ is like +responseFile+. Unlike their WAI counterparts, none of
 these constructors contain information on the status code or response headers;
 that's handled orthogonally in Yesod.
@@ -555,10 +571,10 @@ example, consider the +ToTypedContent TypedContent+ instance.
 
 Some requests to a web application can be displayed with various *representation*. For example, a request for tabular data could be served with:
 
-* An HTML table.
-* A CSV file.
-* XML.
-* JSON data to be consumed by some client-side Javascript.
+* An HTML table
+* A CSV file
+* XML
+* JSON data to be consumed by some client-side Javascript
 
 The HTTP spec allows a client to specify its preference of representation via
 the +accept+ request header. And Yesod allows a handler function to use the
@@ -574,10 +590,11 @@ class ToTypedContent a => HasContentType a where
     getContentType :: Monad m => m a -> ContentType
 ----
 
-The parameter +m a+ is just a poor man's +Proxy+ type. There are instances for
-this typeclass for most data types supported by +ToTypedContent+. Below is our
-example from above, tweaked just a bit to provide multiple representations of
-the data:
+The parameter +m a+ is just a poor man's +Proxy+ type. And, in hindsight, we
+should have used +Proxy+, but that would now be a breaking change. There are
+instances for this typeclass for most data types supported by +ToTypedContent+.
+Below is our example from above, tweaked just a bit to provide multiple
+representations of the data:
 
 [source, haskell]
 ----
@@ -889,6 +906,7 @@ previous example converted to the Template Haskell version:
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE ViewPatterns      #-}
 import           Yesod.Core (RenderRoute (..), Yesod, mkYesod, parseRoutes,
                              redirect, warp)
 
@@ -927,7 +945,7 @@ of Template Haskell:
 This usage of Template Haskell is likely the most controversial decision in
 Yesod. I personally think the benefits definitely justify its usage. But if
 you'd rather avoid Template Haskell, you're free to do so. Every example so far
-in this appendix has done so, and you can follow those techniques. We also have
+in this chapter has done so, and you can follow those techniques. We also have
 another, simpler approach in the Yesod world: +LiteApp+.
 
 ==== LiteApp
@@ -1065,7 +1083,7 @@ import           Text.Lucius (Css)
 import           Yesod.Core
 
 getHomeR :: LiteHandler Html
-getHomeR = giveUrlRenderer $
+getHomeR = withUrlRenderer $
     [hamlet|
         $doctype 5
         <html>
@@ -1078,10 +1096,10 @@ getHomeR = giveUrlRenderer $
     |]
 
 getStyleR :: LiteHandler Css
-getStyleR = giveUrlRenderer [lucius|h1 { color: red }|]
+getStyleR = withUrlRenderer [lucius|h1 { color: red }|]
 
 getScriptR :: LiteHandler Javascript
-getScriptR = giveUrlRenderer [julius|alert('Yay, Javascript works too!');|]
+getScriptR = withUrlRenderer [julius|alert('Yay, Javascript works too!');|]
 
 main :: IO ()
 main = warp 3000 $ liteApp $ do
@@ -1092,7 +1110,7 @@ main = warp 3000 $ liteApp $ do
 
 ==== URL rendering function
 
-Likely the most confusing part of this is the +giveUrlRenderer+ calls. This
+Likely the most confusing part of this is the +withUrlRenderer+ calls. This
 gets into one of the most powerful features of Yesod: type-safe URLs. If you
 notice in our HTML, we're providing links to the CSS and Javascript URLs via
 strings. This leads to a duplication of that information, as in our +main+
@@ -1108,9 +1126,9 @@ URLs for free.
 In any event, the Shakespearean templates all expect to receive a function to
 handle the rendering of a type-safe URL. Since we don't actually use any
 type-safe URLs, just about any function would work here (the function will be
-ignored entirely), but +giveUrlRenderer+ is a convenient way of doing this.
+ignored entirely), but +withUrlRenderer+ is a convenient way of doing this.
 
-As we'll see next, +giveUrlRenderer+ isn't really needed most of the time,
+As we'll see next, +withUrlRenderer+ isn't really needed most of the time,
 since Widgets end up providing the renderer function for us automatically.
 
 === Widgets
@@ -1150,16 +1168,10 @@ look-and-feel for your website. Many built-in pieces of Yesod, such as error
 messages, take advantage of the widget system, so by using widgets, you get a
 consistent feel throughout your site.
 
-=== Forms
+=== Details we won't cover
 
-FIXME
-
-=== Persistent
-
-FIXME
-
-=== WAI middlewares
-
-FIXME
-
-These are functions of type +type Middleware = Application -> Application+, and they do some kind of arbitrary transformation to an application, such as enabling GZIP compression or logging requests.
+Hopefully this chapter has pulled back enough of the ``magic'' in Yesod to let
+you understand what's going on under the surface. We could of course continue
+using this approach for analyze the rest of the Yesod ecosystem, but that would
+be mostly redundant with the rest of this book. Hopefully you can now feel more
+informed as you read chapters on Persistent, forms, sessions, and subsites.
