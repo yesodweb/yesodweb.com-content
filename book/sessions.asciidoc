@@ -180,7 +180,7 @@ instance Yesod App where
     defaultLayout widget = do
         pc <- widgetToPageContent widget
         mmsg <- getMessage
-        giveUrlRenderer
+        withUrlRenderer
             [hamlet|
                 $doctype 5
                 <html>
