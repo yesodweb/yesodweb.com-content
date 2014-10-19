@@ -30,7 +30,7 @@ import Network.HTTP.Client (defaultManagerSettings)
 import Network.HTTP.Conduit (Manager, newManager)
 import Database.Persist.Sqlite
     ( ConnectionPool, SqlBackend, runSqlPool, runMigration
-    , createSqlitePool, runSqlPersistPool
+    , createSqlitePool, runSqlPersistMPool
     )
 import Data.Time (UTCTime, getCurrentTime)
 import Control.Applicative ((&lt;$&gt;), (&lt;*&gt;), pure)
@@ -396,7 +396,7 @@ postEntryR entryId = do
 main = do
     pool &lt;- runStdoutLoggingT $ createSqlitePool "blog.db3" 10 -- create a new pool
     -- perform any necessary migration
-    runSqlPersistPool (runMigration migrateAll) pool
+    runSqlPersistMPool (runMigration migrateAll) pool
     manager &lt;- newManager defaultManagerSettings -- create a new HTTP manager
     warp 3000 $ Blog pool manager -- start our server</programlisting>
 </section>
