@@ -6,14 +6,13 @@
 <article lang="en">
 <section id="yesod-for-haskellers_yesod_for_haskellers">
 <title>Yesod for Haskellers</title>
-<simpara>FIXME: This chapter needs to be reviewed for WAI 3.0/Yesod 1.4</simpara>
 <simpara>The majority of this book is built around giving practical information on how
 to get common tasks done, without drilling too much into the details of what&#8217;s
 going on under the surface. While the book presumes knowledge of Haskell, it
 does not follow the typical style of many Haskell libraries introductions. Many
 seasoned Haskellers are put off by this hiding of implementation details. The
-purpose of this appendix is to address those concerns.</simpara>
-<simpara>In this appendix, we&#8217;ll start off from a bare minimum web application, and
+purpose of this chapter is to address those concerns.</simpara>
+<simpara>In this chapter, we&#8217;ll start off from a bare minimum web application, and
 build up to more complicated examples, explaining the components and their
 types along the way.</simpara>
 <section id="yesod-for-haskellers_hello_warp">
@@ -38,10 +37,16 @@ WAI, the Web Application Interface. WAI sits between a web <emphasis role="stron
 web server or a test framework, and a web <emphasis role="strong">application</emphasis>. In our case, the
 handler is Warp, a high performance web server, and our application is the
 <literal>app</literal> function.</simpara>
-<simpara>What&#8217;s this mysterious <literal>Application</literal> type? It&#8217;s a simple synonym for <literal>type
-Application = Request &#8594; IO Response</literal>. The <literal>Request</literal> value contains information
-such as the requested path, query string, request headers, request body, and
-the IP address of the client. We can use this to do some simple dispatching:</simpara>
+<simpara>What&#8217;s this mysterious <literal>Application</literal> type? It&#8217;s a type synonym defined as:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">type Application = Request
+                -&gt; (Response -&gt; IO ResponseReceived)
+                -&gt; IO ResponseReceived</programlisting>
+<simpara>The <literal>Request</literal> value contains information such as the requested path, query
+string, request headers, request body, and the IP address of the client. The
+second argument is the &#8220;send response&#8221; function. Instead of simply having the
+application return an <literal>IO Response</literal>, WAI uses continuation passing style to
+allow for full exception safety, similar to how the <literal>bracket</literal> function works.</simpara>
+<simpara>We can use this to do some simple dispatching:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
 import           Network.HTTP.Types       (status200)
 import           Network.Wai              (Application, pathInfo, responseLBS)
@@ -119,9 +124,9 @@ the entire response body before returning the <literal>Response</literal> value.
 evaluation, that&#8217;s not as bad as it sounds, since not all of the body will live in
 memory at once. However, if we need to perform some I/O to generate our
 response body (such as reading data from a database), we&#8217;ll be in trouble.</simpara>
-<simpara>To deal with that situation, WAI uses conduit to represent a streaming response
-body. It also allows explicit control of flushing the stream by wrapping values
-in the <literal>Flush</literal> data type. Let&#8217;s see how this works.</simpara>
+<simpara>To deal with that situation, WAI provides a means for generating streaming
+response bodies. It also allows explicit control of flushing the stream.  Let&#8217;s
+see how this works.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
 import           Blaze.ByteString.Builder           (Builder, fromByteString)
 import           Blaze.ByteString.Builder.Char.Utf8 (fromShow)
@@ -155,10 +160,14 @@ myStream send flush = do
         send $ fromByteString "Got the value: " &lt;&gt;
                fromShow i &lt;&gt;
                fromByteString "\n"</programlisting>
+<note><simpara>wai previously relied on the conduit library for its streaming data
+abstraction, but has since gotten rid of that dependency. However, conduit is
+still well supported in the WAI ecosystem, via the wai-conduit helper package.</simpara></note>
 <simpara>Another common requirement when dealing with a streaming response is safely
 allocating a scarce resource- such as a file handle. By <emphasis role="strong">safely</emphasis>, I mean
 ensuring that the response will be released, even in the case of some
-exception. To deal with that, you can use <literal>responseSourceBracket</literal>: FIXME change prose</simpara>
+exception. This is where the continuation passing style mentioned above comes
+into play:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
 import           Blaze.ByteString.Builder (fromByteString)
 import qualified Data.ByteString          as S
@@ -185,6 +194,8 @@ app _req sendResponse = withFile "index.html" ReadMode $ \handle -&gt;
                         then return ()
                         else send (fromByteString bs) &gt;&gt; loop
              in loop</programlisting>
+<simpara>Notice how we&#8217;re able to take advantage of existing exception safe functions
+like <literal>withFile</literal> to deal with exceptions properly.</simpara>
 <simpara>But in the case of serving files, it&#8217;s more efficient to use <literal>responseFile</literal>,
 which can use the <literal>sendfile</literal> system call to avoid unnecessary buffer copies:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
@@ -202,11 +213,11 @@ app _req sendResponse = sendResponse $ responseFile
     "index.html"
     Nothing -- means "serve whole file"
             -- you can also serve specific ranges in the file</programlisting>
-<simpara>There are many aspects of WAI we haven&#8217;t covered here. One important topic is WAI middlewares, which we&#8217;ll cover towards the end of this chapter. We also haven&#8217;t inspected request bodies at all. But for the purposes of understanding Yesod, we&#8217;ve covered enough for the moment.</simpara>
+<simpara>There are many aspects of WAI we haven&#8217;t covered here. One important topic is WAI middlewares. We also haven&#8217;t inspected request bodies at all. But for the purposes of understanding Yesod, we&#8217;ve covered enough for the moment.</simpara>
 </section>
 <section id="yesod-for-haskellers_what_about_yesod">
 <title>What about Yesod?</title>
-<simpara>In all our excitement about WAI and Warp, we still haven&#8217;t seen anything about Yesod! Since we just learnt all about WAI, our first question should be: how does Yesod interact with WAI. The answer to that is with one very important function:</simpara>
+<simpara>In all our excitement about WAI and Warp, we still haven&#8217;t seen anything about Yesod! Since we just learnt all about WAI, our first question should be: how does Yesod interact with WAI. The answer to that is one very important function:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">toWaiApp :: YesodDispatch site =&gt; site -&gt; IO Application</programlisting>
 <note><simpara>There&#8217;s an even more basic function in Yesod, called <literal>toWaiAppPlain</literal>. The
 distinction is that <literal>toWaiAppPlain</literal> doesn&#8217;t install any additional WAI
@@ -235,7 +246,7 @@ Associated types (i.e., type families) are used to create a related <emphasis ro
 </simpara>
 </listitem>
 </itemizedlist>
-<simpara>In keeping with the spirit of this appendix, we&#8217;re going to create our first
+<simpara>In keeping with the spirit of this chapter, we&#8217;re going to create our first
 Yesod application the hard way, by writing everything manually. We&#8217;ll
 progressively add more convenience helpers on top as we go along.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
@@ -303,7 +314,7 @@ storing and retrieving information for the user&#8217;s active session. In real 
 applications, as you&#8217;ll see shortly, you don&#8217;t need to interact with these
 values directly, but it&#8217;s informative to understand what&#8217;s under the surface.</simpara>
 <simpara>The return type of <literal>yesodDispatch</literal> is <literal>Application</literal> from WAI. But as we saw
-earlier, <literal>Application</literal> is simply a function from <literal>Request</literal> to <literal>IO Response</literal>. So
+earlier, <literal>Application</literal> is simply a CPSed function from <literal>Request</literal> to <literal>Response</literal>. So
 our implementation of <literal>yesodDispatch</literal> is able to use everything we learned
 about WAI above. Notice also how we accessed the <literal>welcomeMessage</literal> from our
 foundation data type.</simpara>
@@ -312,7 +323,7 @@ you can see, you could just as easily have performed some I/O to acquire the
 welcome message. We use <literal>toWaiApp</literal> to obtain a WAI application, and then pass
 off our application to Warp, just like we did in the past.</simpara>
 <simpara>Congratulations, you&#8217;ve now seen your first Yesod application! (Or, at least
-your first Yesod application in this appendix.)</simpara>
+your first Yesod application in this chapter.)</simpara>
 </section>
 <section id="yesod-for-haskellers_the_handlert_monad_transformer">
 <title>The HandlerT monad transformer</title>
@@ -422,7 +433,7 @@ The <literal>Maybe (Route site)</literal> is a bit interesting, and gives us mor
 how type-safe URLs work. Until now, we only saw the rendering side of these
 URLs. But just as important is the <emphasis role="strong">parsing</emphasis> side: converting a requested path
 into a route value. In our example, this code is just a few lines, and we store
-the result in +maybeRoute.</simpara>
+the result in <literal>maybeRoute</literal>.</simpara>
 <note><simpara>It&#8217;s true that our current parse function is small, but in a larger
 application it would need to be more complex, also dealing with issues like
 dynamic parameters. At that point, it becomes a non-trivial endeavor to ensure
@@ -439,7 +450,7 @@ box, it&#8217;s just a boring HTML page.</simpara>
 typeclass, and what does it have to do with our <literal>Html</literal> response? Let&#8217;s start by
 answering my question from above: no, Yesod does <emphasis role="strong">not</emphasis> in any way hard code
 support for <literal>Html</literal>. A handler function can return any value that has an
-instance of <literal>ToTypedContent</literal>. This typeclass (which will examine in a moment)
+instance of <literal>ToTypedContent</literal>. This typeclass (which we will examine in a moment)
 provides both a mime-type and a representation of the data that WAI can
 consume. <literal>yesodRunner</literal> then converts that into a WAI response, setting the
 <literal>Content-Type</literal> response header to the mime type, using a 200 OK status code,
@@ -455,7 +466,7 @@ and sending the response body.</simpara>
 type ContentType = ByteString
 data TypedContent = TypedContent !ContentType !Content</programlisting>
 <simpara><literal>Content</literal> should remind you a bit of the WAI response types. <literal>ContentBuilder</literal>
-is similar to <literal>responseBuilder</literal>, <literal>ContentSource</literal> is like <literal>responseSource</literal>, and
+is similar to <literal>responseBuilder</literal>, <literal>ContentSource</literal> is like <literal>responseStream</literal> but specialized to conduit, and
 <literal>ContentFile</literal> is like <literal>responseFile</literal>. Unlike their WAI counterparts, none of
 these constructors contain information on the status code or response headers;
 that&#8217;s handled orthogonally in Yesod.</simpara>
@@ -495,22 +506,22 @@ example, consider the <literal>ToTypedContent TypedContent</literal> instance.</
 <itemizedlist>
 <listitem>
 <simpara>
-An HTML table.
+An HTML table
 </simpara>
 </listitem>
 <listitem>
 <simpara>
-A CSV file.
+A CSV file
 </simpara>
 </listitem>
 <listitem>
 <simpara>
-XML.
+XML
 </simpara>
 </listitem>
 <listitem>
 <simpara>
-JSON data to be consumed by some client-side Javascript.
+JSON data to be consumed by some client-side Javascript
 </simpara>
 </listitem>
 </itemizedlist>
@@ -522,10 +533,11 @@ client headers.</simpara>
 <simpara>The last missing piece to make this all work is the <literal>HasContentType</literal> typeclass:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">class ToTypedContent a =&gt; HasContentType a where
     getContentType :: Monad m =&gt; m a -&gt; ContentType</programlisting>
-<simpara>The parameter <literal>m a</literal> is just a poor man&#8217;s <literal>Proxy</literal> type. There are instances for
-this typeclass for most data types supported by <literal>ToTypedContent</literal>. Below is our
-example from above, tweaked just a bit to provide multiple representations of
-the data:</simpara>
+<simpara>The parameter <literal>m a</literal> is just a poor man&#8217;s <literal>Proxy</literal> type. And, in hindsight, we
+should have used <literal>Proxy</literal>, but that would now be a breaking change. There are
+instances for this typeclass for most data types supported by <literal>ToTypedContent</literal>.
+Below is our example from above, tweaked just a bit to provide multiple
+representations of the data:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies      #-}
 import           Data.Text                (Text)
@@ -921,7 +933,7 @@ You don&#8217;t have as much fine-grained control. For example, in the Yesod rou
 <simpara>This usage of Template Haskell is likely the most controversial decision in
 Yesod. I personally think the benefits definitely justify its usage. But if
 you&#8217;d rather avoid Template Haskell, you&#8217;re free to do so. Every example so far
-in this appendix has done so, and you can follow those techniques. We also have
+in this chapter has done so, and you can follow those techniques. We also have
 another, simpler approach in the Yesod world: <literal>LiteApp</literal>.</simpara>
 <section id="yesod-for-haskellers_liteapp">
 <title>LiteApp</title>
@@ -1112,18 +1124,13 @@ look-and-feel for your website. Many built-in pieces of Yesod, such as error
 messages, take advantage of the widget system, so by using widgets, you get a
 consistent feel throughout your site.</simpara>
 </section>
-<section id="yesod-for-haskellers_forms">
-<title>Forms</title>
-<simpara>FIXME</simpara>
-</section>
-<section id="yesod-for-haskellers_persistent">
-<title>Persistent</title>
-<simpara>FIXME</simpara>
-</section>
-<section id="yesod-for-haskellers_wai_middlewares">
-<title>WAI middlewares</title>
-<simpara>FIXME</simpara>
-<simpara>These are functions of type <literal>type Middleware = Application &#8594; Application</literal>, and they do some kind of arbitrary transformation to an application, such as enabling GZIP compression or logging requests.</simpara>
+<section id="yesod-for-haskellers_details_we_won_8217_t_cover">
+<title>Details we won&#8217;t cover</title>
+<simpara>Hopefully this chapter has pulled back enough of the &#8220;magic&#8221; in Yesod to let
+you understand what&#8217;s going on under the surface. We could of course continue
+using this approach for analyze the rest of the Yesod ecosystem, but that would
+be mostly redundant with the rest of this book. Hopefully you can now feel more
+informed as you read chapters on Persistent, forms, sessions, and subsites.</simpara>
 </section>
 </section>
 </article>
