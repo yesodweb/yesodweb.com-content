@@ -153,12 +153,9 @@ getReceiveR = do
     sendWaiApplication $ eventSourceAppChan chan</programlisting>
 <simpara>We use <literal>dupChan</literal> so that each new connection receives its own copy of newly
 generated messages. This is a standard method in concurrent Haskell of creating
-broadcast channels. The last three lines of our function expose the underlying
-<literal>wai-eventsource</literal> application as a Yesod handler, by getting the raw WAI
-request, running the application on that request, and then sending the raw WAI
-response.</simpara>
-<note><simpara>Starting with WAI 2.0, instead of using <literal>liftResourceT</literal>, you need to use
-<literal>liftIO</literal>.</simpara></note>
+broadcast channels. The last line in our function exposes the underlying
+<literal>wai-eventsource</literal> application as a Yesod handler, using the
+<literal>sendWaiApplication</literal> function to promote a WAI application to a Yesod handler.</simpara>
 <simpara>Now that we&#8217;ve defined our handler functions, we can set up our dispatch. In a
 normal application, dispatching is handled by calling <literal>mkYesod</literal>, which creates
 the appropriate <literal>YesodDispatch</literal> instance. In subsites, things are a little bit
