@@ -83,6 +83,21 @@ client session keys. If you have an open source repository, or do not trust
 everyone who has access to your source code repository, it's vital to figure
 out a safe storage solution for the client session key.
 
+=== SSL and static files
+
+There are two commonly used feature in the Yesod world: serving your site over
+HTTPS, and placing your static files on a separate domain name. While both of
+these are good practices, when combined they can lead to problems if you're not
+careful. In particular, most web browsers will not load up Javascript files
+from a non-HTTPS domain name if your HTML is served from an HTTPS domain name.
+In this situation, you'll need to do one of two things:
+
+* Serve your static files over HTTPS as well.
+* Serve your static files from the same domain name as your main site.
+
+Note that if you go for the first option (which is the better one), you'll
+either need two separate SSL certificates, or a wildcard certificate.
+
 === Warp
 
 As we have mentioned before, Yesod is built on the Web Application Interface
