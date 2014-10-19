@@ -3,9 +3,9 @@
 [preface]
 == Preface
 
-It&rsquo;s fair to say that dynamic languages currently dominate the web development scene. Ruby, Python, and PHP are common choices for quickly creating a powerful web application. They give a much faster and more comfortable development setting than standard static languages in the C family, like Java.
+It&#8217;s fair to say that dynamic languages currently dominate the web development scene. Ruby, Python, and PHP are common choices for quickly creating a powerful web application. They give a much faster and more comfortable development setting than standard static languages in the C family, like Java.
 
-But some of us are looking for something more in our development toolbox. We want a language that gives us guarantees that our code is doing what it should. Instead of writing up a unit test to cover every bit of functionality in our application, wouldn&rsquo;t it be wonderful if the compiler could _automatically_ ensure that our code is correct? And as an added bonus, wouldn&rsquo;t it be nice if our code ran quickly too?
+But some of us are looking for something more in our development toolbox. We want a language that gives us guarantees that our code is doing what it should. Instead of writing up a unit test to cover every bit of functionality in our application, wouldn&#8217;t it be wonderful if the compiler could _automatically_ ensure that our code is correct? And as an added bonus, wouldn&#8217;t it be nice if our code ran quickly too?
 
 These are the goals of Yesod. Yesod is a web framework bringing the strengths of the Haskell programming language to the web development world. Yesod not only uses a pure language to interact with an impure world, it allows safe interactions with the outside world by automatically sanitizing incoming and outgoing data. Not only do we avoid basic mistakes such as mixing up integers and strings, it even allows us to statically prevent many cases of security holes like cross-site scripting (XSS) attacks.
 
@@ -15,9 +15,9 @@ These are the goals of Yesod. Yesod is a web framework bringing the strengths of
 
 In general, there are two groups of people coming to Yesod. The first group is long time Haskell users—already convinced of the advantages of Haskell—who are looking for a powerful framework for creating web applications. The second is web developers who are either dissatisfied with their existing tools, or are looking to expand their horizons into the functional world.
 
-This book assumes a basic familiarity with both web development and Haskell. We don&rsquo;t use many complicated Haskell concepts, and those we do use are introduced separately. For the most part, understanding the basics of the syntax of the language should be sufficient.
+This book assumes a basic familiarity with both web development and Haskell. We don&#8217;t use many complicated Haskell concepts, and those we do use are introduced separately. For the most part, understanding the basics of the syntax of the language should be sufficient.
 
-If you want to come up to speed on Haskell, I recommend another wonderful O&rsquo;Reilly book: link:$$http://shop.oreilly.com/product/9780596514983.do$$[_Real World Haskell_].
+If you want to come up to speed on Haskell, I recommend another wonderful O&#8217;Reilly book: link:$$http://shop.oreilly.com/product/9780596514983.do$$[_Real World Haskell_].
 
 [[I_sect1_d1e148]]
 
@@ -55,9 +55,9 @@ This icon indicates a warning or caution.
 
 === Using Code Examples
 
-This book is here to help you get your job done. In general, you may use the code in this book in your programs and documentation. You do not need to contact us for permission unless you&rsquo;re reproducing a significant portion of the code. For example, writing a program that uses several chunks of code from this book does not require permission. Selling or distributing a CD-ROM of examples from O&rsquo;Reilly books does require permission. Answering a question by citing this book and quoting example code does not require permission. Incorporating a significant amount of example code from this book into your product&rsquo;s documentation does require permission.
+This book is here to help you get your job done. In general, you may use the code in this book in your programs and documentation. You do not need to contact us for permission unless you&#8217;re reproducing a significant portion of the code. For example, writing a program that uses several chunks of code from this book does not require permission. Selling or distributing a CD-ROM of examples from O&#8217;Reilly books does require permission. Answering a question by citing this book and quoting example code does not require permission. Incorporating a significant amount of example code from this book into your product&#8217;s documentation does require permission.
 
-We appreciate, but do not require, attribution. An attribution usually includes the title, author, publisher, and ISBN. For example: “_Developing Web Applications with Haskell and Yesod_ by Michael Snoyman (O&rsquo;Reilly). Copyright 2012 Michael Snoyman, 978-1-449-31697-6.&rdquo;
+We appreciate, but do not require, attribution. An attribution usually includes the title, author, publisher, and ISBN. For example: “_Developing Web Applications with Haskell and Yesod_ by Michael Snoyman (O&#8217;Reilly). Copyright 2012 Michael Snoyman, 978-1-449-31697-6.&rdquo;
 
 If you feel your use of code examples falls outside fair use or the permission given above, feel free to contact us at pass:[<email>permissions@oreilly.com</email>].
 
@@ -68,7 +68,7 @@ If you feel your use of code examples falls outside fair use or the permission g
 
 [NOTE]
 ====
-Safari Books Online (link:$$http://my.safaribooksonline.com/?portal=oreilly$$[www.safaribooksonline.com]) is an on-demand digital library that delivers expert link:$$http://www.safaribooksonline.com/content$$[content] in both book and video form from the world&rsquo;s leading authors in technology and business.
+Safari Books Online (link:$$http://my.safaribooksonline.com/?portal=oreilly$$[www.safaribooksonline.com]) is an on-demand digital library that delivers expert link:$$http://www.safaribooksonline.com/content$$[content] in both book and video form from the world&#8217;s leading authors in technology and business.
 
 
 ====
@@ -76,7 +76,7 @@ Safari Books Online (link:$$http://my.safaribooksonline.com/?portal=oreilly$$[ww
 
 Technology professionals, software developers, web designers, and business and creative professionals use Safari Books Online as their primary resource for research, problem solving, learning, and certification training.
 
-Safari Books Online offers a range of link:$$http://www.safaribooksonline.com/subscriptions$$[product mixes] and pricing programs for link:$$http://www.safaribooksonline.com/organizations-teams$$[organizations], link:$$http://www.safaribooksonline.com/government$$[government agencies], and link:$$http://www.safaribooksonline.com/individuals$$[individuals]. Subscribers have access to thousands of books, training videos, and prepublication manuscripts in one fully searchable database from publishers like O&rsquo;Reilly Media, Prentice Hall Professional, Addison-Wesley Professional, Microsoft Press, Sams, Que, Peachpit Press, Focal Press, Cisco Press, John Wiley &amp; Sons, Syngress, Morgan Kaufmann, IBM Redbooks, Packt, Adobe Press, FT Press, Apress, Manning, New Riders, McGraw-Hill, Jones &amp; Bartlett, Course Technology, and dozens link:$$http://www.safaribooksonline.com/publishers$$[more]. For more information about Safari Books Online, please visit us link:$$http://www.safaribooksonline.com/$$[online].
+Safari Books Online offers a range of link:$$http://www.safaribooksonline.com/subscriptions$$[product mixes] and pricing programs for link:$$http://www.safaribooksonline.com/organizations-teams$$[organizations], link:$$http://www.safaribooksonline.com/government$$[government agencies], and link:$$http://www.safaribooksonline.com/individuals$$[individuals]. Subscribers have access to thousands of books, training videos, and prepublication manuscripts in one fully searchable database from publishers like O&#8217;Reilly Media, Prentice Hall Professional, Addison-Wesley Professional, Microsoft Press, Sams, Que, Peachpit Press, Focal Press, Cisco Press, John Wiley &amp; Sons, Syngress, Morgan Kaufmann, IBM Redbooks, Packt, Adobe Press, FT Press, Apress, Manning, New Riders, McGraw-Hill, Jones &amp; Bartlett, Course Technology, and dozens link:$$http://www.safaribooksonline.com/publishers$$[more]. For more information about Safari Books Online, please visit us link:$$http://www.safaribooksonline.com/$$[online].
 
 [[I_sect1_d1e243]]
 
@@ -85,7 +85,7 @@ Safari Books Online offers a range of link:$$http://www.safaribooksonline.com/su
 Please address comments and questions concerning this book to the publisher:
 
 
-O&rsquo;Reilly Media, Inc. +
+O&#8217;Reilly Media, Inc. +
 1005 Gravenstein Highway North +
 Sebastopol, CA 95472 +
 800-998-9938 (in the United States or Canada) +
@@ -99,7 +99,7 @@ link:$$http://shop.oreilly.com/product/0636920023142.do$$[]
 
 
 ++++++++++++++++++++++++++++++++++++++
-<remark>Don&rsquo;t forget to update the &lt;url&gt; attribute, too.</remark>
+<remark>Don&#8217;t forget to update the &lt;url&gt; attribute, too.</remark>
 ++++++++++++++++++++++++++++++++++++++
 
 To comment or ask technical questions about this book, send email to:
@@ -121,11 +121,11 @@ Watch us on YouTube: link:$$http://www.youtube.com/oreillymedia$$[]
 
 Yesod has been created by an entire community of developers, all of whom have put in significant effort to make sure that the final product is as polished and user-friendly as possible. Everyone from the core development team to the person making an API request on the mailing list has had an impact on bringing Yesod to where it is today.
 
-In particular, I&rsquo;d like to thank Greg Weber, who has shared the maintenance burden of the project; Kazu Yamamoto and Matt Brown, who transformed Warp from a simple testing server to one of the fastest application servers available today; and Felipe Lessa, Patrick Brisbin, and Luite Stegeman for their numerous contributions across the board.
+In particular, I&#8217;d like to thank Greg Weber, who has shared the maintenance burden of the project; Kazu Yamamoto and Matt Brown, who transformed Warp from a simple testing server to one of the fastest application servers available today; and Felipe Lessa, Patrick Brisbin, and Luite Stegeman for their numerous contributions across the board.
 
 A big thank you to my editor, Simon St. Laurent, for all of his guidance and support. Mark Lentczner, Johan Tibell, and Adam Turoff provided incredibly thorough reviews of this book, cleaning up many of my mistakes. Additionally, there have been dozens of readers who have looked over the content of this book online, and provided feedback on where either the prose or the message was not coming through clearly—not to mention numerous spelling errors.
 
-But finally, and most importantly, I&rsquo;d like to thank my wife, Miriam, for enduring all of the time spent on both this book and Yesod in general. She has been my editor and sounding-board, though I&rsquo;m sure the intricacies of Template Haskell sometimes worked more as a sedative than any meaningful conversation. Without her support, neither the Yesod project nor this book would have been able to happen.
+But finally, and most importantly, I&#8217;d like to thank my wife, Miriam, for enduring all of the time spent on both this book and Yesod in general. She has been my editor and sounding-board, though I&#8217;m sure the intricacies of Template Haskell sometimes worked more as a sedative than any meaningful conversation. Without her support, neither the Yesod project nor this book would have been able to happen.
 
-Also, you&rsquo;ll notice that I use my kids&rsquo; names (Eliezer and Gavriella) in some examples throughout the book. They deserve special mention in a Haskell text, since I think they&rsquo;re the youngest people to ever use the word &ldquo;monad&rdquo; in a sentence with their &ldquo;Transformers: Monads in Disguise.&rdquo;
+Also, you&#8217;ll notice that I use my kids&#8217; names (Eliezer and Gavriella) in some examples throughout the book. They deserve special mention in a Haskell text, since I think they&#8217;re the youngest people to ever use the word &ldquo;monad&rdquo; in a sentence with their &ldquo;Transformers: Monads in Disguise.&rdquo;
 
