@@ -333,6 +333,9 @@ main = runSqlite ":memory:" $ do
     liftIO $ print michael
 ----
 
+NOTE: This code compiles, but will generate a runtime exception about a missing
+table. We'll explain and address that problem below.
+
 We start off with some standard database connection code. In this case, we used
 the single-connection functions. Persistent also comes built in with connection
 pool functions, which we will generally want to use in production.
