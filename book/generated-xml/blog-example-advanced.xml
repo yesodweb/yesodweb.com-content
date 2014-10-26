@@ -26,7 +26,7 @@ import Yesod.Auth
 import Yesod.Form.Nic (YesodNic, nicHtmlField)
 import Yesod.Auth.BrowserId (authBrowserId, def)
 import Data.Text (Text)
-import Network.HTTP.Client (defaultManagerSettings)
+import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Conduit (Manager, newManager)
 import Database.Persist.Sqlite
     ( ConnectionPool, SqlBackend, runSqlPool, runMigration
@@ -397,7 +397,7 @@ main = do
     pool &lt;- runStdoutLoggingT $ createSqlitePool "blog.db3" 10 -- create a new pool
     -- perform any necessary migration
     runSqlPersistMPool (runMigration migrateAll) pool
-    manager &lt;- newManager defaultManagerSettings -- create a new HTTP manager
+    manager &lt;- newManager tlsManagerSettings -- create a new HTTP manager
     warp 3000 $ Blog pool manager -- start our server</programlisting>
 </section>
 </article>
