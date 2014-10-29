@@ -422,7 +422,7 @@ There are a number of functions that return information about your application
 as a whole, and give no information about individual requests. Some of these
 are:
 
-getYesod:: Returns your applicaton foundation value. If you store configuration
+getYesod:: Returns your application foundation value. If you store configuration
 values in your foundation, you will probably end up using this function a lot.
 (If you're so inclined, you can also use +ask+ from +Control.Monad.Reader+;
 +getYesod+ is simply a type-constrained synonym for it.)
