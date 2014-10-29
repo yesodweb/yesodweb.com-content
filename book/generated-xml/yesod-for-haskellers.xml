@@ -260,7 +260,7 @@ import           Yesod.Core                    (Html, RenderRoute (..), Yesod,
                                                 YesodDispatch (..), toWaiApp)
 import           Yesod.Core.Types              (YesodRunnerEnv (..))
 
--- | Our foundatation datatype.
+-- | Our foundation datatype.
 data App = App
     { welcomeMessage :: !Html
     }
@@ -369,7 +369,7 @@ import           Yesod.Core               (HandlerT, Html, RenderRoute (..),
                                            Yesod, YesodDispatch (..), getYesod,
                                            notFound, toWaiApp, yesodRunner)
 
--- | Our foundatation datatype.
+-- | Our foundation datatype.
 data App = App
     { welcomeMessage :: !Html
     }
@@ -551,7 +551,7 @@ import           Yesod.Core               (HandlerT, Html, RenderRoute (..),
                                            selectRep, toWaiApp, yesodRunner,
                                            (.=))
 
--- | Our foundatation datatype.
+-- | Our foundation datatype.
 data App = App
     { welcomeMessageHtml :: !Html
     , welcomeMessageText :: !Text
@@ -731,7 +731,7 @@ import           Yesod.Core                         (HandlerT, RenderRoute (..),
                                                      sendChunkText, sendFlush,
                                                      warp, yesodRunner)
 
--- | Our foundatation datatype.
+-- | Our foundation datatype.
 data App = App
 
 instance Yesod App
@@ -888,7 +888,7 @@ previous example converted to the Template Haskell version:</simpara>
 import           Yesod.Core (RenderRoute (..), Yesod, mkYesod, parseRoutes,
                              redirect, warp)
 
--- | Our foundatation datatype.
+-- | Our foundation datatype.
 data App = App
 
 instance Yesod App

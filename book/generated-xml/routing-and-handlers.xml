@@ -389,7 +389,7 @@ getYesod
 </term>
 <listitem>
 <simpara>
-Returns your applicaton foundation value. If you store configuration
+Returns your application foundation value. If you store configuration
 values in your foundation, you will probably end up using this function a lot.
 (If you&#8217;re so inclined, you can also use <literal>ask</literal> from <literal>Control.Monad.Reader</literal>;
 <literal>getYesod</literal> is simply a type-constrained synonym for it.)
