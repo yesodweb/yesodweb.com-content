@@ -9,7 +9,7 @@ about how awesome GHCJS is (after Luite indoctrinated me at ICFP).
 For those interested, the slides are now available online at:
 
 * [Conduit](https://drive.google.com/open?id=1RBefOCZ7AKOo4f1yiF4mtKPAT3l5vY9ky2SR02O4Vvg&authuser=0)
-* [Server/Client Hybrid Webapps in Haskell](https://drive.google.com/open?id=1RBefOCZ7AKOo4f1yiF4mtKPAT3l5vY9ky2SR02O4Vvg&authuser=0)
+* [Server/Client Hybrid Webapps in Haskell](https://drive.google.com/open?id=1Wn-ceTyS8WqDlbzkm_dSyl02rOdskqE8IYRLTbRxFtI&authuser=0)
 
 I've also learnt quite a number of cool client side tricks at PolyConf,
 hopefully we'll get to take advantage of some of them in Yesod in the near
