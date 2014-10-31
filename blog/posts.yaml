@@ -1,3 +1,7 @@
+- time: 2014-10-31T05:00:00Z
+  author: michael
+  title: "Slides on conduit and GHCJS"
+  path: 2014/10/slides-conduit-ghcjs.md
 - time: 2014-10-29T13:16:45Z
   author: michael
   title: "Announcing: yesod-gitrepo"
