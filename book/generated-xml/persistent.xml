@@ -9,7 +9,7 @@
 <simpara>Forms deal with the boundary between the user and the application. Another
 boundary we need to deal with is between the application and the storage layer.
 Whether it be a SQL database, a YAML file, or a binary blob, odds are your
-storage layer does not natively understand your applications data types, and
+storage layer does not natively understand your application&#8217;s data types, and
 you&#8217;ll need to perform some marshaling.  Persistent is Yesod&#8217;s answer to data
 storage- a type-safe, universal data store interface for Haskell.</simpara>
 <simpara>Haskell has many different database bindings available. However, most of these
@@ -258,7 +258,7 @@ data Person = Person
     { personName :: !String
     , personAge :: !Int
     }
-  deriving (Show, Read, Eq)
+  deriving Show
 
 type PersonId = Key Person
 
