@@ -237,7 +237,7 @@ data Person = Person
     { personName :: !String
     , personAge :: !Int
     }
-  deriving (Show, Read, Eq)
+  deriving Show
 
 type PersonId = Key Person
 
