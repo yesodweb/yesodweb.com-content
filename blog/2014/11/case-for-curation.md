@@ -9,7 +9,7 @@ I may as well get a few ideas out there.
 
 __tl;dr__ Stackage is simply better tooling, and we should be using better
 tooling instead of arguing policy. The PVP upper bounds advocates are arguing
-for a world without sin, and such a world doesn't exist.
+for a world without sin, and such a world doesn't exist. [Get started with Stackage now.](https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage)
 
 This blog post will be a bit unusual. Since I'm so used to seeing questions,
 criticisms, and misinformation on this topic, I'm going to interject commonly
@@ -141,3 +141,6 @@ I'm not claiming that Stackage solves every single reason why a build fails.
 The points under (7), for example, are not addressed. However, maybe of the
 common problems people face- and, I'd argue, the vast majority of issues that
 confuse and plague users- are addressed by simply moving over to Stackage.
+
+If you haven't already, I highly recommend you [give Stackage a try
+today](https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage).
