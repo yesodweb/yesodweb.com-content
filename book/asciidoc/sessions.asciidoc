@@ -19,7 +19,7 @@ this data, and some special functions to help you make the most of sessions.
 One of the earliest packages spun off from Yesod was clientsession. This
 package uses encryption and signatures to store data in a client-side cookie.
 The encryption prevents the user from inspecting the data, and the signature
-ensures that the session can be neither hijacked nor tampered with.
+ensures that the session cannot be tampered with.
 
 It might sound like a bad idea from an efficiency standpoint to store data in a
 cookie. After all, this means that the data must be sent on every request.
