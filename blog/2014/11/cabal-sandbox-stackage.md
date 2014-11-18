@@ -13,7 +13,7 @@ Simple definitions:
 * A sandbox is a project-local package installation
 * Freezing is specifying exact dependency versions.
 
-I really hope that Stackage (and sandboxes to a certain extent) are temporary workarounds before we have an amazing installation system such as [backpack]().
+I really hope that Stackage (and sandboxes to a certain extent) are temporary workarounds before we have an amazing installation system such as [backpack](http://plv.mpi-sws.org/backpack/).
 But right now, I think this is the best general-purpose solution we have. There are other tools that you can use if you are not on Windows:
 
 * hsenv (instead of sandboxes)
@@ -35,9 +35,9 @@ Exclusive includes only packages vetted by Stackage.
 Exclusive will always work, even for global installations.
 This has the nice effect of speeding up installation and keeping your disk usage low, whereas if you default to using sandboxes and you are making minor fixes to libraries you can end up with huge disk usage.
 However, you may eventually need packages not on Stackage, at which point you will need to use the inclusive snapshot.
-The inclusive snapshot risks conflicts between projects. At the point you are dealing with that, you need to start using sandboxes. 
+At some point you will be dealing with conflicts between projects, and then you definitely need to start using sandboxes. 
 The biggest problem with Stackage is that you may need a newer version of a package than what is on the exclusive list.
-At this point you will need to stop using Stackage and start using a sandbox.
+At that point you definitely need to stop using Stackage and start using a sandbox.
 
 If you think a project has complex dependencies, which probably includes most applications in a team work setting, you will probably want to start with a sandbox.
 
