@@ -1,4 +1,8 @@
 - time: 2014-11-12T11:38:00Z
+  author: greg
+  title: "Installing application dependencies using Stackage, sandboxes, and freezing"
+  path: 2014/11/cabal-sandbox-stackage.md
+- time: 2014-11-12T11:38:00Z
   author: michael
   title: "The case for curation: Stackage and the PVP"
   path: 2014/11/case-for-curation.md
