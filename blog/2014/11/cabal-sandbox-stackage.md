@@ -5,7 +5,7 @@ My strategy for successful installation:
 
 * Install through Stackage
 * Use a sandbox when you start having complexities
-* freeze (application) depenendencies
+* freeze (application) dependencies
 
 Simple definitions:
 
@@ -25,7 +25,7 @@ I don't want to have a sandbox name on my command line to remind me that it is w
 
 ## Using Stackage
 
-See the [Stackage documentation](). You just need to change the remote-repo setting in your ~/.cabal/config file.
+See the [Stackage documentation](https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage). You just need to change the remote-repo setting in your ~/.cabal/config file.
 
 Stackage is a curated list of packages that are guaranteed to work together.
 Stackage solves dependency hell with exclusive and inclusive package snapshots, but it cannot be used on every project.
@@ -34,16 +34,16 @@ Stackage offers 2 package lists: exclusive, and inclusive.
 Exclusive includes only packages vetted by Stackage.
 Exclusive will always work, even for global installations.
 This has the nice effect of speeding up installation and keeping your disk usage low, whereas if you default to using sandboxes and you are making minor fixes to libraries you can end up with huge disk usage.
-However, but you may eventually need packages not on Stackage, at which point you will need to use the inclusive snapshot.
+However, you may eventually need packages not on Stackage, at which point you will need to use the inclusive snapshot.
 The inclusive snapshot risks conflicts between projects. At the point you are dealing with that, you need to start using sandboxes. 
-The biggest problem with Stackage is that you may need a newer version of a package then what is on the exclusive list.
+The biggest problem with Stackage is that you may need a newer version of a package than what is on the exclusive list.
 At this point you will need to stop using Stackage and start using a sandbox.
 
-If you think a project has complex dependencies, which probbably includes most applications in a team work setting, you will probably want to start with a sandbox.
+If you think a project has complex dependencies, which probably includes most applications in a team work setting, you will probably want to start with a sandbox.
 
 
 
-## Sandboxing
+## Sandboxes
 
     cabal sandbox init
 
@@ -55,9 +55,9 @@ sandboxes are completely orthogonal to Stackage. What we want to do is use Stack
 This will give us the highest probability of a successful install.
 Unfortunately, Stackage (remote-repo) integration does not work for a sandbox.
 
-The good news is that there is a patch for Cabal in the works already.
-Even better news is that [you can use stackage with a sandbox today](https://www.fpcomplete.com/blog/2014/10/new-stackage-features#using-stackage-without-changing-your-repo)!
-The cabal.config file specifies a list of constratins that must be me://www.fpcomplete.com/blog/2014/10/new-stackage-features#using-stackage-without-changing-your-repo, and we can simply set that to use Stackage.
+The good news is that there is a patch for Cabal that has been merged.
+Even better news is that [you can use Stackage with a sandbox today](https://www.fpcomplete.com/blog/2014/10/new-stackage-features#using-stackage-without-changing-your-repo)!
+The cabal.config file specifies a list of constraints that must be met, and we can simply set that to use Stackage.
 
 
     cabal sandbox init
@@ -80,7 +80,9 @@ The solution is freezing your dependencies:
 
     cabal freeze
 
-Note that this will overwrite any existing cabal.config, that gets us into upgrade issues
+Note that this will overwrite any existing cabal.config, that gets us into upgrade issues that will be discussed.
+
+It is also worth noting that There is still a rare situation in which [freezing won't work properly because packages can be edited on Hackage](http://www.reddit.com/r/haskell/comments/2ma5gw/package_versioning_hackage_or_cabal_issue/).
 
 
 ## Installation workflow
@@ -98,16 +100,10 @@ An application developer will then want to freeze their dependencies.
     git commit cabal.config
 
 
-There are still some rare gotchas that you could run into even when using a fresh install
-
-* It is possible that using Stackage for a cabal.config will not work if there is a manually patched package on Stackage.
-* Because packages can be edited on Hackage, it is possible that [freezing will not always work](http://www.reddit.com/r/haskell/comments/2ma5gw/package_versioning_hackage_or_cabal_issue/).
-
-
 ## Upgrading packages
 
 cabal-install should provide us with a `cabal upgrade [PACKAGE-VERSION]` command.
-That would perform an upgrade of the package to the versino specified, but also performa a conservative upgrade of any transitive dependencies of that package.
+That would perform an upgrade of the package to the version specified, but also perform a conservative upgrade of any transitive dependencies of that package.
 
 One option here is to just wipe out your cabal.config and do a fresh re-install.
 
