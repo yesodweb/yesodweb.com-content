@@ -65,7 +65,7 @@ Cabal recognizes a cabal.config file which specifies a list of constraints that 
 
 
     cabal sandbox init
-    curl http://www.stackage.org/stackage/7.8.3-latest/cabal.config > cabal.config
+    curl http://www.stackage.org/alias/fpcomplete/unstable-ghc78-exclusive/cabal.config > cabal.config
     cabal install --only-dep
 
 
@@ -99,7 +99,7 @@ It is also worth noting that there is still a rare situation in which [freezing 
 Lets go over an installation workflow:
 
     cabal sandbox init
-    curl http://www.stackage.org/stackage/7.8.3-latest/cabal.config > cabal.config
+    curl http://www.stackage.org/alias/fpcomplete/unstable-ghc78-exclusive/cabal.config > cabal.config
     cabal install --only-dep
 
 An application developer will then want to freeze their dependencies.
@@ -122,7 +122,7 @@ One option for upgrading is to just wipe out your cabal.config and do a fresh re
     rm cabal.config
     rm -r .cabal-sandbox
     cabal sandbox init
-    curl http://www.stackage.org/stackage/7.8.3-latest/cabal.config > cabal.config
+    curl http://www.stackage.org/alias/fpcomplete/unstable-ghc78-exclusive/cabal.config > cabal.config
     cabal update
     cabal install --only-dep
     cabal freeze
@@ -134,7 +134,7 @@ The other extreme is to become the solver. Manually tinker with the cabal.config
 In between, you can attempt to leverage the fact that cabal already tries to perform conservative upgrades once you have packages installed.
 
     rm cabal.config
-    curl http://www.stackage.org/stackage/7.8.3-latest/cabal.config > cabal.config
+    curl http://www.stackage.org/alias/fpcomplete/unstable-ghc78-exclusive/cabal.config > cabal.config
     cabal update
     cabal install --only-dep --force-reinstalls
     cabal freeze
