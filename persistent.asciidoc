@@ -718,7 +718,7 @@ The one operator that's surprisingly named is "not equals." We use +!=.+, since
 +/=.+ is used for updates (for "divide-and-set", described later). Don't worry:
 if you use the wrong one, the compiler will catch you. The other two surprising
 operators are the "is member" and "is not member". They are, respectively,
-+<-.+ and +/<-.+ (both end with a period).
++\<-.+ and +/\<-.+ (both end with a period).
 
 And regarding ++OR++s, we use the +||.+ operator. For example:
 
