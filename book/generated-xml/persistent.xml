@@ -737,7 +737,7 @@ later.
 <literal>/=.</literal> is used for updates (for "divide-and-set", described later). Don&#8217;t worry:
 if you use the wrong one, the compiler will catch you. The other two surprising
 operators are the "is member" and "is not member". They are, respectively,
-<literal>&#8592;.</literal> and <literal>/&#8592;.</literal> (both end with a period).</simpara>
+<literal>&lt;-.</literal> and <literal>/&lt;-.</literal> (both end with a period).</simpara>
 <simpara>And regarding <literal>OR</literal>s, we use the <literal>||.</literal> operator. For example:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">people &lt;- selectList
     (       [PersonAge &gt;. 25, PersonAge &lt;=. 30]
