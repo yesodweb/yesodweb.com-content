@@ -231,7 +231,7 @@ applicative field with <literal>areq</literal>, or an optional input field with 
 </section>
 <section id="forms_types">
 <title>Types</title>
-<simpara>The Yesod.Form.Types module declares a few types. We won&#8217;t cover all the types
+<simpara>The <literal>Yesod.Form.Types</literal> module declares a few types. We won&#8217;t cover all the types
 available, but will instead focus on the most crucial. Let&#8217;s start with some of
 the simple ones:</simpara>
 <variablelist>
@@ -287,7 +287,7 @@ Field
 <simpara>
 Defines two pieces of functionality: how to parse the text input from a
 user into a Haskell value, and how to create the widget to be displayed to the
-user. <literal>yesod-form</literal> defines a number of individual Fields in Yesod.Form.Fields.
+user. <literal>yesod-form</literal> defines a number of individual Fields in <literal>Yesod.Form.Fields</literal>.
 </simpara>
 </listitem>
 </varlistentry>
@@ -515,12 +515,18 @@ carAForm mcar = Car
 <programlisting language="haskell" linenumbering="unnumbered">colors = map (pack . show &amp;&amp;&amp; id) [minBound..maxBound]</programlisting>
 <simpara><literal>[minBound..maxBound]</literal> gives us a list of all the different <literal>Color</literal> values. We
 then apply a <literal>map</literal> and <literal>&amp;&amp;&amp;</literal> (a.k.a, the fan-out operator) to turn that into a
-list of pairs.</simpara>
+list of pairs. And even this can be simplified by using the <literal>optionsEnum</literal>
+function provided by yesod-form, which would turn out original code into:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">carAForm :: Maybe Car -&gt; AForm Handler Car
+carAForm mcar = Car
+    &lt;$&gt; areq textField "Model" (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField "Year" (carYear &lt;$&gt; mcar)
+    &lt;*&gt; aopt (selectFieldList optionsEnum) "Color" (carColor &lt;$&gt; mcar)</programlisting>
 <simpara>Some people prefer radio buttons to drop-down lists. Fortunately, this is just a one-word change.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">carAForm = Car
-    &lt;$&gt; areq textField               "Model" Nothing
-    &lt;*&gt; areq intField                "Year"  Nothing
-    &lt;*&gt; aopt (radioFieldList colors) "Color" Nothing</programlisting>
+    &lt;$&gt; areq textField                    "Model" Nothing
+    &lt;*&gt; areq intField                     "Year"  Nothing
+    &lt;*&gt; aopt (radioFieldList optionsEnum) "Color" Nothing</programlisting>
 </section>
 <section id="forms_running_forms">
 <title>Running forms</title>
@@ -592,6 +598,10 @@ Same as <literal>generateFormPost</literal>, but for <literal>GET</literal>.
 <simpara>The return type from the first three is <literal>((FormResult a, Widget), Enctype)</literal>.
 The <literal>Widget</literal> will already have any validation errors and previously submitted
 values.</simpara>
+<note><simpara>Why the nested tuple instead of a specialized datatype? It&#8217;s because
+<literal>runFormPostNoToken</literal> and <literal>runFormGet</literal> can both be used with forms that don&#8217;t
+return a <literal>FormResult</literal> or <literal>Widget</literal>, which can be useful when dealing with more
+complicated monadic forms (discussed below).</simpara></note>
 </section>
 <section id="forms_i18n">
 <title>i18n</title>
@@ -827,7 +837,7 @@ main = warp 3000 App</programlisting>
 <title>Custom fields</title>
 <simpara>The fields that come built-in with Yesod will likely cover the vast majority of
 your form needs. But occasionally, you&#8217;ll need something more specialized.
-Fortunately, you can create new forms in Yesod yourself. The <literal>Field</literal> constructor
+Fortunately, you can create new fields in Yesod yourself. The <literal>Field</literal> constructor
 has three values: <literal>fieldParse</literal> takes a list of values submitted by the user and
 returns one of three results:</simpara>
 <itemizedlist>
@@ -1031,6 +1041,11 @@ postHomeR = getHomeR
 
 main :: IO ()
 main = warp 3000 App</programlisting>
+<simpara>One trick we&#8217;ve introduced here is using the same handler code for both the
+<literal>GET</literal> and <literal>POST</literal> request methods. This is enabled by the implementation of
+<literal>runFormPost</literal>, which will behave exactly like <literal>generateFormPost</literal> in the case of
+a <literal>GET</literal> request. Using the same handler for both request methods cuts down on
+some boilerplate.</simpara>
 </section>
 <section id="forms_summary">
 <title>Summary</title>

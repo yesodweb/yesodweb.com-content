@@ -6,6 +6,24 @@
 <article lang="en">
 <section id="I_chapter2_d1e408">
 <title>Haskell</title>
+<simpara>Haskell is a powerful, fast, type-safe, functional programming language. This
+book takes as an assumption that you are already familiar with most of the
+basics of Haskell. There are two wonderful books for learning Haskell, both of
+which are available for reading online:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+<ulink url="http://learnyouahaskell.com">Learn You a Haskell for Great Good!</ulink>
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<ulink url="http://book.realworldhaskell.org/read">Real World Haskell</ulink>
+</simpara>
+</listitem>
+</itemizedlist>
+<simpara>Additionally, there are a number of great articles on
+<ulink url="https://www.fpcomplete.com/school">School of Haskell</ulink>.</simpara>
 <simpara>In order to use Yesod, you&#8217;re going to have to know at least the basics of
 Haskell. Additionally, Yesod uses some features of Haskell that aren&#8217;t covered
 in most introductory texts. While this book assumes the reader has a basic
@@ -13,8 +31,6 @@ familiarity with Haskell, this chapter is intended to fill in the gaps.</simpara
 <simpara>If you are already fluent in Haskell, feel free to completely skip this
 chapter. Also, if you would prefer to start off by getting your feet wet with
 Yesod, you can always come back to this chapter later as a reference.</simpara>
-<simpara>If you are looking for a more thorough introduction to Haskell, I would
-recommend either Real World Haskell or Learn You a Haskell.</simpara>
 <section id="I_sect12_d1e423">
 <title>Terminology</title>
 <simpara>Even for those familiar with Haskell as a language, there can sometimes be some
@@ -98,6 +114,11 @@ this case, <literal>a</literal> is a type variable.
 </listitem>
 </varlistentry>
 </variablelist>
+<note><simpara>In both our <literal>Person</literal> and <literal>Make</literal> data types above, our data type and data
+constructor both share the same name. This is a common practice when dealing
+with a datatype with a single data constructor. However, there is nothing
+requiring this be followed; you can always name the data types and data
+constructors differently.</simpara></note>
 </section>
 <section id="I_sect12_d1e535">
 <title>Tools</title>

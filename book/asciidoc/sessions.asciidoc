@@ -9,7 +9,7 @@ general.
 As much as possible, RESTful applications should avoid storing state about an
 interaction with a client. However, it is sometimes unavoidable. Features like
 shopping carts are the classic example, but other more mundane interactions
-like proper login handling can be greatly enhanced by proper usage of sessions.
+like proper login handling can be greatly enhanced by correct usage of sessions.
 
 This chapter will describe how Yesod stores session data, how you can access
 this data, and some special functions to help you make the most of sessions.
@@ -219,7 +219,7 @@ main = warp 3000 App
 image::images/messages-1.png[]
 
 .New message entered in text box
-image::images/messages-1.png[]
+image::images/messages-2.png[]
 
 .After form submit, message appears at top of page
 image::images/messages-3.png[]

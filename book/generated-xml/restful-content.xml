@@ -471,36 +471,6 @@ For example, the <literal>Accept-Language</literal> header specifies which human
 (English, Spanish, German, Swiss-German) the client prefers. See the i18n
 chapter for details on how this header is used.</simpara>
 </section>
-<section id="restful-content_stateless">
-<title>Stateless</title>
-<simpara>I&#8217;ve saved this section for the last, not because it is less important, but
-rather because there are no specific features in Yesod to enforce this.</simpara>
-<simpara>HTTP is a stateless protocol: each request is to be seen as the beginning of a
-conversation. This means, for instance, it doesn&#8217;t matter to the server if you
-requested five pages previously, it will treat your sixth request as if it&#8217;s
-your first one.</simpara>
-<simpara>On the other hand, some features on websites won&#8217;t work without some kind of
-state. For example, how can you implement a shopping cart without saving
-information about items in between requests?</simpara>
-<simpara>The solution to this is cookies, and built on top of this, sessions. We have a
-whole section addressing the sessions features in Yesod. However, I cannot
-stress enough that this should be used sparingly.</simpara>
-<simpara>Let me give you an example. There&#8217;s a popular bug tracking system that I deal
-with on a daily basis which horribly abuses sessions. There&#8217;s a little
-drop-down on every page to select the current project. Seems harmless, right?
-What that dropdown does is set the current project in your session.</simpara>
-<simpara>The result of all this is that clicking on the "view issues" link is entirely
-dependent on the last project you selected. There&#8217;s no way to create a bookmark
-to your "Yesod" issues and a separate link for your "Hamlet" issues.</simpara>
-<simpara>The proper RESTful approach to this is to have one resource for all of the
-Yesod issues and a separate one for all the Hamlet issues. In Yesod, this is
-easily done with a route definition like:</simpara>
-<programlisting language="routes" linenumbering="unnumbered">/                    ProjectsR      GET
-/projects/#ProjectID ProjectIssuesR GET
-/issues/#IssueID     IssueR         GET</programlisting>
-<simpara>Be nice to your users: proper stateless architecture means that basic features
-like bookmarks, permalinks and the back/forward button will always work.</simpara>
-</section>
 <section id="restful-content_summary">
 <title>Summary</title>
 <simpara>Yesod adheres to the following tenets of REST:</simpara>

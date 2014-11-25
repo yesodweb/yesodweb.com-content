@@ -30,7 +30,7 @@ Static type safety, greatly helping the prevention of
 </listitem>
 <listitem>
 <simpara>
-Automated checking of valid URLs, whenever possible, through type-safe
+Automatic validation of interpolated links, whenever possible, through type-safe
   URLs.
 </simpara>
 </listitem>
@@ -222,7 +222,7 @@ surface. Supposing we had a template:</simpara>
 <title>Syntax</title>
 <simpara>All Shakespearean languages share the same interpolation syntax, and are able
 to utilize type-safe URLs. They differ in the syntax specific for their target
-language (HTML, CSS, or Javascript).</simpara>
+language (HTML, CSS, or Javascript). Let&#8217;s explore each language in turn.</simpara>
 <section id="shakespearean-templates_hamlet_syntax">
 <title>Hamlet Syntax</title>
 <simpara>Hamlet is the most sophisticated of the languages. Not only does it provide
@@ -251,7 +251,7 @@ use indentation. So something like this in HTML:</simpara>
 accustomed to it. The only tricky part comes with dealing with whitespace
 before and after tags. For example, let&#8217;s say you want to create the HTML</simpara>
 <programlisting language="html" linenumbering="unnumbered">&lt;p&gt;Paragraph &lt;i&gt;italic&lt;/i&gt; end.&lt;/p&gt;</programlisting>
-<simpara>We want to make sure that there is a whitespace preserved after the word
+<simpara>We want to make sure that whitespace is preserved after the word
 "Paragraph" and before the word "end". To do so, we use two simple escape
 characters:</simpara>
 <programlisting language="hamlet" linenumbering="unnumbered">&lt;p&gt;
@@ -648,7 +648,7 @@ Both of the above modes require a full recompile to see any changes. In reload m
 </variablelist>
 <note><simpara>Reload mode is not available for Hamlet, only for Cassius, Lucius and
 Julius. There are too many sophisticated features in Hamlet that rely directly
-on the Haskell compiler and could not feasible be reimplemented at runtime.</simpara></note>
+on the Haskell compiler and could not feasibly be reimplemented at runtime.</simpara></note>
 <simpara>One of the first two approaches should be used in production. They both embed
 the entirety of the template in the final executable, simplifying deployment
 and increasing performance. The advantage of the quasiquoter is the simplicity:
@@ -657,7 +657,7 @@ fit. However, in general, the external file approach is recommended because:</si
 <itemizedlist>
 <listitem>
 <simpara>
-It follows nicely in the tradition of separate logic from presentation.
+It follows nicely in the tradition of separating logic from presentation.
 </simpara>
 </listitem>
 <listitem>

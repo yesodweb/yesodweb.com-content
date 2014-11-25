@@ -117,28 +117,5 @@ blaze provides the fastest interface for generating UTF-8 data. Anyone who
 wants to use one of the other great libraries out there, such as <literal>text</literal>, should
 have no problem dropping it in.</simpara>
 </section>
-<section id="I_sect11_d1e388">
-<title>Introduction to Haskell</title>
-<simpara>Haskell is a powerful, fast, type-safe, functional programming language. This
-book takes as an assumption that you are already familiar with most of the
-basics of Haskell. There are two wonderful books for learning Haskell, both of
-which are available for reading online:</simpara>
-<itemizedlist>
-<listitem>
-<simpara>
-<ulink url="http://learnyouahaskell.com">Learn You a Haskell for Great Good!</ulink>
-</simpara>
-</listitem>
-<listitem>
-<simpara>
-<ulink url="http://book.realworldhaskell.org/read">Real World Haskell</ulink>
-</simpara>
-</listitem>
-</itemizedlist>
-<simpara>Yesod relies on a few features in Haskell that most introductory tutorials do
-not cover. Though you will rarely need to understand how these work, it&#8217;s
-always best to start off with a good appreciation for what your tools are
-doing. These are covered in the next chapter.</simpara>
-</section>
 </section>
 </article>

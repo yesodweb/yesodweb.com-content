@@ -354,7 +354,7 @@ the Yesod libraries, you&#8217;ll find no definition of the <literal>Widget</lit
 gives?</simpara>
 <simpara>Yesod defines a very similar type: <literal>data WidgetT site m a</literal>. This data type is a
 <emphasis role="strong">monad transformer</emphasis>. The last two arguments are the underlying monad and the
-monadic value, respectively. The site parameter is the individual foundation
+monadic value, respectively. The site parameter is the specific foundation
 type for your individual application. Since this type varies for each and every
 site, it&#8217;s impossible for the libraries to define a single <literal>Widget</literal> datatype
 which would work for every application.</simpara>
@@ -403,12 +403,12 @@ signature <literal>Widget &#8594; Handler Html</literal>.</simpara>
 each application. This is how Yesod apps are themed. So we&#8217;re still left with
 the question: when we&#8217;re inside <literal>defaultLayout</literal>, how do we unwrap a <literal>Widget</literal>?
 The answer is <literal>widgetToPageContent</literal>. Let&#8217;s look at some (simplified) types:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">widgetToPageContent :: Widget -&gt; Handler (PageContent url)
-data PageContent url = PageContent
+<programlisting language="haskell" linenumbering="unnumbered">data PageContent url = PageContent
     { pageTitle :: Html
     , pageHead :: HtmlUrl url
     , pageBody :: HtmlUrl url
-    }</programlisting>
+    }
+widgetToPageContent :: Widget -&gt; Handler (PageContent url)</programlisting>
 <simpara>This is getting closer to what we need. We now have direct access to the HTML
 making up the head and body, as well as the title. At this point, we can use
 Hamlet to combine them all together into a single document, along with our site

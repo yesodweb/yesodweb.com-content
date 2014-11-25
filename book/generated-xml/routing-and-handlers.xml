@@ -112,7 +112,7 @@ file structure or wikis with arbitrary hierarchies.
 </listitem>
 </varlistentry>
 </variablelist>
-<note><simpara>Since Yesod 1.4, you can additionally use a <literal>\</literal>+ to indicate a dynamic
+<note><simpara>Since Yesod 1.4, you can additionally use a <literal>+</literal> to indicate a dynamic
 multi. This is important since the C preprocessor can be confused by the <literal>/*</literal>
 character combination.</simpara></note>
 <simpara>Let us take a look at some standard kinds of resource patterns you may want to
@@ -178,7 +178,7 @@ beginning of your route. For example, the following will be accepted by Yesod:</
 !/foo/#Int  Foo2R GET
 !/foo/#Text Foo3R GET</programlisting>
 <note><simpara>You can also place the exclamation point at the beginning of any of the
-path pieces, or following the <literal>#</literal>, <literal>*</literal>, or <literal>\</literal>+ characters. However, this newer
+path pieces, or following the <literal>#</literal>, <literal>*</literal>, or <literal>+</literal> characters. However, this newer
 syntax should be preferred as it&#8217;s clearer what the goal is.</simpara></note>
 <simpara>One issue that overlapping routes introduce is ambiguity. In the example above,
 should <literal>/foo/bar</literal> route to <literal>Foo1R</literal> or <literal>Foo3R</literal>? And should <literal>/foo/42</literal> route to
@@ -193,7 +193,7 @@ application. Therefore, it has to start with a capital letter. By convention,
 these resource names all end with a capital R. There is nothing forcing you to
 do this, it is just common practice.</simpara>
 <simpara>The exact definition of our constructor depends upon the resource pattern it is
-attached to. Whatever datatypes are included in single and multi pieces of the
+attached to. Whatever datatypes are used as single-pieces or multi-pieces of the
 pattern become arguments to the datatype. This gives us a 1-to-1 correspondence
 between our type-safe URL values and valid URLs in our application.</simpara>
 <note><simpara>This doesn&#8217;t necessarily mean that <emphasis>every</emphasis> value is a working page, just
@@ -683,7 +683,7 @@ main = warp 3000 App</programlisting>
 </section>
 <section id="routing-and-handlers_query_string_and_hash_fragments">
 <title>Query string and hash fragments</title>
-<simpara>We&#8217;ve looked at a number of functions which work on URL-like things, such as <literal>redirect</literal>. These functions all work with type-safe URLs, but what else do they work with? There&#8217;s a typeclass called <literal>RedirectUrl</literal> which contains the logical for converting some type into a textual URL. This includes type-safe URLs, textual URLs, and two special instances:</simpara>
+<simpara>We&#8217;ve looked at a number of functions which work on URL-like things, such as <literal>redirect</literal>. These functions all work with type-safe URLs, but what else do they work with? There&#8217;s a typeclass called <literal>RedirectUrl</literal> which contains the logic for converting some type into a textual URL. This includes type-safe URLs, textual URLs, and two special instances:</simpara>
 <orderedlist numeration="arabic">
 <listitem>
 <simpara>

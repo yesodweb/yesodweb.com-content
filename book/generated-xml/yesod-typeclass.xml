@@ -81,7 +81,7 @@ could for example provide a different domain name depending on how the user
 requested the site in the first place.</simpara>
 <simpara>The scaffolded site uses <literal>ApprootMaster</literal> by default, and pulls your approot
 from either the <literal>APPROOT</literal> environment variable or a config file on launch.
-Additionally, it load different settings for developing, testing, staging, and
+Additionally, it loads different settings for testing and
 production builds, so you can easily test on one domain- like localhost- and
 serve from a different domain. You can modify these values from the config
 file.</simpara>
@@ -219,7 +219,7 @@ an extra empty string to the end. When dealing with path pieces, an empty
 string will append another slash. So adding an extra empty string will force a
 trailing slash.</simpara>
 <simpara><literal>cleanPath</literal> is a little bit trickier. First, we check for the empty path like
-before, and if so pass it through as-is. We use Right to indicate that a
+before, and if so pass it through as-is. We use <literal>Right</literal> to indicate that a
 redirect is not necessary. The next clause is actually checking for two
 different possible URL issues:</simpara>
 <itemizedlist>
@@ -257,7 +257,9 @@ components, like a Lucius template, from within <literal>defaultLayout</literal>
 information, see the previous chapter on widgets.</simpara>
 <simpara>If you are using the scaffolded site, you can modify the files
 <literal>templates/default-layout.hamlet</literal> and
-<literal>templates/default-layout-wrapper.hamlet</literal>.</simpara>
+<literal>templates/default-layout-wrapper.hamlet</literal>. The former contains most of the
+contents of the <literal>&lt;body&gt;</literal> tag, while the latter has the rest of the HTML, such
+as doctype and <literal>&lt;head&gt;</literal> tag. See those files for more details.</simpara>
 <section id="yesod-typeclass_getmessage">
 <title>getMessage</title>
 <simpara>Even though we haven&#8217;t covered sessions yet, I&#8217;d like to mention <literal>getMessage</literal>
@@ -485,7 +487,7 @@ isWriteRequest
 </term>
 <listitem>
 <simpara>
-Determine if the current request is a "read" or "write" operations. By default, Yesod follows RESTful principles, and assumes <literal>GET</literal>, <literal>HEAD</literal>, <literal>OPTIONS</literal>, and <literal>TRACE</literal> requests are read-only, while all others are can write.
+Determine if the current request is a "read" or "write" operations. By default, Yesod follows RESTful principles, and assumes <literal>GET</literal>, <literal>HEAD</literal>, <literal>OPTIONS</literal>, and <literal>TRACE</literal> requests are read-only, while all others are writable.
 </simpara>
 </listitem>
 </varlistentry>
