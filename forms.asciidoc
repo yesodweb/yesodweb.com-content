@@ -174,7 +174,7 @@ applicative field with +areq+, or an optional input field with +iopt+.
 
 === Types
 
-The Yesod.Form.Types module declares a few types. We won't cover all the types
+The +Yesod.Form.Types+ module declares a few types. We won't cover all the types
 available, but will instead focus on the most crucial. Let's start with some of
 the simple ones:
 
@@ -199,7 +199,7 @@ address. Fields are combined together to build forms.
 
 Field:: Defines two pieces of functionality: how to parse the text input from a
 user into a Haskell value, and how to create the widget to be displayed to the
-user. +yesod-form+ defines a number of individual Fields in Yesod.Form.Fields.
+user. +yesod-form+ defines a number of individual Fields in +Yesod.Form.Fields+.
 
 FieldSettings:: Basic information on how a field should be displayed, such as
 the display name, an optional tooltip, and possibly hardcoded +id+ and +name+
@@ -451,16 +451,26 @@ colors = map (pack . show &&& id) [minBound..maxBound]
 
 +[minBound..maxBound]+ gives us a list of all the different +Color+ values. We
 then apply a +map+ and +&&&+ (a.k.a, the fan-out operator) to turn that into a
-list of pairs.
+list of pairs. And even this can be simplified by using the +optionsEnum+
+function provided by yesod-form, which would turn out original code into:
+
+[source, haskell]
+----
+carAForm :: Maybe Car -> AForm Handler Car
+carAForm mcar = Car
+    <$> areq textField "Model" (carModel <$> mcar)
+    <*> areq carYearField "Year" (carYear <$> mcar)
+    <*> aopt (selectFieldList optionsEnum) "Color" (carColor <$> mcar)
+----
 
 Some people prefer radio buttons to drop-down lists. Fortunately, this is just a one-word change.
 
 [source, haskell]
 ----
 carAForm = Car
-    <$> areq textField               "Model" Nothing
-    <*> areq intField                "Year"  Nothing
-    <*> aopt (radioFieldList colors) "Color" Nothing
+    <$> areq textField                    "Model" Nothing
+    <*> areq intField                     "Year"  Nothing
+    <*> aopt (radioFieldList optionsEnum) "Color" Nothing
 ----
 
 === Running forms
@@ -492,6 +502,11 @@ generateFormGet:: Same as +generateFormPost+, but for +GET+.
 The return type from the first three is +((FormResult a, Widget), Enctype)+.
 The +Widget+ will already have any validation errors and previously submitted
 values.
+
+NOTE: Why the nested tuple instead of a specialized datatype? It's because
++runFormPostNoToken+ and +runFormGet+ can both be used with forms that don't
+return a +FormResult+ or +Widget+, which can be useful when dealing with more
+complicated monadic forms (discussed below).
 
 === i18n
 
@@ -728,7 +743,7 @@ main = warp 3000 App
 
 The fields that come built-in with Yesod will likely cover the vast majority of
 your form needs. But occasionally, you'll need something more specialized.
-Fortunately, you can create new forms in Yesod yourself. The +Field+ constructor
+Fortunately, you can create new fields in Yesod yourself. The +Field+ constructor
 has three values: +fieldParse+ takes a list of values submitted by the user and
 returns one of three results:
 
@@ -893,6 +908,12 @@ postHomeR = getHomeR
 main :: IO ()
 main = warp 3000 App
 ----
+
+One trick we've introduced here is using the same handler code for both the
++GET+ and +POST+ request methods. This is enabled by the implementation of
++runFormPost+, which will behave exactly like +generateFormPost+ in the case of
+a +GET+ request. Using the same handler for both request methods cuts down on
+some boilerplate.
 
 === Summary
 

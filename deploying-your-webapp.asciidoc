@@ -68,7 +68,9 @@ cookies. Yesod will automatically generate a new one of these keys if none is
 present. In practice, this means that, if you do not include this file in
 deployment, all of your users will have to log in again when you redeploy. If
 you follow the advice above and include the +config+ folder, this issue will be
-partially resolved.
+partially resolved. Another approach is to
+link:https://github.com/yesodweb/yesod/wiki/Client-session-key-in-an-environment-variable[put
+your session key in an environment variable].
 
 The other half of the resolution is to ensure that once you generate a
 +config/client_session_key.aes+ file, you keep the same one for all future
@@ -85,7 +87,7 @@ out a safe storage solution for the client session key.
 
 === SSL and static files
 
-There are two commonly used feature in the Yesod world: serving your site over
+There are two commonly used features in the Yesod world: serving your site over
 HTTPS, and placing your static files on a separate domain name. While both of
 these are good practices, when combined they can lead to problems if you're not
 careful. In particular, most web browsers will not load up Javascript files
