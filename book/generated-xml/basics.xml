@@ -280,6 +280,33 @@ appropriately. If you miss one, you&#8217;ll have 404s at runtime. In Yesod, all
 do is update your route and compile: GHC will pinpoint every single line of
 code that needs to be corrected.</simpara>
 </section>
+<section id="basics_non_html_responses">
+<title>Non-HTML responses</title>
+<simpara>Yesod can serve up any kind of content you want, and has first-class support
+for many commonly used response formats. You&#8217;ve seen HTML so far, but JSON data
+is just as easy, via the aeson package:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE ExtendedDefaultRules #-}
+{-# LANGUAGE OverloadedStrings    #-}
+{-# LANGUAGE QuasiQuotes          #-}
+{-# LANGUAGE TemplateHaskell      #-}
+{-# LANGUAGE TypeFamilies         #-}
+import Yesod
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+|]
+
+instance Yesod App
+
+getHomeR  = return $ object ["msg" .= "Hello World"]
+
+main = warp 3000 App</programlisting>
+<simpara>We&#8217;ll cover JSON responses in more detail in later chapters, including how to
+automatically switch between HTML and JSON representations depending on the
+<literal>Accept</literal> request header.</simpara>
+</section>
 <section id="basics_the_scaffolded_site">
 <title>The scaffolded site</title>
 <simpara>Installing Yesod will give you both the Yesod library, as well as a <literal>yesod</literal>
