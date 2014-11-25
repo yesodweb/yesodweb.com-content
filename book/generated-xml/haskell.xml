@@ -173,7 +173,7 @@ On the GHC command line, pass an extra argument <literal>-XMyLanguageExtension</
 </listitem>
 <listitem>
 <simpara>
-In your <literal>cabal</literal> file, add an <literal>extensions</literal> block.
+In your <literal>cabal</literal> file, add an <literal>default-extensions</literal> block.
 </simpara>
 </listitem>
 </itemizedlist>

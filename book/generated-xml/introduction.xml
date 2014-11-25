@@ -45,7 +45,7 @@ your fingers the work:</simpara>
 <listitem>
 <simpara>
 The forms library reduces the amount of code used for common cases by
-  leveraging the Applicative type class.
+  leveraging the <literal>Applicative</literal> type class.
 </simpara>
 </listitem>
 <listitem>
@@ -62,7 +62,7 @@ Serializing your data to and from a database is handled automatically via
 </itemizedlist>
 <simpara>In Yesod, we have two kinds of code generation. To get your project started, we
 provide a scaffolding tool to set up your file and folder structure. However,
-most code generation is done at compile time via meta programming. This means
+most code generation is done at compile time via meta-programming. This means
 your generated code will never get stale, as a simple library upgrade will
 bring all your generated code up-to-date.</simpara>
 <simpara>But for those who like to stay in control, and know exactly what their code is
