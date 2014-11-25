@@ -47,7 +47,7 @@ applications. Wherever possible, Yesod tries to use Haskell's features to save
 your fingers the work:
 
 * The forms library reduces the amount of code used for common cases by
-  leveraging the Applicative type class.
+  leveraging the +Applicative+ type class.
 
 * Routes are declared in a very terse format, without sacrificing type safety.
 
@@ -56,7 +56,7 @@ your fingers the work:
 
 In Yesod, we have two kinds of code generation. To get your project started, we
 provide a scaffolding tool to set up your file and folder structure. However,
-most code generation is done at compile time via meta programming. This means
+most code generation is done at compile time via meta-programming. This means
 your generated code will never get stale, as a simple library upgrade will
 bring all your generated code up-to-date.
 

@@ -119,7 +119,7 @@ are two other common approaches:
 
 * On the GHC command line, pass an extra argument +-XMyLanguageExtension+.
 
-* In your +cabal+ file, add an +extensions+ block.
+* In your +cabal+ file, add an +default-extensions+ block.
 
 I personally never use the GHC command line argument approach. It's a personal
 preference, but I like to have my settings clearly stated in a file. In general
