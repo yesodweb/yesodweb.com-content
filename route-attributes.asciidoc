@@ -95,3 +95,105 @@ main = warp 3000 App
 ----
 
 And it was so glaring, I bet you even caught the security hole about +Admin3R+.
+
+=== Alternative approach: hierarchical routes
+
+Another approach that can be used in some cases is *hierarchical routes*. This
+allows you to group a number of related routes under a single parent. If you
+want to keep all of your admin routes under a single URL structure (e.g.,
++/admin+), this can be a good solution. Using them is fairly simple. You need
+to add a line to your routes declaration with a path, a name, and a colon,
+e.g.:
+
+[source, routes]
+----
+/admin AdminR:
+----
+
+Then, you place all children routes beneath that line, and indented at least one space, e.g.:
+
+[source, routes]
+----
+    /1 Admin1R GET
+    /2 Admin2R GET
+    /3 Admin3R GET
+----
+
+To refer to these routes using type-safe URLs, you simply wrap them with the
++AdminR+ constructor, e.g. +AdminR Admin1R+. Here is the previous route
+attribute example rewritten to use hierarchical routes:
+
+[source, haskell]
+----
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+import           Data.Set         (member)
+import           Data.Text        (Text)
+import           Yesod
+import           Yesod.Auth
+import           Yesod.Auth.Dummy
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+/unprotected UnprotectedR GET
+/admin AdminR:
+    /1 Admin1R GET
+    /2 Admin2R GET
+    /3 Admin3R GET
+/auth AuthR Auth getAuth
+|]
+
+instance Yesod App where
+    authRoute _ = Just $ AuthR LoginR
+    isAuthorized (AdminR _) _writable = do
+        muser <- maybeAuthId
+        case muser of
+            Nothing -> return AuthenticationRequired
+            Just ident
+                -- Just a hack since we're using the dummy module
+                | ident == "admin" -> return Authorized
+                | otherwise -> return $ Unauthorized "Admin access only"
+    isAuthorized _route _writable = return Authorized
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+-- Hacky YesodAuth instance for just the dummy auth plugin
+instance YesodAuth App where
+    type AuthId App = Text
+
+    loginDest _ = HomeR
+    logoutDest _ = HomeR
+    getAuthId = return . Just . credsIdent
+    authPlugins _ = [authDummy]
+    maybeAuthId = lookupSession credsKey
+    authHttpManager = error "no http manager provided"
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout $ do
+    setTitle "Route attr homepage"
+    [whamlet|
+        <p>
+            <a href=@{UnprotectedR}>Unprotected
+        <p>
+            <a href=@{AdminR Admin1R}>Admin 1
+        <p>
+            <a href=@{AdminR Admin2R}>Admin 2
+        <p>
+            <a href=@{AdminR Admin3R}>Admin 3
+    |]
+
+getUnprotectedR, getAdmin1R, getAdmin2R, getAdmin3R :: Handler Html
+getUnprotectedR = defaultLayout [whamlet|Unprotected|]
+getAdmin1R = defaultLayout [whamlet|Admin1|]
+getAdmin2R = defaultLayout [whamlet|Admin2|]
+getAdmin3R = defaultLayout [whamlet|Admin3|]
+
+main :: IO ()
+main = warp 3000 App
+----

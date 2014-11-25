@@ -13,7 +13,7 @@ providing conveniences where unobtrusive.
   link:http://en.wikipedia.org/wiki/Cross-site_scripting[XSS (cross-site
   scripting)] attacks.
 
-* Automated checking of valid URLs, whenever possible, through type-safe
+* Automatic validation of interpolated links, whenever possible, through type-safe
   URLs.
 
 There is nothing inherently tying Yesod to these languages, or the other way
@@ -259,7 +259,7 @@ this would translate roughly into the Haskell code:
 
 All Shakespearean languages share the same interpolation syntax, and are able
 to utilize type-safe URLs. They differ in the syntax specific for their target
-language (HTML, CSS, or Javascript).
+language (HTML, CSS, or Javascript). Let's explore each language in turn.
 
 ==== Hamlet Syntax
 
@@ -305,7 +305,7 @@ before and after tags. For example, let's say you want to create the HTML
 <p>Paragraph <i>italic</i> end.</p>
 ----
 
-We want to make sure that there is a whitespace preserved after the word
+We want to make sure that whitespace is preserved after the word
 "Paragraph" and before the word "end". To do so, we use two simple escape
 characters:
 
@@ -745,7 +745,7 @@ Reload mode:: Both of the above modes require a full recompile to see any change
 
 NOTE: Reload mode is not available for Hamlet, only for Cassius, Lucius and
 Julius. There are too many sophisticated features in Hamlet that rely directly
-on the Haskell compiler and could not feasible be reimplemented at runtime.
+on the Haskell compiler and could not feasibly be reimplemented at runtime.
 
 One of the first two approaches should be used in production. They both embed
 the entirety of the template in the final executable, simplifying deployment
@@ -753,7 +753,7 @@ and increasing performance. The advantage of the quasiquoter is the simplicity:
 everything stays in a single file. For short templates, this can be a very good
 fit. However, in general, the external file approach is recommended because:
 
-* It follows nicely in the tradition of separate logic from presentation.
+* It follows nicely in the tradition of separating logic from presentation.
 
 * You can easily switch between external file and debug mode with some simple
   CPP macros, meaning you can keep rapid development and still achieve high

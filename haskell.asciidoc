@@ -2,6 +2,18 @@
 
 == Haskell
 
+Haskell is a powerful, fast, type-safe, functional programming language. This
+book takes as an assumption that you are already familiar with most of the
+basics of Haskell. There are two wonderful books for learning Haskell, both of
+which are available for reading online:
+
+* link:http://learnyouahaskell.com[Learn You a Haskell for Great Good!]
+
+* link:http://book.realworldhaskell.org/read[Real World Haskell]
+
+Additionally, there are a number of great articles on
+link:https://www.fpcomplete.com/school[School of Haskell].
+
 In order to use Yesod, you're going to have to know at least the basics of
 Haskell. Additionally, Yesod uses some features of Haskell that aren't covered
 in most introductory texts. While this book assumes the reader has a basic
@@ -10,9 +22,6 @@ familiarity with Haskell, this chapter is intended to fill in the gaps.
 If you are already fluent in Haskell, feel free to completely skip this
 chapter. Also, if you would prefer to start off by getting your feet wet with
 Yesod, you can always come back to this chapter later as a reference.
-
-If you are looking for a more thorough introduction to Haskell, I would
-recommend either Real World Haskell or Learn You a Haskell.
 
 [[I_sect12_d1e423]]
 
@@ -59,6 +68,12 @@ all type constructors.
 
 Type variables:: Consider the data type +data Maybe a = Just a | Nothing+. In
 this case, +a+ is a type variable.
+
+NOTE: In both our +Person+ and +Make+ data types above, our data type and data
+constructor both share the same name. This is a common practice when dealing
+with a datatype with a single data constructor. However, there is nothing
+requiring this be followed; you can always name the data types and data
+constructors differently.
 
 [[I_sect12_d1e535]]
 
@@ -119,7 +134,7 @@ are two other common approaches:
 
 * On the GHC command line, pass an extra argument +-XMyLanguageExtension+.
 
-* In your +cabal+ file, add an +extensions+ block.
+* In your +cabal+ file, add an +default-extensions+ block.
 
 I personally never use the GHC command line argument approach. It's a personal
 preference, but I like to have my settings clearly stated in a file. In general

@@ -324,7 +324,7 @@ gives?
 
 Yesod defines a very similar type: +data WidgetT site m a+. This data type is a
 *monad transformer*. The last two arguments are the underlying monad and the
-monadic value, respectively. The site parameter is the individual foundation
+monadic value, respectively. The site parameter is the specific foundation
 type for your individual application. Since this type varies for each and every
 site, it's impossible for the libraries to define a single +Widget+ datatype
 which would work for every application.
@@ -388,12 +388,12 @@ The answer is +widgetToPageContent+. Let's look at some (simplified) types:
 
 [source, haskell]
 ----
-widgetToPageContent :: Widget -> Handler (PageContent url)
 data PageContent url = PageContent
     { pageTitle :: Html
     , pageHead :: HtmlUrl url
     , pageBody :: HtmlUrl url
     }
+widgetToPageContent :: Widget -> Handler (PageContent url)
 ----
 
 This is getting closer to what we need. We now have direct access to the HTML

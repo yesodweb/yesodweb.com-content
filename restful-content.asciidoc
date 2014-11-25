@@ -498,47 +498,6 @@ For example, the +Accept-Language+ header specifies which human language
 (English, Spanish, German, Swiss-German) the client prefers. See the i18n
 chapter for details on how this header is used.
 
-=== Stateless
-
-I've saved this section for the last, not because it is less important, but
-rather because there are no specific features in Yesod to enforce this.
-
-HTTP is a stateless protocol: each request is to be seen as the beginning of a
-conversation. This means, for instance, it doesn't matter to the server if you
-requested five pages previously, it will treat your sixth request as if it's
-your first one.
-
-On the other hand, some features on websites won't work without some kind of
-state. For example, how can you implement a shopping cart without saving
-information about items in between requests?
-
-The solution to this is cookies, and built on top of this, sessions. We have a
-whole section addressing the sessions features in Yesod. However, I cannot
-stress enough that this should be used sparingly.
-
-Let me give you an example. There's a popular bug tracking system that I deal
-with on a daily basis which horribly abuses sessions. There's a little
-drop-down on every page to select the current project. Seems harmless, right?
-What that dropdown does is set the current project in your session.
-
-The result of all this is that clicking on the "view issues" link is entirely
-dependent on the last project you selected. There's no way to create a bookmark
-to your "Yesod" issues and a separate link for your "Hamlet" issues.
-
-The proper RESTful approach to this is to have one resource for all of the
-Yesod issues and a separate one for all the Hamlet issues. In Yesod, this is
-easily done with a route definition like:
-
-[source, routes]
-----
-/                    ProjectsR      GET
-/projects/#ProjectID ProjectIssuesR GET
-/issues/#IssueID     IssueR         GET
-----
-
-Be nice to your users: proper stateless architecture means that basic features
-like bookmarks, permalinks and the back/forward button will always work.
-
 === Summary
 
 Yesod adheres to the following tenets of REST:

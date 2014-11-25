@@ -9,7 +9,7 @@ general.
 As much as possible, RESTful applications should avoid storing state about an
 interaction with a client. However, it is sometimes unavoidable. Features like
 shopping carts are the classic example, but other more mundane interactions
-like proper login handling can be greatly enhanced by proper usage of sessions.
+like proper login handling can be greatly enhanced by correct usage of sessions.
 
 This chapter will describe how Yesod stores session data, how you can access
 this data, and some special functions to help you make the most of sessions.
@@ -19,7 +19,7 @@ this data, and some special functions to help you make the most of sessions.
 One of the earliest packages spun off from Yesod was clientsession. This
 package uses encryption and signatures to store data in a client-side cookie.
 The encryption prevents the user from inspecting the data, and the signature
-ensures that the session can be neither hijacked nor tampered with.
+ensures that the session cannot be tampered with.
 
 It might sound like a bad idea from an efficiency standpoint to store data in a
 cookie. After all, this means that the data must be sent on every request.
@@ -219,7 +219,7 @@ main = warp 3000 App
 image::images/messages-1.png[]
 
 .New message entered in text box
-image::images/messages-1.png[]
+image::images/messages-2.png[]
 
 .After form submit, message appears at top of page
 image::images/messages-3.png[]

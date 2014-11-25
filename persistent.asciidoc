@@ -93,6 +93,10 @@ main = runSqlite ":memory:" $ do
     deleteWhere [BlogPostAuthorId ==. johnId]
 ----
 
+NOTE: The type annotations in the snippet above are *not* required to get your
+code to compile, but are present to clarify to the reader the types of each
+value.
+
 === Solving the boundary issue
 
 Suppose you are storing information on people in a SQL database. Your table
@@ -150,20 +154,24 @@ can represent data that gets sent to and from a database. Its definition is:
 
 [source, haskell]
 ----
-data PersistValue = PersistText Text
-                  | PersistByteString ByteString
-                  | PersistInt64 Int64
-                  | PersistDouble Double
-                  | PersistRational Rational
-                  | PersistBool Bool
-                  | PersistDay Day
-                  | PersistTimeOfDay TimeOfDay
-                  | PersistUTCTime UTCTime
-                  | PersistNull
-                  | PersistList [PersistValue]
-                  | PersistMap [(Text, PersistValue)]
-                  | PersistObjectId ByteString -- ^ Intended especially for MongoDB backend
-                  | PersistDbSpecific ByteString -- ^ Using 'PersistDbSpecific' allows you to use types specific to a particular backend
+data PersistValue
+    = PersistText Text
+    | PersistByteString ByteString
+    | PersistInt64 Int64
+    | PersistDouble Double
+    | PersistRational Rational
+    | PersistBool Bool
+    | PersistDay Day
+    | PersistTimeOfDay TimeOfDay
+    | PersistUTCTime UTCTime
+    | PersistNull
+    | PersistList [PersistValue]
+    | PersistMap [(Text, PersistValue)]
+    | PersistObjectId ByteString
+    -- ^ Intended especially for MongoDB backend
+    | PersistDbSpecific ByteString
+    -- ^ Using 'PersistDbSpecific' allows you to use types
+    -- specific to a particular backend
 ----
 
 Each Persistent backend needs to know how to translate the relevant values into
@@ -197,7 +205,12 @@ entities once. Let's see a quick example:
 
 [source, haskell]
 ----
-{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell, OverloadedStrings, GADTs #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 import Database.Persist
 import Database.Persist.TH
 import Database.Persist.Sqlite
@@ -231,7 +244,6 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative
-import Data.Aeson (ToJSON, FromJSON)
 
 data Person = Person
     { personName :: !String
@@ -243,7 +255,7 @@ type PersonId = Key Person
 
 instance PersistEntity Person where
     newtype Key Person = PersonKey (BackendKey SqlBackend)
-        deriving (ToJSON, FromJSON, PersistField, Show, Eq, Read, Ord)
+        deriving (PersistField, Show, Eq, Read, Ord)
     -- A Generalized Algebraic Datatype (GADT).
     -- This gives us a type-safe approach to matching fields with
     -- their datatypes.
@@ -583,7 +595,7 @@ declaration. Persistent knows that it is defining a unique constructor, since
 the line begins with a capital letter. Each following word must be a field in
 this entity.
 
-The main restriction on uniqueness is that it can only be applied non-null
+The main restriction on uniqueness is that it can only be applied to non-null
 fields. The reason for this is that the SQL standard is ambiguous on how
 uniqueness should be applied to +NULL+ (e.g., is +NULL=NULL+ true or false?).
 Besides that ambiguity, most SQL engines in fact implement rules which would be
@@ -718,7 +730,7 @@ The one operator that's surprisingly named is "not equals." We use +!=.+, since
 +/=.+ is used for updates (for "divide-and-set", described later). Don't worry:
 if you use the wrong one, the compiler will catch you. The other two surprising
 operators are the "is member" and "is not member". They are, respectively,
-+<-.+ and +/<-.+ (both end with a period).
++\<-.+ and +/\<-.+ (both end with a period).
 
 And regarding ++OR++s, we use the +||.+ operator. For example:
 
@@ -880,7 +892,7 @@ haveBirthday personId = update personId [PersonAge +=. 1]
 ----
 
 And as you might expect, we have all the basic mathematical operators:
-+$$+=.$$+, +-=.+, +\*=.+, and +/=.+ (full stop). These can be convenient for
++$$+=.$$+, +-=.+, +*=.+, and +/=.+ (full stop). These can be convenient for
 updating a single record, but they are also essential for proper ACID
 guarantees. Imagine the alternative: pull out a +Person+, increment the age,
 and update the new value. If you have two threads/processes working on this
