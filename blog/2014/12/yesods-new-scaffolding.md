@@ -21,6 +21,26 @@ environments. Since I've already described these changes in quite some detail,
 I will instead point you to [the second mailing list thread linked
 above](https://groups.google.com/d/msg/yesodweb/rpuXOKtUj_o/LrRNQJns6noJ).
 
+To give an example of how this works, take a look at the following lines from
+the new `settings.yml` file:
+
+```
+host:           "_env:HOST:*4" # any IPv4 host
+port:           "_env:PORT:3000"
+approot:        "_env:APPROOT:http://localhost:3000"
+```
+
+In the old scaffolding, both `PORT` and `APPROOT` were recognized environment
+variable names, that would override whatever was defined in `settings.yml`.
+However, that overriding occurred in a library (Yesod.Default.Config) and was
+not obvious to users, which led to many bug reports/support questions.
+Additionally, there was no way to override the host/interface binding via
+environment variables. In the new system:
+
+* It's obvious from reading the config file which settings can be overridden via environment variables, and what the names of those variables are.
+* It's trivial to change the names, or disable environment variable overriding (e.g., replace the `approot` line with `approot: http://localhost:3000`).
+* New arbitrary settings can be added at will, and easily use environment variables to override their values.
+
 The other change is that we've replaced the ad-hoc `Import` prelude replacement
 previously found in the scaffolding with ClassyPrelude.Yesod. For users not
 interested in classy-prelude, it should be trivial to replace `import
