@@ -19,7 +19,7 @@ instead of needing to find a working package set yourself. This avoids the
 oft-sited "cabal hell" users have faced in the past.
 
 If this is your first Haskell project, please use [Stackage Server](http://www.stackage.org/).
-The downside of this approach is that at the moment, all of your Haskell projects need to use Stackage server. This issue should be fixed soon, but if it is an issue for you, use the sandbox install instructions.
+Stackage can be used in a single sandbox or system-wide. To setup a project to use Stackage:
 
 1. Make sure [your system is prepared to use Stackage Server](https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage), and then set up Stackage following the Getting Started section [on the Stackage Server homepage](http://www.stackage.org/).
 2. Install necessary build tools: `cabal install alex happy yesod-bin`
