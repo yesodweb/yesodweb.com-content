@@ -42,7 +42,13 @@ Note that you will need the dev version of some system libraries to be
 available for the above steps to work. For example, on Ubuntu, you may need to
 run something like:
 
-    sudo apt-get install -y build-essential zlib1g-dev libmysqlclient-dev libpq-dev
+    sudo apt-get install -y build-essential zlib1g-dev
+
+If you're using a database, you'll likely need to install the system libraries
+to talk to it. Some Ubuntu examples are:
+
+    sudo apt-get install -y libmysqlclient-dev
+    sudo apt-get install -y libpg-dev
 
 ## Learn more
 
