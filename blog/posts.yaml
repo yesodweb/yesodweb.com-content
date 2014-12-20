@@ -1,3 +1,7 @@
+- time: 2014-12-20T14:30:00Z
+  author: michael
+  title: Use Stackage for docs
+  path: 2014/12/use-stackage-for-docs.md
 - time: 2014-12-16T08:00:00Z
   author: michael
   title: "Minimal Yesod multifile site"
