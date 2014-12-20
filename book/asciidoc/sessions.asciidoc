@@ -68,11 +68,40 @@ helper function:
 [source, haskell]
 ----
 instance Yesod App where
-    makeSessionBackend _ = do
-        let minutes = 24 * 60 -- 1 day
+    makeSessionBackend _ =
+        fmap Just $ defaultClientSessionBackend minutes filepath
+      where minutes = 24 * 60 -- 1 day
             filepath = "mykey.aes"
-        backend <- defaultClientSessionBackend minutes filepath
 ----
+
+Client sessions over HTTP have an inherent hijacking vulnerability: an attacker
+can read the unencrypted traffic, obtain the session cookie from it, and then
+make requests to the site with that same cookie to impersonate the user. This
+vulnerability is particularly severe if the sessions include any personally
+identifiable information or authentication material. The only sure way to defeat
+this threat is to run your entire site over SSL, and prevent browsers from
+attempting to access it over HTTP.  Do the first part of this at the webserver
+level. For the second, augment your application's sessions as well as the
+default +yesodMiddleware+ implementation with some additional behavior: Apply
+the +sslOnlySessions+ transformation to your +makeSessionBackend+, and compose
+the +sslOnlyMiddleware+ transformation with your +yesodMiddleware+
+implementation.
+
+[source, haskell]
+----
+instance Yesod App where
+    makeSessionBackend _ = sslOnlySessions $
+        fmap Just $ defaultClientSessionBackend 120 "mykey.aes"
+    yesodMiddleware = (sslOnlyMiddleware 120) . defaultYesodMiddleware
+----
+
++sslOnlySessions causes all session cookies to be set with the Secure bit on, so
+that browsers will not transmit them over HTTP. +sslOnlyMiddleware+ adds a
+Strict-Transport-Security header to all responses, which instructs browsers not
+to make HTTP requests to your domain or its subdomains for the specified number
+of minutes. Be sure to set the timeout for the +sslOnlyMiddleware+ to be at
+least as long as your session timeout. Used together, these measures will ensure
+that session cookies are not transmitted in the clear.
 
 There are a few other functions to grant you more fine-grained control of
 client-session, but they will rarely be necessary. Please see ++Yesod.Core++'s

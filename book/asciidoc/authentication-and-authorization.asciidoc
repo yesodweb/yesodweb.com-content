@@ -43,11 +43,12 @@ table ID _and_ entity value.
 
 Since all of the storage of +AuthId+ is built on top of sessions, all of the
 rules from there apply. In particular, the data is stored in an encrypted,
-HMACed client cookie, which automatically times out after a certain
-configurable period of inactivity. Additionally, since there is no server-side
-component to sessions, logging out simply deletes the data from the session
-cookie; if a user reuses an older cookie value, the session will still be
-valid.
+HMACed client cookie, which automatically times out after a certain configurable
+period of inactivity. Sites not configured for ssl-only using the
++sslOnlySessions+ and +sslOnlyMiddleware+ functions are vulnerable to +AuthId+
+hijacking. Additionally, since there is no server-side component to sessions,
+logging out simply deletes the data from the session cookie; if a user reuses an
+older cookie value, the session will still be valid.
 
 NOTE: You can replace the default client-side sessions with server side
 sessions, to provide a forced logout capability, if this is desired.
