@@ -95,13 +95,13 @@ instance Yesod App where
     yesodMiddleware = (sslOnlyMiddleware 120) . defaultYesodMiddleware
 ----
 
-+sslOnlySessions causes all session cookies to be set with the Secure bit on, so
-that browsers will not transmit them over HTTP. +sslOnlyMiddleware+ adds a
++sslOnlySessions+ causes all session cookies to be set with the Secure bit on,
+so that browsers will not transmit them over HTTP. +sslOnlyMiddleware+ adds a
 Strict-Transport-Security header to all responses, which instructs browsers not
 to make HTTP requests to your domain or its subdomains for the specified number
 of minutes. Be sure to set the timeout for the +sslOnlyMiddleware+ to be at
-least as long as your session timeout. Used together, these measures will ensure
-that session cookies are not transmitted in the clear.
+least as long as your session timeout. Used together, these measures will
+ensure that session cookies are not transmitted in the clear.
 
 There are a few other functions to grant you more fine-grained control of
 client-session, but they will rarely be necessary. Please see ++Yesod.Core++'s
