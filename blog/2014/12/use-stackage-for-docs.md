@@ -27,4 +27,8 @@ Markdown).
 Others are clearly welcome to do this as well, but my main motivation here is
 explaining my reasoning for these changes, so I don't get a flood of new
 inquiries as to "why do you have such a strange description field in all your
-packages?"
+packages?" For those wishing to emulate this, follow these steps:
+
+1. Make sure your package has a good README or README.md file with a description.
+2. Include the README or README.md file in the extra-source-files field of your cabal file.
+3. Update your description field with text like: "Hackage documentation generation is not reliable. For up to date documentation, please see: <http://www.stackage.org/package/*name*>."
