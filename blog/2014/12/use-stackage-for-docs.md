@@ -32,3 +32,5 @@ packages?" For those wishing to emulate this, follow these steps:
 1. Make sure your package has a good README or README.md file with a description.
 2. Include the README or README.md file in the extra-source-files field of your cabal file.
 3. Update your description field with text like: "Hackage documentation generation is not reliable. For up to date documentation, please see: <http://www.stackage.org/package/*name*>."
+
+__UPDATE__ See [my next blog post](http://www.yesodweb.com/blog/2014/12/use-stackage-for-docs) for aftermath of this.
