@@ -42,13 +42,15 @@ while the second set of functions (the ones <emphasis role="strong">not</emphasi
 table ID <emphasis>and</emphasis> entity value.</simpara>
 <simpara>Since all of the storage of <literal>AuthId</literal> is built on top of sessions, all of the
 rules from there apply. In particular, the data is stored in an encrypted,
-HMACed client cookie, which automatically times out after a certain
-configurable period of inactivity. Additionally, since there is no server-side
-component to sessions, logging out simply deletes the data from the session
-cookie; if a user reuses an older cookie value, the session will still be
-valid.</simpara>
+HMACed client cookie, which automatically times out after a certain configurable
+period of inactivity. Additionally, since there is no server-side component to sessions,
+logging out simply deletes the data from the session cookie; if a user reuses an
+older cookie value, the session will still be valid.</simpara>
 <note><simpara>You can replace the default client-side sessions with server side
-sessions, to provide a forced logout capability, if this is desired.</simpara></note>
+sessions, to provide a forced logout capability, if this is desired.  Also, if
+you wish to secure your sessions from man in the middle (MITM) attacks, you
+should serve your site over SSL and harden your sessions via <literal>sslOnlySessions</literal>
+and <literal>sslOnlyMiddleware</literal>, as described in the sessions chapter.</simpara></note>
 <simpara>On the flip side, authorization is handled by a few methods inside the <literal>Yesod</literal>
 typeclass. For every request, these methods are run to determine if access
 should be allowed, denied, or if the user needs to be authenticated. By
