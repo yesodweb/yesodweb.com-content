@@ -6,8 +6,9 @@
 <article lang="en">
 <section id="creating-a-subsite_creating_a_subsite">
 <title>Creating a Subsite</title>
-<simpara>How many sites provide authentication systems? Or need to provide CRUD (CRUD)
-management of some objects? Or a blog? Or a wiki?</simpara>
+<simpara>How many sites provide authentication systems? Or need to provide
+create-read-update-delete (CRUD) management of some objects? Or a blog? Or a
+wiki?</simpara>
 <simpara>The theme here is that many websites include common components that can be
 reused throughout multiple sites. However, it is often quite difficult to get
 code to be modular enough to be truly plug-and-play: a component will require

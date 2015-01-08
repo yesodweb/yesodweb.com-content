@@ -1,7 +1,8 @@
 == Creating a Subsite
 
-How many sites provide authentication systems? Or need to provide CRUD (CRUD)
-management of some objects? Or a blog? Or a wiki?
+How many sites provide authentication systems? Or need to provide
+create-read-update-delete (CRUD) management of some objects? Or a blog? Or a
+wiki?
 
 The theme here is that many websites include common components that can be
 reused throughout multiple sites. However, it is often quite difficult to get
