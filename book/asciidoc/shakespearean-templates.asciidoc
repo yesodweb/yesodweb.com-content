@@ -800,7 +800,7 @@ main = putStrLn $ renderHtml $ template "My Title" render
 {-# LANGUAGE OverloadedStrings #-} -- we're using Text below
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE CPP #-} -- to control production versus debug
-import Text.Lucius (CssUrl, luciusFile, luciusFileDebug, renderCss)
+import Text.Lucius (CssUrl, luciusFile, luciusFileReload, renderCss)
 import Data.Text (Text)
 import qualified Data.Text.Lazy.IO as TLIO
 
@@ -815,7 +815,7 @@ template :: CssUrl MyRoute
 #if PRODUCTION
 template = $(luciusFile "template.lucius")
 #else
-template = $(luciusFileDebug "template.lucius")
+template = $(luciusFileReload "template.lucius")
 #endif
 
 main :: IO ()
