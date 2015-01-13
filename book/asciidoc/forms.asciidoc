@@ -460,7 +460,7 @@ carAForm :: Maybe Car -> AForm Handler Car
 carAForm mcar = Car
     <$> areq textField "Model" (carModel <$> mcar)
     <*> areq carYearField "Year" (carYear <$> mcar)
-    <*> aopt (selectFieldList optionsEnum) "Color" (carColor <$> mcar)
+    <*> aopt (selectField optionsEnum) "Color" (carColor <$> mcar)
 ----
 
 Some people prefer radio buttons to drop-down lists. Fortunately, this is just a one-word change.
@@ -470,7 +470,7 @@ Some people prefer radio buttons to drop-down lists. Fortunately, this is just a
 carAForm = Car
     <$> areq textField                    "Model" Nothing
     <*> areq intField                     "Year"  Nothing
-    <*> aopt (radioFieldList optionsEnum) "Color" Nothing
+    <*> aopt (radioField optionsEnum) "Color" Nothing
 ----
 
 === Running forms

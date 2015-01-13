@@ -521,12 +521,12 @@ function provided by yesod-form, which would turn out original code into:</simpa
 carAForm mcar = Car
     &lt;$&gt; areq textField "Model" (carModel &lt;$&gt; mcar)
     &lt;*&gt; areq carYearField "Year" (carYear &lt;$&gt; mcar)
-    &lt;*&gt; aopt (selectFieldList optionsEnum) "Color" (carColor &lt;$&gt; mcar)</programlisting>
+    &lt;*&gt; aopt (selectField optionsEnum) "Color" (carColor &lt;$&gt; mcar)</programlisting>
 <simpara>Some people prefer radio buttons to drop-down lists. Fortunately, this is just a one-word change.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">carAForm = Car
     &lt;$&gt; areq textField                    "Model" Nothing
     &lt;*&gt; areq intField                     "Year"  Nothing
-    &lt;*&gt; aopt (radioFieldList optionsEnum) "Color" Nothing</programlisting>
+    &lt;*&gt; aopt (radioField optionsEnum) "Color" Nothing</programlisting>
 </section>
 <section id="forms_running_forms">
 <title>Running forms</title>
