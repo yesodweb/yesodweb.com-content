@@ -33,7 +33,7 @@ app _req sendResponse = sendResponse $ responseLBS
 ----
 
 Wait a minute, there's no Yesod in there! Don't worry, we'll get there.
-Remember, we're building from the ground up, and in Yesod, the ground floor in
+Remember, we're building from the ground up, and in Yesod, the ground floor is
 WAI, the Web Application Interface. WAI sits between a web *handler*, such as a
 web server or a test framework, and a web *application*. In our case, the
 handler is Warp, a high performance web server, and our application is the
