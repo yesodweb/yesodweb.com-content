@@ -18,7 +18,7 @@ different streaming concepts, one of them being a streaming way to convert
 blaze-builder `Builder`s to filled `ByteString` buffers. Since blaze-builder
 was released a few years ago, a new set of modules was added to the bytestring
 package in version 0.10 known as a "bytestring builder." I asked one of the
-engineers at FP Complete, Manny Borsboom, to start working on a new module for
+engineers at FP Complete, Emanuel Borsboom, to start working on a new module for
 streaming-commons to provide similar functionality for bytestring builder.
 
 And now we run into the first problem with the Haskell toolchain. You would
@@ -34,7 +34,7 @@ The idea is that, when compiled against an older version of bytestring, the
 bytestring-builder package provides the necessary missing modules, and
 otherwise does nothing.
 
-When Manny wrote his changes to streaming-commons, he added a dependency on
+When Emanuel wrote his changes to streaming-commons, he added a dependency on
 bytestring-builder. We then proceeded to test this on multiple versions of GHC
 via Travis CI and Herbert's
 [multi-ghc-travis](https://github.com/hvr/multi-ghc-travis). Everything
@@ -50,7 +50,7 @@ library causes the build of streaming-commons to break, whereas our tests just
 used the default version of Cabal shipped with GHC 7.6. (We'll get back to
 *why* that broke things in a bit.)
 
-After some digging, [Manny
+After some digging, [Emanuel
 discovered](https://github.com/fpco/streaming-commons/issues/16#issuecomment-70694389)
 the deeper cause of the problem: [Bryan O'Sullivan
 reported](https://github.com/lpsmith/bytestring-builder/issues/1) an issue a
@@ -66,7 +66,7 @@ fields in the 1.18 (or 1.20? I'm not sure) release. You see, bytestring-builder
 was detecting which version of bytestring it was compiled against by inspecting
 the `configConstraints` field (you can [see the code yourself on
 Hackage](http://hackage.haskell.org/package/bytestring-builder-0.10.4.0.1/src/Setup.hs)).
-And starting in Cabal 0.19.1 (a development release), that field was no longer
+And [starting in Cabal 0.19.1](https://github.com/haskell/cabal/commit/7e88be547fbb31f9ed64062dc0981126f0e736db) (a development release), that field was no longer
 being populated. As a result, as soon as that newer Cabal library was
 installed, the bytestring-builder package became worse than useless.
 
