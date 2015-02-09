@@ -60,7 +60,7 @@ leads us to our second issue: this known bug existed for almost
 a year without resolution, and since it only occurs in unusual circumstances,
 was not detected by any of our automated tooling.
 
-The reason this bug existed though is by far the most terrifying thing I saw in
+The reason this bug existed though is by far the most worrisome thing I saw in
 this process: the Cabal library silently changed the semantics of one of its
 fields in the 1.18 (or 1.20? I'm not sure) release. You see, bytestring-builder
 was detecting which version of bytestring it was compiled against by inspecting
