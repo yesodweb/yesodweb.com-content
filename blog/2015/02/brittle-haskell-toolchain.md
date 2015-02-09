@@ -3,7 +3,7 @@ streaming-commons](https://github.com/fpco/streaming-commons/issues/16). Since
 then, the details of what we discovered when discussing this report have been
 bothering me quite a bit, as they expose a lot of the brittleness of the
 Haskell toolchain. I'm documenting all of these aspects now to make clear how
-fragile our tooling in, and thereby explain why I think Stackage is so vital to
+fragile our tooling is, and thereby explain why I think Stackage is so vital to
 our community.
 
 In this blog post, I'm going to describe six separate problems I've identified
@@ -56,7 +56,7 @@ the deeper cause of the problem: [Bryan O'Sullivan
 reported](https://github.com/lpsmith/bytestring-builder/issues/1) an issue a
 year ago where- when using a new version of the Cabal library-
 bytestring-builder does *not* in fact provide it's compatibility modules. This
-leads us to our second really annoying issue: this known bug existed for almost
+leads us to our second issue: this known bug existed for almost
 a year without resolution, and since it only occurs in unusual circumstances,
 was not detected by any of our automated tooling.
 
@@ -70,9 +70,9 @@ And starting in Cabal 0.19.1 (a development release), that field was no longer
 being populated. As a result, as soon as that newer Cabal library was
 installed, the bytestring-builder package became worse than useless.
 
-As an aside, this points to another painful aspect of our toolchain: there is
+As an aside, this points to another problematic aspect of our toolchain: there is
 no way to specify constraints on dependencies used in custom `Setup.hs` files.
-That's actually a much more painful issue than it may sound like, but I'll skip
+That's actually causes more difficulty than it may sound like, but I'll skip
 diving into it for now.
 
 The fix for this was [relatively
@@ -106,7 +106,7 @@ dependency on that library, and we have no way of placing bounds on it.
 
 So here are the toolchain problems I've identified above:
 
-1. Tight coupling between GHC version of some core libraries like bytestring.
+1. Tight coupling between GHC version and some core libraries like bytestring.
 2. A known issue lasting undocumented for a corner case for over a year, without any indication on the Hackage page that we should be concerned.
 3. The Cabal library silently changed the semantics of a field, causing complete breakage of a package.
 4. cabal-install's solver gets confused by standard flag usage, at least in slightly older versions.
@@ -122,7 +122,7 @@ why FP Complete is [working on Docker-based
 tooling](https://www.fpcomplete.com/blog/2015/01/fp-complete-software-pipeline).)
 
 (1) is highly mitigated by Stackage because, even though the tight coupling
-still exists, Stackage is provided a set of packages that take that coupling
+still exists, Stackage provides a set of packages that take that coupling
 into account for you, so you're not stuck trying to put the pieces together
 yourself.
 

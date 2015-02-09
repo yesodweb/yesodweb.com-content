@@ -1,7 +1,7 @@
 - time: 2015-02-10T12:30:00Z
   author: michael
-  title: Why we need Stackage
-  path: 2015/02/why-we-need-stackage.md
+  title: The brittle Haskell toolchain
+  path: 2015/02/brittle-haskell-toolchain.md
 - time: 2015-01-25T13:30:00Z
   author: michael
   title: PolyConf 2015
