@@ -116,7 +116,7 @@ So here are the toolchain problems I've identified above:
 Stackage completely solves (2), (3), (5), and (6) for end users. By specifying
 all library versions used, and then testing all of those versions together, we
 avoid many possible corner cases of weird library interactions, and provide a
-fully reprodible build. (Note the Stackage doesn't solve *all* such cases:
+fully reproducible build. (Note the Stackage doesn't solve *all* such cases:
 operating system, system libraries, executables, etc are still unpinned. That's
 why FP Complete is [working on Docker-based
 tooling](https://www.fpcomplete.com/blog/2015/01/fp-complete-software-pipeline).)
