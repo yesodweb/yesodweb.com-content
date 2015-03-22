@@ -48,7 +48,7 @@ If you're using a database, you'll likely need to install the system libraries
 to talk to it. Some Ubuntu examples are:
 
     sudo apt-get install -y libmysqlclient-dev
-    sudo apt-get install -y libpg-dev
+    sudo apt-get install -y libpq-dev
 
 ## Learn more
 
