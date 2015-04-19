@@ -350,6 +350,9 @@ folder, you can run +cabal install --only-dependencies+ to build any extra
 dependencies (such as your database backends), and then +yesod devel+ to run
 your site.
 
+NOTE: For getting your package environment set up, please be sure to follow the
+link:http://www.yesodweb.com/page/quickstart[quick start guide].
+
 The scaffolded site gives you a lot of best practices out of the box, setting
 up files and dependencies in a time-tested approach used by most production
 Yesod sites. However, all this convenience can get in the way of actually
