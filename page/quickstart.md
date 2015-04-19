@@ -1,16 +1,6 @@
 Title: Yesod quick start guide
 
-## Try it online
-
-[FP Haskell Center](https://www.fpcomplete.com/business/haskell-center/overview/)
-provides a web based development environment with all of the
-Haskell toolchain and Yesod libraries preinstalled. You can get started right
-away by [cloning an existing Yesod
-project](https://www.fpcomplete.com/school/project-templates/file-server).
-
-## Local installation
-
-To use Yesod on your local system, you'll need to [install the Haskell
+You'll need to [install the Haskell
 toolchain](http://www.stackage.org/install). Once you have Haskell installed, you can follow these steps to get a scaffolded site up and running:
 
 The simplest set of steps to get this started is:
