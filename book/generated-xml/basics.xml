@@ -316,6 +316,8 @@ then generate a folder containing the default scaffolded site. Inside that
 folder, you can run <literal>cabal install --only-dependencies</literal> to build any extra
 dependencies (such as your database backends), and then <literal>yesod devel</literal> to run
 your site.</simpara>
+<note><simpara>For getting your package environment set up, please be sure to follow the
+<ulink url="http://www.yesodweb.com/page/quickstart">quick start guide</ulink>.</simpara></note>
 <simpara>The scaffolded site gives you a lot of best practices out of the box, setting
 up files and dependencies in a time-tested approach used by most production
 Yesod sites. However, all this convenience can get in the way of actually
