@@ -1,7 +1,7 @@
 Title: Yesod quick start guide
 
 You'll need to [install the Haskell
-toolchain](http://www.stackage.org/install). Once you have Haskell installed, you can follow these steps to get a scaffolded site up and running:
+toolchain](http://www.stackage.org/install). Note that you *must* install the correct version of GHC. That is currently GHC __7.8.4__. Once you have Haskell installed, you can follow these steps to get a scaffolded site up and running:
 
 The simplest set of steps to get this started is:
 
