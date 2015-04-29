@@ -1,7 +1,7 @@
 Title: Yesod quick start guide
 
 You'll need to [install the Haskell
-toolchain](http://www.stackage.org/install). Note that you *must* install the correct version of GHC. That is currently GHC __7.8.4__. Once you have Haskell installed, you can follow these steps to get a scaffolded site up and running:
+toolchain](https://www.stackage.org/install). Note that you *must* install the correct version of GHC. That is currently GHC __7.8.4__. Once you have Haskell installed, you can follow these steps to get a scaffolded site up and running:
 
 The simplest set of steps to get this started is:
 
@@ -9,7 +9,7 @@ The simplest set of steps to get this started is:
 2.  Run the following series of commands
 
     ```shell
-    wget http://www.stackage.org/lts/cabal.config
+    wget https://www.stackage.org/lts/cabal.config
     cabal update                       # download package list
     cabal install alex happy yesod-bin # install build tools
     yesod init --bare                  # answer questions as prompted
@@ -23,7 +23,7 @@ The simplest set of steps to get this started is:
 These steps download some necessary tools, create a scaffolded site, set up a
 sandbox, and install all libraries. Note that it may take some time to compile
 all dependencies. These steps also leverage
-[Stackage](http://www.stackage.org/) to ensure you have a consistent library
+[Stackage](https://www.stackage.org/) to ensure you have a consistent library
 set and avoid "cabal hell" issues, which came up in the past.
 
 ### System libraries
