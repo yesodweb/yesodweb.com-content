@@ -33,3 +33,11 @@ Some quick pointers for those looking to convert:
 * You can drop basically all usages of `encodeString` and `decodeString`
 * If you're using basic-prelude or classy-prelude, you should get some deprecation warnings around functions like `fpToString`
 * Most functions have a direct translation, e.g. `createTree` becomes `createDirectoryIfMissing True` (yes, the system-filepath and system-fileio names often times feel nicer...)
+
+And for those looking for more type safety: all is not lost. Chris Done has
+been [working on a new
+package](https://www.stackage.org/haddock/nightly-2015-05-14/path-0.2.0/Path.html)
+which is aimed at providing additional type safety around absolute/relative and
+files/directories. It's not yet complete, but is already seeing some
+interesting work and preventing bugs at some projects we've been working on
+(and which will be announced soon).
