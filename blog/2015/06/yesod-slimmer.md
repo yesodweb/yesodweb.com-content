@@ -49,3 +49,10 @@ a yesod-webpage package would split out Yesod's Widget system (a system for mana
 ### Breaking up the Yesod typeclass
 
 The Yesod typeclass will need to be broken up into smaller chunks. Much as YesodAuth and YesodPersist are configuration typeclasses present in other packages, the Yesod typeclass will need to be broken up into smaller chunks.
+
+
+## API servers and type-safe routes
+
+It isn't obvious how type-safe routes benefit API servers.
+To get all the benefit users may need to write their own [integrations](http://hackage.haskell.org/package/yesod-routes-typescript) that traverse the routing data structure.
+Yesod can learn from [servant](http://haskell-servant.github.io/) which also provides boilerplate-free type-safe routing, but providing out-of the box functionality for API servers.
