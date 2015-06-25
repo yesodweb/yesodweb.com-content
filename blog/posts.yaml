@@ -1,3 +1,7 @@
+- time: 2015-06-25T00:00:00Z
+  author: kazu
+  title: "Cleaning up the Warp APIs"
+  path: 2015/06/cleaning-up-warp-apis.md
 - time: 2015-06-11T00:00:00Z
   author: michael
   title: "cabal's does not exist error message"
