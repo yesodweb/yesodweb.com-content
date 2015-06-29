@@ -86,6 +86,11 @@ Haskell build tool. Not only do we use Cabal for building our local code, but
 it can automatically download and install dependencies from Hackage, the
 Haskell package repository.
 
+NOTE: We're in the process of upgrading from cabal to
+link:https://github.com/commercialhaskell/stack#readme[stack], a more modern
+replacement for cabal. Expect the instructions here to change in the coming
+weeks.
+
 The Yesod website keeps an up-to-date
 link:http://www.yesodweb.com/page/quickstart[quick start guide] which includes
 information on how to install and configure the various tools. It's highly

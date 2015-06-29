@@ -1,5 +1,11 @@
 Title: Yesod quick start guide
 
+__NOTE__ We'll be upgrading these instructions to use the new [stack build
+tool](https://github.com/commercialhaskell/stack#readme) in the next week or so
+after some testing. If you'd like to use Yesod with stack before then, check
+out [this relevant blog
+post](http://www.yesodweb.com/blog/2015/06/stack-support-yesod-devel).
+
 You'll need to [install the Haskell
 toolchain](https://www.stackage.org/install). Note that you *must* install the correct version of GHC. That is currently GHC __7.8.4__. Once you have Haskell installed, you can follow these steps to get a scaffolded site up and running:
 

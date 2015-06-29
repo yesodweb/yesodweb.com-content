@@ -128,6 +128,10 @@ officially supported by Yesod. You&#8217;ll also need Cabal, which is the standa
 Haskell build tool. Not only do we use Cabal for building our local code, but
 it can automatically download and install dependencies from Hackage, the
 Haskell package repository.</simpara>
+<note><simpara>We&#8217;re in the process of upgrading from cabal to
+<ulink url="https://github.com/commercialhaskell/stack#readme">stack</ulink>, a more modern
+replacement for cabal. Expect the instructions here to change in the coming
+weeks.</simpara></note>
 <simpara>The Yesod website keeps an up-to-date
 <ulink url="http://www.yesodweb.com/page/quickstart">quick start guide</ulink> which includes
 information on how to install and configure the various tools. It&#8217;s highly
