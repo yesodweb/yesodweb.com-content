@@ -1,3 +1,7 @@
+- time: 2015-06-29T00:00:00Z
+  author: michael
+  title: stack support for yesod devel
+  path: 2015/06/stack-support-yesod-devel.md
 - time: 2015-06-25T09:00:00Z
   author: kazu
   title: "Cleaning up the Warp APIs"
