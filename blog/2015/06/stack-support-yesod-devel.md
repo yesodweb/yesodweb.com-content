@@ -17,7 +17,7 @@ much smoother. For now, here's the workflow:
 ```
 # Install both yesod-bin and cabal-install. Both are still necessary
 $ stack install yesod-bin-1.4.11 cabal-install
-# Initialize yoru project
+# Initialize your project
 $ stack exec yesod init
 $ cd new-directory
 # Create stack.yaml

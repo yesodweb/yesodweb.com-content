@@ -1,36 +1,17 @@
 Title: Yesod quick start guide
 
-__NOTE__ We'll be upgrading these instructions to use the new [stack build
-tool](https://github.com/commercialhaskell/stack#readme) in the next week or so
-after some testing. If you'd like to use Yesod with stack before then, check
-out [this relevant blog
-post](http://www.yesodweb.com/blog/2015/06/stack-support-yesod-devel).
+The Yesod team strongly recommends using [the stack build tool](https://github.com/commercialhaskell/stack#readme) for developing with stack. There are other build tools available in the Haskell world which will likely work with Yesod, but stack provides the easiest experience. To get started:
 
-You'll need to [install the Haskell
-toolchain](https://www.stackage.org/install). Note that you *must* install the correct version of GHC. That is currently GHC __7.8.4__. Once you have Haskell installed, you can follow these steps to get a scaffolded site up and running:
+1. Follow the [installation instructions for stack](https://github.com/commercialhaskell/stack/wiki/Downloads) to get stack.
+2. Install the yesod command line tool: `stack install yesod-bin cabal-install --install-ghc`
+3. Create a new scaffolded site: `stack exec -- yesod init --bare`
+4. Build libraries: `stack build`
+5. Launch devel server: `stack exec -- yesod devel`
+6. View your Yesod site at [http://localhost:3000/](http://localhost:3000/)
 
-The simplest set of steps to get this started is:
-
-1. Create a new directory to hold your project, and `cd` into it
-2.  Run the following series of commands
-
-    ```shell
-    wget https://www.stackage.org/lts/cabal.config
-    cabal update                       # download package list
-    cabal install alex happy yesod-bin # install build tools
-    yesod init --bare                  # answer questions as prompted
-    cabal sandbox init                 # set up a sandbox
-    cabal install --run-tests          # install libraries
-    yesod devel                        # launch devel server
-    ```
-
-3. View your Yesod site at [http://localhost:3000/](http://localhost:3000/)
-
-These steps download some necessary tools, create a scaffolded site, set up a
-sandbox, and install all libraries. Note that it may take some time to compile
-all dependencies. These steps also leverage
-[Stackage](https://www.stackage.org/) to ensure you have a consistent library
-set and avoid "cabal hell" issues, which came up in the past.
+NOTE: If you get an error message about `GHC_PACKAGE_PATH` at step (5), you
+need to install a newer version of yesod-bin. Try running `stack install
+yesod-bin-1.4.11` and rerunning `stack exec --yesod devel`.
 
 ### System libraries
 

@@ -122,63 +122,23 @@ constructors differently.</simpara></note>
 </section>
 <section id="I_sect12_d1e535">
 <title>Tools</title>
-<simpara>There are two main tools you&#8217;ll need for Haskell development. The Glasgow
-Haskell Compiler (GHC) is the standard Haskell compiler, and the only one
-officially supported by Yesod. You&#8217;ll also need Cabal, which is the standard
-Haskell build tool. Not only do we use Cabal for building our local code, but
-it can automatically download and install dependencies from Hackage, the
-Haskell package repository.</simpara>
-<note><simpara>We&#8217;re in the process of upgrading from cabal to
-<ulink url="https://github.com/commercialhaskell/stack#readme">stack</ulink>, a more modern
-replacement for cabal. Expect the instructions here to change in the coming
-weeks.</simpara></note>
-<simpara>The Yesod website keeps an up-to-date
-<ulink url="http://www.yesodweb.com/page/quickstart">quick start guide</ulink> which includes
-information on how to install and configure the various tools. It&#8217;s highly
-recommended that you follow those instructions. In particular, these steps make
-use of <ulink url="http://www.stackage.org/">Stackage</ulink> to avoid many common
-dependency-resolution issues.</simpara>
-<simpara>If you decide to install your tools yourself, please make sure to avoid these
-common pitfalls:</simpara>
-<orderedlist numeration="arabic">
-<listitem>
-<simpara>
-Some Javascript tools that ship with Yesod require the build tools <literal>alex</literal> and <literal>happy</literal> to be installed. These can be added with <literal>cabal install alex happy</literal>.
-</simpara>
-</listitem>
-<listitem>
-<simpara>
-Cabal installs executable to a user-specific directory, which needs to be added to your <literal>PATH</literal>. The exact location is OS-specific; please make sure to <ulink url="https://github.com/fpco/stackage/wiki/Preparing-your-system-to-use-Stackage#set-path-to-include-cabals-bin-directory">get the correct directory added</ulink>.
-</simpara>
-</listitem>
-<listitem>
-<simpara>
-On Windows, it&#8217;s difficult to install the <literal>network</literal> package from source, as it requires a POSIX shell. Installing the <ulink url="http://hackage.haskell.org/platform/">Haskell Platform</ulink> avoids this issue.
-</simpara>
-</listitem>
-<listitem>
-<simpara>
-On Mac OS X, there are multiple C preprocessors available: one from Clang, and one from GCC. Many Haskell libraries depend on the GCC preprocessor. Again, the Haskell Platform sets things up correctly.
-</simpara>
-</listitem>
-<listitem>
-<simpara>
-Some Linux distributions- Ubuntu in particular- typically have outdated packages for GHC and Haskell Platform. These may no longer be supported by the current version of Yesod. Please check the quick start guide for minimum version requirements.
-</simpara>
-</listitem>
-<listitem>
-<simpara>
-Make sure you have all necessary system libraries installed. This is usually handled automatically by Haskell Platform, but may require extra work on Linux distros. If you get error messages about missing libraries, you usually just need to <literal>apt-get install</literal> or <literal>yum install</literal> the relevant libraries.
-</simpara>
-</listitem>
-</orderedlist>
+<simpara>Since July 2015, the tooling recommendation for Yesod has become very simple:
+use <ulink url="https://github.com/commercialhaskell/stack#readme">stack</ulink>. stack is a
+complete build tool for Haskell which deals with your compiler (Glasgow Haskell
+Compiler, aka GHC), libraries (including Yesod), additional build tools (like
+alex and happy), and much more. There are other build tools available in
+Haskell, and most of them support Yesod quite well. But for the easiest
+experience, it&#8217;s strongly recommended to stick with stack.  The Yesod website
+keeps an up-to-date <ulink url="http://www.yesodweb.com/page/quickstart">quick start
+guide</ulink>, which provides instructions on installing stack and getting started
+with a new scaffolded site.</simpara>
 <simpara>Once you have your toolchain set up correctly, you&#8217;ll need to install a number
 of Haskell libraries. For the vast majority of the book, the following command
 will install all the libraries you need:</simpara>
-<programlisting language="shell" linenumbering="unnumbered">cabal update &amp;&amp; cabal install yesod yesod-bin persistent-sqlite yesod-static</programlisting>
-<simpara>Again, please refer to the
-<ulink url="http://www.yesodweb.com/page/quickstart">quick start guide</ulink> for the
-most up to date and accurate information.</simpara>
+<programlisting language="shell" linenumbering="unnumbered">stack build yesod persistent-sqlite yesod-static</programlisting>
+<simpara>In order to run an example from the book, save it in a file, e.g.,
+yesod-example.hs, and then run it with:</simpara>
+<programlisting language="shell" linenumbering="unnumbered">stack runghc yesod-example.hs</programlisting>
 </section>
 <section id="I_sect12_d1e628">
 <title>Language Pragmas</title>
