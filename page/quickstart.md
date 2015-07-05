@@ -4,7 +4,7 @@ The Yesod team strongly recommends using [the stack build tool](https://github.c
 
 1. Follow the [installation instructions for stack](https://github.com/commercialhaskell/stack/wiki/Downloads) to get stack.
 2. Install the yesod command line tool: `stack install yesod-bin cabal-install --install-ghc`
-3. Create a new scaffolded site: `stack exec -- yesod init --bare`
+3. Create a new scaffolded site: `stack exec -- yesod init --bare && stack init`
 4. Build libraries: `stack build`
 5. Launch devel server: `stack exec -- yesod devel`
 6. View your Yesod site at [http://localhost:3000/](http://localhost:3000/)
