@@ -47,17 +47,18 @@ projects. And every time, it is unsatisfactory.
 ## Problems With Naive Solution
 
 Let's take a look at three reasons why this solution leaves us wanting something more:
-* Duplication. After building a few tables this way, you realize that you are
-  copying the HTML elements and the list iteration (`$forall`) every time.
-* Non-composability. If I want to build a similar table, one that shows the 
-  same fields but additionally has a column for `favoriteColor`, I have to copy
-  the whole thing. I can't glue another piece onto the end.
-* Breakable Invariant. If we do decide to add a `favoriteColor` column, we might 
-  try simply adding `<td>#{show (favoriteColor p)}` to the end. This would cause incorrect 
-  behavior at runtime, because we would have forgotten to add 
-  `<th>Favorite Color` to the table header. The problem is that we have an invariant 
-  not captured by the type system: `thead` and the `tbody` loop must have the same
-  number of `<th>`/`<td>` elements, and the order must match.
+
+ - Duplication. After building a few tables this way, you realize that you are
+   copying the HTML elements and the list iteration (`$forall`) every time.
+ - Non-composability. If I want to build a similar table, one that shows the 
+   same fields but additionally has a column for `favoriteColor`, I have to copy
+   the whole thing. I can't glue another piece onto the end.
+ - Breakable Invariant. If we do decide to add a `favoriteColor` column, we might 
+   try simply adding `<td>#{show (favoriteColor p)}` to the end. This would cause incorrect 
+   behavior at runtime, because we would have forgotten to add 
+   `<th>Favorite Color` to the table header. The problem is that we have an invariant 
+   not captured by the type system: `thead` and the `tbody` loop must have the same
+   number of `<th>`/`<td>` elements, and the order must match.
 
 In particular, the last issue (breakable invariant) has been a source of great pains to me before. 
 On a three-column table, you are less likely to forget the `<th>` or put it in the wrong place.
