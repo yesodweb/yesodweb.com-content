@@ -143,7 +143,7 @@ if you somehow typed this instead, you would get a compile-time error:
       <> Table.string (show . favoriteColor)
 
 Secondly, we can look at duplication. All the
-table-rendering logic is moved into `buildBootstrap` (and you can write you're own 
+table-rendering logic is moved into `buildBootstrap` (and you can write your own 
 table renderer if that one is not satisfactory). The `Table` that we are using now
 has neither the HTML elements nor the list iteration that we dealt with earlier.
 
