@@ -11,7 +11,7 @@ The Yesod team strongly recommends using [the stack build tool](https://github.c
 
 NOTE: If you get an error message about `GHC_PACKAGE_PATH` at step (5), you
 need to install a newer version of yesod-bin. Try running `stack install
-yesod-bin-1.4.11` and rerunning `stack exec --yesod devel`. Also, if you choose
+yesod-bin-1.4.11` and rerunning `stack exec -- yesod devel`. Also, if you choose
 the "mini" scaffolding, `yesod devel` will not work.
 
 ### System libraries
