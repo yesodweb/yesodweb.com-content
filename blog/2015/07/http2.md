@@ -34,7 +34,7 @@ Haskell threads to HTTP/2 elements.
 In HTTP/1.1, the role of Haskell threads is clear.
 That is, one HTTP (TCP) connection is a Haskell thread.
 After trial and error, I finally reached an answer.
-Streams (roughly, a pair of request and response) is a Haskell thread.
+Streams of HTTP/2 (roughly, a pair of request and response) is a Haskell thread.
 To avoid overhead of spawning Haskell threads,
 I introduced thread pools to Warp.
 Yes, Haskell threads shines even in HTTP/2.
