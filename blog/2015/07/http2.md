@@ -17,7 +17,7 @@ HTTP/2 retains the semantics of HTTP/1.1 such as request and response headers. S
 To solve the issue 1, HTTP/2 provides a header compression mechanism called [HPACK](https://tools.ietf.org/html/rfc7541).
 To fix the issue 2 and 3, HTTP/2 makes just one TCP connection per site and multiplex frames of requests and responses asynchronously. The default number of concurrency is 100.
 
-I guess that HTTP/2 implementors agree that the most challenging ports of HTTP/2 are HPACK and priority. HPACK used to define reference sets as well as indices and Huffman encoding. During standardization activities, I found that [reference sets makes the spec really complicated but does not contribute compression ratio](http://d.hatena.ne.jp/kazu-yamamoto/20140129/1391057824). My big contribution to HTTP/2 was a proposal to remove reference sets from HPACK. The final HPACK gets much simpler.
+I guess that HTTP/2 implementors agree that the most challenging parts of HTTP/2 are HPACK and priority. HPACK used to define reference sets as well as indices and Huffman encoding. During standardization activities, I found that [reference sets makes the spec really complicated but does not contribute compression ratio](http://d.hatena.ne.jp/kazu-yamamoto/20140129/1391057824). My big contribution to HTTP/2 was a proposal to remove reference sets from HPACK. The final HPACK gets much simpler.
 
 Since multiple requests and responses are multiplexed in one TCP connection,
 priority is important. 
