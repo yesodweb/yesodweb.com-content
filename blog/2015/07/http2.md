@@ -37,7 +37,7 @@ After trial and error, I finally reached an answer.
 Streams of HTTP/2 (roughly, a pair of request and response) is a Haskell thread.
 To avoid overhead of spawning Haskell threads,
 I introduced thread pools to Warp.
-Yes, Haskell threads shin even in HTTP/2.
+Yes, Haskell threads shine even in HTTP/2.
 
 HTTP/2 provides plain (non-encrypted) communications, too.
 But since Firefox and Chrome require TLS,
