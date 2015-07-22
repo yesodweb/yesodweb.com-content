@@ -1,5 +1,3 @@
-# Cleaning up the Warp APIs
-
 For the last one and a half years, I have been trying to implement [HTTP/2](https://tools.ietf.org/html/rfc7540) in Warp.
 Since both HTTP/2 implementations of Firefox and Chrome requires TLS for HTTP/2,
 I'm also trying to improve the performance of WarpTLS.
