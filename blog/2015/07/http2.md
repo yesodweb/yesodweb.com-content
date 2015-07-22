@@ -39,11 +39,11 @@ To avoid overhead of spawning Haskell threads,
 I introduced thread pools to Warp.
 Yes, Haskell threads shines even in HTTP/2.
 
-HTTP/2 provides plain (non-ciphered) communications, too.
+HTTP/2 provides plain (non-encrypted) communications, too.
 But since Firefox and Chrome require TLS,
 TLS is a MUST in practice.
 TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 is a mandate cipher suite in HTTP/2.
-Unfortunately, many pieces are missing in the [tls library](http://hackage.haskell.org/package/tls).
+Unfortunately, many pieces were missing in the [tls library](http://hackage.haskell.org/package/tls).
 So, it was necessary for me to implement
 ALPN, ECDHE(Elliptic curve Diffie-Hellman, ephemeral) and AES GCM(Galois/Counter Mode). They are already merged into the tls and [cryptonite library](http://hackage.haskell.org/package/cryptonite).
 
