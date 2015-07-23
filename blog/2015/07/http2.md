@@ -11,7 +11,7 @@ So, if you upgrade Warp and WarpTLS in your site serving TLS and anyone visits y
 HTTP/2 retains the semantics of HTTP/1.1 such as request and response headers, meaning you don't have to modify your WAI applications, just link them to the new version of WarpTLS. Rather, HTTP/2 redesigned its transport to solve the following issues:
 
 1. Redundant headers: HTTP/1.1 repeatedly transfers almost exactly the same headers for every request and response, wasting bandwidth.
-2. Poor concurrency: only one request or response can be sent in one TCP connection (request pipelining is not used in practice). What HTTP/1.1 can do is make use of multiple TCP connections, up to 6 per site.
+2. Poor concurrency: only one request or response can be sent in one TCP connection at a time(request pipelining is not used in practice). What HTTP/1.1 can do is make use of multiple TCP connections, up to 6 per site.
 3. Head-of-line blocking: if one request is blocked on a server, no other requests can be sent in the same connection.
 
 To solve the issue 1, HTTP/2 provides a header compression mechanism called [HPACK](https://tools.ietf.org/html/rfc7541).
