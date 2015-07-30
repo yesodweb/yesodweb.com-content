@@ -35,6 +35,6 @@ if you want to learn more, check out these resources:
 
 * [Yesod book](/book)
 * [Community](/page/community)
-* [Yesod tutorial](http://yannesposito.com/Scratch/en/blog/Yesod-tutorial-for-newbies/)
 * [The Wiki](/wiki)
 * [Screencasts](/page/screencasts)
+* [Yesod tutorial](http://yannesposito.com/Scratch/en/blog/Yesod-tutorial-for-newbies/) (slightly outdated, book provides more up-to-date content)
