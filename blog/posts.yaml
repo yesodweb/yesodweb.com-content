@@ -1,3 +1,7 @@
+- time: 2015-07-31T04:05:00Z
+  author: michael
+  title: "S3 Hackage mirror for Travis builds"
+  path: 2015/07/s3-hackage-mirror-travis.md
 - time: 2015-07-23T04:05:00Z
   author: kazu
   title: "Supporting HTTP/2"
