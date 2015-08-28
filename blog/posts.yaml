@@ -1,3 +1,7 @@
+- time: 2015-08-28T13:00:00Z
+  author: michael
+  title: "Some thoughts on documentation"
+  path: 2015/08/thoughts-on-documentation.md
 - time: 2015-07-31T04:05:00Z
   author: michael
   title: "S3 Hackage mirror for Travis builds"
