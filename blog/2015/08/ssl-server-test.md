@@ -23,7 +23,7 @@ If you are using Warp TLS version 3.1.1 or earlier and the tls library version 1
 </tr>
 </table>
 
-Is the quality of the tls library low? The answer is NO. The code is really readable. But unfortunately some small features were missing. This article describes how Aaron Friel and I added such features to get rating A.
+Is the quality of the tls library low? The answer is NO. The code is really readable. But some small features were missing unfortunately. This article describes how Aaron Friel and I added such features to get rating A.
 
 If you are not interested in technical details, just upgrade Warp TLS to version 3.1.2 and the tls library to version 1.3.2. Your server automatically will get rating A or T in the case of self-signed.
 
@@ -202,4 +202,8 @@ So, the client and the server are able to reuse the exchanged key.
 
 The tls library supports this mechanism. That's why the result says "IDs assgined". Since Warp TLS does not make use of `SessionManager`, it also says "but not accepted". 
 
-I'm not planning to implement the session resumption in Warp TLS since the server need to have states of exchanged keys. Rather, I would like to implement stateless TLS session resumption defined in [RFC 5077](https://tools.ietf.org/html/rfc5077).
+I'm not planning to implement this simple session resumption in Warp TLS since the server need to have states of exchanged keys. Rather, I would like to implement the stateless TLS session resumption defined in [RFC 5077](https://tools.ietf.org/html/rfc5077).
+
+## Acknowledgment
+
+I would like to thank Kazuho Oku for giving usefule information about the secure renegotiation.
