@@ -146,8 +146,7 @@ Warp TLS version 3.1.1 sets `supportedCiphers` to:
 , TLSExtra.cipher_AES128_SHA1
 , TLSExtra.cipher_AES256_SHA1
 ]
-``` 
-
+```
 
 This is evaluated as "With some browsers". 
 [SSL Labs: Deploying Forward Secrecy](https://community.qualys.com/blogs/securitylabs/2013/06/25/ssl-labs-deploying-forward-secrecy) suggests that
