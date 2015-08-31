@@ -1,5 +1,3 @@
-# Getting Rating A from the SSL Server Test
-
 If you are using Warp TLS version 3.1.1 or earlier and the tls library version 1.3.1 or earlier, try the [SSL Server Test](https://www.ssllabs.com/ssltest/) provided by QUALYS SSL LABS. I'm sure that your server will get rating F and you will get disappointed. Here is a list of failed items:
 
 <table border=1>
