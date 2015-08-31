@@ -169,7 +169,7 @@ added them in Warp TLS:
 , TLSExtra.cipher_AES128_SHA1
 , TLSExtra.cipher_AES256_SHA1
 ]
-``` 
+```
 
 This configuration is evaluated as "With modern browsers".
 
