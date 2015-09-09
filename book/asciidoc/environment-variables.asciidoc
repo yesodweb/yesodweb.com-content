@@ -13,7 +13,7 @@ ties in nicely with link:https://github.com/snoyberg/keter[the Keter deployment
 manager].)
 
 The technique for doing this is quite easy: just do the environment variable
-lookup in your +main+ funciton. This example demonstrates this technique, along
+lookup in your +main+ function. This example demonstrates this technique, along
 with the slightly special handling necessary for setting the application root.
 
 [source, haskell]
