@@ -82,7 +82,7 @@ You might be surprised to see the +NoImplicitPrelude+ extension. We turn this
 on since the site includes its own module, +Import+, with a few changes to the
 Prelude that make working with Yesod a little more convenient.
 
-The last thing to note is the exported-modules list. If you add any modules to
+The last thing to note is the exposed-modules list. If you add any modules to
 your application, you *must* update this list to get yesod devel to work
 correctly. Unfortunately, neither Cabal nor GHC will give you a warning if you
 forgot to make this update, and instead you'll get a very scary-looking error
