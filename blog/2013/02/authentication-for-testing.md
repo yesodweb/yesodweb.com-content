@@ -1,7 +1,7 @@
 # Performing Authentication during Testing
 
 _This is cookbook recipe, also available from
-[the Wiki](https://github.com/yesodweb/yesod/wiki/Cookbook)._
+[the Wiki](https://github.com/yesodweb/yesod-cookbook)._
 
 When testing a real application using `Yesod.Test`, each test case may need
 to perform a login.  This is not difficult, but as it involves several steps,

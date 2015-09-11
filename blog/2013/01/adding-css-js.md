@@ -1,6 +1,6 @@
 _This is a cookbook recipe. Yesod has a strong and growing collection of
 cookbook recipes [available on our
-Wiki](https://github.com/yesodweb/yesod/wiki/Cookbook). If you see any recipes
+Wiki](https://github.com/yesodweb/yesod-cookbook). If you see any recipes
 you think should be highlighted here, or would like to request some additions,
 please bring it up [on the mailing list](groups.google.com/group/yesodweb) or
 [the Google+
