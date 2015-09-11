@@ -17,7 +17,7 @@ listen for requests on, and database connection settings. (Incidentally, this
 ties in nicely with <ulink url="https://github.com/snoyberg/keter">the Keter deployment
 manager</ulink>.)</simpara>
 <simpara>The technique for doing this is quite easy: just do the environment variable
-lookup in your <literal>main</literal> funciton. This example demonstrates this technique, along
+lookup in your <literal>main</literal> function. This example demonstrates this technique, along
 with the slightly special handling necessary for setting the application root.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}

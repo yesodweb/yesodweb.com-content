@@ -101,7 +101,7 @@ When building a production build, perform <literal>cabal clean &amp;&amp; cabal
 <simpara>You might be surprised to see the <literal>NoImplicitPrelude</literal> extension. We turn this
 on since the site includes its own module, <literal>Import</literal>, with a few changes to the
 Prelude that make working with Yesod a little more convenient.</simpara>
-<simpara>The last thing to note is the exported-modules list. If you add any modules to
+<simpara>The last thing to note is the exposed-modules list. If you add any modules to
 your application, you <emphasis role="strong">must</emphasis> update this list to get yesod devel to work
 correctly. Unfortunately, neither Cabal nor GHC will give you a warning if you
 forgot to make this update, and instead you&#8217;ll get a very scary-looking error
