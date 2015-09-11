@@ -1,7 +1,7 @@
 # Using Ajax with a Scaffolded Site
 
 _This is cookbook recipe, also available from
-[the Wiki](https://github.com/yesodweb/yesod/wiki/Cookbook)._
+[the Wiki](https://github.com/yesodweb/yesod-cookbook)._
 
 A common scenario is that part of an application requires Ajax, while the rest
 is based on dynamically generated HTML.  The core functionality of Yesod
@@ -224,7 +224,7 @@ clipSpecs2 = describe "The clipboard (part 2)" $ do
 
 Actually that is not quite all: for our running example we need to log in in
 each `it` spec.  A recipe for packaging that is the subject of
-[another cookbook article](https://github.com/yesodweb/yesod/wiki/Performing-Authentication-during-Testing).
+[another cookbook article](https://github.com/yesodweb/yesod-cookbook/blob/master/cookbook/Performing-Authentication-during-Testing.md).
 
 ## Appendix: Example handler and client-side code
 
