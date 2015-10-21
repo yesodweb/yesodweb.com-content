@@ -1,3 +1,5 @@
+#!/usr/bin/env stack
+-- stack -runghc
 {-# LANGUAGE OverloadedStrings #-}
 import System.Environment (getArgs)
 import qualified Data.ByteString.Char8 as S
