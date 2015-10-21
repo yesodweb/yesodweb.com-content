@@ -35,8 +35,11 @@ main = warp 3000 HelloWorld
 ----
 
 If you save that code in +helloworld.hs+ and run it with +runhaskell
-helloworld.hs+, you'll get a web server running on port 3000. If you point your
-browser to http://localhost:3000, you'll get the following HTML:
+helloworld.hs+, you'll get a web server running on port 3000. Note, 
+if you followed the quick start guide and installed yesod with +stack+
+then you will not have +runhaskell+ and will need to run +stack runghc 
+helloworld.hs+ instead. If you point your browser to http://localhost:3000, 
+you'll get the following HTML:
 
 [source, html]
 ----
