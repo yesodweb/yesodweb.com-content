@@ -14,7 +14,7 @@ someFunc1 key =
         Nothing -> getDefaultValue
         Just value -> otherFunc value
 
-someFunc2 key = maybe getDefaultValue otherFunc . flip lookup someMap
+someFunc2 = maybe getDefaultValue otherFunc . flip lookup someMap
 ```
 
 Which is better? I'll start with objective facts from my own experience:
