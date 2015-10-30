@@ -35,6 +35,8 @@ This is not what we want. In other words, this is not *fair*.
 
 ## Benchmark
 
+![benchmark results](/assets/http2-priority/priority-bench.png)
+
 ## Conclusion
 
 ## History
