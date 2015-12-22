@@ -37,8 +37,8 @@ to make it happen. Consider the following `stack.yaml` file:
 # Every Stack.yaml needs to specify its resolver
 resolver: lts-3.14
 
-# Build using Docker. Will use the default stack-build image, which includes
-build tools but not precompiled libraries.
+# Build using Docker. Will use the default stack-build image, which
+# includes build tools but not precompiled libraries.
 docker:
   enable: true
 
