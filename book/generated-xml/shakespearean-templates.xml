@@ -431,6 +431,13 @@ You can add an attribute optionally by using colons. To make a checkbox only
   <literal>&lt;p :isCurrent:.current&gt;</literal> will set the class <literal>current</literal> is <literal>isCurrent</literal> is <literal>True</literal>.)
 </simpara>
 </listitem>
+<listitem>
+<simpara>
+Arbitrary key-value pairs can also be interpolated using the <literal>*{…}</literal> syntax. The
+  interpolated variable must be a tuple, or list of tuples, of Text or String.
+  For example: if we have a variable <literal>attrs = [("foo", "bar")]</literal>, we could interpolate
+</simpara>
+</listitem>
 </itemizedlist>
 </section>
 <section id="shakespearean-templates_conditionals">
@@ -703,7 +710,7 @@ main = putStrLn $ renderHtml $ template "My Title" render</programlisting>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-} -- we're using Text below
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE CPP #-} -- to control production versus debug
-import Text.Lucius (CssUrl, luciusFile, luciusFileDebug, renderCss)
+import Text.Lucius (CssUrl, luciusFile, luciusFileReload, renderCss)
 import Data.Text (Text)
 import qualified Data.Text.Lazy.IO as TLIO
 
@@ -718,7 +725,7 @@ template :: CssUrl MyRoute
 #if PRODUCTION
 template = $(luciusFile "template.lucius")
 #else
-template = $(luciusFileDebug "template.lucius")
+template = $(luciusFileReload "template.lucius")
 #endif
 
 main :: IO ()

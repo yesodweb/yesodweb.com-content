@@ -61,7 +61,29 @@ of the benefits of a declarative authorization system.</simpara>
 </section>
 <section id="authentication-and-authorization_authenticate_me">
 <title>Authenticate Me</title>
-<simpara>Let&#8217;s jump right in with an example of authentication.</simpara>
+<simpara>Let&#8217;s jump right in with an example of authentication. For the Google oAuth authentication to work you should follow these steps:</simpara>
+<orderedlist numeration="arabic">
+<listitem>
+<simpara>
+Read on [Google Developers Help](<ulink url="https://developers.google.com/identity/protocols/OAuth2">https://developers.google.com/identity/protocols/OAuth2</ulink>) how to obtain OAuth 2.0 credentials such as a client ID and client secret that are known to both Google and your application.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Set <literal>Authorized redirect URIs</literal> to <literal>http://localhost:3000/auth/page/googleemail2/complete</literal>.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Enable <literal>Google+ API</literal> and <literal>Contacts API</literal>.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Once you have the <literal>clientId</literal> and <literal>secretId</literal>, replace them in the code below.
+</simpara>
+</listitem>
+</orderedlist>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE QuasiQuotes           #-}
@@ -73,7 +95,16 @@ import           Network.HTTP.Client.Conduit (Manager, newManager)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.BrowserId
-import           Yesod.Auth.GoogleEmail
+import           Yesod.Auth.GoogleEmail2
+
+
+-- Replace with Google client ID.
+clientId :: Text
+clientId = ""
+
+-- Replace with Google secret ID.
+clientSecret :: Text
+clientSecret = ""
 
 data App = App
     { httpManager :: Manager
@@ -98,7 +129,7 @@ instance YesodAuth App where
 
     authPlugins _ =
         [ authBrowserId def
-        , authGoogleEmail
+        , authGoogleEmail clientId clientSecret
         ]
 
     authHttpManager = httpManager

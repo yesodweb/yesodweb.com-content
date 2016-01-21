@@ -702,11 +702,8 @@ URL. Let&#8217;s see some examples of how these can be used:</simpara>
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
-import           Data.Set         (member)
 import           Data.Text        (Text)
 import           Yesod
-import           Yesod.Auth
-import           Yesod.Auth.Dummy
 
 data App = App
 
