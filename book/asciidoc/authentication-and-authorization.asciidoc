@@ -194,11 +194,11 @@ So what exactly goes in this +YesodAuth+ instance? There are six required declar
 
 * Likewise, +logoutDest+ gives the route to redirect to after a logout.
 
-*  +authPlugins+ is a list of individual authentication backends to use. In our example, we're using BrowserID, which logs in via Mozilla's BrowserID system, and Google Email, which authenticates a user's email address using their Google account. The nice thing about these two backends is:
+*  +authPlugins+ is a list of individual authentication backends to use. In our example, we're using BrowserID, which logs in via Mozilla's BrowserID system, and Google oAuth, which authenticates a user using their Google account. The somewhat advantage of BrowserID backends is:
 
-** They require no set up, as opposed to Facebook or OAuth, which require setting up credentials.
+** It requires no set up, as opposed to Facebook or OAuth, which require setting up credentials.
 
-** They use email addresses as identifiers, which people are comfortable with, as opposed to OpenID, which uses a URL.
+** It uses email addresses as identifiers, which people are comfortable with, as opposed to OpenID, which uses a URL.
 
 *  +authHttpManager+ gets an HTTP connection manager from the foundation type.
    This allow authentication backends which use HTTP connections (i.e., almost
