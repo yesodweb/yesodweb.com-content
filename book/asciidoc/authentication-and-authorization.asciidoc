@@ -449,7 +449,7 @@ your Yesod typeclass instance. Let's see an example.
 {-# LANGUAGE TypeFamilies          #-}
 import           Data.Default         (def)
 import           Data.Text            (Text)
-import           Network.HTTP.Conduit (Manager, conduitManagerSettings, newManager)
+import           Network.HTTP.Conduit (Manager, newManager, tlsManagerSettings)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.Dummy -- just for testing, don't use in real life!!!
@@ -530,7 +530,7 @@ getAdminR = defaultLayout
 
 main :: IO ()
 main = do
-    manager <- newManager conduitManagerSettings
+    manager <- newManager tlsManagerSettings
     warp 3000 $ App manager
 ----
 
