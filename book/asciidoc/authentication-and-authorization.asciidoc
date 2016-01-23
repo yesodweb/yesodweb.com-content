@@ -66,7 +66,8 @@ of the benefits of a declarative authorization system.
 
 Let's jump right in with an example of authentication. For the Google oAuth authentication to work you should follow these steps:
 
-1. Read on [Google Developers Help](https://developers.google.com/identity/protocols/OAuth2) how to obtain OAuth 2.0 credentials such as a client ID and client secret that are known to both Google and your application.
+
+1. Read on link:https://developers.google.com/identity/protocols/OAuth2[Google Developers Help] how to obtain OAuth 2.0 credentials such as a client ID and client secret that are known to both Google and your application.
 2. Set `Authorized redirect URIs` to `http://localhost:3000/auth/page/googleemail2/complete`.
 3. Enable `Google+ API` and `Contacts API`.
 4. Once you have the `clientId` and `secretId`, replace them in the code below.
