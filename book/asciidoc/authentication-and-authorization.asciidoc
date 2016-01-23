@@ -266,6 +266,9 @@ users (verify account, password retrieval, etc.).
 Let's have a look at a site that provides email authentication, storing
 passwords in a Persistent SQLite database.
 
+NOTE: Even if you don't have an email server, for debugging purposes the
+verification link is printed in the console.
+
 [source, haskell]
 ----
 {-# LANGUAGE DeriveDataTypeable         #-}
@@ -280,7 +283,7 @@ passwords in a Persistent SQLite database.
 import           Control.Monad            (join)
 import           Control.Monad.Logger (runNoLoggingT)
 import           Data.Maybe               (isJust)
-import           Data.Text                (Text)
+import           Data.Text                (Text, unpack)
 import qualified Data.Text.Lazy.Encoding
 import           Data.Typeable            (Typeable)
 import           Database.Persist.Sqlite
@@ -353,7 +356,12 @@ instance YesodAuthEmail App where
     addUnverified email verkey =
         runDB $ insert $ User email Nothing (Just verkey) False
 
-    sendVerifyEmail email _ verurl =
+    sendVerifyEmail email _ verurl = do
+        -- Print out to the console the verification email, for easier
+        -- debugging.
+        liftIO $ putStrLn $ "Copy/ Paste this URL in your browser:" ++ unpack verurl
+
+        -- Send email.
         liftIO $ renderSendMail (emptyMail $ Address Nothing "noreply")
             { mailTo = [Address Nothing email]
             , mailHeaders =
