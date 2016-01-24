@@ -1,0 +1,42 @@
+language: c
+sudo: false
+
+cache:
+  directories:
+  - $HOME/.stack
+
+addons:
+  apt:
+    packages:
+    - asciidoc
+    - ghc-7.10.3
+    sources:
+    - hvr-ghc
+
+install:
+- export PATH=$HOME/.local/bin:/opt/ghc/7.10.3/bin$PATH
+- mkdir -p $HOME/.local/bin
+- curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+
+script:
+- rm -f book/generated-xml/*
+- book/tools/generate.sh
+- git diff
+- |
+  if [ $TRAVIS_PULL_REQUEST != false ]
+  then
+    echo Not pushing diff for a pull request
+  elif [ -n "$(git status --porcelain)" ]
+  then
+    mkdir -p $HOME/.ssh
+    openssl aes-256-cbc -K $encrypted_92ac0cbbb1f3_key -iv $encrypted_92ac0cbbb1f3_iv -in id_rsa.enc -out id_rsa -d
+    mv id_rsa $HOME/.ssh
+    chmod 400 $HOME/.ssh/id_rsa
+    git config --global user.email "michael+travis@snoyman.com"
+    git config --global user.name "Travis job for yesodweb/yesodweb.com-content"
+    git add -A
+    git commit -m "Travis auto-generate XML files, $(date --utc --iso=sec)"
+    git push git@github.com:yesodweb/yesodweb.com-content.git HEAD:$TRAVIS_BRANCH
+  else
+    echo No changes present
+  fi
