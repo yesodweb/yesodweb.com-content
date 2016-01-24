@@ -1,4 +1,6 @@
-#!/bin/bash -ex
+#!/usr/bin/env bash
+
+set -exu
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 #rm -rf generated-xml
