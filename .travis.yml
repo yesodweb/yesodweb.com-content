@@ -16,5 +16,19 @@ install:
 - curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 
 script:
+- rm -f book/generated-xml/*
 - book/tools/generate.sh
 - git diff
+- |
+  if [ $TRAVIS_PULL_REQUEST != false ]
+  then
+    echo Not pushing diff for a pull request
+  elif [ -n "$(git status --porcelain)" ]
+  then
+    git add -A
+    git commit -m "Travis auto-generate XML files, $(date --utc --iso=sec)"
+    git pull --rebase
+    git push git@github.com:yesodweb/yesodweb.com-content.git HEAD:$TRAVIS_BRANCH
+  else
+    echo No changes present
+  fi
