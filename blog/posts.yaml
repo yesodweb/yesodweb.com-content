@@ -1,3 +1,7 @@
+- time: 2016-01-25T10:30:00Z
+  author: michael
+  title: "Auto generate Docbook XML for the Yesod book"
+  path: 2016/01/auto-generate-docbook-xml.md
 - time: 2015-12-14T13:30:00Z
   author: michael
   title: "Yesod hosting with Docker and Kubernetes"
