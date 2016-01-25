@@ -122,7 +122,7 @@ whatever you like in this file, but here are some guidelines:</simpara>
 <listitem>
 <simpara>
 Any data types used in <emphasis>entities</emphasis> <emphasis role="strong">must</emphasis> be imported/declared in <literal>Model.hs</literal>,
-  above the <literal>persistFile</literal> call.
+  above the <literal>persistFileWith</literal> call.
 </simpara>
 </listitem>
 <listitem>

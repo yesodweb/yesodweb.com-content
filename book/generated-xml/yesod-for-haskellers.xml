@@ -32,7 +32,7 @@ app _req sendResponse = sendResponse $ responseLBS
     [("Content-Type", "text/plain")]
     "Hello Warp!"</programlisting>
 <simpara>Wait a minute, there&#8217;s no Yesod in there! Don&#8217;t worry, we&#8217;ll get there.
-Remember, we&#8217;re building from the ground up, and in Yesod, the ground floor in
+Remember, we&#8217;re building from the ground up, and in Yesod, the ground floor is
 WAI, the Web Application Interface. WAI sits between a web <emphasis role="strong">handler</emphasis>, such as a
 web server or a test framework, and a web <emphasis role="strong">application</emphasis>. In our case, the
 handler is Warp, a high performance web server, and our application is the
