@@ -9,9 +9,12 @@ addons:
   apt:
     packages:
     - asciidoc
+    - ghc-7.10.3
+    sources:
+    - hvr-ghc
 
 install:
-- export PATH=$HOME/.local/bin:$PATH
+- export PATH=$HOME/.local/bin:/opt/ghc/7.10.3/bin$PATH
 - mkdir -p $HOME/.local/bin
 - curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 
@@ -25,9 +28,10 @@ script:
     echo Not pushing diff for a pull request
   elif [ -n "$(git status --porcelain)" ]
   then
+    git config --global user.email "michael+travis@snoyman.com"
+    git config --global user.name "Travis job for yesodweb/yesodweb.com-content"
     git add -A
     git commit -m "Travis auto-generate XML files, $(date --utc --iso=sec)"
-    git pull --rebase
     git push git@github.com:yesodweb/yesodweb.com-content.git HEAD:$TRAVIS_BRANCH
   else
     echo No changes present
