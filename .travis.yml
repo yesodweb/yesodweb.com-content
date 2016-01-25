@@ -28,6 +28,9 @@ script:
     echo Not pushing diff for a pull request
   elif [ -n "$(git status --porcelain)" ]
   then
+    mkdir -p $HOME/.ssh
+    mv id_rsa $HOME/.ssh
+    chmod 400 $HOME/.ssh/id_rsa
     git config --global user.email "michael+travis@snoyman.com"
     git config --global user.name "Travis job for yesodweb/yesodweb.com-content"
     git add -A
