@@ -1,0 +1,755 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<?asciidoc-toc?>
+<?asciidoc-numbered?>
+
+<article lang="en">
+<section id="routing-and-handlers_routing_and_handlers">
+<title>Routing and Handlers</title>
+<simpara>If we look at Yesod as a Model-View-Controller framework, routing and handlers
+make up the controller. For contrast, let&#8217;s describe two other routing
+approaches used in other web development environments:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+Dispatch based on file name. This is how PHP and ASP work, for example.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Have a centralized routing function that parses routes based on regular
+  expressions. Django and Rails follow this approach.
+</simpara>
+</listitem>
+</itemizedlist>
+<simpara>Yesod is closer in principle to the latter technique. Even so, there are
+significant differences. Instead of using regular expressions, Yesod matches on
+pieces of a route. Instead of having a one-way route-to-handler mapping, Yesod
+has an intermediate data type (called the route datatype, or a type-safe URL)
+and creates two-way conversion functions.</simpara>
+<simpara>Coding this more advanced system manually is tedious and error prone.
+Therefore, Yesod defines a Domain Specific Language (DSL) for specifying
+routes, and provides Template Haskell functions to convert this DSL to Haskell
+code. This chapter will explain the syntax of the routing declarations, give
+you a glimpse of what code is generated for you, and explain the interaction
+between routing and handler functions.</simpara>
+<section id="routing-and-handlers_route_syntax">
+<title>Route Syntax</title>
+<simpara>Instead of trying to shoe-horn route declarations into an existing syntax,
+Yesod&#8217;s approach is to use a simplified syntax designed just for routes. This
+has the advantage of making the code not only easy to write, but simple enough
+for someone with no Yesod experience to read and understand the sitemap of your
+application.</simpara>
+<simpara>A basic example of this syntax is:</simpara>
+<programlisting language="routes" linenumbering="unnumbered">/             HomeR     GET
+/blog         BlogR     GET POST
+/blog/#BlogId BlogPostR GET POST
+
+/static       StaticR   Static getStatic</programlisting>
+<simpara>The next few sections will explain the full details of what goes on in the
+route declaration.</simpara>
+<section id="routing-and-handlers_pieces">
+<title>Pieces</title>
+<simpara>One of the first thing Yesod does when it gets a request is split up the
+requested path into pieces. The pieces are tokenized at all forward slashes.
+For example:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">toPieces "/" = []
+toPieces "/foo/bar/baz/" = ["foo", "bar", "baz", ""]</programlisting>
+<simpara>You may notice that there are some funny things going on with trailing slashes,
+or double slashes ("/foo//bar//"), or a few other things. Yesod believes in
+having canonical URLs; if users request a URL with a trailing slash, or with a
+double slash, they are automatically redirected to the canonical version.  This
+ensures you have one URL for one resource, and can help with your search
+rankings.</simpara>
+<simpara>What this means for you is that you needn&#8217;t concern yourself with the exact
+structure of your URLs: you can safely think about pieces of a path, and Yesod
+automatically handles intercalating the slashes and escaping problematic
+characters.</simpara>
+<simpara>If, by the way, you want more fine-tuned control of how paths are split into
+pieces and joined together again, you&#8217;ll want to look at the <literal>cleanPath</literal> and
+<literal>joinPath</literal> methods in the Yesod typeclass chapter.</simpara>
+<section id="routing-and-handlers_types_of_pieces">
+<title>Types of Pieces</title>
+<simpara>When you are declaring your routes, you have three types of pieces at your
+disposal:</simpara>
+<variablelist>
+<varlistentry>
+<term>
+Static
+</term>
+<listitem>
+<simpara>
+This is a plain string that must be matched against precisely in the URL.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+Dynamic single
+</term>
+<listitem>
+<simpara>
+This is a single piece (ie, between two forward slashes), but
+represents a user-submitted value. This is the primary method of receiving
+extra user input on a page request. These pieces begin with a hash (#) and are
+followed by a data type. The datatype must be an instance of <literal>PathPiece</literal>.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+Dynamic multi
+</term>
+<listitem>
+<simpara>
+The same as before, but can receive multiple pieces of the URL.
+This must always be the last piece in a resource pattern. It is specified by an
+asterisk (*) followed by a datatype, which must be an instance of
+<literal>PathMultiPiece</literal>. Multi pieces are not as common as the other two, though they
+are very important for implementing features like static trees representing
+file structure or wikis with arbitrary hierarchies.
+</simpara>
+</listitem>
+</varlistentry>
+</variablelist>
+<note><simpara>Since Yesod 1.4, you can additionally use a <literal>+</literal> to indicate a dynamic
+multi. This is important since the C preprocessor can be confused by the <literal>/*</literal>
+character combination.</simpara></note>
+<simpara>Let us take a look at some standard kinds of resource patterns you may want to
+write. Starting simply, the root of an application will just be <literal>/</literal>. Similarly,
+you may want to place your FAQ at <literal>/page/faq</literal>.</simpara>
+<simpara>Now let&#8217;s say you are going to write a Fibonacci website. You may construct
+your URLs like <literal>/fib/#Int</literal>. But there&#8217;s a slight problem with this: we do not
+want to allow negative numbers or zero to be passed into our application.
+Fortunately, the type system can protect us:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">newtype Natural = Natural Int
+instance PathPiece Natural where
+    toPathPiece (Natural i) = T.pack $ show i
+    fromPathPiece s =
+        case reads $ T.unpack s of
+            (i, ""):_
+                | i &lt; 1 -&gt; Nothing
+                | otherwise -&gt; Just $ Natural i
+            [] -&gt; Nothing</programlisting>
+<simpara>On line 1 we define a simple newtype wrapper around Int to protect ourselves
+from invalid input. We can see that <literal>PathPiece</literal> is a typeclass with two
+methods. <literal>toPathPiece</literal> does nothing more than convert to a <literal>Text</literal>.
+<literal>fromPathPiece</literal> <emphasis>attempts</emphasis> to convert a <literal>Text</literal> to our datatype, returning
+<literal>Nothing</literal> when this conversion is impossible. By using this datatype, we can
+ensure that our handler function is only ever given natural numbers, allowing
+us to once again use the type system to battle the boundary issue.</simpara>
+<note><simpara>In a real life application, we would also want to ensure we never
+accidentally constructed an invalid <literal>Natural</literal> value internally to our app. To do
+so, we could use an approach like
+<ulink url="http://www.haskell.org/haskellwiki/Smart_constructors">smart constructors</ulink>.
+For the purposes of this example, we&#8217;ve kept the code simple.</simpara></note>
+<simpara>Defining a <literal>PathMultiPiece</literal> is just as simple. Let&#8217;s say we want to have a Wiki
+with at least two levels of hierarchy; we might define a datatype such as:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">data Page = Page Text Text [Text] -- 2 or more
+instance PathMultiPiece Page where
+    toPathMultiPiece (Page x y z) = x : y : z
+    fromPathMultiPiece (x:y:z) = Just $ Page x y z
+    fromPathMultiPiece _ = Nothing</programlisting>
+</section>
+<section id="routing-and-handlers_overlap_checking">
+<title>Overlap checking</title>
+<simpara>By default, Yesod will ensure that no two routes have the potential to overlap
+with each other. So, for example, consider the following routes:</simpara>
+<programlisting language="routes" linenumbering="unnumbered">/foo/bar   Foo1R GET
+/foo/#Text Foo2R GET</programlisting>
+<simpara>This route declaration will be rejected as overlapping, since <literal>/foo/bar</literal> will
+match both routes. However, there are two cases where we may wish to allow
+overlapping:</simpara>
+<orderedlist numeration="arabic">
+<listitem>
+<simpara>
+We know by the definition of our datatype that the overlap can never happen. For example, if you replace <literal>Text</literal> with <literal>Int</literal> above, it&#8217;s easy to convince yourself that there&#8217;s no route that exists that will overlap. Yesod is currently not capable of performing such an analysis.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+You have some extra knowledge about how your application operates, and know that such a situation should never be allowed. For example, if the <literal>Foo2R</literal> route should never be allowed to receive the parameter <literal>bar</literal>.
+</simpara>
+</listitem>
+</orderedlist>
+<simpara>You can turn off overlap checking by using the exclamation mark at the
+beginning of your route. For example, the following will be accepted by Yesod:</simpara>
+<programlisting language="routes" linenumbering="unnumbered">/foo/bar    Foo1R GET
+!/foo/#Int  Foo2R GET
+!/foo/#Text Foo3R GET</programlisting>
+<note><simpara>You can also place the exclamation point at the beginning of any of the
+path pieces, or following the <literal>#</literal>, <literal>*</literal>, or <literal>+</literal> characters. However, this newer
+syntax should be preferred as it&#8217;s clearer what the goal is.</simpara></note>
+<simpara>One issue that overlapping routes introduce is ambiguity. In the example above,
+should <literal>/foo/bar</literal> route to <literal>Foo1R</literal> or <literal>Foo3R</literal>? And should <literal>/foo/42</literal> route to
+<literal>Foo2R</literal> or <literal>Foo3R</literal>? Yesod&#8217;s rule for this is simple: first route wins.</simpara>
+</section>
+</section>
+<section id="routing-and-handlers_resource_name">
+<title>Resource name</title>
+<simpara>Each resource pattern also has a name associated with it. That name will become
+the constructor for the type safe URL datatype associated with your
+application. Therefore, it has to start with a capital letter. By convention,
+these resource names all end with a capital R. There is nothing forcing you to
+do this, it is just common practice.</simpara>
+<simpara>The exact definition of our constructor depends upon the resource pattern it is
+attached to. Whatever datatypes are used as single-pieces or multi-pieces of the
+pattern become arguments to the datatype. This gives us a 1-to-1 correspondence
+between our type-safe URL values and valid URLs in our application.</simpara>
+<note><simpara>This doesn&#8217;t necessarily mean that <emphasis>every</emphasis> value is a working page, just
+that it is a potentially valid URL. As an example, the value <literal>PersonR
+"Michael"</literal> may not resolve to a valid page if there is no Michael in the
+database.</simpara></note>
+<simpara>Let&#8217;s get some real examples going here. If you had the resource patterns
+<literal>/person/#Text</literal> named <literal>PersonR</literal>, <literal>/year/#Int</literal> named <literal>YearR</literal> and <literal>/page/faq</literal>
+named <literal>FaqR</literal>, you would end up with a route data type roughly looking like:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">data MyRoute = PersonR Text
+             | YearR Int
+             | FaqR</programlisting>
+<simpara>If a user requests <literal>/year/2009</literal>, Yesod will convert it into the value <literal>YearR
+2009</literal>. <literal>/person/Michael</literal> becomes <literal>PersonR "Michael"</literal> and <literal>/page/faq</literal> becomes
+<literal>FaqR</literal>. On the other hand, <literal>/year/two-thousand-nine</literal>, <literal>/person/michael/snoyman</literal>
+and <literal>/page/FAQ</literal> would all result in 404 errors without ever seeing your code.</simpara>
+</section>
+<section id="routing-and-handlers_handler_specification">
+<title>Handler specification</title>
+<simpara>The last piece of the puzzle when declaring your resources is how they will be
+handled. There are three options in Yesod:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+A single handler function for all request methods on a given route.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+A separate handler function for each request method on a given route. Any
+  other request method will generate a 405 Method Not Allowed response.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+You want to pass off to a subsite.
+</simpara>
+</listitem>
+</itemizedlist>
+<simpara>The first two can be easily specified. A single handler function will be a line
+with just a resource pattern and the resource name, such as <literal>/page/faq FaqR</literal>.
+In this case, the handler function must be named <literal>handleFaqR</literal>.</simpara>
+<simpara>A separate handler for each request method will be the same, plus a list of
+request methods. The request methods must be all capital letters. For example,
+<literal>/person/#String PersonR GET POST DELETE</literal>. In this case, you would need to
+define three handler functions: <literal>getPersonR</literal>, <literal>postPersonR</literal> and
+<literal>deletePersonR</literal>.</simpara>
+<simpara>Subsites are a very useful— but more complicated— topic in Yesod. We will cover
+writing subsites later, but using them is not too difficult. The most commonly
+used subsite is the static subsite, which serves static files for your
+application. In order to serve static files from <literal>/static</literal>, you would need a
+resource line like:</simpara>
+<programlisting language="routes" linenumbering="unnumbered">/static StaticR Static getStatic</programlisting>
+<simpara>In this line, <literal>/static</literal> just says where in your URL structure to serve the
+static files from. There is nothing magical about the word static, you could
+easily replace it with <literal>/my/non-dynamic/files</literal>.</simpara>
+<simpara>The next word, <literal>StaticR</literal>, gives the resource name. The next two words
+specify that we are using a subsite. <literal>Static</literal> is the name of the subsite
+foundation datatype, and <literal>getStatic</literal> is a function that gets a <literal>Static</literal> value
+from a value of your master foundation datatype.</simpara>
+<simpara>Let&#8217;s not get too caught up in the details of subsites now. We will look more
+closely at the static subsite in the scaffolded site chapter.</simpara>
+</section>
+</section>
+<section id="routing-and-handlers_dispatch">
+<title>Dispatch</title>
+<simpara>Once you have specified your routes, Yesod will take care of all the pesky
+details of URL dispatch for you. You just need to make sure to provide the
+appropriate handler functions. For subsite routes, you do not need to write any
+handler functions, but you do for the other two. We mentioned the naming rules
+above (<literal>MyHandlerR GET</literal> becomes <literal>getMyHandlerR</literal>, <literal>MyOtherHandlerR</literal> becomes
+<literal>handleMyOtherHandlerR</literal>).</simpara>
+<simpara>Now that we know which functions we need to write, let&#8217;s figure out what their
+type signatures should be.</simpara>
+<section id="routing-and-handlers_return_type">
+<title>Return Type</title>
+<simpara>Let&#8217;s look at a simple handler function:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">mkYesod "Simple" [parseRoutes|
+/ HomeR GET
+|]
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout [whamlet|&lt;h1&gt;This is simple|]</programlisting>
+<simpara>There are two components to this return type: <literal>Handler</literal> and <literal>Html</literal>. Let&#8217;s
+analyze each in more depth.</simpara>
+<section id="routing-and-handlers_handler_monad">
+<title>Handler monad</title>
+<simpara>Like the <literal>Widget</literal> type, the <literal>Handler</literal> data type is not defined anywhere in the
+Yesod libraries. Instead, the libraries provide the data type:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">data HandlerT site m a</programlisting>
+<simpara>And like <literal>WidgetT</literal>, this has three arguments: a base monad <literal>m</literal>, a monadic value
+<literal>a</literal>, and the foundation data type <literal>site</literal>. Each application defines a <literal>Handler</literal>
+synonym which constrains <literal>site</literal> to that application&#8217;s foundation data type, and
+sets <literal>m</literal> to <literal>IO</literal>. If your foundation is <literal>MyApp</literal>, in other words, you&#8217;d have the
+synonym:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">type Handler = HandlerT MyApp IO</programlisting>
+<simpara>We need to be able to modify the underlying monad when writing subsites, but
+otherwise we&#8217;ll use <literal>IO</literal>.</simpara>
+<simpara>The <literal>HandlerT</literal> monad provides access to information about the user request
+(e.g. query-string parameters), allows modifying the response (e.g., response
+headers), and more. This is the monad that most of your Yesod code will live
+in.</simpara>
+<simpara>In addition, there&#8217;s a type class called <literal>MonadHandler</literal>. Both <literal>HandlerT</literal> and
+<literal>WidgetT</literal> are instances of this type class, allowing many common functions to
+be used in both monads. If you see <literal>MonadHandler</literal> in any API documentation, you
+should remember that the function can be used in your <literal>Handler</literal> functions.</simpara>
+</section>
+<section id="routing-and-handlers_html">
+<title>Html</title>
+<simpara>There&#8217;s nothing too surprising about this type. This function returns some HTML
+content, represented by the <literal>Html</literal> data type. But clearly Yesod would not be
+useful if it only allowed HTML responses to be generated. We want to respond with
+CSS, Javascript, JSON, images, and more. So the question is: what data types
+can be returned?</simpara>
+<simpara>In order to generate a response, we need to know two pieces of information:
+the content type (e.g., <literal>text/html</literal>, <literal>image/png</literal>) and how to serialize it to a
+stream of bytes. This is represented by the <literal>TypedContent</literal> data type:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">data TypedContent = TypedContent !ContentType !Content</programlisting>
+<simpara>We also have a type class for all data types which can be converted to a
+<literal>TypedContent</literal>:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">class ToTypedContent a where
+    toTypedContent :: a -&gt; TypedContent</programlisting>
+<simpara>Many common data types are instances of this type class, including <literal>Html</literal>,
+<literal>Value</literal> (from the aeson package, representing JSON), <literal>Text</literal>, and even <literal>()</literal> (for
+representing an empty response).</simpara>
+</section>
+</section>
+<section id="routing-and-handlers_arguments">
+<title>Arguments</title>
+<simpara>Let&#8217;s return to our simple example from above:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">mkYesod "Simple" [parseRoutes|
+/ HomeR GET
+|]
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout [whamlet|&lt;h1&gt;This is simple|]</programlisting>
+<simpara>Not every route is as simple as this <literal>HomeR</literal>. Take for instance our <literal>PersonR</literal>
+route from earlier. The name of the person needs to be passed to the handler
+function. This translation is very straight-forward, and hopefully intuitive.
+For example:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE ViewPatterns      #-}
+import           Data.Text (Text)
+import qualified Data.Text as T
+import           Yesod
+
+data App = App
+instance Yesod App
+
+mkYesod "App" [parseRoutes|
+/person/#Text PersonR GET
+/year/#Integer/month/#Text/day/#Int DateR
+/wiki/*Texts WikiR GET
+|]
+
+getPersonR :: Text -&gt; Handler Html
+getPersonR name = defaultLayout [whamlet|&lt;h1&gt;Hello #{name}!|]
+
+handleDateR :: Integer -&gt; Text -&gt; Int -&gt; Handler Text -- text/plain
+handleDateR year month day =
+    return $
+        T.concat [month, " ", T.pack $ show day, ", ", T.pack $ show year]
+
+getWikiR :: [Text] -&gt; Handler Text
+getWikiR = return . T.unwords
+
+main :: IO ()
+main = warp 3000 App</programlisting>
+<simpara>The arguments have the types of the dynamic pieces for each route, in the order
+specified. Also, notice how we are able to use both <literal>Html</literal> and <literal>Text</literal> return
+values.</simpara>
+</section>
+</section>
+<section id="routing-and-handlers_the_handler_functions">
+<title>The Handler functions</title>
+<simpara>Since the majority of your code will live in the <literal>Handler</literal> monad, it&#8217;s
+important to invest some time in understanding it better. The remainder of this
+chapter will give a brief introduction to some of the most common functions
+living in the <literal>Handler</literal> monad. I am specifically <emphasis>not</emphasis> covering any of the
+session functions; that will be addressed in the sessions chapter.</simpara>
+<section id="routing-and-handlers_application_information">
+<title>Application Information</title>
+<simpara>There are a number of functions that return information about your application
+as a whole, and give no information about individual requests. Some of these
+are:</simpara>
+<variablelist>
+<varlistentry>
+<term>
+getYesod
+</term>
+<listitem>
+<simpara>
+Returns your application foundation value. If you store configuration
+values in your foundation, you will probably end up using this function a lot.
+(If you&#8217;re so inclined, you can also use <literal>ask</literal> from <literal>Control.Monad.Reader</literal>;
+<literal>getYesod</literal> is simply a type-constrained synonym for it.)
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+getUrlRender
+</term>
+<listitem>
+<simpara>
+Returns the URL rendering function, which converts a type-safe
+URL into a <literal>Text</literal>. Most of the time- like with Hamlet- Yesod calls this
+function for you, but you may occasionally need to call it directly.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+getUrlRenderParams
+</term>
+<listitem>
+<simpara>
+A variant of <literal>getUrlRender</literal> that converts both a type-safe
+URL and a list of query-string parameters. This function handles all
+percent-encoding necessary.
+</simpara>
+</listitem>
+</varlistentry>
+</variablelist>
+</section>
+<section id="routing-and-handlers_request_information">
+<title>Request Information</title>
+<simpara>The most common information you will want to get about the current request is
+the requested path, the query string parameters and <literal>POST</literal>ed form data. The
+first of those is dealt with in the routing, as described above. The other two
+are best dealt with using the forms module.</simpara>
+<simpara>That said, you will sometimes need to get the data in a more raw format. For
+this purpose, Yesod exposes the <literal>YesodRequest</literal> datatype along with the
+<literal>getRequest</literal> function to retrieve it. This gives you access to the full list of
+GET parameters, cookies, and preferred languages. There are some convenient
+functions to make these lookups easier, such as <literal>lookupGetParam</literal>,
+<literal>lookupCookie</literal> and <literal>languages</literal>. For raw access to the POST parameters, you
+should use <literal>runRequestBody</literal>.</simpara>
+<simpara>If you need even more raw data, like request headers, you can use <literal>waiRequest</literal>
+to access the Web Application Interface (WAI) request value. See the WAI
+appendix for more details.</simpara>
+</section>
+<section id="routing-and-handlers_short_circuiting">
+<title>Short Circuiting</title>
+<simpara>The following functions immediately end execution of a handler function and
+return a result to the user.</simpara>
+<variablelist>
+<varlistentry>
+<term>
+redirect
+</term>
+<listitem>
+<simpara>
+Sends a redirect response to the user (a 303 response). If you want to use a different response code (e.g., a permanent 301 redirect), you can use <literal>redirectWith</literal>.
+</simpara>
+</listitem>
+</varlistentry>
+</variablelist>
+<note>
+<simpara>Yesod uses a 303 response for HTTP/1.1 clients, and a 302 response for HTTP/1.0
+clients. You can read up on this sordid saga in the HTTP spec.</simpara>
+</note>
+<variablelist>
+<varlistentry>
+<term>
+notFound
+</term>
+<listitem>
+<simpara>
+Return a 404 response. This can be useful if a user requests a
+database value that doesn&#8217;t exist.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+permissionDenied
+</term>
+<listitem>
+<simpara>
+Return a 403 response with a specific error message.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+invalidArgs
+</term>
+<listitem>
+<simpara>
+A 400 response with a list of invalid arguments.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+sendFile
+</term>
+<listitem>
+<simpara>
+Sends a file from the filesystem with a specified content type. This
+is the preferred way to send static files, since the underlying WAI handler may
+be able to optimize this to a <literal>sendfile</literal> system call. Using <literal>readFile</literal> for
+sending static files should not be necessary.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+sendResponse
+</term>
+<listitem>
+<simpara>
+Send a normal response with a 200 status code. This is really
+just a convenience for when you need to break out of some deeply nested code
+with an immediate response. Any instance of <literal>ToTypedContent</literal> may be used.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+sendWaiResponse
+</term>
+<listitem>
+<simpara>
+When you need to get low-level and send out a raw WAI
+response. This can be especially useful for creating streaming responses or a
+technique like server-sent events.
+</simpara>
+</listitem>
+</varlistentry>
+</variablelist>
+</section>
+<section id="routing-and-handlers_response_headers">
+<title>Response Headers</title>
+<variablelist>
+<varlistentry>
+<term>
+setCookie
+</term>
+<listitem>
+<simpara>
+Set a cookie on the client. Instead of taking an expiration date,
+this function takes a cookie duration in minutes. Remember, you won&#8217;t see this
+cookie using <literal>lookupCookie</literal> until the <emphasis>following</emphasis> request.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+deleteCookie
+</term>
+<listitem>
+<simpara>
+Tells the client to remove a cookie. Once again, <literal>lookupCookie</literal>
+will not reflect this change until the next request.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+setHeader
+</term>
+<listitem>
+<simpara>
+Set an arbitrary response header.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+setLanguage
+</term>
+<listitem>
+<simpara>
+Set the preferred user language, which will show up in the result
+of the <literal>languages</literal> function.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+cacheSeconds
+</term>
+<listitem>
+<simpara>
+Set a Cache-Control header to indicate how many seconds this
+response can be cached. This can be particularly useful if you are using
+<ulink url="http://www.varnish-cache.org">varnish on your server</ulink>.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+neverExpires
+</term>
+<listitem>
+<simpara>
+Set the Expires header to the year 2037. You can use this with
+content which should never expire, such as when the request path has a hash
+value associated with it.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+alreadyExpired
+</term>
+<listitem>
+<simpara>
+Sets the Expires header to the past.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+expiresAt
+</term>
+<listitem>
+<simpara>
+Sets the Expires header to the specified date/time.
+</simpara>
+</listitem>
+</varlistentry>
+</variablelist>
+</section>
+</section>
+<section id="routing-and-handlers_i_o_and_debugging">
+<title>I/O and debugging</title>
+<simpara>The <literal>HandlerT</literal> and <literal>WidgetT</literal> monad transformers are both instances of a number
+of typeclasses. For this section, the important typeclasses are <literal>MonadIO</literal> and
+<literal>MonadLogger</literal>. The former allows you to perform arbitrary <literal>IO</literal> actions inside
+your handler, such as reading from a file. In order to achieve this, you just
+need to prepend <literal>liftIO</literal> to the call.</simpara>
+<simpara><literal>MonadLogger</literal> provides a built-in logging system. There are many ways you can
+customize this system, including what messages get logged and where logs are
+sent. By default, logs are sent to standard output, in development all messages
+are logged, and in production, warnings and errors are logged.</simpara>
+<simpara>Often times when logging, we want to know where in the source code the logging
+occured. For this, <literal>MonadLogger</literal> provides a number of convenience Template
+Haskell functions which will automatically insert source code location into the
+log messages. These functions are <literal>$logDebug</literal>, <literal>$logInfo</literal>, <literal>$logWarn</literal>, and
+<literal>$logError</literal>. Let&#8217;s look at a short example of some of these functions.</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Control.Exception (IOException, try)
+import           Control.Monad     (when)
+import           Yesod
+
+data App = App
+instance Yesod App where
+    -- This function controls which messages are logged
+    shouldLog App src level =
+        True -- good for development
+        -- level == LevelWarn || level == LevelError -- good for production
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+|]
+
+getHomeR :: Handler Html
+getHomeR = do
+    $logDebug "Trying to read data file"
+    edata &lt;- liftIO $ try $ readFile "datafile.txt"
+    case edata :: Either IOException String of
+        Left e -&gt; do
+            $logError $ "Could not read datafile.txt"
+            defaultLayout [whamlet|An error occurred|]
+        Right str -&gt; do
+            $logInfo "Reading of data file succeeded"
+            let ls = lines str
+            when (length ls &lt; 5) $ $logWarn "Less than 5 lines of data"
+            defaultLayout
+                [whamlet|
+                    &lt;ol&gt;
+                        $forall l &lt;- ls
+                            &lt;li&gt;#{l}
+                |]
+
+main :: IO ()
+main = warp 3000 App</programlisting>
+</section>
+<section id="routing-and-handlers_query_string_and_hash_fragments">
+<title>Query string and hash fragments</title>
+<simpara>We&#8217;ve looked at a number of functions which work on URL-like things, such as <literal>redirect</literal>. These functions all work with type-safe URLs, but what else do they work with? There&#8217;s a typeclass called <literal>RedirectUrl</literal> which contains the logic for converting some type into a textual URL. This includes type-safe URLs, textual URLs, and two special instances:</simpara>
+<orderedlist numeration="arabic">
+<listitem>
+<simpara>
+A tuple of a URL and a list of key/value pairs of query string parameters.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+The <literal>Fragment</literal> datatype, used for adding a hash fragment to the end of a URL.
+</simpara>
+</listitem>
+</orderedlist>
+<simpara>Both of these instances allow you to "add on" extra information to a type-safe
+URL. Let&#8217;s see some examples of how these can be used:</simpara>
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Data.Text        (Text)
+import           Yesod
+
+data App = App
+
+mkYesod "App" [parseRoutes|
+/      HomeR  GET
+/link1 Link1R GET
+/link2 Link2R GET
+/link3 Link3R GET
+/link4 Link4R GET
+|]
+
+instance Yesod App where
+
+getHomeR :: Handler Html
+getHomeR = defaultLayout $ do
+    setTitle "Redirects"
+    [whamlet|
+        &lt;p&gt;
+            &lt;a href=@{Link1R}&gt;Click to start the redirect loop!
+    |]
+
+getLink1R, getLink2R, getLink3R :: Handler ()
+getLink1R = redirect Link2R -- /link1
+getLink2R = redirect (Link3R, [("foo", "bar")]) -- /link3?foo=bar
+getLink3R = redirect $ Link4R :#: ("baz" :: Text) -- /link4#baz
+
+getLink4R :: Handler Html
+getLink4R = defaultLayout
+    [whamlet|
+        &lt;p&gt;You made it!
+    |]
+
+main :: IO ()
+main = warp 3000 App</programlisting>
+<simpara>Of course, inside a Hamlet template this is usually not necessary, as you can simply include the hash after the URL directly, e.g.:</simpara>
+<programlisting language="hamlet" linenumbering="unnumbered">&lt;a href=@{Link1R}#somehash&gt;Link to hash</programlisting>
+</section>
+<section id="routing-and-handlers_summary">
+<title>Summary</title>
+<simpara>Routing and dispatch is arguably the core of Yesod: it is from here that our
+type-safe URLs are defined, and the majority of our code is written within the
+<literal>Handler</literal> monad. This chapter covered some of the most important and central
+concepts of Yesod, so it is important that you properly digest it.</simpara>
+<simpara>This chapter also hinted at a number of more complex Yesod topics that we will
+be covering later. But you should be able to write some very sophisticated web
+applications with just the knowledge you have learned up until here.</simpara>
+</section>
+</section>
+</article>
