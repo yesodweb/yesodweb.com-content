@@ -29,6 +29,7 @@ script:
   elif [ -n "$(git status --porcelain)" ]
   then
     mkdir -p $HOME/.ssh
+    openssl aes-256-cbc -K $encrypted_92ac0cbbb1f3_key -iv $encrypted_92ac0cbbb1f3_iv -in id_rsa.enc -out id_rsa -d
     mv id_rsa $HOME/.ssh
     chmod 400 $HOME/.ssh/id_rsa
     git config --global user.email "michael+travis@snoyman.com"
