@@ -140,7 +140,7 @@ the different kinds of forms. There are three categories:
 
 Applicative:: These are the most commonly used (it's what appeared in the
 synopsis). Applicative gives us some nice properties of letting error messages
-coallesce together and keep a very high-level, declarative approach. (For more
+coalesce together and keep a very high-level, declarative approach. (For more
 information on applicative code, see
 link:http://www.haskell.org/haskellwiki/Applicative_functor[the Haskell
 wiki].)
