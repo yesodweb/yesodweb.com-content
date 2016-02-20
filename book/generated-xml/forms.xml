@@ -167,7 +167,7 @@ Applicative
 <simpara>
 These are the most commonly used (it&#8217;s what appeared in the
 synopsis). Applicative gives us some nice properties of letting error messages
-coallesce together and keep a very high-level, declarative approach. (For more
+coalesce together and keep a very high-level, declarative approach. (For more
 information on applicative code, see
 <ulink url="http://www.haskell.org/haskellwiki/Applicative_functor">the Haskell
 wiki</ulink>.)
