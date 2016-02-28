@@ -1,3 +1,7 @@
+- time: 2016-02-28T13:00:00Z
+  author: michael
+  title: "First class stream fusion"
+  path: 2016/02/first-class-stream-fusion.md
 - time: 2016-01-25T10:30:00Z
   author: michael
   title: "Auto generate Docbook XML for the Yesod book"
