@@ -238,3 +238,17 @@ conduit-style workflows, and would be relatively easy to teach. With the
 exception of the two extra type parameters possibly causing confusion, I think
 everything else is true. As far as where this goes next, I'm very much open to
 feedback.
+
+## UPDATE Benchmark results
+
+Don Stewart asked me on Twitter to share the [benchmark results for this
+repo](/assets/vegito-benchmark-2016-02-28.html). They're not particularly
+enlightening, which is why I didn't include them initially. Nonetheless,
+putting them here makes it clear what I'm getting at: vegito, vector, and
+conduit (when stream fusion kicks in) are all the same speed. In fact, the more
+interesting thing is to look at their compiled core, which is identical. The
+annoyance is that, while `Data.Conduit.List` and `Data.Conduit.Combinators`
+both fire their rewrite rules, the combinators provided by the `Conduit` module
+do _not_ fire, leading to a significant (read: 200-fold) slowdown. This
+slowdown is exacerbated by the choice of benchmark, which is intended to
+demonstrate the specific power of the stream fusion optimizations.
