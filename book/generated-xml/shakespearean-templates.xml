@@ -428,7 +428,7 @@ You can add an attribute optionally by using colons. To make a checkbox only
   checked if the variable isChecked is True, you would write
   <literal>&lt;input type=checkbox :isChecked:checked&gt;</literal>. To have a paragraph be optionally red,
   you could use <literal>&lt;p :isRed:style="color:red"&gt;</literal>. (This also works for class names, e.g.,
-  <literal>&lt;p :isCurrent:.current&gt;</literal> will set the class <literal>current</literal> is <literal>isCurrent</literal> is <literal>True</literal>.)
+  <literal>&lt;p :isCurrent:.current&gt;</literal> will set the class <literal>current</literal> if <literal>isCurrent</literal> is <literal>True</literal>.)
 </simpara>
 </listitem>
 <listitem>
