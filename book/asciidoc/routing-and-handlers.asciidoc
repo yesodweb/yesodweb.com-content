@@ -611,11 +611,11 @@ getHomeR = defaultLayout $ do
     setTitle "Redirects"
     [whamlet|
         <p>
-            <a href=@{Link1R}>Click to start the redirect loop!
+            <a href=@{Link1R}>Click to start the redirect chain!
     |]
 
 getLink1R, getLink2R, getLink3R :: Handler ()
-getLink1R = redirect Link2R -- /link1
+getLink1R = redirect Link2R -- /link2
 getLink2R = redirect (Link3R, [("foo", "bar")]) -- /link3?foo=bar
 getLink3R = redirect $ Link4R :#: ("baz" :: Text) -- /link4#baz
 
