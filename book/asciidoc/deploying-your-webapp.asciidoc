@@ -13,6 +13,10 @@ for everyone. This chapter covers the different options you have for
 deployment, and gives some general recommendations on what you should choose in
 different situations.
 
+The Yesod team strongly recommends using the +stack+ build tool as discussed in 
+the link:http://www.yesodweb.com/page/quickstart[quick start guide] for Yesod
+development, check out the quick start if you haven't already.
+
 === Keter
 
 The Yesod scaffolding comes with some built-in support for the Keter deployment
@@ -44,11 +48,10 @@ The biggest advice I can give is: *don't compile on your server*. It's tempting 
 * While you're recompiling your app, your existing application will suffer performance-wise.
 * You will need to get a much larger machine to handle compilation, and that capacity will likely sit idle most of the time, since Yesod applications tend to require far less CPU and memory than GHC itself.
 
-Once you're ready to compile, you should always make sure to +cabal clean+
+Once you're ready to compile, you should always make sure to +stack clean+
 before a new production build, to make sure no old files are lying around.
-Then, you can run +cabal configure && cabal build+ to get an executable, which
-will be located at +dist/build/myapp/myapp+. (The +yesod keter+ command does
-+cabal clean+ for you automatically.)
+Then, you can run +stack build+ to get an executable, which
+will be located at +dist/build/myapp/myapp+.
 
 === Files to deploy
 
