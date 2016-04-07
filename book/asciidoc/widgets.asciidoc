@@ -3,7 +3,7 @@
 One of the challenges in web development is that we have to coordinate three
 different client-side technologies: HTML, CSS and Javascript. Worse still, we
 have to place these components in different locations on the page: CSS in a
-style tag in the head, Javascript in a script tag in the head, and HTML in the
+style tag in the head, Javascript in a script tag before the closing body tag, and HTML in the
 body. And never mind if you want to put your CSS and Javascript in separate
 files!
 
