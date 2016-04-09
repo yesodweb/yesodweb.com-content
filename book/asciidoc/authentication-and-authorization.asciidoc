@@ -208,8 +208,7 @@ So what exactly goes in this +YesodAuth+ instance? There are six required declar
 In addition to these six methods, there are other methods available to control
 other behavior of the authentication system, such as what the login page looks
 like. For more information, please
-link:http://haddocks.fpcomplete.com/fp/7.8/20140916-162/yesod-auth/Yesod-Auth.html[see
-the API documentation].
+link:https://hackage.haskell.org/package/yesod-auth[see the API documentation].
 
 In our +HomeR+ handler, we have some simple links to the login and logout
 pages, depending on whether or not the user is logged in. Notice how we
