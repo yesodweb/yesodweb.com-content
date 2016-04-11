@@ -236,8 +236,7 @@ It uses email addresses as identifiers, which people are comfortable with, as op
 <simpara>In addition to these six methods, there are other methods available to control
 other behavior of the authentication system, such as what the login page looks
 like. For more information, please
-<ulink url="http://haddocks.fpcomplete.com/fp/7.8/20140916-162/yesod-auth/Yesod-Auth.html">see
-the API documentation</ulink>.</simpara>
+<ulink url="https://www.stackage.org/package/yesod-auth">see the API documentation</ulink>.</simpara>
 <simpara>In our <literal>HomeR</literal> handler, we have some simple links to the login and logout
 pages, depending on whether or not the user is logged in. Notice how we
 construct these subsite links: first we give the subsite route name (<literal>AuthR</literal>),
