@@ -7,7 +7,7 @@ Over the years, much has been said about Either-like `Monad` instances. To summa
 * The `EitherT` transformer from the `eithert` package
 * The newer `ExceptT` transformer, which greatly improves on `EitherT` by giving it a more intuitive name
 
-I'm not going to dive into all of these points, I merely raise them to stress the idea of how many approaches have been attempted to get this right. I'd like to explain how our current situation is wrong, how we can do much better, and propose that - despite the large impact on all Haskell users out there to make such a change - we should finally fix our library ecosystem correctly, once and for all.
+I'm not going to dive into all of these points, I merely raise them to stress the idea of how many approaches have been attempted to get this right. I'd like to explain how our current situation is wrong, how we can do much better, and propose that – despite the large impact on all Haskell users out there to make such a change – we should finally fix our library ecosystem correctly, once and for all.
 
 ## The broken `fail` function
 
