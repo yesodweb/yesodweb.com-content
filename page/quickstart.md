@@ -5,13 +5,13 @@ The Yesod team strongly recommends using [the stack build tool](https://github.c
 1. Follow the [installation instructions for stack](http://docs.haskellstack.org/en/stable/install_and_upgrade.html) to get stack.
 2. Create a new scaffolded site: `stack new my-project yesod-sqlite && cd my-project`
     * NOTE: Use `stack templates` to see other available Yesod scaffoldings.
-3. Install the yesod command line tool: `stack install yesod-bin cabal-install --install-ghc`
+3. Install the yesod command line tool: `stack build yesod-bin cabal-install --install-ghc`
 4. Build libraries: `stack build`
 5. Launch devel server: `stack exec -- yesod devel`
 6. View your Yesod site at [http://localhost:3000/](http://localhost:3000/)
 
 NOTE: If you get an error message about `GHC_PACKAGE_PATH` at step (5), you
-need to install a newer version of yesod-bin. Try running `stack install
+need to install a newer version of yesod-bin. Try running `stack build
 yesod-bin-1.4.11` and rerunning `stack exec -- yesod devel`. Also, if you choose
 the "mini" scaffolding, `yesod devel` will not work.
 
