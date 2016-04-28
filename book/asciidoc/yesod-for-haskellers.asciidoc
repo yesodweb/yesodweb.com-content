@@ -1068,9 +1068,9 @@ If you're happy with +blaze-html+ combinators, by all means use them. However,
 many people like to use a more specialized templating language. Yesod's
 standard provider for this is the Shakespearean languages: Hamlet, Lucius, and
 Julius. You are by all means welcome to use a different system if so desired,
-the only requirement is that you can a +Content+ value from the template.
+the only requirement is that you can get a +Content+ value from the template.
 
-Since Shakespearean templates on compile-time checked, their usage requires
+Since Shakespearean templates are compile-time checked, their usage requires
 either quasiquotation or Template Haskell. We'll go for the former approach
 here. Please see the Shakespeare chapter in the book for more information.
 
