@@ -1038,8 +1038,8 @@ attempt.</simpara>
 many people like to use a more specialized templating language. Yesod&#8217;s
 standard provider for this is the Shakespearean languages: Hamlet, Lucius, and
 Julius. You are by all means welcome to use a different system if so desired,
-the only requirement is that you can a <literal>Content</literal> value from the template.</simpara>
-<simpara>Since Shakespearean templates on compile-time checked, their usage requires
+the only requirement is that you can get a <literal>Content</literal> value from the template.</simpara>
+<simpara>Since Shakespearean templates are compile-time checked, their usage requires
 either quasiquotation or Template Haskell. We&#8217;ll go for the former approach
 here. Please see the Shakespeare chapter in the book for more information.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes #-}
