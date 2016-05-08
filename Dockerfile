@@ -17,7 +17,7 @@ RUN apt-get install -y postgresql postgresql-client postgresql-contrib libpq-dev
 RUN apt-get install -y sqlite3 libsqlite3-dev
 
 # # when the building step is done, run the given <image>, mounting this directory inside
-# sudo docker run -name yesodcontent -v `pwd`:/home/haskell -t -i <image> /bin/bash
+# sudo docker run --name yesodcontent -v `pwd`:/home/haskell -t -i <image> /bin/bash
 #
 # # switch to the haskell user in the image and its home directory
 # su haskell
