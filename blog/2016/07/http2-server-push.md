@@ -55,6 +55,7 @@ The next question is how an application knows which files to be pushed for a giv
 One way is [manifest files](https://github.com/GoogleChrome/http2-push-manifest/).
 
 Another way is learning based on `Referer:`.
+This idea came from [Jetty](http://www.eclipse.org/jetty/).
 Typically, there is the `Referer:` whose value
 is, say, https://example.com/index.html", 
 in a GET request to "style.css".
@@ -89,7 +90,8 @@ So, no pushes are used.
 ![Figure 1: Download time-line without server push](/assets/server-push/nopush.png)
 
 The second figure is the second access.
-You can see .js and .css files are pushed.
+You can see .js and .css files are pushed
+since bullets are not green.
 
 ![Figure 2: Download time-line with server push](/assets/server-push/push.png)
 
