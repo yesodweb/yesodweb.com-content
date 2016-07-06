@@ -1,3 +1,7 @@
+- time: 2016-07-06T07:10:00Z
+  author: kazu
+  title: "Implementing HTTP/2 server push"
+  path: 2016/07/http2-server-push.md
 - time: 2016-07-05T06:15:00Z
   author: michael
   title: New http-client and mono-traversable releases
