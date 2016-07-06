@@ -52,7 +52,7 @@ They are APIs provided only by Warp.
 ## Middleware for server push
 
 The next question is how an application knows which files to be pushed for a given URL.
-One way is a [manifest files](https://github.com/GoogleChrome/http2-push-manifest/).
+One way is [manifest files](https://github.com/GoogleChrome/http2-push-manifest/).
 
 Another way is learning based on `Referer:`.
 Typically, there is the `Referer:` whose value
