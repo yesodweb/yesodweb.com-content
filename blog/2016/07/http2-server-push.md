@@ -1,10 +1,9 @@
 ## What is HTTP/2 server push?
 
 Server push is a hot topic of [HTTP/2](https://tools.ietf.org/html/rfc7540).
-If we used server push effectively,
-user experience cloud be improved.
-For instance, let's think a scenario to
-download "index.html" which requires "style.css". 
+Effective usage of server push can improve user experience.
+For instance, let's consider a scenario:
+downloading "index.html" which requires "style.css". 
 
 If a browser uses HTTP/1.1, it gets the "index.html" first,
 parses it,
@@ -33,8 +32,8 @@ We need to modify all existing applications.
 
 To keep all existing types as is,
 I decided to use [vault](http://www.yesodweb.com/blog/2015/10/using-wais-vault) in the `Request` type.
-Vault is heterogeneous infinite map which can store any kinds of types.
-Now, Warp creates a new `IORef` and store its getter and setter to the vault:
+Vault is a heterogeneous infinite map which can store any type.
+Warp creates a new `IORef` and store its getter and setter to the vault:
 
 ```haskell
 getHTTP2Data :: Request -> IO (Maybe HTTP2Data)
@@ -52,8 +51,8 @@ They are APIs provided only by Warp.
 
 ## Middleware for server push
 
-The next question is how an application know files to be pushed for a given URL.
-One way is [manifest files](https://github.com/GoogleChrome/http2-push-manifest/).
+The next question is how an application knows which files to be pushed for a given URL.
+One way is a [manifest files](https://github.com/GoogleChrome/http2-push-manifest/).
 
 Another way is learning based on `Referer:`.
 Typically, there is the `Referer:` whose value
@@ -63,11 +62,11 @@ So, analyzing requests for a while,
 we can learn that "style.css" should be pushed
 when "index.html" is requested.
 
-@davean suggested me to implement this mechanism as a middleware.
+@davean suggested that I implement this mechanism as a middleware.
 So, I created a middleware for HTTP/2 server push based on `Referer:`.
-It's default behavior for a given `Request` and `Response` is as follows:
+Its default behavior for a given `Request` and `Response` is as follows:
 
-- If files to be pushed is found for a given path in a learning dictionary, set them by `setHTTP2Data`.
+- If files to be pushed are found for a given path in a learning dictionary, set them by `setHTTP2Data`.
 - Otherwise, register the file of `Response` to the learning dictionary only when the following conditions are met:
 1. The `Request` stores a valid `Referer:`
 2. The `Response` is a file type
@@ -83,10 +82,10 @@ please send a pull request on [github](https://github.com/yesodweb/wai).
 
 ## Visualization
 
-Here are screen shots of Firefox accessing to new Warp.
+Here are screen shots of Firefox accessing the new Warp.
 Figure 1 is the first access and the middleware has not learned anything.
 So, no pushes are used.
-Figure 2 is the second access. 
+Figure 2 is the second access.
 You can see .js and .css files are pushed.
 
 
@@ -96,7 +95,7 @@ You can see .js and .css files are pushed.
 
 ## Next Step
 
-The next step would be implementation of
+The next step would be an implementation of
 [Cache Digests for HTTP/2](https://tools.ietf.org/html/draft-kazuho-h2-cache-digest).
 In this scheme, a browser can tell a list of cached file to a server.
 So, the server can avoid unnecessary pushes.
