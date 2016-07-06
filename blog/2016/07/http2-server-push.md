@@ -83,13 +83,13 @@ please send a pull request on [github](https://github.com/yesodweb/wai).
 ## Visualization
 
 Here are screen shots of Firefox accessing the new Warp.
-Figure 1 is the first access and the middleware has not learned anything.
+The first figure is the first access and the middleware has not learned anything.
 So, no pushes are used.
-Figure 2 is the second access.
-You can see .js and .css files are pushed.
-
 
 ![Figure 1: Download time-line without server push](/assets/server-push/nopush.png)
+
+The second figure is the second access.
+You can see .js and .css files are pushed.
 
 ![Figure 2: Download time-line with server push](/assets/server-push/push.png)
 
