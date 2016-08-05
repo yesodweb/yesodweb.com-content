@@ -4,7 +4,7 @@ A few months ago, Max Cantor braved the treacherous journey into the barren wast
 
 There have been a number of different alternate preludes attempted before, trying to do such things as fix the numeric type classes or automatically generate Javascript code. Our goal was entirely different.
 
-For me, it's based around a very simple idea: programmers are lazy. Let me give a practical motivating case. Suppose you're on line 247 of the file you're currently editing, and you need to modify some value wrapped in a `Functor`. You'd ideally like to write `f <$> x`. But have you imported `Control.Applicative` yet? If you want to write that "correct" code, you'll need to:
+For me, it's based around a very simple idea: programmers are ~~lazy~~ efficient. Let me give a practical motivating case. Suppose you're on line 247 of the file you're currently editing, and you need to modify some value wrapped in a `Functor`. You'd ideally like to write `f <$> x`. But have you imported `Control.Applicative` yet? If you want to write that "correct" code, you'll need to:
 
 1. Scroll up to your import list.
 2. Look for `Control.Applicative`.
@@ -52,7 +52,7 @@ Notice the use of functional dependencies to state the datatype used to represen
 
 There are of course some downsides to this approach.
 
-* As just mentioned: error messages are less helpful.
+* As just mentioned: error messages are ~~almost useless~~ less helpful.
 * In some cases, explicit type signatures are necessary. For example, `length . pack . "hello"` is ambiguous, since `length` and `pack` could be working on either strict or lazy text, or a string, or possibly something else entirely.
 * Some seemingly simple functions (like `map`) need a bit more type machinery around them, as depending on the data structure in question, `map` can be more or less polymorphic.
 
