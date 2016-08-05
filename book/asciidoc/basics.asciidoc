@@ -253,9 +253,9 @@ mkYesod "Links" [parseRoutes|
 
 instance Yesod Links
 
-getHomeR  = defaultLayout [whamlet|<a href=@{Page1R}>Go to page 1!|]
-getPage1R = defaultLayout [whamlet|<a href=@{Page2R}>Go to page 2!|]
-getPage2R = defaultLayout [whamlet|<a href=@{HomeR}>Go home!|]
+getHomeR  = defaultLayout [whamlet|<a href=@{HomeR}>Go home!|]
+getPage1R = defaultLayout [whamlet|<a href=@{Page1R}>Go to page 1!|]
+getPage2R = defaultLayout [whamlet|<a href=@{Page2R}>Go to page 2!|]
 
 main = warp 3000 Links
 ----
