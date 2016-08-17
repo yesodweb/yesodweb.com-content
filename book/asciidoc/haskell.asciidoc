@@ -96,7 +96,7 @@ will install all the libraries you need:
 
 [source, shell]
 ----
-stack build yesod persistent-sqlite yesod-static
+stack build yesod persistent-sqlite yesod-static esqueleto
 ----
 
 In order to run an example from the book, save it in a file, e.g.,

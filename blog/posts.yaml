@@ -1,3 +1,63 @@
+- time: 2016-07-06T07:10:00Z
+  author: kazu
+  title: "Implementing HTTP/2 server push"
+  path: 2016/07/http2-server-push.md
+- time: 2016-07-05T06:15:00Z
+  author: michael
+  title: New http-client and mono-traversable releases
+  path: 2016/07/new-http-client-mono-traversable.md
+- time: 2016-05-18T06:15:00Z
+  author: michael
+  title: Are unused import warnings harmful?
+  path: 2016/05/are-unused-import-warnings-harmful.md
+- time: 2016-04-10T15:00:00Z
+  author: eric
+  title: "Supporting separate read and write databases in persistent"
+  path: 2016/04/split-db.md
+- time: 2016-04-08T10:00:00Z
+  author: michael
+  title: "Stackifying the cookbook"
+  path: 2016/04/stackifying-the-cookbook.md
+- time: 2016-04-01T00:00:00Z
+  author: michael
+  title: "Fixing the Monad instance for Either"
+  path: 2016/04/fixing-monad-either.md
+- time: 2016-03-22T09:30:00Z
+  author: michael
+  title: "Why I prefer typeclass-based libraries"
+  path: 2016/03/why-i-prefer-typeclass-based-libraries.md
+- time: 2016-02-28T13:00:00Z
+  author: michael
+  title: "First class stream fusion"
+  path: 2016/02/first-class-stream-fusion.md
+- time: 2016-01-25T10:30:00Z
+  author: michael
+  title: "Auto generate Docbook XML for the Yesod book"
+  path: 2016/01/auto-generate-docbook-xml.md
+- time: 2015-12-14T13:30:00Z
+  author: michael
+  title: "Yesod hosting with Docker and Kubernetes"
+  path: 2015/12/yesod-hosting-docker-kubernetes.md
+- time: 2015-10-30T07:30:00Z
+  author: michael
+  title: "Beginner friendly code and APIs"
+  path: 2015/10/beginner-friendly-code-and-apis.md
+- time: 2015-10-25T08:00:00Z
+  author: michael
+  title: "Resurrecting servius"
+  path: 2015/10/resurrecting-servius.md
+- time: 2015-10-20T06:00:00Z
+  author: michael
+  title: "Using WAI's vault for fun and profit"
+  path: 2015/10/using-wais-vault.md
+- time: 2015-09-24T12:45:00Z
+  author: michael
+  title: "The true root of the PVP debate"
+  path: 2015/09/true-root-pvp-debate.md
+- time: 2015-09-18T03:00:00Z
+  author: michael
+  title: "The new runtime Hamlet API"
+  path: 2015/09/new-runtime-hamlet-api.md
 - time: 2015-08-31T00:45:00Z
   author: kazu
   title: "Getting Rating A from the SSL Server Test"

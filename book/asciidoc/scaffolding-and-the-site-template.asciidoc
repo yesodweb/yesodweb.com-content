@@ -104,7 +104,7 @@ The +models+ files is referenced by +Model.hs+. You are free to declare
 whatever you like in this file, but here are some guidelines:
 
 * Any data types used in _entities_ *must* be imported/declared in +Model.hs+,
-  above the +persistFile+ call.
+  above the +persistFileWith+ call.
 
 * Helper utilities should either be declared in +Import.hs+ or, if very
   model-centric, in a file within the +Model+ folder and imported into
@@ -148,7 +148,7 @@ functions: +getApplicationDev+ is used by +yesod devel+ to launch your app, and
 * Declares your foundation datatype
 
 * Declares a number of instances, such as +Yesod+, +YesodAuth+, and
-  +YesodPersist+ 
+  +YesodPersist+
 
 * Imports the messages files. If you look for the line starting with
   +mkMessage+, you will see that it specifies the folder containing the

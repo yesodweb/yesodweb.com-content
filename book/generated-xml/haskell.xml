@@ -135,7 +135,7 @@ with a new scaffolded site.</simpara>
 <simpara>Once you have your toolchain set up correctly, you&#8217;ll need to install a number
 of Haskell libraries. For the vast majority of the book, the following command
 will install all the libraries you need:</simpara>
-<programlisting language="shell" linenumbering="unnumbered">stack build yesod persistent-sqlite yesod-static</programlisting>
+<programlisting language="shell" linenumbering="unnumbered">stack build yesod persistent-sqlite yesod-static esqueleto</programlisting>
 <simpara>In order to run an example from the book, save it in a file, e.g.,
 yesod-example.hs, and then run it with:</simpara>
 <programlisting language="shell" linenumbering="unnumbered">stack runghc yesod-example.hs</programlisting>

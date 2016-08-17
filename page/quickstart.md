@@ -1,17 +1,16 @@
 Title: Yesod quick start guide
 
-The Yesod team strongly recommends using [the stack build tool](https://github.com/commercialhaskell/stack#readme) for developing with stack. There are other build tools available in the Haskell world which will likely work with Yesod, but stack provides the easiest experience. To get started:
-
-1. Follow the [installation instructions for stack](https://github.com/commercialhaskell/stack/wiki/Downloads) to get stack.
+1. Follow the [haskell-lang get started guide](https://haskell-lang.org/get-started) to get the Stack build tool.
+    * On POSIX systems, this is usually `curl -sSL https://get.haskellstack.org/ | sh`
 2. Create a new scaffolded site: `stack new my-project yesod-sqlite && cd my-project`
     * NOTE: Use `stack templates` to see other available Yesod scaffoldings.
-3. Install the yesod command line tool: `stack install yesod-bin cabal-install --install-ghc`
+3. Install the yesod command line tool: `stack build yesod-bin cabal-install --install-ghc`
 4. Build libraries: `stack build`
 5. Launch devel server: `stack exec -- yesod devel`
 6. View your Yesod site at [http://localhost:3000/](http://localhost:3000/)
 
 NOTE: If you get an error message about `GHC_PACKAGE_PATH` at step (5), you
-need to install a newer version of yesod-bin. Try running `stack install
+need to install a newer version of yesod-bin. Try running `stack build
 yesod-bin-1.4.11` and rerunning `stack exec -- yesod devel`. Also, if you choose
 the "mini" scaffolding, `yesod devel` will not work.
 
@@ -37,5 +36,6 @@ if you want to learn more, check out these resources:
 * [Yesod book](/book)
 * [Community](/page/community)
 * [The Wiki](/wiki)
+* [Haskell Documentation](https://haskell-lang.org/documentation)
 * [Screencasts](/page/screencasts)
 * [Yesod tutorial](http://yannesposito.com/Scratch/en/blog/Yesod-tutorial-for-newbies/) (slightly outdated, book provides more up-to-date content)

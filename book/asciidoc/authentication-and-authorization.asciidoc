@@ -64,7 +64,13 @@ of the benefits of a declarative authorization system.
 
 === Authenticate Me
 
-Let's jump right in with an example of authentication.
+Let's jump right in with an example of authentication. For the Google oAuth authentication to work you should follow these steps:
+
+
+1. Read on link:https://developers.google.com/identity/protocols/OAuth2[Google Developers Help] how to obtain OAuth 2.0 credentials such as a client ID and client secret that are known to both Google and your application.
+2. Set `Authorized redirect URIs` to `http://localhost:3000/auth/page/googleemail2/complete`.
+3. Enable `Google+ API` and `Contacts API`.
+4. Once you have the `clientId` and `secretId`, replace them in the code below.
 
 [source, haskell]
 ----
@@ -79,7 +85,16 @@ import           Network.HTTP.Client.Conduit (Manager, newManager)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.BrowserId
-import           Yesod.Auth.GoogleEmail
+import           Yesod.Auth.GoogleEmail2
+
+
+-- Replace with Google client ID.
+clientId :: Text
+clientId = ""
+
+-- Replace with Google secret ID.
+clientSecret :: Text
+clientSecret = ""
 
 data App = App
     { httpManager :: Manager
@@ -104,7 +119,7 @@ instance YesodAuth App where
 
     authPlugins _ =
         [ authBrowserId def
-        , authGoogleEmail
+        , authGoogleEmail clientId clientSecret
         ]
 
     authHttpManager = httpManager
@@ -179,11 +194,11 @@ So what exactly goes in this +YesodAuth+ instance? There are six required declar
 
 * Likewise, +logoutDest+ gives the route to redirect to after a logout.
 
-*  +authPlugins+ is a list of individual authentication backends to use. In our example, we're using BrowserID, which logs in via Mozilla's BrowserID system, and Google Email, which authenticates a user's email address using their Google account. The nice thing about these two backends is:
+*  +authPlugins+ is a list of individual authentication backends to use. In our example, we're using BrowserID, which logs in via Mozilla's BrowserID system, and Google oAuth, which authenticates a user using their Google account. The somewhat advantage of BrowserID backends is:
 
-** They require no set up, as opposed to Facebook or OAuth, which require setting up credentials.
+** It requires no set up, as opposed to Facebook or OAuth, which require setting up credentials.
 
-** They use email addresses as identifiers, which people are comfortable with, as opposed to OpenID, which uses a URL.
+** It uses email addresses as identifiers, which people are comfortable with, as opposed to OpenID, which uses a URL.
 
 *  +authHttpManager+ gets an HTTP connection manager from the foundation type.
    This allow authentication backends which use HTTP connections (i.e., almost
@@ -193,8 +208,7 @@ So what exactly goes in this +YesodAuth+ instance? There are six required declar
 In addition to these six methods, there are other methods available to control
 other behavior of the authentication system, such as what the login page looks
 like. For more information, please
-link:http://haddocks.fpcomplete.com/fp/7.8/20140916-162/yesod-auth/Yesod-Auth.html[see
-the API documentation].
+link:https://www.stackage.org/package/yesod-auth[see the API documentation].
 
 In our +HomeR+ handler, we have some simple links to the login and logout
 pages, depending on whether or not the user is logged in. Notice how we
@@ -252,6 +266,9 @@ users (verify account, password retrieval, etc.).
 Let's have a look at a site that provides email authentication, storing
 passwords in a Persistent SQLite database.
 
+NOTE: Even if you don't have an email server, for debugging purposes the
+verification link is printed in the console.
+
 [source, haskell]
 ----
 {-# LANGUAGE DeriveDataTypeable         #-}
@@ -266,7 +283,7 @@ passwords in a Persistent SQLite database.
 import           Control.Monad            (join)
 import           Control.Monad.Logger (runNoLoggingT)
 import           Data.Maybe               (isJust)
-import           Data.Text                (Text)
+import           Data.Text                (Text, unpack)
 import qualified Data.Text.Lazy.Encoding
 import           Data.Typeable            (Typeable)
 import           Database.Persist.Sqlite
@@ -339,7 +356,12 @@ instance YesodAuthEmail App where
     addUnverified email verkey =
         runDB $ insert $ User email Nothing (Just verkey) False
 
-    sendVerifyEmail email _ verurl =
+    sendVerifyEmail email _ verurl = do
+        -- Print out to the console the verification email, for easier
+        -- debugging.
+        liftIO $ putStrLn $ "Copy/ Paste this URL in your browser:" ++ unpack verurl
+
+        -- Send email.
         liftIO $ renderSendMail (emptyMail $ Address Nothing "noreply")
             { mailTo = [Address Nothing email]
             , mailHeaders =
@@ -435,7 +457,7 @@ your Yesod typeclass instance. Let's see an example.
 {-# LANGUAGE TypeFamilies          #-}
 import           Data.Default         (def)
 import           Data.Text            (Text)
-import           Network.HTTP.Conduit (Manager, conduitManagerSettings, newManager)
+import           Network.HTTP.Conduit (Manager, newManager, tlsManagerSettings)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.Dummy -- just for testing, don't use in real life!!!
@@ -516,7 +538,7 @@ getAdminR = defaultLayout
 
 main :: IO ()
 main = do
-    manager <- newManager conduitManagerSettings
+    manager <- newManager tlsManagerSettings
     warp 3000 $ App manager
 ----
 

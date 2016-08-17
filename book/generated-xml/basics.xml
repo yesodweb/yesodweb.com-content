@@ -33,8 +33,11 @@ getHomeR = defaultLayout [whamlet|Hello World!|]
 main :: IO ()
 main = warp 3000 HelloWorld</programlisting>
 <simpara>If you save that code in <literal>helloworld.hs</literal> and run it with <literal>runhaskell
-helloworld.hs</literal>, you&#8217;ll get a web server running on port 3000. If you point your
-browser to <ulink url="http://localhost:3000">http://localhost:3000</ulink>, you&#8217;ll get the following HTML:</simpara>
+helloworld.hs</literal>, you&#8217;ll get a web server running on port 3000. Note,
+if you followed the quick start guide and installed yesod with <literal>stack</literal>
+then you will not have <literal>runhaskell</literal> and will need to run <literal>stack runghc
+helloworld.hs</literal> instead. If you point your browser to <ulink url="http://localhost:3000">http://localhost:3000</ulink>,
+you&#8217;ll get the following HTML:</simpara>
 <programlisting language="html" linenumbering="unnumbered">&lt;!DOCTYPE html&gt;
 &lt;html&gt;&lt;head&gt;&lt;title&gt;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;Hello World!&lt;/body&gt;&lt;/html&gt;</programlisting>
 <simpara>We&#8217;ll refer back to this example through the rest of the chapter.</simpara>

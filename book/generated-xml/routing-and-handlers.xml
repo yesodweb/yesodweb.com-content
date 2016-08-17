@@ -702,11 +702,8 @@ URL. Let&#8217;s see some examples of how these can be used:</simpara>
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
-import           Data.Set         (member)
 import           Data.Text        (Text)
 import           Yesod
-import           Yesod.Auth
-import           Yesod.Auth.Dummy
 
 data App = App
 
@@ -725,11 +722,11 @@ getHomeR = defaultLayout $ do
     setTitle "Redirects"
     [whamlet|
         &lt;p&gt;
-            &lt;a href=@{Link1R}&gt;Click to start the redirect loop!
+            &lt;a href=@{Link1R}&gt;Click to start the redirect chain!
     |]
 
 getLink1R, getLink2R, getLink3R :: Handler ()
-getLink1R = redirect Link2R -- /link1
+getLink1R = redirect Link2R -- /link2
 getLink2R = redirect (Link3R, [("foo", "bar")]) -- /link3?foo=bar
 getLink3R = redirect $ Link4R :#: ("baz" :: Text) -- /link4#baz
 

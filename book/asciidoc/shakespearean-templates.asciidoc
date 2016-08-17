@@ -511,7 +511,12 @@ In that last example, we put an href attribute on the "a" tag. Let's elaborate o
   checked if the variable isChecked is True, you would write
   +<input type=checkbox :isChecked:checked>+. To have a paragraph be optionally red,
   you could use +<p :isRed:style="color:red">+. (This also works for class names, e.g.,
-  +<p :isCurrent:.current>+ will set the class +current+ is +isCurrent+ is +True+.)
+  +<p :isCurrent:.current>+ will set the class +current+ if +isCurrent+ is +True+.)
+
+* Arbitrary key-value pairs can also be interpolated using the +*{…}+ syntax. The 
+  interpolated variable must be a tuple, or list of tuples, of Text or String. 
+  For example: if we have a variable +attrs = [("foo", "bar")]+, we could interpolate 
+  that into an element like: +<p *{attrs}>+ to get +<p foo="bar">+.
 
 ===== Conditionals
 

@@ -61,7 +61,29 @@ of the benefits of a declarative authorization system.</simpara>
 </section>
 <section id="authentication-and-authorization_authenticate_me">
 <title>Authenticate Me</title>
-<simpara>Let&#8217;s jump right in with an example of authentication.</simpara>
+<simpara>Let&#8217;s jump right in with an example of authentication. For the Google oAuth authentication to work you should follow these steps:</simpara>
+<orderedlist numeration="arabic">
+<listitem>
+<simpara>
+Read on <ulink url="https://developers.google.com/identity/protocols/OAuth2">Google Developers Help</ulink> how to obtain OAuth 2.0 credentials such as a client ID and client secret that are known to both Google and your application.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Set <literal>Authorized redirect URIs</literal> to <literal>http://localhost:3000/auth/page/googleemail2/complete</literal>.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Enable <literal>Google+ API</literal> and <literal>Contacts API</literal>.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Once you have the <literal>clientId</literal> and <literal>secretId</literal>, replace them in the code below.
+</simpara>
+</listitem>
+</orderedlist>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE QuasiQuotes           #-}
@@ -73,7 +95,16 @@ import           Network.HTTP.Client.Conduit (Manager, newManager)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.BrowserId
-import           Yesod.Auth.GoogleEmail
+import           Yesod.Auth.GoogleEmail2
+
+
+-- Replace with Google client ID.
+clientId :: Text
+clientId = ""
+
+-- Replace with Google secret ID.
+clientSecret :: Text
+clientSecret = ""
 
 data App = App
     { httpManager :: Manager
@@ -98,7 +129,7 @@ instance YesodAuth App where
 
     authPlugins _ =
         [ authBrowserId def
-        , authGoogleEmail
+        , authGoogleEmail clientId clientSecret
         ]
 
     authHttpManager = httpManager
@@ -178,17 +209,17 @@ Likewise, <literal>logoutDest</literal> gives the route to redirect to after a l
 </listitem>
 <listitem>
 <simpara>
-<literal>authPlugins</literal> is a list of individual authentication backends to use. In our example, we&#8217;re using BrowserID, which logs in via Mozilla&#8217;s BrowserID system, and Google Email, which authenticates a user&#8217;s email address using their Google account. The nice thing about these two backends is:
+<literal>authPlugins</literal> is a list of individual authentication backends to use. In our example, we&#8217;re using BrowserID, which logs in via Mozilla&#8217;s BrowserID system, and Google oAuth, which authenticates a user using their Google account. The somewhat advantage of BrowserID backends is:
 </simpara>
 <itemizedlist>
 <listitem>
 <simpara>
-They require no set up, as opposed to Facebook or OAuth, which require setting up credentials.
+It requires no set up, as opposed to Facebook or OAuth, which require setting up credentials.
 </simpara>
 </listitem>
 <listitem>
 <simpara>
-They use email addresses as identifiers, which people are comfortable with, as opposed to OpenID, which uses a URL.
+It uses email addresses as identifiers, which people are comfortable with, as opposed to OpenID, which uses a URL.
 </simpara>
 </listitem>
 </itemizedlist>
@@ -205,8 +236,7 @@ They use email addresses as identifiers, which people are comfortable with, as o
 <simpara>In addition to these six methods, there are other methods available to control
 other behavior of the authentication system, such as what the login page looks
 like. For more information, please
-<ulink url="http://haddocks.fpcomplete.com/fp/7.8/20140916-162/yesod-auth/Yesod-Auth.html">see
-the API documentation</ulink>.</simpara>
+<ulink url="https://www.stackage.org/package/yesod-auth">see the API documentation</ulink>.</simpara>
 <simpara>In our <literal>HomeR</literal> handler, we have some simple links to the login and logout
 pages, depending on whether or not the user is logged in. Notice how we
 construct these subsite links: first we give the subsite route name (<literal>AuthR</literal>),
@@ -278,6 +308,8 @@ passwords securely in the database and send a number of different emails to
 users (verify account, password retrieval, etc.).</simpara>
 <simpara>Let&#8217;s have a look at a site that provides email authentication, storing
 passwords in a Persistent SQLite database.</simpara>
+<note><simpara>Even if you don&#8217;t have an email server, for debugging purposes the
+verification link is printed in the console.</simpara></note>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DeriveDataTypeable         #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -290,7 +322,7 @@ passwords in a Persistent SQLite database.</simpara>
 import           Control.Monad            (join)
 import           Control.Monad.Logger (runNoLoggingT)
 import           Data.Maybe               (isJust)
-import           Data.Text                (Text)
+import           Data.Text                (Text, unpack)
 import qualified Data.Text.Lazy.Encoding
 import           Data.Typeable            (Typeable)
 import           Database.Persist.Sqlite
@@ -363,7 +395,12 @@ instance YesodAuthEmail App where
     addUnverified email verkey =
         runDB $ insert $ User email Nothing (Just verkey) False
 
-    sendVerifyEmail email _ verurl =
+    sendVerifyEmail email _ verurl = do
+        -- Print out to the console the verification email, for easier
+        -- debugging.
+        liftIO $ putStrLn $ "Copy/ Paste this URL in your browser:" ++ unpack verurl
+
+        -- Send email.
         liftIO $ renderSendMail (emptyMail $ Address Nothing "noreply")
             { mailTo = [Address Nothing email]
             , mailHeaders =
@@ -455,7 +492,7 @@ your Yesod typeclass instance. Let&#8217;s see an example.</simpara>
 {-# LANGUAGE TypeFamilies          #-}
 import           Data.Default         (def)
 import           Data.Text            (Text)
-import           Network.HTTP.Conduit (Manager, conduitManagerSettings, newManager)
+import           Network.HTTP.Conduit (Manager, newManager, tlsManagerSettings)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.Dummy -- just for testing, don't use in real life!!!
@@ -536,7 +573,7 @@ getAdminR = defaultLayout
 
 main :: IO ()
 main = do
-    manager &lt;- newManager conduitManagerSettings
+    manager &lt;- newManager tlsManagerSettings
     warp 3000 $ App manager</programlisting>
 <simpara><literal>authRoute</literal> should be your login page, almost always <literal>AuthR</literal> <literal>LoginR</literal>.
 <literal>isAuthorized</literal> is a function that takes two parameters: the requested route,

@@ -16,6 +16,9 @@ you to deploy your app with a single command.</simpara>
 for everyone. This chapter covers the different options you have for
 deployment, and gives some general recommendations on what you should choose in
 different situations.</simpara>
+<simpara>The Yesod team strongly recommends using the <literal>stack</literal> build tool as discussed in
+the <ulink url="http://www.yesodweb.com/page/quickstart">quick start guide</ulink> for Yesod
+development, check out the quick start if you haven&#8217;t already.</simpara>
 <section id="deploying-your-webapp_keter">
 <title>Keter</title>
 <simpara>The Yesod scaffolding comes with some built-in support for the Keter deployment
@@ -74,11 +77,10 @@ You will need to get a much larger machine to handle compilation, and that capac
 </simpara>
 </listitem>
 </itemizedlist>
-<simpara>Once you&#8217;re ready to compile, you should always make sure to <literal>cabal clean</literal>
+<simpara>Once you&#8217;re ready to compile, you should always make sure to <literal>stack clean</literal>
 before a new production build, to make sure no old files are lying around.
-Then, you can run <literal>cabal configure &amp;&amp; cabal build</literal> to get an executable, which
-will be located at <literal>dist/build/myapp/myapp</literal>. (The <literal>yesod keter</literal> command does
-<literal>cabal clean</literal> for you automatically.)</simpara>
+Then, you can run <literal>stack build</literal> to get an executable, which
+will be located at <literal>dist/build/myapp/myapp</literal>.</simpara>
 </section>
 <section id="deploying-your-webapp_files_to_deploy">
 <title>Files to deploy</title>

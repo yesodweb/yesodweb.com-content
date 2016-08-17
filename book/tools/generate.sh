@@ -1,4 +1,6 @@
-#!/bin/bash -ex
+#!/usr/bin/env bash
+
+set -exu
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 #rm -rf generated-xml
@@ -14,7 +16,7 @@ do
         if [[ ! -f "$DEST" ]] || [[ "$f" -nt "$DEST" ]]
         then
             asciidoc -b docbook45 --attribute=idprefix="${FILEID}_" -o tmp "$f"
-            runghc $DIR/strip-article-info.hs tmp
+            $DIR/strip-article-info.hs tmp
             mv tmp "$DEST"
         fi
     fi

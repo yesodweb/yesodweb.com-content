@@ -32,7 +32,7 @@ app _req sendResponse = sendResponse $ responseLBS
     [("Content-Type", "text/plain")]
     "Hello Warp!"</programlisting>
 <simpara>Wait a minute, there&#8217;s no Yesod in there! Don&#8217;t worry, we&#8217;ll get there.
-Remember, we&#8217;re building from the ground up, and in Yesod, the ground floor in
+Remember, we&#8217;re building from the ground up, and in Yesod, the ground floor is
 WAI, the Web Application Interface. WAI sits between a web <emphasis role="strong">handler</emphasis>, such as a
 web server or a test framework, and a web <emphasis role="strong">application</emphasis>. In our case, the
 handler is Warp, a high performance web server, and our application is the
@@ -1038,8 +1038,8 @@ attempt.</simpara>
 many people like to use a more specialized templating language. Yesod&#8217;s
 standard provider for this is the Shakespearean languages: Hamlet, Lucius, and
 Julius. You are by all means welcome to use a different system if so desired,
-the only requirement is that you can a <literal>Content</literal> value from the template.</simpara>
-<simpara>Since Shakespearean templates on compile-time checked, their usage requires
+the only requirement is that you can get a <literal>Content</literal> value from the template.</simpara>
+<simpara>Since Shakespearean templates are compile-time checked, their usage requires
 either quasiquotation or Template Haskell. We&#8217;ll go for the former approach
 here. Please see the Shakespeare chapter in the book for more information.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE QuasiQuotes #-}
