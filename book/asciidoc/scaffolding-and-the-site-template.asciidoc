@@ -24,31 +24,31 @@ information in this chapter is slightly outdated.
 
 === How to Scaffold
 
-The yesod-bin package installs an executable (conveniently named _yesod_ as
-well). This executable provides a few commands (run _yesod_ by itself to get a
-list). In order to generate a scaffolding, the command is _yesod init_. This
-will start a question-and-answer process where you get to provide basic
-details. After answering the questions, you will have a site template in a
-subfolder with the name of your project.
+The yesod-bin package installs an executable (conveniently named
+_yesod_ as well). This executable provides a few commands (run _stack
+exec -- yesod --help_ to get a list). In order to generate a
+scaffolding, the command is _stack new my-project
+yesod-postgres_. This will generate a scaffolding site with a postgres
+database backend in a directory named +my-project+. You can see the
+other available templates using the command *stack templates*.
 
-The most important of these questions is the database backend. You get a few
-choices here, including SQL and MongoDB backends, as well as "simple" to
-include no database support.  This last option also turns off a few extra
-dependencies, giving you a leaner overall site. The remainder of this chapter
-will focus on the scaffoldings for one of the database backends. There will be
-minor differences for the simple backend.
+The key thing differing in various available templates (from the
+*stack templates* command) is the database backend. You get a few
+choices here, including SQL and MongoDB backends, as well as
+"yesod-simple" template to include no database support.  This last
+option also turns off a few extra dependencies, giving you a leaner
+overall site. The remainder of this chapter will focus on the
+scaffoldings for one of the database backends. There will be minor
+differences for the yesod-simple backend.
 
-After creating your files, the scaffolder will print a message about getting
-started. You should follow those instruction to ensure a reliable installation.
-In particular, the commands provided will ensure that any missing dependencies are built and installed.
-Even if you've installed the +yesod+ package, you most likely do not yet
-have all the dependencies in place needed by your site. For example, none of
-the database backends, nor the Javascript minifier (hjsmin) are installed when
-installing the +yesod+ package.
+After creating your files, install the yesod command line tool inside
+the project: *stack build yesod-bin cabal-install*. Then do a *stack
+build* inside the directory.  In particular, the commands provided
+will ensure that any missing dependencies are built and installed.
 
-Finally, to launch your development site, you would use +yesod devel+.
-This site will automatically rebuild and reload whenever
-you change your code.
+Finally, to launch your development site, you would use +stack exec --
+yesod devel+.  This site will automatically rebuild and reload
+whenever you change your code.
 
 === File Structure
 
@@ -58,7 +58,7 @@ well.
 
 ==== Cabal file
 
-Whether directly using +cabal+, or indirectly using +yesod devel+, building
+Whether directly using +stack+, or indirectly using +stack exec -- yesod devel+, building
 your code will always go through the cabal file. If you open the file, you'll
 see that there are both library and executable blocks. If the +library-only+
 flag is turned on, then the executable block is not built.  This is how +yesod
@@ -74,9 +74,10 @@ In general, you will build as follows:
 
 * When developing, use +yesod devel+ exclusively.
 
-* When building a production build, perform +cabal clean &amp;&amp; cabal
-  configure &amp;&amp; cabal build+. This will produce an optimized executable
-  in your +dist+ folder. (You can also use the +yesod keter+ command for this.)
+* When building a production build, perform +stack clean &amp;&amp;
+  stack build+. This will produce an optimized executable in your
+  +dist+ folder. (You can also use the +yesod keter+ command for
+  this.)
 
 You might be surprised to see the +NoImplicitPrelude+ extension. We turn this
 on since the site includes its own module, +Import+, with a few changes to the
@@ -204,7 +205,7 @@ you do the following:
 * Add it to the +Application.hs+ file.
 * Put a module statement at the top, and an +import Import+ line below it.
 
-You can use the +yesod add-handler+ command to automate the last three steps.
+You can use the +stack exec -- yesod add-handler+ command to automate the last three steps.
 
 === widgetFile
 
