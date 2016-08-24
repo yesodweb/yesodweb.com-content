@@ -2,10 +2,7 @@
 
 This example will tie together a few different ideas. We'll start with a chat
 subsite, which allows us to embed a chat widget on any page. We'll use the HTML
-5 event source API to handle sending events from the server to the client. You
-can view the entire project on
-link:https://www.fpcomplete.com/user/snoyberg/yesod/wiki-markdown-chat-subsite-event-source[FP
-Haskell Center].
+5 event source API to handle sending events from the server to the client.
 
 === Subsite: data
 
