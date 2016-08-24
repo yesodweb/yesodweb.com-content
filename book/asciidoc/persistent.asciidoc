@@ -1520,7 +1520,7 @@ The type of +runDB+ is +YesodDB site a -> HandlerT site IO a+. +YesodDB+ is defi
  
 [source, haskell]
 ----
-type YesodDB site = YesodPersistBackend site (HandlerT site IO)
+type YesodDB site = ReaderT (YesodPersistBackend site) (HandlerT site IO)
 ----
  
 Since it is built on top of the +YesodPersistBackend+ associated type, it uses
