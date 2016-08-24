@@ -1428,7 +1428,7 @@ DB action from within a <literal>Handler</literal>. Within the <literal>runDB</l
 functions we&#8217;ve spoken about so far, such as <literal>insert</literal> and <literal>selectList</literal>.</simpara>
 <note>
 <simpara>The type of <literal>runDB</literal> is <literal>YesodDB site a &#8594; HandlerT site IO a</literal>. <literal>YesodDB</literal> is defined as:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">type YesodDB site = YesodPersistBackend site (HandlerT site IO)</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">type YesodDB site = ReaderT (YesodPersistBackend site) (HandlerT site IO)</programlisting>
 <simpara>Since it is built on top of the <literal>YesodPersistBackend</literal> associated type, it uses
 the appropriate database backend based on the current site.</simpara>
 </note>
