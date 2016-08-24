@@ -8,10 +8,7 @@
 <title>Wiki: markdown, chat subsite, event source</title>
 <simpara>This example will tie together a few different ideas. We&#8217;ll start with a chat
 subsite, which allows us to embed a chat widget on any page. We&#8217;ll use the HTML
-5 event source API to handle sending events from the server to the client. You
-can view the entire project on
-<ulink url="https://www.fpcomplete.com/user/snoyberg/yesod/wiki-markdown-chat-subsite-event-source">FP
-Haskell Center</ulink>.</simpara>
+5 event source API to handle sending events from the server to the client.</simpara>
 <section id="wiki-chat-example_subsite_data">
 <title>Subsite: data</title>
 <simpara>In order to define a subsite, we first need to create a foundation type for the
