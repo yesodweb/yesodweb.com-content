@@ -43,28 +43,27 @@ of Yesod, and can change from version to version. It is possible that the
 information in this chapter is slightly outdated.</simpara></note>
 <section id="scaffolding-and-the-site-template_how_to_scaffold">
 <title>How to Scaffold</title>
-<simpara>The yesod-bin package installs an executable (conveniently named <emphasis>yesod</emphasis> as
-well). This executable provides a few commands (run <emphasis>yesod</emphasis> by itself to get a
-list). In order to generate a scaffolding, the command is <emphasis>yesod init</emphasis>. This
-will start a question-and-answer process where you get to provide basic
-details. After answering the questions, you will have a site template in a
-subfolder with the name of your project.</simpara>
-<simpara>The most important of these questions is the database backend. You get a few
-choices here, including SQL and MongoDB backends, as well as "simple" to
-include no database support.  This last option also turns off a few extra
-dependencies, giving you a leaner overall site. The remainder of this chapter
-will focus on the scaffoldings for one of the database backends. There will be
-minor differences for the simple backend.</simpara>
-<simpara>After creating your files, the scaffolder will print a message about getting
-started. You should follow those instruction to ensure a reliable installation.
-In particular, the commands provided will ensure that any missing dependencies are built and installed.
-Even if you&#8217;ve installed the <literal>yesod</literal> package, you most likely do not yet
-have all the dependencies in place needed by your site. For example, none of
-the database backends, nor the Javascript minifier (hjsmin) are installed when
-installing the <literal>yesod</literal> package.</simpara>
-<simpara>Finally, to launch your development site, you would use <literal>yesod devel</literal>.
-This site will automatically rebuild and reload whenever
-you change your code.</simpara>
+<simpara>The yesod-bin package installs an executable (conveniently named
+<emphasis>yesod</emphasis> as well). This executable provides a few commands (run <emphasis>stack
+exec&#8201;&#8212;&#8201;yesod --help</emphasis> to get a list). In order to generate a
+scaffolding, the command is <emphasis>stack new my-project
+yesod-postgres</emphasis>. This will generate a scaffolding site with a postgres
+database backend in a directory named <literal>my-project</literal>. You can see the
+other available templates using the command <emphasis role="strong">stack templates</emphasis>.</simpara>
+<simpara>The key thing differing in various available templates (from the
+<emphasis role="strong">stack templates</emphasis> command) is the database backend. You get a few
+choices here, including SQL and MongoDB backends, as well as
+"yesod-simple" template to include no database support.  This last
+option also turns off a few extra dependencies, giving you a leaner
+overall site. The remainder of this chapter will focus on the
+scaffoldings for one of the database backends. There will be minor
+differences for the yesod-simple backend.</simpara>
+<simpara>After creating your files, install the yesod command line tool inside
+the project: <emphasis role="strong">stack build yesod-bin cabal-install</emphasis>. Then do a <emphasis role="strong">stack
+build</emphasis> inside the directory.  In particular, the commands provided
+will ensure that any missing dependencies are built and installed.</simpara>
+<simpara>Finally, to launch your development site, you would use <literal>stack exec&#8201;&#8212;&#8201;yesod devel</literal>.  This site will automatically rebuild and reload
+whenever you change your code.</simpara>
 </section>
 <section id="scaffolding-and-the-site-template_file_structure">
 <title>File Structure</title>
@@ -73,7 +72,7 @@ to source files, config files, templates, and static files are produced as
 well.</simpara>
 <section id="scaffolding-and-the-site-template_cabal_file">
 <title>Cabal file</title>
-<simpara>Whether directly using <literal>cabal</literal>, or indirectly using <literal>yesod devel</literal>, building
+<simpara>Whether directly using <literal>stack</literal>, or indirectly using <literal>stack exec&#8201;&#8212;&#8201;yesod devel</literal>, building
 your code will always go through the cabal file. If you open the file, you&#8217;ll
 see that there are both library and executable blocks. If the <literal>library-only</literal>
 flag is turned on, then the executable block is not built.  This is how <literal>yesod
@@ -92,9 +91,10 @@ When developing, use <literal>yesod devel</literal> exclusively.
 </listitem>
 <listitem>
 <simpara>
-When building a production build, perform <literal>cabal clean &amp;&amp; cabal
-  configure &amp;&amp; cabal build</literal>. This will produce an optimized executable
-  in your <literal>dist</literal> folder. (You can also use the <literal>yesod keter</literal> command for this.)
+When building a production build, perform <literal>stack clean &amp;&amp;
+  stack build</literal>. This will produce an optimized executable in your
+  <literal>dist</literal> folder. (You can also use the <literal>yesod keter</literal> command for
+  this.)
 </simpara>
 </listitem>
 </itemizedlist>
@@ -276,7 +276,7 @@ Put a module statement at the top, and an <literal>import Import</literal> line 
 </simpara>
 </listitem>
 </itemizedlist>
-<simpara>You can use the <literal>yesod add-handler</literal> command to automate the last three steps.</simpara>
+<simpara>You can use the <literal>stack exec&#8201;&#8212;&#8201;yesod add-handler</literal> command to automate the last three steps.</simpara>
 </section>
 </section>
 <section id="scaffolding-and-the-site-template_widgetfile">
