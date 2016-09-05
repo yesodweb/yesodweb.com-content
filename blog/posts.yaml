@@ -1,3 +1,7 @@
+- time: 2016-09-05T07:00:00Z
+  author: michael
+  title: "Better CI for the Yesod scaffoldings"
+  path: 2016/09/better-ci-yesod-scaffoldings.md
 - time: 2016-07-06T07:10:00Z
   author: kazu
   title: "Implementing HTTP/2 server push"
