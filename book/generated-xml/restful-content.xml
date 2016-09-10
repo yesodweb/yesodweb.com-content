@@ -67,6 +67,17 @@ method <emphasis>is</emphasis> safe to be called multiple times.
 </varlistentry>
 <varlistentry>
 <term>
+<literal>PATCH</literal>
+</term>
+<listitem>
+<simpara>
+Updates the resource partially on the server. When you want
+to update one or more field of the resource, this method should be preferred.
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
 <literal>DELETE</literal>
 </term>
 <listitem>
