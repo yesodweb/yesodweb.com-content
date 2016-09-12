@@ -232,5 +232,5 @@ However, the benefit becomes more obvious when the admin pages are not all group
     /2 AAdmin2R GET
 ----
 
-The pages under +/admin+ and +/a/admin+ have all the +admin+ attribute and can be checked using +"admin" `member` routeAttrs route+. Pattern matching on +(AdminR _)+ will not work for this example and only match +/admin/*+ routes but not +/a/admin/*+
+The pages under +/admin+ and +/a/admin+ have all the +admin+ attribute and can be checked using +"admin" `member` routeAttrs route+. Pattern matching on +(AdminR _)+ will not work for this example and only match +/admin/\*+ routes but not +/a/admin/\*+
 
