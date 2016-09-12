@@ -21,6 +21,7 @@ install:
 script:
 - rm -f book/generated-xml/*
 - book/tools/generate.sh
+- book/tools/validate.hs
 - git diff
 - |
   if [ $TRAVIS_PULL_REQUEST != false ]
