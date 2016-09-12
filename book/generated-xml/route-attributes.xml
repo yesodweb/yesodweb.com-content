@@ -218,7 +218,7 @@ However, the benefit becomes more obvious when the admin pages are not all group
   /admin AAdminR !admin:
     /1 AAdmin1R GET
     /2 AAdmin2R GET</programlisting>
-<simpara>The pages under <literal>/admin</literal> and <literal>/a/admin</literal> have all the <literal>admin</literal> attribute and can be checked using <literal>"admin" <literal>member</literal> routeAttrs route</literal>. Pattern matching on <literal>(AdminR _)</literal> will not work for this example and only match <literal>/admin/<emphasis role="strong"></literal> routes but not <literal>/a/admin/</emphasis></literal></simpara>
+<simpara>The pages under <literal>/admin</literal> and <literal>/a/admin</literal> have all the <literal>admin</literal> attribute and can be checked using <literal>"admin" <literal>member</literal> routeAttrs route</literal>. Pattern matching on <literal>(AdminR _)</literal> will not work for this example and only match <literal>/admin/*</literal> routes but not <literal>/a/admin/\*</literal></simpara>
 </section>
 </section>
 </article>
