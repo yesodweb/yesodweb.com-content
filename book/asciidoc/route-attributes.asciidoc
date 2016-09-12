@@ -197,3 +197,40 @@ getAdmin3R = defaultLayout [whamlet|Admin3|]
 main :: IO ()
 main = warp 3000 App
 ----
+
+=== Hierarchical routes with attributes
+Of course, you can mix the two approaches. Children of a hierarchical route will inherit the attributes of their parents, e.g.:
+
+[source, routes]
+----
+/admin AdminR !admin:
+    /1 Admin1R GET !1
+    /2 Admin2R GET !2
+    /3 Admin3R Get !3
+----
+
++AdminR Admin1R+ has the +admin+ and +1+ attributes.
+
+With this technique, you can use the +admin+ attributes in the +isAuthorized+ function, like in the first example.
+You are also sure that you won't forget any attributes as we did with +Admin3R+.
+Compared to the original code corresponding to the hiearchical route, this method has no real benefit : both methods being somehow equivalent.
+We replaced the pattern matching on +(AdminR _)+ with +"admin" `member` routeAttrs route+.
+However, the benefit becomes more obvious when the admin pages are not all grouped under the same url structures but belong to different subtrees, e.g:
+
+[source, routes]
+----
+/admin AdminR !admin:
+    /1 Admin1R GET
+    /2 Admin2R GET
+    /3 Admin3R Get
+
+/a AR !a:
+  /1 A1R GET
+  /2 A2R GET
+  /admin AAdminR !admin:
+    /1 AAdmin1R GET
+    /2 AAdmin2R GET
+----
+
+The pages under +/admin+ and +/a/admin+ have all the +admin+ attribute and can be checked using +"admin" `member` routeAttrs route+. Pattern matching on +(AdminR _)+ will not work for this example and only match +/admin/*+ routes but not +/a/admin/*+
+
