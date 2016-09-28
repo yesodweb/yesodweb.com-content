@@ -7,7 +7,6 @@
 <appendix id="http-conduit_http_conduit">
 <title>http-conduit</title>
 <simpara>This content has been superceded by
-<ulink url="https://github.com/commercialhaskell/jump/blob/master/doc/http-client.md">Jump
-content on http-client</ulink>.</simpara>
+<ulink url="https://haskell-lang.org/library/http-client">haskell-lang.org content on http-client</ulink>.</simpara>
 </appendix>
 </article>
