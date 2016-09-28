@@ -2,5 +2,4 @@
 == http-conduit
 
 This content has been superceded by
-link:https://github.com/commercialhaskell/jump/blob/master/doc/http-client.md[Jump
-content on http-client].
+link:https://haskell-lang.org/library/http-client[haskell-lang.org content on http-client].
