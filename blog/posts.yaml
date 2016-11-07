@@ -1,3 +1,7 @@
+- time: 2016-11-06T21:39:00Z
+  author: paul
+  title: "Use MySQL Safely in Yesod Applications"
+  path: 2016/11/use-mysql-safely-in-yesod.md
 - time: 2016-09-05T07:00:00Z
   author: michael
   title: "Better CI for the Yesod scaffoldings"
