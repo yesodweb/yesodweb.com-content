@@ -72,6 +72,9 @@ So far, in my limited testing, I've found that the new `yesod devel`
 runs faster than the current one, but that could very much be
 confirmation bias speaking.
 
+Note: there are a few removed features in this update, please see [the
+changelog](https://github.com/yesodweb/yesod/blob/1304-stack-based-devel/yesod-bin/ChangeLog.md).
+
 ## How it works
 
 The big change - as the branch name implies - was depending entirely
