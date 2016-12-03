@@ -165,7 +165,7 @@ abstraction, but has since gotten rid of that dependency. However, conduit is
 still well supported in the WAI ecosystem, via the wai-conduit helper package.</simpara></note>
 <simpara>Another common requirement when dealing with a streaming response is safely
 allocating a scarce resource- such as a file handle. By <emphasis role="strong">safely</emphasis>, I mean
-ensuring that the response will be released, even in the case of some
+ensuring that the resource will be released, even in the case of some
 exception. This is where the continuation passing style mentioned above comes
 into play:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
