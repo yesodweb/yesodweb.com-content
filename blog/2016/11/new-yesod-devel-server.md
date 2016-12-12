@@ -97,8 +97,8 @@ libraries I've worked on, like
 [say](https://haskell-lang.org/library/say).
 
 The code is (finally) well commented, so you can
-[jump in and look yourself](https://github.com/yesodweb/yesod/blob/1304-stack-based-devel/yesod-bin/Devel.hs). I've
+[jump in and look yourself](https://github.com/yesodweb/yesod/blob/master/yesod-bin/Devel.hs). I've
 also added
-[a decent README](https://github.com/yesodweb/yesod/tree/1304-stack-based-devel/yesod-bin#readme),
+[a decent README](https://github.com/yesodweb/yesod/tree/master/yesod-bin#readme),
 and
-[an example of using `yesod devel` with a non-Yesod project](https://github.com/yesodweb/yesod/tree/1304-stack-based-devel/yesod-bin/devel-example#readme).
+[an example of using `yesod devel` with a non-Yesod project](https://github.com/yesodweb/yesod/tree/master/yesod-bin/devel-example#readme).
