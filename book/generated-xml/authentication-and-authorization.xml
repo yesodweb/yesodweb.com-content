@@ -356,6 +356,7 @@ instance Yesod App where
     -- Emails will include links, so be sure to include an approot so that
     -- the links are valid!
     approot = ApprootStatic "http://localhost:3000"
+    yesodMiddleware = defaultCsrfMiddleware . defaultYesodMiddleware
 
 instance RenderMessage App FormMessage where
     renderMessage _ _ = defaultFormMessage
