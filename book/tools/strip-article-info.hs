@@ -1,5 +1,5 @@
 #!/usr/bin/env stack
--- stack runghc --resolver ghc-7.10.3
+-- stack runghc --system-ghc --resolver ghc-7.10.3
 {-# LANGUAGE OverloadedStrings #-}
 import System.Environment (getArgs)
 import qualified Data.ByteString.Char8 as S
