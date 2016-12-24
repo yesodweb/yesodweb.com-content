@@ -245,8 +245,31 @@ chdir /home/michael/sites/mysite
 exec /home/michael/sites/mysite/dist/build/mysite/mysite
 ----
 
-Once this is in place, bringing up your application is as simple as +sudo start
-mysite+.
+Once this is in place, bringing up your application is as simple as
++sudo start mysite+. A similar systemd configuration file placed in
++/etc/systemd/system/yesod-sample.service+:
+
+----
+[Service]
+ExecStart=/home/sibi/.local/bin/my-yesod-executable
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=yesod-sample
+
+[Install]
+WantedBy=multi-user.target
+----
+
+Now you can start your service with:
+
+----
+systemctl enable yesod-sample
+systemctl start yesod-sample
+----
+
+You can also see the status of your process using +systemctl status
+yesod-sample+.
 
 === Nginx + FastCGI
 
