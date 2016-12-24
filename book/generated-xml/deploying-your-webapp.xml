@@ -320,8 +320,23 @@ stop on runlevel [!2345];
 respawn
 chdir /home/michael/sites/mysite
 exec /home/michael/sites/mysite/dist/build/mysite/mysite</screen>
-<simpara>Once this is in place, bringing up your application is as simple as <literal>sudo start
-mysite</literal>.</simpara>
+<simpara>Once this is in place, bringing up your application is as simple as
+<literal>sudo start mysite</literal>. A similar systemd configuration file placed in
+<literal>/etc/systemd/system/yesod-sample.service</literal>:</simpara>
+<screen>[Service]
+ExecStart=/home/sibi/.local/bin/my-yesod-executable
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=yesod-sample
+
+[Install]
+WantedBy=multi-user.target</screen>
+<simpara>Now you can start your service with:</simpara>
+<screen>systemctl enable yesod-sample
+systemctl start yesod-sample</screen>
+<simpara>You can also see the status of your process using <literal>systemctl status
+yesod-sample</literal>.</simpara>
 </section>
 </section>
 <section id="deploying-your-webapp_nginx_fastcgi">
