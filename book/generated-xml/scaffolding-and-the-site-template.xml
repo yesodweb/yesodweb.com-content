@@ -359,7 +359,7 @@ When your static file identifiers are generated (e.g., <literal>static/mylogo.pn
 <listitem>
 <simpara>
 When <literal>yesod-static</literal> serves your static files, it sets expiration headers far
-  in the future, and incldues an etag based on a hash of your content.
+  in the future, and includes an etag based on a hash of your content.
 </simpara>
 </listitem>
 <listitem>
