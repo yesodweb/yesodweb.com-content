@@ -266,7 +266,7 @@ What this means is that:
   the contents of the file. All of this happens at compile time.
 
 * When +yesod-static+ serves your static files, it sets expiration headers far
-  in the future, and incldues an etag based on a hash of your content.
+  in the future, and includes an etag based on a hash of your content.
 
 * Whenever you embed a link to +mylogo_png+, the rendering includes the
   query-string parameter. If you change the logo, recompile, and launch your
