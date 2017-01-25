@@ -433,9 +433,11 @@ You can add an attribute optionally by using colons. To make a checkbox only
 </listitem>
 <listitem>
 <simpara>
-Arbitrary key-value pairs can also be interpolated using the <literal>*{…}</literal> syntax. The
-  interpolated variable must be a tuple, or list of tuples, of Text or String.
-  For example: if we have a variable <literal>attrs = [("foo", "bar")]</literal>, we could interpolate
+Arbitrary key-value pairs can also be interpolated using the <literal>*{…}</literal>
+  syntax. The interpolated variable must be a tuple, or list of
+  tuples, of Text or String.  For example: if we have a variable
+  <literal>attrs = [("foo", "bar")]</literal>, we could interpolate that into an
+  element like: <literal>&lt;p *{attrs}&gt;</literal> to get <literal>&lt;p foo="bar"&gt;</literal>.
 </simpara>
 </listitem>
 </itemizedlist>
