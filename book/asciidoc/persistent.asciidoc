@@ -46,6 +46,9 @@ Persistent on its own.
 
 === Synopsis
 
+The required dependencies for the below is: persistent, persistent-sqlite and persistent-template.
+
+
 [source, haskell]
 ----
 {-# LANGUAGE EmptyDataDecls             #-}
