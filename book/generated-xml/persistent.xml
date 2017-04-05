@@ -1514,6 +1514,8 @@ to the underlying data store, so you can write whatever 5-way joins you want.</s
 <simpara>Persistent integrates directly into the general Yesod workflow. Not only do
 helper packages like <literal>yesod-persistent</literal> provide a nice layer, but packages like
 <literal>yesod-form</literal> and <literal>yesod-auth</literal> also leverage Persistent&#8217;s features as well.</simpara>
+<simpara>For more information on the syntax of entity declarations, database connection, etc.
+Checkout <ulink url="https://github.com/yesodweb/persistent/wiki">https://github.com/yesodweb/persistent/wiki</ulink></simpara>
 </section>
 </section>
 </article>
