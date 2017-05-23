@@ -42,7 +42,7 @@ scaffoldings for one of the database backends. There will be minor
 differences for the yesod-simple backend.
 
 After creating your files, install the yesod command line tool inside
-the project: *stack install yesod-bin cabal-install*. Then do a *stack
+the project: *stack build yesod-bin cabal-install*. Then do a *stack
 build* inside the directory.  In particular, the commands provided
 will ensure that any missing dependencies are built and installed.
 
