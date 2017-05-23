@@ -46,7 +46,7 @@ the project: *stack build yesod-bin cabal-install*. Then do a *stack
 build* inside the directory.  In particular, the commands provided
 will ensure that any missing dependencies are built and installed.
 
-Finally, to launch your development site, you would use +stack exec \--yesod devel+.
+Finally, to launch your development site, you would use *stack exec \-- yesod devel*.
 This site will automatically rebuild and reload whenever you change your code.
 
 === File Structure
