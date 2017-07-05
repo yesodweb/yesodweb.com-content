@@ -25,7 +25,7 @@ With that caveat out of the way, let's get started.
 
 We'll need two different mutable references in our foundation. The first will
 keep track of the next "job id" we'll hand out. Each of these background jobs
-we'll be represented by a unique identifier, which will be used in our URLs.
+will be represented by a unique identifier, which will be used in our URLs.
 The second piece of data will be a map from the job ID to the broadcast channel
 used for publishing updates. In code:
 
