@@ -213,7 +213,7 @@ Of course, you can mix the two approaches. Children of a hierarchical route will
 
 With this technique, you can use the +admin+ attributes in the +isAuthorized+ function, like in the first example.
 You are also sure that you won't forget any attributes as we did with +Admin3R+.
-Compared to the original code corresponding to the hiearchical route, this method has no real benefit : both methods being somehow equivalent.
+Compared to the original code corresponding to the hierarchical route, this method has no real benefit : both methods being somehow equivalent.
 We replaced the pattern matching on +(AdminR _)+ with +"admin" `member` routeAttrs route+.
 However, the benefit becomes more obvious when the admin pages are not all grouped under the same url structures but belong to different subtrees, e.g:
 
