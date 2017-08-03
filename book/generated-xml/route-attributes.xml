@@ -204,7 +204,7 @@ main = warp 3000 App</programlisting>
 <simpara><literal>AdminR Admin1R</literal> has the <literal>admin</literal> and <literal>1</literal> attributes.</simpara>
 <simpara>With this technique, you can use the <literal>admin</literal> attributes in the <literal>isAuthorized</literal> function, like in the first example.
 You are also sure that you won&#8217;t forget any attributes as we did with <literal>Admin3R</literal>.
-Compared to the original code corresponding to the hiearchical route, this method has no real benefit : both methods being somehow equivalent.
+Compared to the original code corresponding to the hierarchical route, this method has no real benefit : both methods being somehow equivalent.
 We replaced the pattern matching on <literal>(AdminR _)</literal> with <literal>"admin" <literal>member</literal> routeAttrs route</literal>.
 However, the benefit becomes more obvious when the admin pages are not all grouped under the same url structures but belong to different subtrees, e.g:</simpara>
 <programlisting language="routes" linenumbering="unnumbered">/admin AdminR !admin:
