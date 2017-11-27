@@ -4,7 +4,7 @@ Title: Yesod quick start guide
     * On POSIX systems, this is usually `curl -sSL https://get.haskellstack.org/ | sh`
 2. Create a new scaffolded site: `stack new my-project yesod-sqlite && cd my-project`
     * NOTE: Use `stack templates` to see other available Yesod scaffoldings.
-3. Install the yesod command line tool: `stack build yesod-bin cabal-install --install-ghc`
+3. Install the yesod command line tool: `stack install yesod-bin --install-ghc`
 4. Build libraries: `stack build`
 5. Launch devel server: `stack exec -- yesod devel`
 6. View your Yesod site at [http://localhost:3000/](http://localhost:3000/)
