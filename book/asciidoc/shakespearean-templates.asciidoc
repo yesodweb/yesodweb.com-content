@@ -830,7 +830,7 @@ main = TLIO.putStrLn $ renderCss $ template render
 
 [source, lucius]
 ----
--- @template.lucius
+/* @template.lucius */
 foo { bar: baz }
 ----
 
