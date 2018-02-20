@@ -314,7 +314,7 @@ instance RenderRoute App where
                         )
 
 instance YesodDispatch App where
-    yesodDispatch (YesodRunnerEnv _logger site _sessionBackend _) _req sendResponse =
+    yesodDispatch (YesodRunnerEnv _logger site _sessionBackend _ _) _req sendResponse =
         sendResponse $ responseBuilder
             status200
             [("Content-Type", "text/html")]
