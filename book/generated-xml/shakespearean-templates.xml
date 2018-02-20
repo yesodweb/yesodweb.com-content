@@ -733,7 +733,7 @@ template = $(luciusFileReload "template.lucius")
 main :: IO ()
 main = TLIO.putStrLn $ renderCss $ template render</programlisting>
 </para></formalpara>
-<programlisting language="lucius" linenumbering="unnumbered">-- @template.lucius
+<programlisting language="lucius" linenumbering="unnumbered">/* @template.lucius */
 foo { bar: baz }</programlisting>
 <simpara>The naming scheme for the functions is very consistent.</simpara>
 <informaltable
