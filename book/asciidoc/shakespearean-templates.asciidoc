@@ -1007,6 +1007,12 @@ Some quick points about this simple example:
 
 * Also, there are longer names for these quasiquoters (+ltext+ and +stext+).
 
+* The syntax for variable interpolation for Text.Shakespeare.Text is the same
+  as described above.  Note that +^{..}+ and +@{..}+ are also recognized in
+  +lt+ and +st+. If the output of a template should contain +^{..}+, a
+  backslash can be used to prevent the interpolation,
+  e.g. +[lt|2^\{23}|]+. The backslash is removed from the resulting text.
+
 === General Recommendations
 
 Here are some general hints from the Yesod community on how to get the most out
