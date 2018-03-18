@@ -1,10 +1,5 @@
 #!/usr/bin/env stack
-{- stack --system-ghc --resolver lts-6.16
-   runghc
-   --package xml-conduit
-   --package conduit-combinators
-   --package executable-path
--}
+-- stack --resolver lts-11.1 script
 {-# LANGUAGE OverloadedStrings #-}
 import System.FilePath (takeDirectory, (</>), takeFileName)
 import Conduit
