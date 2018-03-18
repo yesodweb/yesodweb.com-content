@@ -933,10 +933,10 @@ Also, there are longer names for these quasiquoters (<literal>ltext</literal> an
 <listitem>
 <simpara>
 The syntax for variable interpolation for Text.Shakespeare.Text is the same
-  as described above.  Note that <literal><superscript>{..}</literal> and <literal>@{..}</literal> are also recognized in
-  <literal>lt</literal> and <literal>st</literal>. If the output of a template should contain <literal></superscript>{..}</literal>, a
+  as described above.  Note that <literal>^{..}</literal> and <literal>@{..}</literal> are also recognized in
+  <literal>lt</literal> and <literal>st</literal>. If the output of a template should contain <literal><superscript>{..}</literal>, a
   backslash can be used to prevent the interpolation,
-  e.g. <literal>[lt|2^{23}|]</literal>. The backslash is removed from the resulting text.
+  e.g. <literal>[lt|2</superscript>{23}|]</literal>. The backslash is removed from the resulting text.
 </simpara>
 </listitem>
 </itemizedlist>
