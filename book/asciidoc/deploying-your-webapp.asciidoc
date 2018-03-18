@@ -31,7 +31,7 @@ running apps. If you'd like to deploy with Keter, follow these steps:
 . Run +yesod keter+ to generate a Keter bundle, e.g., +myapp.keter+.
 . Copy +myapp.keter+ to the +/opt/keter/incoming+ directory on your server.
 
-If you've gotten things configured correctly, you should now be able to view
+If you've got things configured correctly, you should now be able to view
 your website, running in a production environment! In the future, upgrades can
 be handled by simply rerunning +yesod keter+ and recopying the +myapp.keter+
 bundle to the server. Note that Keter will automatically detect the presence of
@@ -43,7 +43,7 @@ or not use Keter.
 
 === Compiling
 
-The biggest advice I can give is: *don't compile on your server*. It's tempting to do so, as you have to just transfer source code around, and you avoid confusing dependency issues. However, compiling a Yesod application takes signficiant memory and CPU, which means:
+The biggest advice I can give is: *don't compile on your server*. It's tempting to do so, as you have to just transfer source code around, and you avoid confusing dependency issues. However, compiling a Yesod application takes significant memory and CPU, which means:
 
 * While you're recompiling your app, your existing application will suffer performance-wise.
 * You will need to get a much larger machine to handle compilation, and that capacity will likely sit idle most of the time, since Yesod applications tend to require far less CPU and memory than GHC itself.

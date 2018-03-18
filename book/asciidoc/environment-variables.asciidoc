@@ -59,4 +59,4 @@ main = do
 The only tricky things here are:
 
 . You need to convert the +String+ value returned by +getEnv+ into a +Text+ by using +pack+.
-. We use the +ApprootMaster+ constructor for +approot+, which says "apply this function to the foundation datatype to get the actual applicaiton root."
+. We use the +ApprootMaster+ constructor for +approot+, which says "apply this function to the foundation datatype to get the actual application root."
