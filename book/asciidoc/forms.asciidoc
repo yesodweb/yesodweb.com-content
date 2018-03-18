@@ -683,7 +683,7 @@ These work mostly the same as applicative and monadic forms, with some differenc
 You can use input forms to recreate the previous example. Note, however, that
 the input version is less user friendly. If you make a mistake in an
 applicative or monadic form, you will be brought back to the same page, with
-your previously entered values in the form, and an error message explaning what
+your previously entered values in the form, and an error message explaining what
 you need to correct. With input forms, the user simply gets an error message.
 
 [source, haskell]

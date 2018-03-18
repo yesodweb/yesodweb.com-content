@@ -30,7 +30,7 @@ would be the actual OpenID value. In BrowserID, it's the email address. For
 HashDB (which uses a database of hashed passwords), it's the username.
 
 Each authentication plugin provides its own system for logging in, whether it
-be via passing tokens with an external site or a email/password form. After a
+be via passing tokens with an external site or an email/password form. After a
 successful login, the plugin sets a value in the user's session to indicate
 his/her +AuthId+. This +AuthId+ is usually a Persistent ID from a table used
 for keeping track of users.
@@ -151,7 +151,7 @@ main = do
     warp 3000 $ App man
 ----
 
-We'll start with the route declarations. First we declare our standard +HomeR+
+We'll start with the route declarations. First, we declare our standard +HomeR+
 route, and then we set up the authentication subsite. Remember that a subsite
 needs four parameters: the path to the subsite, the route name, the subsite
 name, and a function to get the subsite value. In other words, based on the
@@ -201,7 +201,7 @@ So what exactly goes in this +YesodAuth+ instance? There are six required declar
 ** It uses email addresses as identifiers, which people are comfortable with, as opposed to OpenID, which uses a URL.
 
 *  +authHttpManager+ gets an HTTP connection manager from the foundation type.
-   This allow authentication backends which use HTTP connections (i.e., almost
+   This allows authentication backends which use HTTP connections (i.e., almost
    all third-party login systems) to share connections, avoiding the cost of
    restarting a TCP connection for each request.
 
@@ -235,7 +235,7 @@ image::images/after-login.png[]
 === Email
 
 For many use cases, third-party authentication of email will be sufficient.
-Occasionally, you'll want users to actual create passwords on your site. The
+Occasionally, you'll want users to create passwords on your site. The
 scaffolded site does not include this setup, because:
 
 * In order to securely accept passwords, you need to be running over SSL. Many

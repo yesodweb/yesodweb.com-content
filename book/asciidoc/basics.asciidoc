@@ -78,9 +78,9 @@ I'd like to call it +HomeR+, it should listen for requests to +/+ (the root of
 the application), and should answer +GET+ requests. We call +HomeR+ a resource,
 which is where the "R" suffix comes from.
 
-NOTE: The R suffix on resource names is simply convention, but it's a fairly
+NOTE: The R suffix on resource names is simply a convention, but it's a fairly
 universally followed convention. It makes it just a bit easier to read and
-understand code.
+understand the code.
 
 The +mkYesod+ TH function generates quite a bit of code here: a route data
 type, parser/render functions, a dispatch function, and some helper types.

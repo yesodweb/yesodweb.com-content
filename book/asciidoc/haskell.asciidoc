@@ -201,7 +201,7 @@ should be treated as a +String+ or +Text+.
 
 NOTE: In some cases, you can overcome these problems by using the
 +ExtendedDefaultRules+ language extension, though we'll instead try to be
-explicit in the book and not rely on defaulting.
+explicit in the book and not rely on defaults.
 
 [[I_sect12_d1e753]]
 

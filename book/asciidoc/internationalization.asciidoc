@@ -190,9 +190,9 @@ example, suppose a user has the following language list:
 pt-BR, es, he
 ----
 
-What this means is "I like Brazilian Porteguese, then Spanish, and then
+What this means is "I like Brazilian Portuguese, then Spanish, and then
 Hebrew." Suppose your application provides the languages pt (general
-Porteguese) and English, with English as the default. Strictly following the
+Portuguese) and English, with English as the default. Strictly following the
 user's language list would result in the user being served English. Instead,
 Yesod translates that list into:
 
@@ -343,7 +343,7 @@ STOP RIGHT THERE! This is all well and good from a programming perspective, but 
 
 * Some languages might put "to your cart" before "You have added."
 
-* Maybe "added" will be constructed differently depending whether you added 1 or more turtles.
+* Maybe "added" will be constructed differently depending on whether you added 1 or more turtles.
 
 * There are a bunch of whitespace issues as well.
 
