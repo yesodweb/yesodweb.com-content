@@ -48,7 +48,7 @@ by some applications that skip the framework entirely, including Hoogle.</simpar
 <note><simpara>Yesod provides an alternate approach for a devel server, known as <emphasis>yesod
 devel</emphasis>. The difference from wai-handler-devel is that yesod devel actually
 compiles your code each time, respecting all settings in your cabal file. This
-is the recommended aproach for general Yesod development.</simpara></note>
+is the recommended approach for general Yesod development.</simpara></note>
 <section id="web-application-interface_the_interface">
 <title>The Interface</title>
 <simpara>The interface itself is very straight-forward: an application takes a request

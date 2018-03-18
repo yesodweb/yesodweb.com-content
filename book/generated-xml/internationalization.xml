@@ -171,9 +171,9 @@ ensures that someone asking for Canadian English will still see your English.
 Behind the scenes, Yesod will add the two-letter codes where relevant. For
 example, suppose a user has the following language list:</simpara>
 <programlisting language="langs" linenumbering="unnumbered">pt-BR, es, he</programlisting>
-<simpara>What this means is "I like Brazilian Porteguese, then Spanish, and then
+<simpara>What this means is "I like Brazilian Portuguese, then Spanish, and then
 Hebrew." Suppose your application provides the languages pt (general
-Porteguese) and English, with English as the default. Strictly following the
+Portuguese) and English, with English as the default. Strictly following the
 user&#8217;s language list would result in the user being served English. Instead,
 Yesod translates that list into:</simpara>
 <programlisting language="langs" linenumbering="unnumbered">pt-BR, es, he, pt</programlisting>
@@ -296,7 +296,7 @@ Some languages might put "to your cart" before "You have added."
 </listitem>
 <listitem>
 <simpara>
-Maybe "added" will be constructed differently depending whether you added 1 or more turtles.
+Maybe "added" will be constructed differently depending on whether you added 1 or more turtles.
 </simpara>
 </listitem>
 <listitem>

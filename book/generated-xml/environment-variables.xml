@@ -64,7 +64,7 @@ You need to convert the <literal>String</literal> value returned by <literal>get
 </listitem>
 <listitem>
 <simpara>
-We use the <literal>ApprootMaster</literal> constructor for <literal>approot</literal>, which says "apply this function to the foundation datatype to get the actual applicaiton root."
+We use the <literal>ApprootMaster</literal> constructor for <literal>approot</literal>, which says "apply this function to the foundation datatype to get the actual application root."
 </simpara>
 </listitem>
 </orderedlist>

@@ -53,7 +53,7 @@ Copy <literal>myapp.keter</literal> to the <literal>/opt/keter/incoming</literal
 </simpara>
 </listitem>
 </orderedlist>
-<simpara>If you&#8217;ve gotten things configured correctly, you should now be able to view
+<simpara>If you&#8217;ve got things configured correctly, you should now be able to view
 your website, running in a production environment! In the future, upgrades can
 be handled by simply rerunning <literal>yesod keter</literal> and recopying the <literal>myapp.keter</literal>
 bundle to the server. Note that Keter will automatically detect the presence of
@@ -64,7 +64,7 @@ or not use Keter.</simpara>
 </section>
 <section id="deploying-your-webapp_compiling">
 <title>Compiling</title>
-<simpara>The biggest advice I can give is: <emphasis role="strong">don&#8217;t compile on your server</emphasis>. It&#8217;s tempting to do so, as you have to just transfer source code around, and you avoid confusing dependency issues. However, compiling a Yesod application takes signficiant memory and CPU, which means:</simpara>
+<simpara>The biggest advice I can give is: <emphasis role="strong">don&#8217;t compile on your server</emphasis>. It&#8217;s tempting to do so, as you have to just transfer source code around, and you avoid confusing dependency issues. However, compiling a Yesod application takes significant memory and CPU, which means:</simpara>
 <itemizedlist>
 <listitem>
 <simpara>

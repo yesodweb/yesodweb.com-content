@@ -227,7 +227,7 @@ you&#8217;ll need to give an explicit type annotation to specify whether <litera
 should be treated as a <literal>String</literal> or <literal>Text</literal>.</simpara>
 <note><simpara>In some cases, you can overcome these problems by using the
 <literal>ExtendedDefaultRules</literal> language extension, though we&#8217;ll instead try to be
-explicit in the book and not rely on defaulting.</simpara></note>
+explicit in the book and not rely on defaults.</simpara></note>
 </section>
 <section id="I_sect12_d1e753">
 <title>Type Families</title>

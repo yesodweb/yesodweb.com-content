@@ -31,7 +31,7 @@ they identify a user based on some unique string. In OpenID, for instance, this
 would be the actual OpenID value. In BrowserID, it&#8217;s the email address. For
 HashDB (which uses a database of hashed passwords), it&#8217;s the username.</simpara>
 <simpara>Each authentication plugin provides its own system for logging in, whether it
-be via passing tokens with an external site or a email/password form. After a
+be via passing tokens with an external site or an email/password form. After a
 successful login, the plugin sets a value in the user&#8217;s session to indicate
 his/her <literal>AuthId</literal>. This <literal>AuthId</literal> is usually a Persistent ID from a table used
 for keeping track of users.</simpara>
@@ -159,7 +159,7 @@ main :: IO ()
 main = do
     man &lt;- newManager
     warp 3000 $ App man</programlisting>
-<simpara>We&#8217;ll start with the route declarations. First we declare our standard <literal>HomeR</literal>
+<simpara>We&#8217;ll start with the route declarations. First, we declare our standard <literal>HomeR</literal>
 route, and then we set up the authentication subsite. Remember that a subsite
 needs four parameters: the path to the subsite, the route name, the subsite
 name, and a function to get the subsite value. In other words, based on the
@@ -227,7 +227,7 @@ It uses email addresses as identifiers, which people are comfortable with, as op
 <listitem>
 <simpara>
 <literal>authHttpManager</literal> gets an HTTP connection manager from the foundation type.
-   This allow authentication backends which use HTTP connections (i.e., almost
+   This allows authentication backends which use HTTP connections (i.e., almost
    all third-party login systems) to share connections, avoiding the cost of
    restarting a TCP connection for each request.
 </simpara>
@@ -270,7 +270,7 @@ followed by the route within the subsite (<literal>LoginR</literal> and <literal
 <section id="authentication-and-authorization_email">
 <title>Email</title>
 <simpara>For many use cases, third-party authentication of email will be sufficient.
-Occasionally, you&#8217;ll want users to actual create passwords on your site. The
+Occasionally, you&#8217;ll want users to create passwords on your site. The
 scaffolded site does not include this setup, because:</simpara>
 <itemizedlist>
 <listitem>

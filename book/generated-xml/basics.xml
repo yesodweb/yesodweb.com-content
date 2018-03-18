@@ -61,9 +61,9 @@ QuasiQuoter.</simpara></note>
 I&#8217;d like to call it <literal>HomeR</literal>, it should listen for requests to <literal>/</literal> (the root of
 the application), and should answer <literal>GET</literal> requests. We call <literal>HomeR</literal> a resource,
 which is where the "R" suffix comes from.</simpara>
-<note><simpara>The R suffix on resource names is simply convention, but it&#8217;s a fairly
+<note><simpara>The R suffix on resource names is simply a convention, but it&#8217;s a fairly
 universally followed convention. It makes it just a bit easier to read and
-understand code.</simpara></note>
+understand the code.</simpara></note>
 <simpara>The <literal>mkYesod</literal> TH function generates quite a bit of code here: a route data
 type, parser/render functions, a dispatch function, and some helper types.
 We&#8217;ll look at this in more detail in the routing chapter. But by using the

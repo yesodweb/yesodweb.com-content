@@ -57,7 +57,7 @@ usable on its own as a standalone library. Most of this chapter will address
 Persistent on its own.</simpara>
 <section id="persistent_synopsis">
 <title>Synopsis</title>
-<simpara>The required dependencies for the below is: persistent, persistent-sqlite and persistent-template.</simpara>
+<simpara>The required dependencies for the below are: persistent, persistent-sqlite and persistent-template.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
