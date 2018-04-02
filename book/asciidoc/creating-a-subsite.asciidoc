@@ -65,10 +65,10 @@ import           HelloSub.Data
 import           Yesod
 
 -- And we'll spell out the handler type signature.
-getSubHomeR :: Yesod master => HandlerT HelloSub (HandlerT master IO) Html
-getSubHomeR = lift $ defaultLayout [whamlet|Welcome to the subsite!|]
+getSubHomeR :: Yesod master => SubHandlerFor HelloSub master Html
+getSubHomeR = liftHandler $ defaultLayout [whamlet|Welcome to the subsite!|]
 
-instance Yesod master => YesodSubDispatch HelloSub (HandlerT master IO) where
+instance Yesod master => YesodSubDispatch HelloSub master where
     yesodSubDispatch = $(mkYesodSubDispatch resourcesHelloSub)
 ----
 
@@ -94,7 +94,7 @@ mkYesod "Master" [parseRoutes|
 instance Yesod Master
 
 -- Spelling out type signature again.
-getHomeR :: HandlerT Master IO Html
+getHomeR :: HandlerFor Master Html
 getHomeR = defaultLayout
     [whamlet|
         <h1>Welcome to the homepage
@@ -118,13 +118,13 @@ On the dispatch side, we start off by defining our handler function for the +Sub
 [source, haskell]
 ----
 getSubHomeR :: Yesod master
-            => HandlerT HelloSub (HandlerT master IO) Html
+            => SubHandlerFor HelloSub master Html
 ----
 
 This is the heart and soul of what a subsite is all about. All of our actions
 live in this layered monad, where we have our subsite wrapping around our main
 site. Given this monadic layering, it should come as no surprise that we end up
-calling +lift+. In this case, our subsite is using the master site's
+calling +liftHandler+. In this case, our subsite is using the master site's
 +defaultLayout+ function to render a widget.
 
 The +defaultLayout+ function is part of the Yesod typeclass. Therefore, in
