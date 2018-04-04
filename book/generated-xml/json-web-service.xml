@@ -65,8 +65,7 @@ modValue = return</programlisting>
 <simpara>
 A <literal>Manager</literal> is present to keep track of open connections, so that multiple
   requests to the same server use the same connection. You usually want to use
-  the <literal>withManager</literal> function to create and clean up this <literal>Manager</literal>, since it is
-  exception safe.
+  the <literal>getGlobalManager</literal> function to get the global connection manager.
 </simpara>
 </listitem>
 <listitem>
@@ -94,10 +93,11 @@ import           Data.Conduit            (($$+-))
 import           Data.Conduit.Attoparsec (sinkParser)
 import           Network.HTTP.Conduit    (RequestBody (RequestBodyLBS),
                                           Response (..), http, method, parseUrl,
-                                          requestBody, withManager)
+                                          requestBody, getGlobalManager)
 
 main :: IO ()
-main = withManager $ \manager -&gt; do
+main = do
+    manager &lt;- getGlobalManager
     value &lt;- liftIO makeValue
     -- We need to know the size of the request body, so we convert to a
     -- ByteString

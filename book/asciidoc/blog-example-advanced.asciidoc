@@ -354,7 +354,6 @@ instance YesodAuth Blog where
     type AuthId Blog = UserId
     loginDest _ = HomeR
     logoutDest _ = HomeR
-    authHttpManager = httpManager
 ----
 
 We'll use link:https://browserid.org/[BrowserID] (a.k.a. Mozilla Persona),

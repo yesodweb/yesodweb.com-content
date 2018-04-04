@@ -132,8 +132,6 @@ instance YesodAuth App where
         , authGoogleEmail clientId clientSecret
         ]
 
-    authHttpManager = httpManager
-
     -- The default maybeAuthId assumes a Persistent database. We're going for a
     -- simpler AuthId, so we'll just do a direct lookup in the session.
     maybeAuthId = lookupSession "_ID"
@@ -223,14 +221,6 @@ It uses email addresses as identifiers, which people are comfortable with, as op
 </simpara>
 </listitem>
 </itemizedlist>
-</listitem>
-<listitem>
-<simpara>
-<literal>authHttpManager</literal> gets an HTTP connection manager from the foundation type.
-   This allows authentication backends which use HTTP connections (i.e., almost
-   all third-party login systems) to share connections, avoiding the cost of
-   restarting a TCP connection for each request.
-</simpara>
 </listitem>
 </itemizedlist>
 <simpara>In addition to these six methods, there are other methods available to control
@@ -383,8 +373,6 @@ instance YesodAuth App where
                 Left (Entity userid _) -&gt; userid -- newly added user
                 Right userid -&gt; userid -- existing user
 
-    authHttpManager = error "Email doesn't need an HTTP manager"
-
 instance YesodAuthPersist App
 
 -- Here's all of the email-specific code
@@ -533,8 +521,6 @@ instance YesodAuth App where
     logoutDest _ = HomeR
 
     authPlugins _ = [authDummy]
-
-    authHttpManager = httpManager
 
     maybeAuthId = lookupSession "_ID"
 

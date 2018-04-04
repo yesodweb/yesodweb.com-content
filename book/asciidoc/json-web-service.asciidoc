@@ -62,8 +62,7 @@ http-conduit was written as a companion to WAI. It too uses +conduit+ and
 
 * A +Manager+ is present to keep track of open connections, so that multiple
   requests to the same server use the same connection. You usually want to use
-  the +withManager+ function to create and clean up this +Manager+, since it is
-  exception safe.
+  the +getGlobalManager+ function to get the global connection manager.
 
 * We need to know the size of our request body, which can't be determined
   directly from a +Builder+. Instead, we convert the +Builder+ into a lazy
@@ -86,10 +85,11 @@ import           Data.Conduit            (($$+-))
 import           Data.Conduit.Attoparsec (sinkParser)
 import           Network.HTTP.Conduit    (RequestBody (RequestBodyLBS),
                                           Response (..), http, method, parseUrl,
-                                          requestBody, withManager)
+                                          requestBody, getGlobalManager)
 
 main :: IO ()
-main = withManager $ \manager -> do
+main = do
+    manager <- getGlobalManager
     value <- liftIO makeValue
     -- We need to know the size of the request body, so we convert to a
     -- ByteString

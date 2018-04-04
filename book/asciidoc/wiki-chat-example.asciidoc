@@ -30,6 +30,7 @@ import           Data.Text                           (Text)
 import           Network.Wai.EventSource
 import           Network.Wai.EventSource.EventStream
 import           Yesod
+import           Yesod.Core.Types (SubHandlerFor)
 
 -- | Our subsite foundation. We keep a channel of events that all connections
 -- will share.
@@ -70,8 +71,8 @@ the necessary functionality. Let's have a look at our +YesodChat+ typeclass:
 -- @Chat/Data.hs
 class (Yesod master, RenderMessage master FormMessage)
         => YesodChat master where
-    getUserName :: HandlerT master IO Text
-    isLoggedIn :: HandlerT master IO Bool
+    getUserName :: HandlerFor master Text
+    isLoggedIn :: HandlerFor master Bool
 ----
 
 Any master site which wants to use the chat subsite will need to provide a
@@ -85,22 +86,22 @@ There are a few interesting things to note:
 
 * Previously in the book, we've used the +Handler+ monad quite a bit. Remember
   that +Handler+ is just an application-specific type synonym around
-  +HandlerT+. Since this code is intended to work with many different
-  applications, we use the full +HandlerT+ form of the transformer.
+  +HandlerFor+. Since this code is intended to work with many different
+  applications, we use the full +HandlerFor+ form of the transformer.
 
-Speaking of the +Handler+ type synonym, we're going to want to have something
-similar for our subsite. The question is: what does this monad look like? In a
-subsite situation, we end up with two layers of +HandlerT+ transformers: one
-for the subsite, and one for the master site. We want to have a synonym that
-works for any master site which is an instance of +YesodChat+, so we end up
-with:
+Speaking of the +Handler+ type synonym, we're going to want to have
+something similar for our subsite. The question is: what does this
+monad look like? In a subsite situation, we use +SubHandlerFor+ with
+both the subsite data type and the master site type. We'll define a
+helper synonym for this which requires a +YesodChat+ instance on the
+master site type, so we end up with:
 
 [source, haskell]
 ----
 -- @Chat/Data.hs
 type ChatHandler a =
     forall master. YesodChat master =>
-    HandlerT Chat (HandlerT master IO) a
+    SubHandlerFor Chat master a
 ----
 
 Now that we have our machinery out of the way, it's time to write our subsite
@@ -119,9 +120,9 @@ the implementation, and then discuss those +lift+ usages:
 -- @Chat/Data.hs
 postSendR :: ChatHandler ()
 postSendR = do
-    from <- lift getUserName
-    body <- lift $ runInputGet $ ireq textField "message"
-    Chat chan <- getYesod
+    from <- liftHandler getUserName
+    body <- runInputGet $ ireq textField "message"
+    Chat chan <- getSubYesod
     liftIO $ writeChan chan $ ServerEvent Nothing Nothing $ return $
         fromText from <> fromText ": " <> fromText body
 ----
@@ -154,7 +155,7 @@ The receiving side is similarly simple:
 -- @Chat/Data.hs
 getReceiveR :: ChatHandler ()
 getReceiveR = do
-    Chat chan0 <- getYesod
+    Chat chan0 <- getSubYesod
     chan <- liftIO $ dupChan chan0
     sendWaiApplication $ eventSourceAppChan chan
 ----
@@ -187,7 +188,7 @@ module Chat where
 import           Chat.Data
 import           Yesod
 
-instance YesodChat master => YesodSubDispatch Chat (HandlerT master IO) where
+instance YesodChat master => YesodSubDispatch Chat master where
     yesodSubDispatch = $(mkYesodSubDispatch resourcesChat)
 ----
 
@@ -215,7 +216,7 @@ URLs. Let's start off our widget:
 -- @Chat.hs
 chatWidget :: YesodChat master
            => (Route Chat -> Route master)
-           -> WidgetT master IO ()
+           -> WidgetFor master ()
 chatWidget toMaster = do
 ----
 
@@ -448,7 +449,6 @@ instance YesodAuth App where
     loginDest _ = HomeR
     logoutDest _ = HomeR
     getAuthId = return . Just . credsIdent
-    authHttpManager = error "authHttpManager" -- not used by authDummy
     maybeAuthId = lookupSession "_ID"
 
 instance RenderMessage App FormMessage where

@@ -571,7 +571,7 @@ large ones are stored to disk.
 </varlistentry>
 <varlistentry>
 <term>
-shouldLog
+shouldLogIO
 </term>
 <listitem>
 <simpara>

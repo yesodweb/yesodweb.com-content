@@ -60,10 +60,10 @@ import           HelloSub.Data
 import           Yesod
 
 -- And we'll spell out the handler type signature.
-getSubHomeR :: Yesod master =&gt; HandlerT HelloSub (HandlerT master IO) Html
-getSubHomeR = lift $ defaultLayout [whamlet|Welcome to the subsite!|]
+getSubHomeR :: Yesod master =&gt; SubHandlerFor HelloSub master Html
+getSubHomeR = liftHandler $ defaultLayout [whamlet|Welcome to the subsite!|]
 
-instance Yesod master =&gt; YesodSubDispatch HelloSub (HandlerT master IO) where
+instance Yesod master =&gt; YesodSubDispatch HelloSub master where
     yesodSubDispatch = $(mkYesodSubDispatch resourcesHelloSub)</programlisting>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}
@@ -85,7 +85,7 @@ mkYesod "Master" [parseRoutes|
 instance Yesod Master
 
 -- Spelling out type signature again.
-getHomeR :: HandlerT Master IO Html
+getHomeR :: HandlerFor Master Html
 getHomeR = defaultLayout
     [whamlet|
         &lt;h1&gt;Welcome to the homepage
@@ -103,11 +103,11 @@ centered around a foundation datatype, <literal>HelloSub</literal> in our case. 
 and render functions.</simpara>
 <simpara>On the dispatch side, we start off by defining our handler function for the <literal>SubHomeR</literal> route. You should pay special attention to the type signature on this function:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">getSubHomeR :: Yesod master
-            =&gt; HandlerT HelloSub (HandlerT master IO) Html</programlisting>
+            =&gt; SubHandlerFor HelloSub master Html</programlisting>
 <simpara>This is the heart and soul of what a subsite is all about. All of our actions
 live in this layered monad, where we have our subsite wrapping around our main
 site. Given this monadic layering, it should come as no surprise that we end up
-calling <literal>lift</literal>. In this case, our subsite is using the master site&#8217;s
+calling <literal>liftHandler</literal>. In this case, our subsite is using the master site&#8217;s
 <literal>defaultLayout</literal> function to render a widget.</simpara>
 <simpara>The <literal>defaultLayout</literal> function is part of the Yesod typeclass. Therefore, in
 order to call it, the <literal>master</literal> type argument must be an instance of <literal>Yesod</literal>.

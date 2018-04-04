@@ -32,6 +32,7 @@ import           Data.Text                           (Text)
 import           Network.Wai.EventSource
 import           Network.Wai.EventSource.EventStream
 import           Yesod
+import           Yesod.Core.Types (SubHandlerFor)
 
 -- | Our subsite foundation. We keep a channel of events that all connections
 -- will share.
@@ -61,8 +62,8 @@ the necessary functionality. Let&#8217;s have a look at our <literal>YesodChat</
 <programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
 class (Yesod master, RenderMessage master FormMessage)
         =&gt; YesodChat master where
-    getUserName :: HandlerT master IO Text
-    isLoggedIn :: HandlerT master IO Bool</programlisting>
+    getUserName :: HandlerFor master Text
+    isLoggedIn :: HandlerFor master Bool</programlisting>
 <simpara>Any master site which wants to use the chat subsite will need to provide a
 <literal>YesodChat</literal> instance. (We&#8217;ll see in a bit how this requirement is enforced.)
 There are a few interesting things to note:</simpara>
@@ -79,21 +80,21 @@ We can put further constraints on the master site, such as providing a
 <simpara>
 Previously in the book, we&#8217;ve used the <literal>Handler</literal> monad quite a bit. Remember
   that <literal>Handler</literal> is just an application-specific type synonym around
-  <literal>HandlerT</literal>. Since this code is intended to work with many different
-  applications, we use the full <literal>HandlerT</literal> form of the transformer.
+  <literal>HandlerFor</literal>. Since this code is intended to work with many different
+  applications, we use the full <literal>HandlerFor</literal> form of the transformer.
 </simpara>
 </listitem>
 </itemizedlist>
-<simpara>Speaking of the <literal>Handler</literal> type synonym, we&#8217;re going to want to have something
-similar for our subsite. The question is: what does this monad look like? In a
-subsite situation, we end up with two layers of <literal>HandlerT</literal> transformers: one
-for the subsite, and one for the master site. We want to have a synonym that
-works for any master site which is an instance of <literal>YesodChat</literal>, so we end up
-with:</simpara>
+<simpara>Speaking of the <literal>Handler</literal> type synonym, we&#8217;re going to want to have
+something similar for our subsite. The question is: what does this
+monad look like? In a subsite situation, we use <literal>SubHandlerFor</literal> with
+both the subsite data type and the master site type. We&#8217;ll define a
+helper synonym for this which requires a <literal>YesodChat</literal> instance on the
+master site type, so we end up with:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
 type ChatHandler a =
     forall master. YesodChat master =&gt;
-    HandlerT Chat (HandlerT master IO) a</programlisting>
+    SubHandlerFor Chat master a</programlisting>
 <simpara>Now that we have our machinery out of the way, it&#8217;s time to write our subsite
 handler functions. We had two routes: one for sending messages, and one for
 receiving messages. Let&#8217;s start with sending. We need to:</simpara>
@@ -119,9 +120,9 @@ the implementation, and then discuss those <literal>lift</literal> usages:</simp
 <programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
 postSendR :: ChatHandler ()
 postSendR = do
-    from &lt;- lift getUserName
-    body &lt;- lift $ runInputGet $ ireq textField "message"
-    Chat chan &lt;- getYesod
+    from &lt;- liftHandler getUserName
+    body &lt;- runInputGet $ ireq textField "message"
+    Chat chan &lt;- getSubYesod
     liftIO $ writeChan chan $ ServerEvent Nothing Nothing $ return $
         fromText from &lt;&gt; fromText ": " &lt;&gt; fromText body</programlisting>
 <simpara><literal>getUserName</literal> is the function we defined in our <literal>YesodChat</literal> typeclass earlier.
@@ -145,7 +146,7 @@ example.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
 getReceiveR :: ChatHandler ()
 getReceiveR = do
-    Chat chan0 &lt;- getYesod
+    Chat chan0 &lt;- getSubYesod
     chan &lt;- liftIO $ dupChan chan0
     sendWaiApplication $ eventSourceAppChan chan</programlisting>
 <simpara>We use <literal>dupChan</literal> so that each new connection receives its own copy of newly
@@ -172,7 +173,7 @@ module Chat where
 import           Chat.Data
 import           Yesod
 
-instance YesodChat master =&gt; YesodSubDispatch Chat (HandlerT master IO) where
+instance YesodChat master =&gt; YesodSubDispatch Chat master where
     yesodSubDispatch = $(mkYesodSubDispatch resourcesChat)</programlisting>
 <simpara>We&#8217;re stating that our <literal>Chat</literal> subsite can live on top of any master site which
 is an instance of <literal>YesodChat</literal>. We then use the <literal>mkYesodSubDispatch</literal> Template
@@ -194,7 +195,7 @@ URLs. Let&#8217;s start off our widget:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">-- @Chat.hs
 chatWidget :: YesodChat master
            =&gt; (Route Chat -&gt; Route master)
-           -&gt; WidgetT master IO ()
+           -&gt; WidgetFor master ()
 chatWidget toMaster = do</programlisting>
 <simpara>Next, we&#8217;re going to generate some identifiers to be used by our widget. It&#8217;s
 always good practice to let Yesod generate unique identifiers for you instead
@@ -384,7 +385,6 @@ instance YesodAuth App where
     loginDest _ = HomeR
     logoutDest _ = HomeR
     getAuthId = return . Just . credsIdent
-    authHttpManager = error "authHttpManager" -- not used by authDummy
     maybeAuthId = lookupSession "_ID"
 
 instance RenderMessage App FormMessage where

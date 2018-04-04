@@ -81,7 +81,6 @@ instance YesodAuth App where
     getAuthId = return . Just . credsIdent
     authPlugins _ = [authDummy]
     maybeAuthId = lookupSession credsKey
-    authHttpManager = error "no http manager provided"
 
 getHomeR :: Handler Html
 getHomeR = defaultLayout $ do
@@ -169,7 +168,6 @@ instance YesodAuth App where
     getAuthId = return . Just . credsIdent
     authPlugins _ = [authDummy]
     maybeAuthId = lookupSession credsKey
-    authHttpManager = error "no http manager provided"
 
 getHomeR :: Handler Html
 getHomeR = defaultLayout $ do
