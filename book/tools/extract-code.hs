@@ -1,12 +1,14 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ViewPatterns #-}
 import ClassyPrelude.Conduit hiding (hash)
 import Text.XML as X hiding (writeFile)
 import Text.XML.Cursor
 import Crypto.Hash.SHA1 (hash)
 import qualified Data.ByteString.Base16 as B16
-import Filesystem (createTree, removeFile, isFile)
+import System.Directory (createDirectoryIfMissing, removeFile, doesFileExist)
+import System.FilePath
 
 root :: FilePath
 root = "extracted"
@@ -18,7 +20,7 @@ main = runResourceT $ do
         $$ awaitForever handleXML
         =$ foldMapC (asSet . singletonSet)
     sourceDirectoryDeep False root
-        $= filterC (\fp -> hasExtension fp "hs")
+        $= filterC (\fp -> takeExtension fp == ".hs")
         $$ mapM_C (\fp -> do
             unless (fp `member` generated) $ liftIO $ removeFile fp)
 
@@ -34,29 +36,31 @@ handleXML fp = do
                 = unlines (filter (not . hasPath) snippets0)
                 : filter hasPath snippets0
             | otherwise = snippets0
-    let fileMap = asMap $ map unlines $ unionsWith (++)
+    let fileMap :: Map FilePath ByteString
+        fileMap = asMap $ map (encodeUtf8 . filter (/= '\r') . unlines) $ unionsWith (++)
           $ map (maybe
                     mempty
-                    (\(x, y) -> singletonMap x (opoint y))
+                    (\(x, y) -> singletonMap x [y])
                 . getFileName)
             snippets
     forM_ (mapToList fileMap) $ \(fp, code') -> do
         liftIO $ whenM (fileChanged fp code') $ do
-            createTree $ directory fp
-            writeFile fp $ filter (/= '\r') code'
+            createDirectoryIfMissing True $ takeDirectory fp
+            writeFile fp code'
         yield fp
 
 -- | One of the chapters where all code snippets must be concatenated together.
 isContinuous :: FilePath -> Bool
 isContinuous fp =
-    basename fp `member` names
+    takeBaseName fp `member` names
   where
     names = asSet $ setFromList
         [ "blog-example-advanced"
         ]
 
+fileChanged :: FilePath -> ByteString -> IO Bool
 fileChanged fp new
-    | isHashName fp = not <$> isFile fp
+    | isHashName fp = not <$> doesFileExist fp
     | otherwise = do
         eold <- tryIO $ ClassyPrelude.Conduit.readFile fp
         return $ case eold of
@@ -64,14 +68,14 @@ fileChanged fp new
             Right old -> old /= new
 
 isHashName :: FilePath -> Bool
-isHashName t = "Extracted_" `isInfixOf` fpToText t
+isHashName t = "Extracted_" `isInfixOf` t
 
 hasPath = ("-- @" `isPrefixOf`)
 
 getFileName :: Text -> Maybe (FilePath, Text)
 getFileName orig
     | Just fp <- listToMaybe (mapMaybe (stripPrefix "-- @") lorig) =
-        Just (root </> fpFromText fp, unlines $ filter (not . isFileName) lorig)
+        Just (root </> unpack fp, unlines $ filter (not . isFileName) lorig)
     | all (not . isMain) lorig = Nothing
     | any isImport lorig = Just (hashfp, unlines $ go lorig)
     | otherwise = Just (hashfp, unlines $ header : lorig)
@@ -84,7 +88,7 @@ getFileName orig
 
     name = "Extracted_" ++ (decodeUtf8 $ B16.encode $ hash $ encodeUtf8 orig)
 
-    hashfp = root </> fpFromText name <.> "hs"
+    hashfp = root </> unpack name <.> "hs"
 
     go [] = []
     go (x:xs)
