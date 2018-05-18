@@ -146,14 +146,13 @@ example.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">-- @Chat/Data.hs
 getReceiveR :: ChatHandler ()
 getReceiveR = do
-    Chat chan0 &lt;- getSubYesod
-    chan &lt;- liftIO $ dupChan chan0
+    Chat chan &lt;- getSubYesod
     sendWaiApplication $ eventSourceAppChan chan</programlisting>
-<simpara>We use <literal>dupChan</literal> so that each new connection receives its own copy of newly
-generated messages. This is a standard method in concurrent Haskell of creating
-broadcast channels. The last line in our function exposes the underlying
-<literal>wai-eventsource</literal> application as a Yesod handler, using the
-<literal>sendWaiApplication</literal> function to promote a WAI application to a Yesod handler.</simpara>
+<simpara>The last line in our function exposes the underlying <literal>wai-eventsource</literal>
+application as a Yesod handler, using the <literal>sendWaiApplication</literal> function to
+promote a WAI application to a Yesod handler. <literal>eventSourceAppChan</literal> duplicates
+the chan under the hood, which is a standard method in concurrent Haskel
+of creating broadcast channels.</simpara>
 <simpara>Now that we&#8217;ve defined our handler functions, we can set up our dispatch. In a
 normal application, dispatching is handled by calling <literal>mkYesod</literal>, which creates
 the appropriate <literal>YesodDispatch</literal> instance. In subsites, things are a little bit

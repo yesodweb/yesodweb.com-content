@@ -155,16 +155,15 @@ The receiving side is similarly simple:
 -- @Chat/Data.hs
 getReceiveR :: ChatHandler ()
 getReceiveR = do
-    Chat chan0 <- getSubYesod
-    chan <- liftIO $ dupChan chan0
+    Chat chan <- getSubYesod
     sendWaiApplication $ eventSourceAppChan chan
 ----
 
-We use +dupChan+ so that each new connection receives its own copy of newly
-generated messages. This is a standard method in concurrent Haskell of creating
-broadcast channels. The last line in our function exposes the underlying
-+wai-eventsource+ application as a Yesod handler, using the
-+sendWaiApplication+ function to promote a WAI application to a Yesod handler.
+The last line in our function exposes the underlying +wai-eventsource+
+application as a Yesod handler, using the +sendWaiApplication+ function to
+promote a WAI application to a Yesod handler. +eventSourceAppChan+ duplicates
+the chan under the hood, which is a standard method in concurrent Haskel
+of creating broadcast channels.
 
 Now that we've defined our handler functions, we can set up our dispatch. In a
 normal application, dispatching is handled by calling +mkYesod+, which creates
