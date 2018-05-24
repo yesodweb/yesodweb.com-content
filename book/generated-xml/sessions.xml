@@ -344,7 +344,7 @@ getSetNameR = defaultLayout
             &lt;input type=submit value="Set name"&gt;
     |]
 
--- Retreive the submitted name from the user
+-- Retrieve the submitted name from the user
 postSetNameR :: Handler ()
 postSetNameR = do
     -- Get the submitted name and set it in the session
