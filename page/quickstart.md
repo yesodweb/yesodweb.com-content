@@ -38,4 +38,5 @@ if you want to learn more, check out these resources:
 * [The Wiki](/wiki)
 * [Haskell Documentation](https://haskell-lang.org/documentation)
 * [Screencasts](/page/screencasts)
+* [Cloning FluxBB](https://siskam.link/2018-04-14-cloning-fluxbb.html) (blog post about writing a forum in Yesod with Esqueleto)
 * [Yesod tutorial](http://yannesposito.com/Scratch/en/blog/Yesod-tutorial-for-newbies/) (slightly outdated, book provides more up-to-date content)
