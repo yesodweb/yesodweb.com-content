@@ -1620,4 +1620,4 @@ helper packages like +yesod-persistent+ provide a nice layer, but packages like
 +yesod-form+ and +yesod-auth+ also leverage Persistent's features as well.
 
 For more information on the syntax of entity declarations, database connection, etc.
-Checkout https://github.com/yesodweb/persistent/wiki
+Checkout https://github.com/yesodweb/persistent/tree/master/docs
