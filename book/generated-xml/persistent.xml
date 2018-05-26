@@ -1074,8 +1074,7 @@ Person sql=the-person-table id=numeric_id
 |]</programlisting>
 <simpara>There are a number of other features to the entity definition syntax. An
 up-to-date list is maintained
-<ulink url="https://github.com/yesodweb/yesod/wiki/Persistent-entity-syntax">on the
-Yesod wiki</ulink>.</simpara>
+<ulink url="https://github.com/yesodweb/persistent/blob/master/docs/Persistent-entity-syntax.md">in the Persistent documentation</ulink>.</simpara>
 </section>
 <section id="persistent_relations">
 <title>Relations</title>
@@ -1515,7 +1514,7 @@ to the underlying data store, so you can write whatever 5-way joins you want.</s
 helper packages like <literal>yesod-persistent</literal> provide a nice layer, but packages like
 <literal>yesod-form</literal> and <literal>yesod-auth</literal> also leverage Persistent&#8217;s features as well.</simpara>
 <simpara>For more information on the syntax of entity declarations, database connection, etc.
-Checkout <ulink url="https://github.com/yesodweb/persistent/wiki">https://github.com/yesodweb/persistent/wiki</ulink></simpara>
+Checkout <ulink url="https://github.com/yesodweb/persistent/tree/master/docs">https://github.com/yesodweb/persistent/tree/master/docs</ulink></simpara>
 </section>
 </section>
 </article>
