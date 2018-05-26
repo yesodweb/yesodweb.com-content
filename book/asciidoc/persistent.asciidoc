@@ -1094,8 +1094,7 @@ Person sql=the-person-table id=numeric_id
 
 There are a number of other features to the entity definition syntax. An
 up-to-date list is maintained
-link:https://github.com/yesodweb/yesod/wiki/Persistent-entity-syntax[on the
-Yesod wiki].
+link:https://github.com/yesodweb/persistent/blob/master/docs/Persistent-entity-syntax.md[in the Persistent documentation].
 
 === Relations
 
