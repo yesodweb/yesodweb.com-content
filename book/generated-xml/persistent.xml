@@ -48,7 +48,8 @@ Convenient data modeling.
 </listitem>
 <listitem>
 <simpara>
-Automatically perform database migrations
+Automatic database migrations in non-production environments to speed up
+  development.
 </simpara>
 </listitem>
 </itemizedlist>
@@ -461,6 +462,11 @@ main = runSqlite ":memory:" $ do
 <simpara>With this one little code change, Persistent will automatically create your
 <literal>Person</literal> table for you. This split between <literal>runMigration</literal> and <literal>migrate</literal> allows
 you to migrate multiple tables simultaneously.</simpara>
+<note><simpara>Using automated database migrations is only recommended in development
+environments. Allowing your application to modify your database schema in
+a production environment is <emphasis>very strongly discouraged</emphasis>. Automated migrations
+can be used to help speed up development, but are not a replacement for manual
+review and testing that should take place before production deployments.</simpara></note>
 <simpara>This works when dealing with just a few entities, but can quickly get tiresome
 once we are dealing with a dozen entities. Instead of repeating yourself,
 Persistent provides a helper function, <literal>mkMigrate</literal>:</simpara>
