@@ -14,6 +14,11 @@ need to install a newer version of yesod-bin. Try running `stack build
 yesod-bin-1.4.11` and rerunning `stack exec -- yesod devel`. Also, if you choose
 the "mini" scaffolding, `yesod devel` will not work.
 
+NOTE: If you are using the openSUSE operating system, you may need to change the
+`host` key in `./config/settings.yml` from `_env:HOST:*4` to `*4`. Please see
+[Issue 1517](https://github.com/yesodweb/yesod/issues/1517) for further
+information.
+
 ### System libraries
 
 Note that you will need the dev version of some system libraries to be
