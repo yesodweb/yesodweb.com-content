@@ -462,11 +462,8 @@ Person
     deriving Show
 |]
 
-runSqlite' :: (MonadUnliftIO m) => Text -> ReaderT SqlBackend (NoLoggingT (ResourceT m)) a -> m a
-runSqlite' = runSqlite
-
 main :: IO ()
-main = runSqlite' ":memory:" $ do
+main = runSqlite ":memory:" $ do
     runMigration $ migrate entityDefs $ entityDef (Nothing :: Maybe Person)
     michaelId <- insert $ Person "Michael" $ Just 26
     michael <- get michaelId
