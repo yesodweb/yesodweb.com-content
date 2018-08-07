@@ -79,7 +79,7 @@ BlogPost
 
 main :: IO ()
 main = runSqlite ":memory:" $ do
-      runMigration migrateAll :: IO ()
+    runMigration migrateAll 
 
     johnId <- insert $ Person "John Doe" $ Just 35
     janeId <- insert $ Person "Jane Doe" Nothing
@@ -330,20 +330,29 @@ pass it off to other Persistent functions.
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
+
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
 import           Database.Persist.Sqlite
 import           Database.Persist.TH
+import           Control.Monad.IO.Unlift
+import           Data.Text 
+import           Control.Monad.Reader
+import           Control.Monad.Logger
+import           Conduit
 
-share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+share [mkPersist sqlSettings, mkSave "entityDefs"] [persistLowerCase|
 Person
     name String
     age Int Maybe
     deriving Show
 |]
 
+runSqlite' :: (MonadUnliftIO m) => Text -> ReaderT SqlBackend (NoLoggingT (ResourceT m)) a -> m a
+runSqlite' = runSqlite
+
 main :: IO ()
-main = runSqlite ":memory:" $ do
+main = runSqlite' ":memory:" $ do
     michaelId <- insert $ Person "Michael" $ Just 26
     michael <- get michaelId
     liftIO $ print michael
@@ -435,27 +444,31 @@ to _ask_ it to help. Let's see what this looks like:
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
-import Database.Persist
-import Database.Persist.TH
-import Database.Persist.Sqlite
-import Control.Monad.IO.Class (liftIO)
+
+import           Control.Monad.IO.Class  (liftIO)
+import           Database.Persist
+import           Database.Persist.Sqlite
+import           Database.Persist.TH
+import           Control.Monad.IO.Unlift
+import           Data.Text 
+import           Control.Monad.Reader
+import           Control.Monad.Logger
+import           Conduit
 
 share [mkPersist sqlSettings, mkSave "entityDefs"] [persistLowerCase|
 Person
     name String
-    age Int
+    age Int Maybe
     deriving Show
 |]
 
 main :: IO ()
 main = runSqlite ":memory:" $ do
-    -- this line added: that's it!
     runMigration $ migrate entityDefs $ entityDef (Nothing :: Maybe Person)
-    michaelId <- insert $ Person "Michael" 26
+    michaelId <- insert $ Person "Michael" $ Just 26
     michael <- get michaelId
     liftIO $ print michael
-----
-
+----   
 With this one little code change, Persistent will automatically create your
 +Person+ table for you. This split between +runMigration+ and +migrate+ allows
 you to migrate multiple tables simultaneously.
