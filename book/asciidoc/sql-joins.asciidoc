@@ -219,6 +219,10 @@ runtime error messages.
 
 === Esqueleto
 
+NOTE: Currently, esqueleto is not included in a recent LTS Haskell,
+and therefore using it may require some extra work, not covered by the
+book.
+
 Persistent has a companion library- Esqueleto- which provides an expressive,
 type safe DSL for writing SQL queries. It takes advantage of the Persistent
 types to ensure it generates valid SQL queries and produces the results
