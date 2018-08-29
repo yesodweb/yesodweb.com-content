@@ -245,7 +245,7 @@ scaffolded site does not include this setup, because:
 NOTE: The example below will use the system's built-in _sendmail_ executable.
 If you would like to avoid the hassle of dealing with an email server yourself,
 you can use Amazon SES. There is a package called
-link:http://hackage.haskell.org/package/mime-mail-ses[mime-mail-ses] which
+link:https://www.stackage.org/package/mime-mail-ses[mime-mail-ses] which
 provides a drop-in replacement for the sendmail code used below. This is the
 approach I generally recommend, and what I use on most of my sites, including
 FP Haskell Center and Haskellers.com.

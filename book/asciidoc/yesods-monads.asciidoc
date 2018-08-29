@@ -368,7 +368,7 @@ If you want to understand this more, please have a look at the definitions of
 
 At times, you'll want to add your own monad transformer in part of your
 application. As a motivating example, let's consider the
-link:http://hackage.haskell.org/package/monadcryptorandom[monadcryptorandom]
+link:https://www.stackage.org/package/monadcryptorandom[monadcryptorandom]
 package from Hackage, which defines both a +MonadCRandom+ typeclass for monads
 which allow generating cryptographically-secure random values, and +CRandT+ as
 a concrete instance of that typeclass. You would like to write some code that
