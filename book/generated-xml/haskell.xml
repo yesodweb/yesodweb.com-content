@@ -135,7 +135,7 @@ with a new scaffolded site.</simpara>
 <simpara>Once you have your toolchain set up correctly, you&#8217;ll need to install a number
 of Haskell libraries. For the vast majority of the book, the following command
 will install all the libraries you need:</simpara>
-<programlisting language="shell" linenumbering="unnumbered">stack build yesod persistent-sqlite yesod-static esqueleto</programlisting>
+<programlisting language="shell" linenumbering="unnumbered">stack build classy-prelude-yesod persistent-sqlite</programlisting>
 <simpara>In order to run an example from the book, save it in a file, e.g.,
 yesod-example.hs, and then run it with:</simpara>
 <programlisting language="shell" linenumbering="unnumbered">stack runghc yesod-example.hs</programlisting>
@@ -344,20 +344,13 @@ as it gives a nice separation of the non-Haskell syntax from your Haskell code.<
 <title>API Documentation</title>
 <simpara>The standard API documentation program in Haskell is called Haddock. The
 standard Haddock search tool is called Hoogle. My recommendation is to use
-<ulink url="https://www.fpcomplete.com/hoogle">FP Complete&#8217;s Hoogle search</ulink> and its
+<ulink url="https://www.stackage.org/">Stackage&#8217;s Hoogle search</ulink> and its
 accompanying Haddocks for searching and browsing documentation. The reason for
-this is that the FP Complete Hoogle database covers a very large number of open
+this is that the Stackage Hoogle database covers a very large number of open
 source Haskell packages, and the documentation provided is always fully
 generated and known to link to other working Haddocks.</simpara>
-<simpara>The more commonly used sources for these are
-<ulink url="http://hackage.haskell.org/">Hackage</ulink> itself, and
-<ulink url="http://www.haskell.org/hoogle">haskell.org&#8217;s Hoogle instance</ulink>. The
-downsides to these are that- based on build issues on the server- documentation
-is sometimes not generated, and the Hoogle search defaults to searching only a
-subset of available packages. Most importantly for us, Yesod is indexed by FP
-Complete&#8217;s Hoogle, but not by haskell.org&#8217;s.</simpara>
 <simpara>If when reading this book you run into types or functions that you do not
-understand, try doing a Hoogle search with FP Complete&#8217;s Hoogle to get more
+understand, try doing a Hoogle search with Hoogle to get more
 information.</simpara>
 </section>
 <section id="haskell_summary">

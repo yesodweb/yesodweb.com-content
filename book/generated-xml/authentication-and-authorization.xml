@@ -287,7 +287,7 @@ You need to have a working system for sending email. Many web servers these
 <note><simpara>The example below will use the system&#8217;s built-in <emphasis>sendmail</emphasis> executable.
 If you would like to avoid the hassle of dealing with an email server yourself,
 you can use Amazon SES. There is a package called
-<ulink url="http://hackage.haskell.org/package/mime-mail-ses">mime-mail-ses</ulink> which
+<ulink url="https://www.stackage.org/package/mime-mail-ses">mime-mail-ses</ulink> which
 provides a drop-in replacement for the sendmail code used below. This is the
 approach I generally recommend, and what I use on most of my sites, including
 FP Haskell Center and Haskellers.com.</simpara></note>

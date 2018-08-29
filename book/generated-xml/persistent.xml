@@ -42,7 +42,7 @@ Convenient data modeling.
   wider number of storage layers.
   Joins and other SQL specific functionality can be achieved through using
   a raw SQL layer (with very little type safety).
-  An additional library, <ulink url="http://hackage.haskell.org/package/esqueleto">Esqueleto</ulink>,
+  An additional library, <ulink url="https://github.com/bitemyapp/esqueleto">Esqueleto</ulink>,
   builds on top of the Persistent data model, adding type-safe joins and SQL functionality.
 </simpara>
 </listitem>
@@ -1463,8 +1463,8 @@ Yesod applications: <literal>get404</literal> a value and then return a response
 code which easily moves from different backend types. The downside is that you
 lose out on some backend-specific features. Probably the biggest casualty is
 SQL join support.</simpara>
-<simpara>Fortunately, thanks to Felipe Lessa, you can have your cake and eat it too. The
-<ulink url="http://hackage.haskell.org/package/esqueleto">Esqueleto</ulink> library provides
+<simpara>Fortunately, thanks to Felipe Lessa and Chris Allen, you can have your cake and eat it too. The
+<ulink url="https://github.com/bitemyapp/esqueleto">Esqueleto</ulink> library provides
 support for writing type safe SQL queries, using the existing Persistent
 infrastructure. The Haddocks for that package provide a good introduction to
 its usage. And since it uses many Persistent concepts, most of your existing
