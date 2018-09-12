@@ -349,7 +349,7 @@ Installing Yesod will give you both the Yesod library, as well as a +yesod+
 executable. This executable accepts a few commands, but the first one you'll
 want to be acquainted with is +yesod init+. It will ask you some questions, and
 then generate a folder containing the default scaffolded site. Inside that
-folder, you can run +cabal install --only-dependencies+ to build any extra
+folder, you can run +stack install --only-dependencies+ to build any extra
 dependencies (such as your database backends), and then +yesod devel+ to run
 your site.
 
