@@ -204,7 +204,7 @@ Of course, you can mix the two approaches. Children of a hierarchical route will
 /admin AdminR !admin:
     /1 Admin1R GET !1
     /2 Admin2R GET !2
-    /3 Admin3R Get !3
+    /3 Admin3R GET !3
 ----
 
 +AdminR Admin1R+ has the +admin+ and +1+ attributes.
@@ -220,7 +220,7 @@ However, the benefit becomes more obvious when the admin pages are not all group
 /admin AdminR !admin:
     /1 Admin1R GET
     /2 Admin2R GET
-    /3 Admin3R Get
+    /3 Admin3R GET
 
 /a AR !a:
   /1 A1R GET
