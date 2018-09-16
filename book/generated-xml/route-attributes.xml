@@ -198,7 +198,7 @@ main = warp 3000 App</programlisting>
 <programlisting language="routes" linenumbering="unnumbered">/admin AdminR !admin:
     /1 Admin1R GET !1
     /2 Admin2R GET !2
-    /3 Admin3R Get !3</programlisting>
+    /3 Admin3R GET !3</programlisting>
 <simpara><literal>AdminR Admin1R</literal> has the <literal>admin</literal> and <literal>1</literal> attributes.</simpara>
 <simpara>With this technique, you can use the <literal>admin</literal> attributes in the <literal>isAuthorized</literal> function, like in the first example.
 You are also sure that you won&#8217;t forget any attributes as we did with <literal>Admin3R</literal>.
@@ -208,7 +208,7 @@ However, the benefit becomes more obvious when the admin pages are not all group
 <programlisting language="routes" linenumbering="unnumbered">/admin AdminR !admin:
     /1 Admin1R GET
     /2 Admin2R GET
-    /3 Admin3R Get
+    /3 Admin3R GET
 
 /a AR !a:
   /1 A1R GET
