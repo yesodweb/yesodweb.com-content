@@ -430,17 +430,18 @@ static files from a separate domain]. The advantage to this approach is that
 cookies set on your main domain are not sent when retrieving static files, thus
 saving on a bit of bandwidth.
 
-To facilitate this, we have the +urlRenderOverride+ method. This method
+To facilitate this, we have the +urlParamRenderOverride+ method. This method
 intercepts the normal URL rendering and sets a special value for some routes.
 For example, the scaffolding defines this method as:
 
 
 [source, haskell]
 ----
-urlRenderOverride y (StaticR s) =
-    Just $ uncurry (joinPath y (Settings.staticRoot $ settings y)) $ renderRoute s
-
-urlRenderOverride _ _ = Nothing
+    urlParamRenderOverride :: site
+                           -> Route site
+                           -> [(T.Text, T.Text)] -- ^ query string
+                           -> Maybe Builder
+    urlParamRenderOverride _ _ _ = Nothing
 ----
 
 This means that static routes are served from a special static root, which you
