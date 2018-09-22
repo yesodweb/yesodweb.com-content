@@ -302,7 +302,7 @@ main :: IO ()
 main = warp 3000 App
 ----
 
-+provideJson+ is similarly trivial, in this case +provideRep . returnJson+.
++provideJson+ is similarly trivial, in this case +provideRep . return . toEncoding+.
 
 ==== New datatypes
 
