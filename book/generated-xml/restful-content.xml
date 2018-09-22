@@ -294,7 +294,7 @@ getHomeR = selectRep $ do
 
 main :: IO ()
 main = warp 3000 App</programlisting>
-<simpara><literal>provideJson</literal> is similarly trivial, in this case <literal>provideRep . returnJson</literal>.</simpara>
+<simpara><literal>provideJson</literal> is similarly trivial, in this case <literal>provideRep . return . toEncoding</literal>.</simpara>
 </section>
 <section id="restful-content_new_datatypes">
 <title>New datatypes</title>
