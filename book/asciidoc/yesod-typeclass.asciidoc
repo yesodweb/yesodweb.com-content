@@ -439,6 +439,7 @@ to provide special rendering of static routes:
                            -> Route site
                            -> [(T.Text, T.Text)] -- ^ query string
                            -> Maybe Builder
+    urlParamRenderOverride _ _ _ = Nothing
 ----
 
 === Authentication/Authorization
