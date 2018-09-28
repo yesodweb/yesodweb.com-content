@@ -430,8 +430,10 @@ static files from a separate domain]. The advantage to this approach is that
 cookies set on your main domain are not sent when retrieving static files, thus
 saving on a bit of bandwidth.
 
-To facilitate this, we have the +urlParamRenderOverride+ method. You could use the following 
-to provide special rendering of static routes:
+To facilitate this, we have the +urlParamRenderOverride+ method.
+This method intercepts the normal URL rendering and query string parameters.
+Then, sets a special value for some routes.
+For example, the scaffolding defines this method as:
 
 [source, haskell]
 ----
@@ -439,8 +441,12 @@ to provide special rendering of static routes:
                            -> Route site
                            -> [(T.Text, T.Text)] -- ^ query string
                            -> Maybe Builder
+    urlParamRenderOverride y (StaticR s) _ =
+    Just $ uncurry (joinPath y (Settings.staticRoot $ settings y)) $ renderRoute s
     urlParamRenderOverride _ _ _ = Nothing
 ----
+
+This means that static routes are served from a special static root, which you can configure to be a different domain. This is a great example of the power and flexibility of type-safe URLs: with a single line of code you’re able to change the rendering of static routes throughout all of your handlers.
 
 === Authentication/Authorization
 
