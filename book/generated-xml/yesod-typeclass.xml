@@ -461,13 +461,17 @@ Also, since filenames are based on hashes, you can be guaranteed that a file
 static files from a separate domain</ulink>. The advantage to this approach is that
 cookies set on your main domain are not sent when retrieving static files, thus
 saving on a bit of bandwidth.</simpara>
-<simpara>To facilitate this, we have the <literal>urlRenderOverride</literal> method. This method
-intercepts the normal URL rendering and sets a special value for some routes.
+<simpara>To facilitate this, we have the <literal>urlParamRenderOverride</literal> method.
+This method intercepts the normal URL rendering and query string parameters.
+Then, it sets a special value for some routes.
 For example, the scaffolding defines this method as:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">urlRenderOverride y (StaticR s) =
+<programlisting language="haskell" linenumbering="unnumbered">urlParamRenderOverride :: site
+                       -&gt; Route site
+                       -&gt; [(T.Text, T.Text)] -- ^ query string
+                       -&gt; Maybe Builder
+urlParamRenderOverride y (StaticR s) _ =
     Just $ uncurry (joinPath y (Settings.staticRoot $ settings y)) $ renderRoute s
-
-urlRenderOverride _ _ = Nothing</programlisting>
+urlParamRenderOverride _ _ _ = Nothing</programlisting>
 <simpara>This means that static routes are served from a special static root, which you
 can configure to be a different domain. This is a great example of the power
 and flexibility of type-safe URLs: with a single line of code you&#8217;re able to
