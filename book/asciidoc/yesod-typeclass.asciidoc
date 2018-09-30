@@ -432,21 +432,24 @@ saving on a bit of bandwidth.
 
 To facilitate this, we have the +urlParamRenderOverride+ method.
 This method intercepts the normal URL rendering and query string parameters.
-Then, sets a special value for some routes.
+Then, it sets a special value for some routes.
 For example, the scaffolding defines this method as:
 
 [source, haskell]
 ----
-    urlParamRenderOverride :: site
-                           -> Route site
-                           -> [(T.Text, T.Text)] -- ^ query string
-                           -> Maybe Builder
-    urlParamRenderOverride y (StaticR s) _ =
+urlParamRenderOverride :: site
+                       -> Route site
+                       -> [(T.Text, T.Text)] -- ^ query string
+                       -> Maybe Builder
+urlParamRenderOverride y (StaticR s) _ =
     Just $ uncurry (joinPath y (Settings.staticRoot $ settings y)) $ renderRoute s
-    urlParamRenderOverride _ _ _ = Nothing
+urlParamRenderOverride _ _ _ = Nothing
 ----
 
-This means that static routes are served from a special static root, which you can configure to be a different domain. This is a great example of the power and flexibility of type-safe URLs: with a single line of code you’re able to change the rendering of static routes throughout all of your handlers.
+This means that static routes are served from a special static root, which you
+can configure to be a different domain. This is a great example of the power
+and flexibility of type-safe URLs: with a single line of code you're able to
+change the rendering of static routes throughout all of your handlers.
 
 === Authentication/Authorization
 
