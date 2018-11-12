@@ -486,7 +486,7 @@ maximumContentLength:: To prevent Denial of Service (DoS) attacks, Yesod will
 limit the size of request bodies. Some of the time, you'll want to bump that
 limit for some routes (e.g., a file upload page). This is where you'd do that.
 
-fileUpload:: Determines how uploaded files and treated, based on the size of
+fileUpload:: Determines how uploaded files are treated, based on the size of
 the request. The two most common approaches are saving the files in memory, or
 streaming to temporary files. By default, small requests are kept in memory and
 large ones are stored to disk.
