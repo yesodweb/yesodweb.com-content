@@ -566,7 +566,7 @@ fileUpload
 </term>
 <listitem>
 <simpara>
-Determines how uploaded files and treated, based on the size of
+Determines how uploaded files are treated, based on the size of
 the request. The two most common approaches are saving the files in memory, or
 streaming to temporary files. By default, small requests are kept in memory and
 large ones are stored to disk.

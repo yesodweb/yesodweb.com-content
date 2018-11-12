@@ -817,7 +817,7 @@ Embedding (the caret-interpolator) no longer allows arbitrary <literal>HtmlUrl</
 <simpara>Dealing with internationalization (i18n) in Hamlet is a bit complicated. Hamlet
 supports i18n via a message datatype, very similar in concept and
 implementation to a type-safe URL. As a motivating example, let&#8217;s say we want
-to have an application that tells you hello and how many apples you have eaten.
+to have an application that tells you hello and how many apples you bought.
 We could represent those messages with a datatype.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">data Msg = Hello | Apples Int</programlisting>
 <simpara>Next, we would want to be able to convert that into something human-readable,
