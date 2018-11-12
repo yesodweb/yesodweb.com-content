@@ -873,7 +873,7 @@ There are a few changes:
 Dealing with internationalization (i18n) in Hamlet is a bit complicated. Hamlet
 supports i18n via a message datatype, very similar in concept and
 implementation to a type-safe URL. As a motivating example, let's say we want
-to have an application that tells you hello and how many apples you have eaten.
+to have an application that tells you hello and how many apples you bought.
 We could represent those messages with a datatype.
 
 [source, haskell]
