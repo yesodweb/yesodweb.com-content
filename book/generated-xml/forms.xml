@@ -516,7 +516,7 @@ carAForm mcar = Car
 <simpara><literal>[minBound..maxBound]</literal> gives us a list of all the different <literal>Color</literal> values. We
 then apply a <literal>map</literal> and <literal>&amp;&amp;&amp;</literal> (a.k.a, the fan-out operator) to turn that into a
 list of pairs. And even this can be simplified by using the <literal>optionsEnum</literal>
-function provided by yesod-form, which would turn out original code into:</simpara>
+function provided by yesod-form, which would turn our original code into:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">carAForm :: Maybe Car -&gt; AForm Handler Car
 carAForm mcar = Car
     &lt;$&gt; areq textField "Model" (carModel &lt;$&gt; mcar)
