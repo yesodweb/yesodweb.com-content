@@ -452,7 +452,7 @@ colors = map (pack . show &&& id) [minBound..maxBound]
 +[minBound..maxBound]+ gives us a list of all the different +Color+ values. We
 then apply a +map+ and +&&&+ (a.k.a, the fan-out operator) to turn that into a
 list of pairs. And even this can be simplified by using the +optionsEnum+
-function provided by yesod-form, which would turn out original code into:
+function provided by yesod-form, which would turn our original code into:
 
 [source, haskell]
 ----
