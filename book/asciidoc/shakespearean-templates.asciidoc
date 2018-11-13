@@ -1011,7 +1011,7 @@ Some quick points about this simple example:
   as described above.  Note that +\^{..}+ and +@{..}+ are also recognized in
   +lt+ and +st+. If the output of a template should contain +\^{..}+, a
   backslash can be used to prevent the interpolation,
-  e.g. +[lt|2^\{23}|]+. The backslash is removed from the resulting text.
+  e.g. +[lt|2^\\{23}|]+. The backslash is removed from the resulting text.
 
 === General Recommendations
 
