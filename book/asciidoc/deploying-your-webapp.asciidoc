@@ -37,7 +37,7 @@ be handled by simply rerunning +yesod keter+ and recopying the +myapp.keter+
 bundle to the server. Note that Keter will automatically detect the presence of
 the new file and reload your application.
 
-The rest of this chapter will go into so more details about various steps, and
+The rest of this chapter will go into some more details about various steps, and
 provide some alternatives for people looking to either not use the scaffolding
 or not use Keter.
 
