@@ -58,7 +58,7 @@ your website, running in a production environment! In the future, upgrades can
 be handled by simply rerunning <literal>yesod keter</literal> and recopying the <literal>myapp.keter</literal>
 bundle to the server. Note that Keter will automatically detect the presence of
 the new file and reload your application.</simpara>
-<simpara>The rest of this chapter will go into so more details about various steps, and
+<simpara>The rest of this chapter will go into some more details about various steps, and
 provide some alternatives for people looking to either not use the scaffolding
 or not use Keter.</simpara>
 </section>
