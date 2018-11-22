@@ -134,7 +134,7 @@ well for one specific reason: message translations. By using the master site,
 we can take advantage of whatever <literal>RenderMessage</literal> instance the master site
 defines. This also explains why we have a <literal>RenderMessage</literal> constraint on the
 <literal>YesodChat</literal> typeclass.</simpara>
-<simpara>The next call to <literal>getYesod</literal> is <emphasis>not</emphasis> <literal>lift</literal>ed. The reasoning here is simple:
+<simpara>The next call to <literal>getSubYesod</literal> is <emphasis>not</emphasis> <literal>lift</literal>ed. The reasoning here is simple:
 we want to get the subsite&#8217;s foundation type in order to access the message
 channel. If we instead <literal>lift</literal>ed that call, we&#8217;d get the master site&#8217;s
 foundation type instead, which is not what we want in this case.</simpara>
@@ -310,6 +310,7 @@ import           Text.Markdown
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.Dummy
+import           System.SetEnv
 
 data App = App
     { getChat     :: Chat
@@ -475,6 +476,10 @@ main = do
 
     -- Initially have a blank database of wiki pages
     icontent &lt;- newIORef Map.empty
+
+    -- Set web server's listening port required by warpEnv function
+    -- This env var is set up automatically if 'yesod devel' is used
+    setEnv "PORT" "3000"
 
     -- Run our app
     warpEnv App
