@@ -28,7 +28,7 @@ Now our imports.
 import Yesod
 import Yesod.Auth
 import Yesod.Form.Nic (YesodNic, nicHtmlField)
-import Yesod.Auth.BrowserId (authBrowserId, def)
+import Yesod.Auth.OpenId (IdentifierType(..), authOpenId)
 import Data.Text (Text)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Conduit (Manager, newManager)
@@ -356,26 +356,36 @@ instance YesodAuth Blog where
     logoutDest _ = HomeR
 ----
 
-We'll use link:https://browserid.org/[BrowserID] (a.k.a. Mozilla Persona),
-which is a third-party system using email addresses as your identifier. This
-makes it easy to switch to other systems in the future, locally authenticated
-email addresses (also included with yesod-auth).
+We'll use external OpenId providers to authenticate our users and request
+email addresses to use as user id. This makes it easy to switch to other
+systems in the future, locally authenticated email addresses (also included
+with yesod-auth).
 
 [source, haskell]
 ----
-    authPlugins _ = [authBrowserId def]
+    authPlugins _ = [authOpenId Claimed
+                        [ ("openid.ns.ax", "http://openid.net/srv/ax/1.0")
+                        , ("openid.ax.mode", "fetch_request") 
+                        , ("openid.ax.type.email",
+                           "http://axschema.org/contact/email")
+                        , ("openid.ax.required", "email")
+                        ]
+                    ]
 ----
 
-This function takes someone's login credentials (i.e., his/her email address)
+This function takes someone's login credentials (including his/her email address)
 and gives back a UserId.
 
 [source, haskell]
 ----
-    getAuthId creds = do
-        let email = credsIdent creds
-            user = User email
-        res <- runDB $ insertBy user
-        return $ Just $ either entityKey id res
+    getAuthId creds =
+      -- Key name for email value may vary between providers
+      let emailKey = "openid.ax.value.email" in
+      case lookup emailKey (credsExtra creds) of
+          Just email -> do
+              res <- liftHandler $ runDB $ insertBy (User email)
+              return $ Just $ either entityKey id res
+          Nothing -> return Nothing  
 ----
 
 We also need to provide a +YesodAuthPersist+ instance to work with Persistent.
