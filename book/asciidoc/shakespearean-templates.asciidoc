@@ -86,10 +86,19 @@ section.blog
 
 ==== Julius (Javascript)
 
+String interpolation works slightly differently in Julius. You'll need to use
+the `rawJS` function to get a string that isn't wrapped in double-quotes. Don't
+forget to import that function where necessary.
+
+[source, haskell]
+----
+import Text.Julius (RawJS (..))
+----
+
 [source, julius]
 ----
 $(function(){
-    $("section.#{sectionClass}").hide();
+    $("section.#{rawJS sectionClass}").hide();
     $("#mybutton").click(function(){document.location = "@{SomeRouteR}";});
     ^{addBling}
 });
