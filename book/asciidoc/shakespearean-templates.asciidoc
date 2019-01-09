@@ -86,12 +86,17 @@ section.blog
 
 ==== Julius (Javascript)
 
-String interpolation works slightly differently in Julius. You'll need to use
-the `rawJS` function to get a string that isn't wrapped in double-quotes. Don't
-forget to import that function where necessary.
+String interpolation works slightly differently in Julius. This is important
+from a security standpoint — all interpolated values are valid JSON by default
+which helps prevent XSS attacks. You'll need to use the `rawJS` function to get
+a string that isn't wrapped in double-quotes.
+
+Be sure not to use `rawJS` with any input you don't trust, _e.g._, anything
+submitted by a user.
 
 [source, haskell]
 ----
+-- import the rawJS function by importing its typeclass
 import Text.Julius (RawJS (..))
 ----
 
