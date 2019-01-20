@@ -61,7 +61,7 @@ of the benefits of a declarative authorization system.</simpara>
 </section>
 <section id="authentication-and-authorization_authenticate_me">
 <title>Authenticate Me</title>
-<simpara>Let&#8217;s jump right in with an example of authentication. For the Google oAuth authentication to work you should follow these steps:</simpara>
+<simpara>Let&#8217;s jump right in with an example of authentication. For the Google OAuth authentication to work you should follow these steps:</simpara>
 <orderedlist numeration="arabic">
 <listitem>
 <simpara>
@@ -94,7 +94,6 @@ import           Data.Text                   (Text)
 import           Network.HTTP.Client.Conduit (Manager, newManager)
 import           Yesod
 import           Yesod.Auth
-import           Yesod.Auth.BrowserId
 import           Yesod.Auth.GoogleEmail2
 
 
@@ -122,15 +121,12 @@ instance Yesod App where
 
 instance YesodAuth App where
     type AuthId App = Text
-    getAuthId = return . Just . credsIdent
+    authenticate = return . Authenticated . credsIdent
 
     loginDest _ = HomeR
     logoutDest _ = HomeR
 
-    authPlugins _ =
-        [ authBrowserId def
-        , authGoogleEmail clientId clientSecret
-        ]
+    authPlugins _ = [ authGoogleEmail clientId clientSecret ]
 
     -- The default maybeAuthId assumes a Persistent database. We're going for a
     -- simpler AuthId, so we'll just do a direct lookup in the session.
@@ -176,7 +172,7 @@ subsites? It comes with a downside: you can then only have a single instance
 per site, disallowing serving different sets of static files from different
 routes. Also, the subsite value works better when we want to load data at app
 initialization.</simpara></note>
-<simpara>So what exactly goes in this <literal>YesodAuth</literal> instance? There are six required declarations:</simpara>
+<simpara>So what exactly goes in this <literal>YesodAuth</literal> instance? There are five required declarations:</simpara>
 <itemizedlist>
 <listitem>
 <simpara>
@@ -188,9 +184,9 @@ initialization.</simpara></note>
 </listitem>
 <listitem>
 <simpara>
-<literal>getAuthId</literal> gets the actual <literal>AuthId</literal> from the <literal>Creds</literal> (credentials) data
+<literal>authenticate</literal> gets the actual <literal>AuthId</literal> from the <literal>Creds</literal> (credentials) data
   type. This type has three pieces of information: the authentication backend
-  used (browserid or googleemail in our case), the actual identifier, and an
+  used (googleemail in our case), the actual identifier, and an
   associated list of arbitrary extra information. Each backend provides
   different extra information; see their docs for more information.
 </simpara>
@@ -207,23 +203,11 @@ Likewise, <literal>logoutDest</literal> gives the route to redirect to after a l
 </listitem>
 <listitem>
 <simpara>
-<literal>authPlugins</literal> is a list of individual authentication backends to use. In our example, we&#8217;re using BrowserID, which logs in via Mozilla&#8217;s BrowserID system, and Google oAuth, which authenticates a user using their Google account. The somewhat advantage of BrowserID backends is:
-</simpara>
-<itemizedlist>
-<listitem>
-<simpara>
-It requires no set up, as opposed to Facebook or OAuth, which require setting up credentials.
-</simpara>
-</listitem>
-<listitem>
-<simpara>
-It uses email addresses as identifiers, which people are comfortable with, as opposed to OpenID, which uses a URL.
+<literal>authPlugins</literal> is a list of individual authentication backends to use. In our example, we&#8217;re using Google OAuth, which authenticates a user using their Google account.
 </simpara>
 </listitem>
 </itemizedlist>
-</listitem>
-</itemizedlist>
-<simpara>In addition to these six methods, there are other methods available to control
+<simpara>In addition to these five methods, there are other methods available to control
 other behavior of the authentication system, such as what the login page looks
 like. For more information, please
 <ulink url="https://www.stackage.org/package/yesod-auth">see the API documentation</ulink>.</simpara>
@@ -231,31 +215,6 @@ like. For more information, please
 pages, depending on whether or not the user is logged in. Notice how we
 construct these subsite links: first we give the subsite route name (<literal>AuthR</literal>),
 followed by the route within the subsite (<literal>LoginR</literal> and <literal>LogoutR</literal>).</simpara>
-<simpara>The figures below show what the login process looks like from a user perspective.</simpara>
-<figure id="concept_d1y_t2f_p2-x-26"><title>Initial page load</title>
-<mediaobject>
-  <imageobject>
-  <imagedata fileref="images/initial-screen.png"/>
-  </imageobject>
-  <textobject><phrase>images/initial-screen.png</phrase></textobject>
-</mediaobject>
-</figure>
-<figure id="concept_d1y_t2f_p2-x-28"><title>BrowserID login screen</title>
-<mediaobject>
-  <imageobject>
-  <imagedata fileref="images/login-with-browserid.png"/>
-  </imageobject>
-  <textobject><phrase>images/login-with-browserid.png</phrase></textobject>
-</mediaobject>
-</figure>
-<figure id="concept_d1y_t2f_p2-x-30"><title>Homepage after logging in</title>
-<mediaobject>
-  <imageobject>
-  <imagedata fileref="images/after-login.png"/>
-  </imageobject>
-  <textobject><phrase>images/after-login.png</phrase></textobject>
-</mediaobject>
-</figure>
 </section>
 <section id="authentication-and-authorization_email">
 <title>Email</title>
@@ -310,7 +269,7 @@ verification link is printed in the console.</simpara></note>
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 import           Control.Monad            (join)
-import           Control.Monad.Logger (runNoLoggingT)
+import           Control.Monad.Logger     (runNoLoggingT)
 import           Data.Maybe               (isJust)
 import           Data.Text                (Text, unpack)
 import qualified Data.Text.Lazy.Encoding
@@ -319,8 +278,8 @@ import           Database.Persist.Sqlite
 import           Database.Persist.TH
 import           Network.Mail.Mime
 import           Text.Blaze.Html.Renderer.Utf8 (renderHtml)
-import           Text.Hamlet              (shamlet)
-import           Text.Shakespeare.Text    (stext)
+import           Text.Hamlet                   (shamlet)
+import           Text.Shakespeare.Text         (stext)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.Email
@@ -366,9 +325,9 @@ instance YesodAuth App where
     authPlugins _ = [authEmail]
 
     -- Need to find the UserId for the given email address.
-    getAuthId creds = runDB $ do
+    authenticate creds = liftHandler $ runDB $ do
         x &lt;- insertBy $ User (credsIdent creds) Nothing Nothing False
-        return $ Just $
+        return $ Authenticated $
             case x of
                 Left (Entity userid _) -&gt; userid -- newly added user
                 Right userid -&gt; userid -- existing user
@@ -382,7 +341,7 @@ instance YesodAuthEmail App where
     afterPasswordRoute _ = HomeR
 
     addUnverified email verkey =
-        runDB $ insert $ User email Nothing (Just verkey) False
+        liftHandler $ runDB $ insert $ User email Nothing (Just verkey) False
 
     sendVerifyEmail email _ verurl = do
         -- Print out to the console the verification email, for easier
@@ -425,18 +384,18 @@ instance YesodAuthEmail App where
                 |]
             , partHeaders = []
             }
-    getVerifyKey = runDB . fmap (join . fmap userVerkey) . get
-    setVerifyKey uid key = runDB $ update uid [UserVerkey =. Just key]
-    verifyAccount uid = runDB $ do
+    getVerifyKey = liftHandler . runDB . fmap (join . fmap userVerkey) . get
+    setVerifyKey uid key = liftHandler $ runDB $ update uid [UserVerkey =. Just key]
+    verifyAccount uid = liftHandler $ runDB $ do
         mu &lt;- get uid
         case mu of
             Nothing -&gt; return Nothing
             Just u -&gt; do
                 update uid [UserVerified =. True]
                 return $ Just uid
-    getPassword = runDB . fmap (join . fmap userPassword) . get
-    setPassword uid pass = runDB $ update uid [UserPassword =. Just pass]
-    getEmailCreds email = runDB $ do
+    getPassword = liftHandler . runDB . fmap (join . fmap userPassword) . get
+    setPassword uid pass = liftHandler . runDB $ update uid [UserPassword =. Just pass]
+    getEmailCreds email = liftHandler $ runDB $ do
         mu &lt;- getBy $ UniqueUser email
         case mu of
             Nothing -&gt; return Nothing
@@ -447,7 +406,7 @@ instance YesodAuthEmail App where
                 , emailCredsVerkey = userVerkey u
                 , emailCredsEmail = email
                 }
-    getEmail = runDB . fmap (fmap userEmail) . get
+    getEmail = liftHandler . runDB . fmap (fmap userEmail) . get
 
 getHomeR :: Handler Html
 getHomeR = do
@@ -515,7 +474,7 @@ isAdmin = do
 
 instance YesodAuth App where
     type AuthId App = Text
-    getAuthId = return . Just . credsIdent
+    authenticate = return . Authenticated . credsIdent
 
     loginDest _ = HomeR
     logoutDest _ = HomeR
@@ -562,7 +521,7 @@ main :: IO ()
 main = do
     manager &lt;- newManager tlsManagerSettings
     warp 3000 $ App manager</programlisting>
-<simpara><literal>authRoute</literal> should be your login page, almost always <literal>AuthR</literal> <literal>LoginR</literal>.
+<simpara><literal>authRoute</literal> should be your login page, almost always <literal>AuthR LoginR</literal>.
 <literal>isAuthorized</literal> is a function that takes two parameters: the requested route,
 and whether or not the request was a "write" request. You can actually change
 the meaning of what a write request is using the <literal>isWriteRequest</literal> method, but
