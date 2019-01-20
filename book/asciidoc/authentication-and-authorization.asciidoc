@@ -64,7 +64,7 @@ of the benefits of a declarative authorization system.
 
 === Authenticate Me
 
-Let's jump right in with an example of authentication. For the Google oAuth authentication to work you should follow these steps:
+Let's jump right in with an example of authentication. For the Google OAuth authentication to work you should follow these steps:
 
 
 1. Read on link:https://developers.google.com/identity/protocols/OAuth2[Google Developers Help] how to obtain OAuth 2.0 credentials such as a client ID and client secret that are known to both Google and your application.
@@ -84,7 +84,6 @@ import           Data.Text                   (Text)
 import           Network.HTTP.Client.Conduit (Manager, newManager)
 import           Yesod
 import           Yesod.Auth
-import           Yesod.Auth.BrowserId
 import           Yesod.Auth.GoogleEmail2
 
 
@@ -112,15 +111,12 @@ instance Yesod App where
 
 instance YesodAuth App where
     type AuthId App = Text
-    getAuthId = return . Just . credsIdent
+    authenticate = return . Authenticated . credsIdent
 
     loginDest _ = HomeR
     logoutDest _ = HomeR
 
-    authPlugins _ =
-        [ authBrowserId def
-        , authGoogleEmail clientId clientSecret
-        ]
+    authPlugins _ = [ authGoogleEmail clientId clientSecret ]
 
     -- The default maybeAuthId assumes a Persistent database. We're going for a
     -- simpler AuthId, so we'll just do a direct lookup in the session.
@@ -175,16 +171,16 @@ per site, disallowing serving different sets of static files from different
 routes. Also, the subsite value works better when we want to load data at app
 initialization.
 
-So what exactly goes in this +YesodAuth+ instance? There are six required declarations:
+So what exactly goes in this +YesodAuth+ instance? There are five required declarations:
 
 * +AuthId+ is an associated type. This is the value +yesod-auth+ will give you
   when you ask if a user is logged in (via +maybeAuthId+ or +requireAuthId+).
   In our case, we're simply using +Text+, to store the raw identifier- email
   address in our case, as we'll soon see.
 
-* +getAuthId+ gets the actual +AuthId+ from the +Creds+ (credentials) data
+* +authenticate+ gets the actual +AuthId+ from the +Creds+ (credentials) data
   type. This type has three pieces of information: the authentication backend
-  used (browserid or googleemail in our case), the actual identifier, and an
+  used (googleemail in our case), the actual identifier, and an
   associated list of arbitrary extra information. Each backend provides
   different extra information; see their docs for more information.
 
@@ -192,13 +188,9 @@ So what exactly goes in this +YesodAuth+ instance? There are six required declar
 
 * Likewise, +logoutDest+ gives the route to redirect to after a logout.
 
-*  +authPlugins+ is a list of individual authentication backends to use. In our example, we're using BrowserID, which logs in via Mozilla's BrowserID system, and Google oAuth, which authenticates a user using their Google account. The somewhat advantage of BrowserID backends is:
+*  +authPlugins+ is a list of individual authentication backends to use. In our example, we're using Google OAuth, which authenticates a user using their Google account.
 
-** It requires no set up, as opposed to Facebook or OAuth, which require setting up credentials.
-
-** It uses email addresses as identifiers, which people are comfortable with, as opposed to OpenID, which uses a URL.
-
-In addition to these six methods, there are other methods available to control
+In addition to these five methods, there are other methods available to control
 other behavior of the authentication system, such as what the login page looks
 like. For more information, please
 link:https://www.stackage.org/package/yesod-auth[see the API documentation].
@@ -207,23 +199,6 @@ In our +HomeR+ handler, we have some simple links to the login and logout
 pages, depending on whether or not the user is logged in. Notice how we
 construct these subsite links: first we give the subsite route name (+AuthR+),
 followed by the route within the subsite (+LoginR+ and +LogoutR+).
-
-The figures below show what the login process looks like from a user perspective.
-
-[[concept_d1y_t2f_p2-x-26]]
-
-.Initial page load
-image::images/initial-screen.png[]
-
-[[concept_d1y_t2f_p2-x-28]]
-
-.BrowserID login screen
-image::images/login-with-browserid.png[]
-
-[[concept_d1y_t2f_p2-x-30]]
-
-.Homepage after logging in
-image::images/after-login.png[]
 
 === Email
 
@@ -274,7 +249,7 @@ verification link is printed in the console.
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 import           Control.Monad            (join)
-import           Control.Monad.Logger (runNoLoggingT)
+import           Control.Monad.Logger     (runNoLoggingT)
 import           Data.Maybe               (isJust)
 import           Data.Text                (Text, unpack)
 import qualified Data.Text.Lazy.Encoding
@@ -283,8 +258,8 @@ import           Database.Persist.Sqlite
 import           Database.Persist.TH
 import           Network.Mail.Mime
 import           Text.Blaze.Html.Renderer.Utf8 (renderHtml)
-import           Text.Hamlet              (shamlet)
-import           Text.Shakespeare.Text    (stext)
+import           Text.Hamlet                   (shamlet)
+import           Text.Shakespeare.Text         (stext)
 import           Yesod
 import           Yesod.Auth
 import           Yesod.Auth.Email
@@ -330,9 +305,9 @@ instance YesodAuth App where
     authPlugins _ = [authEmail]
 
     -- Need to find the UserId for the given email address.
-    getAuthId creds = runDB $ do
+    authenticate creds = liftHandler $ runDB $ do
         x <- insertBy $ User (credsIdent creds) Nothing Nothing False
-        return $ Just $
+        return $ Authenticated $
             case x of
                 Left (Entity userid _) -> userid -- newly added user
                 Right userid -> userid -- existing user
@@ -346,7 +321,7 @@ instance YesodAuthEmail App where
     afterPasswordRoute _ = HomeR
 
     addUnverified email verkey =
-        runDB $ insert $ User email Nothing (Just verkey) False
+        liftHandler $ runDB $ insert $ User email Nothing (Just verkey) False
 
     sendVerifyEmail email _ verurl = do
         -- Print out to the console the verification email, for easier
@@ -389,18 +364,18 @@ instance YesodAuthEmail App where
                 |]
             , partHeaders = []
             }
-    getVerifyKey = runDB . fmap (join . fmap userVerkey) . get
-    setVerifyKey uid key = runDB $ update uid [UserVerkey =. Just key]
-    verifyAccount uid = runDB $ do
+    getVerifyKey = liftHandler . runDB . fmap (join . fmap userVerkey) . get
+    setVerifyKey uid key = liftHandler $ runDB $ update uid [UserVerkey =. Just key]
+    verifyAccount uid = liftHandler $ runDB $ do
         mu <- get uid
         case mu of
             Nothing -> return Nothing
             Just u -> do
                 update uid [UserVerified =. True]
                 return $ Just uid
-    getPassword = runDB . fmap (join . fmap userPassword) . get
-    setPassword uid pass = runDB $ update uid [UserPassword =. Just pass]
-    getEmailCreds email = runDB $ do
+    getPassword = liftHandler . runDB . fmap (join . fmap userPassword) . get
+    setPassword uid pass = liftHandler . runDB $ update uid [UserPassword =. Just pass]
+    getEmailCreds email = liftHandler $ runDB $ do
         mu <- getBy $ UniqueUser email
         case mu of
             Nothing -> return Nothing
@@ -411,7 +386,7 @@ instance YesodAuthEmail App where
                 , emailCredsVerkey = userVerkey u
                 , emailCredsEmail = email
                 }
-    getEmail = runDB . fmap (fmap userEmail) . get
+    getEmail = liftHandler . runDB . fmap (fmap userEmail) . get
 
 getHomeR :: Handler Html
 getHomeR = do
@@ -483,7 +458,7 @@ isAdmin = do
 
 instance YesodAuth App where
     type AuthId App = Text
-    getAuthId = return . Just . credsIdent
+    authenticate = return . Authenticated . credsIdent
 
     loginDest _ = HomeR
     logoutDest _ = HomeR
@@ -532,7 +507,7 @@ main = do
     warp 3000 $ App manager
 ----
 
-+authRoute+ should be your login page, almost always +AuthR+ +LoginR+.
++authRoute+ should be your login page, almost always +AuthR LoginR+.
 +isAuthorized+ is a function that takes two parameters: the requested route,
 and whether or not the request was a "write" request. You can actually change
 the meaning of what a write request is using the +isWriteRequest+ method, but
