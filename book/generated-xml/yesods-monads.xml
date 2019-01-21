@@ -218,8 +218,7 @@ app.</simpara>
 {-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
-import           Data.List (sortBy)
-import           Data.Ord  (comparing)
+import           Data.List (sortOn)
 import           Data.Text (Text)
 import           Yesod
 
@@ -265,8 +264,8 @@ showPeople = do
     msort &lt;- runInputGet $ iopt textField "sort"
     let people' =
             case msort of
-                Just "name" -&gt; sortBy (comparing personName) people
-                Just "age"  -&gt; sortBy (comparing personAge)  people
+                Just "name" -&gt; sortOn personName people
+                Just "age"  -&gt; sortOn personAge  people
                 _           -&gt; people
     [whamlet|
         &lt;dl&gt;
@@ -378,7 +377,10 @@ getHomeR = do
       arising from a use of ‘getBytes’
     In a stmt of a 'do' block: randomBS &lt;- getBytes 128</programlisting>
 <simpara>How do we get such an instance? One approach is to simply use the <literal>CRandT</literal> monad transformer when we call <literal>getBytes</literal>. A complete example of doing so would be:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings, QuasiQuotes, TemplateHaskell, TypeFamilies #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
 import Yesod
 import Crypto.Random (SystemRandom, newGenIO)
 import Control.Monad.CryptoRandom
@@ -440,13 +442,14 @@ involved:</simpara>
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 import           Control.Monad              (join)
-import           Control.Monad.Catch        (catch, throwM)
+import           Control.Monad.Catch        (throwM)
 import           Control.Monad.CryptoRandom
 import           Control.Monad.Error.Class  (MonadError (..))
 import           Crypto.Random              (SystemRandom, newGenIO)
 import           Data.ByteString.Base16     (encode)
 import           Data.IORef
 import           Data.Text.Encoding         (decodeUtf8)
+import           UnliftIO.Exception         (catch)
 import           Yesod
 
 data App = App
@@ -471,7 +474,7 @@ instance MonadError GenError Handler where
     throwError = throwM
     catchError = catch
 instance MonadCRandom GenError Handler where
-    getCRandom  = wrap crandom
+    getCRandom = wrap crandom
     {-# INLINE getCRandom #-}
     getBytes i = wrap (genBytes i)
     {-# INLINE getBytes #-}
