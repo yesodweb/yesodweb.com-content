@@ -25,15 +25,15 @@ information in this chapter is slightly outdated.
 === How to Scaffold
 
 The yesod-bin package installs an executable (conveniently named
-_yesod_ as well). This executable provides a few commands (run _stack
-exec \-- yesod --help_ to get a list). In order to generate a
-scaffolding, the command is _stack new my-project 
-yesod-postgres_. This will generate a scaffolding site with a postgres
+_yesod_ as well). This executable provides a few commands (run +stack
+exec \-- yesod --help+ to get a list). In order to generate a
+scaffolding, the command is +stack new my-project 
+yesod-postgres+. This will generate a scaffolding site with a postgres
 database backend in a directory named +my-project+. You can see the
 other available templates using the command *stack templates*.
 
 The key thing differing in various available templates (from the
-*stack templates* command) is the database backend. You get a few
++stack templates+ command) is the database backend. You get a few
 choices here, including SQL and MongoDB backends, as well as
 "yesod-simple" template to include no database support.  This last
 option also turns off a few extra dependencies, giving you a leaner
@@ -42,11 +42,11 @@ scaffoldings for one of the database backends. There will be minor
 differences for the yesod-simple backend.
 
 After creating your files, install the yesod command line tool inside
-the project: *stack build yesod-bin cabal-install*. Then do a *stack
-build* inside the directory.  In particular, the commands provided
+the project: +stack install yesod-bin --install-ghc+. Then do a +stack
+build+ inside the directory.  In particular, the commands provided
 will ensure that any missing dependencies are built and installed.
 
-Finally, to launch your development site, you would use *stack exec \-- yesod devel*.
+Finally, to launch your development site, you would use +stack exec \-- yesod devel+.
 This site will automatically rebuild and reload whenever you change your code.
 
 === File Structure
@@ -66,7 +66,7 @@ devel+ calls your app. Otherwise, the executable is built.
 The +library-only+ flag should only be used by +yesod devel+; you should never
 be explicitly passing it into +cabal+. There is an additional flag, +dev+, that
 allows cabal to build an executable, but turns on some of the same features as
-the library-only flag, i.e., no optimizations and reload versions of the
+the +library-only+ flag, i.e., no optimizations and reload versions of the
 Shakespearean template functions.
 
 In general, you will build as follows:
@@ -83,10 +83,10 @@ on since the site includes its own module, +Import+, with a few changes to the
 Prelude that make working with Yesod a little more convenient.
 
 The last thing to note is the exposed-modules list. If you add any modules to
-your application, you *must* update this list to get yesod devel to work
+your application, you *must* update this list to get +yesod devel+ to work
 correctly. Unfortunately, neither Cabal nor GHC will give you a warning if you
 forgot to make this update, and instead you'll get a very scary-looking error
-message from yesod devel.
+message from +yesod devel+.
 
 ==== Routes and entities
 
@@ -128,7 +128,7 @@ defined, or must import that file. If you follow the logic here, your entire
 application must essentially live in a single file!
 
 Clearly this isn't what we want. So instead of using +mkYesod+, the scaffolding
-site uses a decomposed version of the function. +Foundation+ calls
+site uses a decomposed version of the function. +Foundation.hs+ calls
 +mkYesodData+, which declares the route type and render function. Since it does
 not declare the dispatch function, the handler functions need not be in scope.
 +Import.hs+ imports +Foundation.hs+, and all the handler modules import
