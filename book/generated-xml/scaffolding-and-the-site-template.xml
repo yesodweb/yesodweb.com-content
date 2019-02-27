@@ -44,14 +44,14 @@ information in this chapter is slightly outdated.</simpara></note>
 <section id="scaffolding-and-the-site-template_how_to_scaffold">
 <title>How to Scaffold</title>
 <simpara>The yesod-bin package installs an executable (conveniently named
-<emphasis>yesod</emphasis> as well). This executable provides a few commands (run <emphasis>stack
-exec -- yesod --help</emphasis> to get a list). In order to generate a
-scaffolding, the command is <emphasis>stack new my-project
-yesod-postgres</emphasis>. This will generate a scaffolding site with a postgres
+<emphasis>yesod</emphasis> as well). This executable provides a few commands (run <literal>stack
+exec -- yesod --help</literal> to get a list). In order to generate a
+scaffolding, the command is <literal>stack new my-project
+yesod-postgres</literal>. This will generate a scaffolding site with a postgres
 database backend in a directory named <literal>my-project</literal>. You can see the
 other available templates using the command <emphasis role="strong">stack templates</emphasis>.</simpara>
 <simpara>The key thing differing in various available templates (from the
-<emphasis role="strong">stack templates</emphasis> command) is the database backend. You get a few
+<literal>stack templates</literal> command) is the database backend. You get a few
 choices here, including SQL and MongoDB backends, as well as
 "yesod-simple" template to include no database support.  This last
 option also turns off a few extra dependencies, giving you a leaner
@@ -59,10 +59,10 @@ overall site. The remainder of this chapter will focus on the
 scaffoldings for one of the database backends. There will be minor
 differences for the yesod-simple backend.</simpara>
 <simpara>After creating your files, install the yesod command line tool inside
-the project: <emphasis role="strong">stack build yesod-bin cabal-install</emphasis>. Then do a <emphasis role="strong">stack
-build</emphasis> inside the directory.  In particular, the commands provided
+the project: <literal>stack install yesod-bin --install-ghc</literal>. Then do a <literal>stack
+build</literal> inside the directory.  In particular, the commands provided
 will ensure that any missing dependencies are built and installed.</simpara>
-<simpara>Finally, to launch your development site, you would use <emphasis role="strong">stack exec -- yesod devel</emphasis>.
+<simpara>Finally, to launch your development site, you would use <literal>stack exec -- yesod devel</literal>.
 This site will automatically rebuild and reload whenever you change your code.</simpara>
 </section>
 <section id="scaffolding-and-the-site-template_file_structure">
@@ -80,7 +80,7 @@ devel</literal> calls your app. Otherwise, the executable is built.</simpara>
 <simpara>The <literal>library-only</literal> flag should only be used by <literal>yesod devel</literal>; you should never
 be explicitly passing it into <literal>cabal</literal>. There is an additional flag, <literal>dev</literal>, that
 allows cabal to build an executable, but turns on some of the same features as
-the library-only flag, i.e., no optimizations and reload versions of the
+the <literal>library-only</literal> flag, i.e., no optimizations and reload versions of the
 Shakespearean template functions.</simpara>
 <simpara>In general, you will build as follows:</simpara>
 <itemizedlist>
@@ -102,10 +102,10 @@ When building a production build, perform <literal>stack clean &amp;&amp;
 on since the site includes its own module, <literal>Import</literal>, with a few changes to the
 Prelude that make working with Yesod a little more convenient.</simpara>
 <simpara>The last thing to note is the exposed-modules list. If you add any modules to
-your application, you <emphasis role="strong">must</emphasis> update this list to get yesod devel to work
+your application, you <emphasis role="strong">must</emphasis> update this list to get <literal>yesod devel</literal> to work
 correctly. Unfortunately, neither Cabal nor GHC will give you a warning if you
 forgot to make this update, and instead you&#8217;ll get a very scary-looking error
-message from yesod devel.</simpara>
+message from <literal>yesod devel</literal>.</simpara>
 </section>
 <section id="scaffolding-and-the-site-template_routes_and_entities">
 <title>Routes and entities</title>
@@ -163,7 +163,7 @@ Therefore, <emphasis>they</emphasis> must be either in the same file where the r
 defined, or must import that file. If you follow the logic here, your entire
 application must essentially live in a single file!</simpara>
 <simpara>Clearly this isn&#8217;t what we want. So instead of using <literal>mkYesod</literal>, the scaffolding
-site uses a decomposed version of the function. <literal>Foundation</literal> calls
+site uses a decomposed version of the function. <literal>Foundation.hs</literal> calls
 <literal>mkYesodData</literal>, which declares the route type and render function. Since it does
 not declare the dispatch function, the handler functions need not be in scope.
 <literal>Import.hs</literal> imports <literal>Foundation.hs</literal>, and all the handler modules import
