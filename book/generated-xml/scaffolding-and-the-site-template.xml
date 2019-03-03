@@ -276,7 +276,7 @@ Put a module statement at the top, and an <literal>import Import</literal> line 
 </simpara>
 </listitem>
 </itemizedlist>
-<simpara>You can use the <literal>stack exec&#8201;&#8212;&#8201;yesod add-handler</literal> command to automate the last three steps.</simpara>
+<simpara>You can use the <literal>stack exec -- yesod add-handler</literal> command to automate the last three steps.</simpara>
 </section>
 </section>
 <section id="scaffolding-and-the-site-template_widgetfile">
