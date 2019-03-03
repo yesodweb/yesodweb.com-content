@@ -106,6 +106,8 @@ Fortunately, the type system can protect us:
 [source, haskell]
 ----
 newtype Natural = Natural Int
+    deriving (Eq, Show, Read)
+
 instance PathPiece Natural where
     toPathPiece (Natural i) = T.pack $ show i
     fromPathPiece s =
@@ -136,6 +138,8 @@ with at least two levels of hierarchy; we might define a datatype such as:
 [source, haskell]
 ----
 data Page = Page Text Text [Text] -- 2 or more
+    deriving (Eq, Show, Read)
+
 instance PathMultiPiece Page where
     toPathMultiPiece (Page x y z) = x : y : z
     fromPathMultiPiece (x:y:z) = Just $ Page x y z
@@ -495,7 +499,7 @@ cookie using +lookupCookie+ until the _following_ request.
 deleteCookie:: Tells the client to remove a cookie. Once again, +lookupCookie+
 will not reflect this change until the next request.
 
-setHeader:: Set an arbitrary response header.
+addHeader:: Set an arbitrary response header.
 
 setLanguage:: Set the preferred user language, which will show up in the result
 of the +languages+ function.
@@ -544,8 +548,8 @@ import           Yesod
 data App = App
 instance Yesod App where
     -- This function controls which messages are logged
-    shouldLogIO App src level = return $
-        True -- good for development
+    shouldLogIO App src level =
+        return True -- good for development
         -- level == LevelWarn || level == LevelError -- good for production
 
 mkYesod "App" [parseRoutes|
@@ -558,7 +562,7 @@ getHomeR = do
     edata <- liftIO $ try $ readFile "datafile.txt"
     case edata :: Either IOException String of
         Left e -> do
-            $logError $ "Could not read datafile.txt"
+            $logError "Could not read datafile.txt"
             defaultLayout [whamlet|An error occurred|]
         Right str -> do
             $logInfo "Reading of data file succeeded"
