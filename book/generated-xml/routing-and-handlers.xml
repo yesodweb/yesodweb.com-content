@@ -123,6 +123,8 @@ your URLs like <literal>/fib/#Int</literal>. But there&#8217;s a slight problem 
 want to allow negative numbers or zero to be passed into our application.
 Fortunately, the type system can protect us:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">newtype Natural = Natural Int
+    deriving (Eq, Show, Read)
+
 instance PathPiece Natural where
     toPathPiece (Natural i) = T.pack $ show i
     fromPathPiece s =
@@ -146,6 +148,8 @@ For the purposes of this example, we&#8217;ve kept the code simple.</simpara></n
 <simpara>Defining a <literal>PathMultiPiece</literal> is just as simple. Let&#8217;s say we want to have a Wiki
 with at least two levels of hierarchy; we might define a datatype such as:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">data Page = Page Text Text [Text] -- 2 or more
+    deriving (Eq, Show, Read)
+
 instance PathMultiPiece Page where
     toPathMultiPiece (Page x y z) = x : y : z
     fromPathMultiPiece (x:y:z) = Just $ Page x y z
@@ -558,7 +562,7 @@ will not reflect this change until the next request.
 </varlistentry>
 <varlistentry>
 <term>
-setHeader
+addHeader
 </term>
 <listitem>
 <simpara>
@@ -651,8 +655,8 @@ import           Yesod
 data App = App
 instance Yesod App where
     -- This function controls which messages are logged
-    shouldLogIO App src level = return $
-        True -- good for development
+    shouldLogIO App src level =
+        return True -- good for development
         -- level == LevelWarn || level == LevelError -- good for production
 
 mkYesod "App" [parseRoutes|
@@ -665,7 +669,7 @@ getHomeR = do
     edata &lt;- liftIO $ try $ readFile "datafile.txt"
     case edata :: Either IOException String of
         Left e -&gt; do
-            $logError $ "Could not read datafile.txt"
+            $logError "Could not read datafile.txt"
             defaultLayout [whamlet|An error occurred|]
         Right str -&gt; do
             $logInfo "Reading of data file succeeded"
