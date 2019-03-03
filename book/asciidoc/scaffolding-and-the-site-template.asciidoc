@@ -204,7 +204,7 @@ you do the following:
 * Add it to the +Application.hs+ file.
 * Put a module statement at the top, and an +import Import+ line below it.
 
-You can use the +stack exec -- yesod add-handler+ command to automate the last three steps.
+You can use the +stack exec \-- yesod add-handler+ command to automate the last three steps.
 
 === widgetFile
 
