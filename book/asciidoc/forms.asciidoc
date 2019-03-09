@@ -274,7 +274,7 @@ data Car = Car
 carAForm :: AForm Handler Car
 carAForm = Car
     <$> areq textField "Model" Nothing
-    <*> areq intField "Year" Nothing
+    <*> areq intField  "Year"  Nothing
 
 carForm :: Html -> MForm Handler (FormResult Car, Widget)
 carForm = renderTable carAForm
@@ -317,7 +317,7 @@ instead is use the +aopt+ function.
 carAForm :: AForm Handler Car
 carAForm = Car
     <$> areq textField "Model" Nothing
-    <*> areq intField "Year" Nothing
+    <*> areq intField  "Year"  Nothing
     <*> aopt textField "Color" Nothing
 ----
 
@@ -359,7 +359,7 @@ carAForm mcar = Car
     carYearField = check validateYear intField
 
     validateYear y
-        | y < 1990 = Left errorMessage
+        | y < 1990  = Left errorMessage
         | otherwise = Right y
 ----
 
@@ -434,8 +434,8 @@ data Color = Red | Blue | Gray | Black
 
 carAForm :: Maybe Car -> AForm Handler Car
 carAForm mcar = Car
-    <$> areq textField "Model" (carModel <$> mcar)
-    <*> areq carYearField "Year" (carYear <$> mcar)
+    <$> areq textField                "Model" (carModel <$> mcar)
+    <*> areq carYearField             "Year"  (carYear  <$> mcar)
     <*> aopt (selectFieldList colors) "Color" (carColor <$> mcar)
   where
     colors :: [(Text, Color)]
@@ -458,8 +458,8 @@ function provided by yesod-form, which would turn our original code into:
 ----
 carAForm :: Maybe Car -> AForm Handler Car
 carAForm mcar = Car
-    <$> areq textField "Model" (carModel <$> mcar)
-    <*> areq carYearField "Year" (carYear <$> mcar)
+    <$> areq textField                 "Model" (carModel <$> mcar)
+    <*> areq carYearField              "Year"  (carYear  <$> mcar)
     <*> aopt (selectField optionsEnum) "Color" (carColor <$> mcar)
 ----
 
@@ -468,8 +468,8 @@ Some people prefer radio buttons to drop-down lists. Fortunately, this is just a
 [source, haskell]
 ----
 carAForm = Car
-    <$> areq textField                    "Model" Nothing
-    <*> areq intField                     "Year"  Nothing
+    <$> areq textField                "Model" Nothing
+    <*> areq intField                 "Year"  Nothing
     <*> aopt (radioField optionsEnum) "Color" Nothing
 ----
 
