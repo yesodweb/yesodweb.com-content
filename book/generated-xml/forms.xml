@@ -385,7 +385,7 @@ these things get created. Let&#8217;s take a simple example:</simpara>
 carAForm :: AForm Handler Car
 carAForm = Car
     &lt;$&gt; areq textField "Model" Nothing
-    &lt;*&gt; areq intField "Year" Nothing
+    &lt;*&gt; areq intField  "Year"  Nothing
 
 carForm :: Html -&gt; MForm Handler (FormResult Car, Widget)
 carForm = renderTable carAForm</programlisting>
@@ -416,7 +416,7 @@ instead is use the <literal>aopt</literal> function.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">carAForm :: AForm Handler Car
 carAForm = Car
     &lt;$&gt; areq textField "Model" Nothing
-    &lt;*&gt; areq intField "Year" Nothing
+    &lt;*&gt; areq intField  "Year"  Nothing
     &lt;*&gt; aopt textField "Color" Nothing</programlisting>
 <simpara>And like required fields, the last argument is the optional default value.
 However, this has two layers of Maybe wrapping. This is actually a bit
@@ -450,7 +450,7 @@ carAForm mcar = Car
     carYearField = check validateYear intField
 
     validateYear y
-        | y &lt; 1990 = Left errorMessage
+        | y &lt; 1990  = Left errorMessage
         | otherwise = Right y</programlisting>
 <simpara>The trick here is the <literal>check</literal> function. It takes a function (<literal>validateYear</literal>)
 that returns either an error message or a modified field value. In this
@@ -505,8 +505,8 @@ data Color = Red | Blue | Gray | Black
 
 carAForm :: Maybe Car -&gt; AForm Handler Car
 carAForm mcar = Car
-    &lt;$&gt; areq textField "Model" (carModel &lt;$&gt; mcar)
-    &lt;*&gt; areq carYearField "Year" (carYear &lt;$&gt; mcar)
+    &lt;$&gt; areq textField                "Model" (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField             "Year"  (carYear  &lt;$&gt; mcar)
     &lt;*&gt; aopt (selectFieldList colors) "Color" (carColor &lt;$&gt; mcar)
   where
     colors :: [(Text, Color)]
@@ -519,13 +519,13 @@ list of pairs. And even this can be simplified by using the <literal>optionsEnum
 function provided by yesod-form, which would turn our original code into:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">carAForm :: Maybe Car -&gt; AForm Handler Car
 carAForm mcar = Car
-    &lt;$&gt; areq textField "Model" (carModel &lt;$&gt; mcar)
-    &lt;*&gt; areq carYearField "Year" (carYear &lt;$&gt; mcar)
+    &lt;$&gt; areq textField                 "Model" (carModel &lt;$&gt; mcar)
+    &lt;*&gt; areq carYearField              "Year"  (carYear  &lt;$&gt; mcar)
     &lt;*&gt; aopt (selectField optionsEnum) "Color" (carColor &lt;$&gt; mcar)</programlisting>
 <simpara>Some people prefer radio buttons to drop-down lists. Fortunately, this is just a one-word change.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">carAForm = Car
-    &lt;$&gt; areq textField                    "Model" Nothing
-    &lt;*&gt; areq intField                     "Year"  Nothing
+    &lt;$&gt; areq textField                "Model" Nothing
+    &lt;*&gt; areq intField                 "Year"  Nothing
     &lt;*&gt; aopt (radioField optionsEnum) "Color" Nothing</programlisting>
 </section>
 <section id="forms_running_forms">
