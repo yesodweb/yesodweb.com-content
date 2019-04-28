@@ -220,10 +220,13 @@ languages provided by your application match the user&#8217;s language list.</si
 <simpara>Your call to <literal>mkMessage</literal> creates an instance of the <literal>RenderMessage</literal> typeclass,
 which is the core of Yesod&#8217;s i18n. It is defined as:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">class RenderMessage master message where
-    renderMessage :: master
-                  -&gt; [Text] -- ^ languages
-                  -&gt; message
-                  -&gt; Text</programlisting>
+    renderMessage :: master  -- ^ type that specifies which set of translations to use
+                  -&gt; [Lang]  -- ^ acceptable languages in descending order of preference
+                  -&gt; message -- ^ message to translate
+                  -&gt; Text
+
+-- | an RFC1766 / ISO 639-1 language code (eg, @fr@, @en-GB@, etc).
+type Lang = Text</programlisting>
 <simpara>Notice that there are two parameters to the <literal>RenderMessage</literal> class: the master
 site and the message type. In theory, we could skip the master type here, but
 that would mean that every site would need to have the same set of translations
