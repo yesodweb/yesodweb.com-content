@@ -249,10 +249,13 @@ which is the core of Yesod's i18n. It is defined as:
 [source, haskell]
 ----
 class RenderMessage master message where
-    renderMessage :: master
-                  -> [Text] -- ^ languages
-                  -> message
-                  -> Text 
+    renderMessage :: master  -- ^ type that specifies which set of translations to use
+                  -> [Lang]  -- ^ acceptable languages in descending order of preference
+                  -> message -- ^ message to translate
+                  -> Text
+
+-- | an RFC1766 / ISO 639-1 language code (eg, @fr@, @en-GB@, etc).
+type Lang = Text
 ----
 
 Notice that there are two parameters to the +RenderMessage+ class: the master
