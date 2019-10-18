@@ -329,8 +329,8 @@ instance YesodAuth App where
         x &lt;- insertBy $ User (credsIdent creds) Nothing Nothing False
         return $ Authenticated $
             case x of
-                Left (Entity userid _) -&gt; userid -- newly added user
-                Right userid -&gt; userid -- existing user
+                Left (Entity userid _) -&gt; userid -- existing user
+                Right userid -&gt; userid -- newly added user
 
 instance YesodAuthPersist App
 
