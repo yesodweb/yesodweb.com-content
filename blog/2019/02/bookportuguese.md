@@ -1,9 +1,6 @@
-#A new Yesod book in Portuguese
-
 Yesod users,
 
-in order to help to spread the Yesod word here in Brazil, we, [Alexandre Garcia de Oliveira]
-(https://github.com/romefeller), [Patrick Augusto da Silva](https://github.com/ptkato) (@ptkato_ on Twitter), and
+in order to help to spread the Yesod word here in Brazil, we, [Alexandre Garcia de Oliveira](https://github.com/romefeller), [Patrick Augusto da Silva](https://github.com/ptkato) (@ptkato_ on Twitter), and
 [Felipe Cannarozzo Lourenço](https://github.com/cannarozzo), wrote a book, recently released, about Yesod
 called "Yesod e Haskell: Aplicações web com Programação Funcional pura" ("Yesod and Haskell: Web
 applications with pure Functional Programming", in English).
