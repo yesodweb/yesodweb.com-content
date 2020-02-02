@@ -43,13 +43,13 @@ of Yesod, and can change from version to version. It is possible that the
 information in this chapter is slightly outdated.</simpara></note>
 <section id="scaffolding-and-the-site-template_how_to_scaffold">
 <title>How to Scaffold</title>
-<simpara>The yesod-bin package installs an executable (conveniently named
-<emphasis>yesod</emphasis> as well). This executable provides a few commands (run <literal>stack
-exec -- yesod --help</literal> to get a list). In order to generate a
-scaffolding, the command is <literal>stack new my-project
-yesod-postgres</literal>. This will generate a scaffolding site with a postgres
-database backend in a directory named <literal>my-project</literal>. You can see the
-other available templates using the command <emphasis role="strong">stack templates</emphasis>.</simpara>
+<simpara>The yesod-bin package installs an executable (conveniently named <emphasis>yesod</emphasis> as
+well). This executable provides a few commands (run <literal>stack exec -- yesod
+--help</literal> to get a list). In order to generate a scaffolding, the command is
+<literal>stack new my-project yesodweb/postgres &amp;&amp; cd my-project</literal>. This will generate a
+scaffolding site with a postgres database backend in a directory named
+<literal>my-project</literal>. You can see the other available templates using the command
+<emphasis role="strong">stack templates</emphasis>.</simpara>
 <simpara>The key thing differing in various available templates (from the
 <literal>stack templates</literal> command) is the database backend. You get a few
 choices here, including SQL and MongoDB backends, as well as
