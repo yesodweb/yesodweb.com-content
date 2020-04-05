@@ -159,7 +159,6 @@ is simple: there is a single folder containing all of your translation files,
 with a single file for each language. Each file is named based on its language
 code, e.g. <emphasis>en.msg</emphasis>. And each line in a file handles one phrase, which
 correlates to a single constructor in your message data type.</simpara>
-<note><simpara>The scaffolded site already includes a fully configured message folder.</simpara></note>
 <simpara>So firstly, a word about language codes. There are really two choices
 available: using a two-letter language code, or a language-LOCALE code. For
 example, when I load up a page in my web browser, it sends two language codes:
@@ -188,6 +187,33 @@ These will be arguments to the data constructor.</simpara>
 string, which allows usage of our typical variable interpolation syntax
 translation helper functions to deal with issues like pluralization, you can
 create all the translated messages you need.</simpara>
+<section id="internationalization_scaffolding">
+<title>Scaffolding</title>
+<simpara>The scaffolding used to include a messages folder for i18n messages. Since it is
+used rarely it was removed to save some performance.
+To add back i18n to your application you need to:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+Add the line <literal>mkMessage "App" "messages" "en"</literal> to <literal>Foundation.hs</literal>.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Create a directory <literal>"messages"</literal> in the main folder of your scaffolding project.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Create a file <literal>"messages/en.msg"</literal> with the following dummy content: <literal>Hello: Hello</literal>
+</simpara>
+</listitem>
+</itemizedlist>
+<simpara>After that you can use <literal><emphasis>{..}</emphasis></literal> anywhere in all your Hamlet files. Just make sure
+to insert <literal>mkMessage "App" "messages" "en"</literal> before <literal>instance Yesod App where</literal>.
+Otherwise you can&#8217;t use i18n in your <literal>defaultLayout</literal>. If your default language is
+not <literal>"en"</literal>, you can decide it here. Just make sure to also name your message file accordingly.</simpara>
+</section>
 <section id="internationalization_specifying_types">
 <title>Specifying types</title>
 <simpara>Since we will be creating a datatype out of our message specifications, each
