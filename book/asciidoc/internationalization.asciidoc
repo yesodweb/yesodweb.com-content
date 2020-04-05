@@ -171,8 +171,6 @@ with a single file for each language. Each file is named based on its language
 code, e.g. _en.msg_. And each line in a file handles one phrase, which
 correlates to a single constructor in your message data type.
 
-NOTE: The scaffolded site already includes a fully configured message folder.
-
 So firstly, a word about language codes. There are really two choices
 available: using a two-letter language code, or a language-LOCALE code. For
 example, when I load up a page in my web browser, it sends two language codes:
@@ -215,6 +213,21 @@ string, which allows usage of our typical variable interpolation syntax
 +#{myVar}+. By referring to the parameters defined before the colon, and using
 translation helper functions to deal with issues like pluralization, you can
 create all the translated messages you need.
+
+
+==== Scaffolding
+The scaffolding used to include a messages folder for i18n messages. Since it is 
+used rarely it was removed to save some performance.
+To add back i18n to your application you need to:
+
+* Add the line +mkMessage "App" "messages" "en"+ to +Foundation.hs+.  
+* Create a directory +"messages"+ in the main folder of your scaffolding project.
+* Create a file +"messages/en.msg"+ with the following dummy content: +Hello: Hello+
+
+After that you can use +_{..}_+ anywhere in all your Hamlet files. Just make sure
+to insert +mkMessage "App" "messages" "en"+ before +instance Yesod App where+.
+Otherwise you can't use i18n in your +defaultLayout+. If your default language is
+not +"en"+, you can decide it here. Just make sure to also name your message file accordingly.
 
 ==== Specifying types
 
