@@ -12,7 +12,9 @@ Title: Yesod quick start guide
 NOTE: If you get an error message about `GHC_PACKAGE_PATH` at step (5), you
 need to install a newer version of yesod-bin. Try running `stack build
 yesod-bin-1.4.11` and rerunning `stack exec -- yesod devel`. Also, if you choose
-the "mini" scaffolding, `yesod devel` will not work.
+the "mini" scaffolding, `yesod devel` will not work. 
+
+NOTE: Stack version 2 or later is required to create the scaffold.
 
 ### System libraries
 
