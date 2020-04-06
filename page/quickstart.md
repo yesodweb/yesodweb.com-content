@@ -2,7 +2,7 @@ Title: Yesod quick start guide
 
 1. Follow the [FP Complete get started guide](https://haskell.fpcomplete.com/get-started) to get the Stack build tool.
     * On POSIX systems, this is usually `curl -sSL https://get.haskellstack.org/ | sh`
-2. Create a new scaffolded site: `stack new my-project yesodweb/sqlite && cd my-project`
+2. Create a new scaffolded site: `stack new my-project yesod-sqlite && cd my-project`
     * NOTE: You can see [other template options on Github](https://github.com/yesodweb/stack-templates).
 3. Install the yesod command line tool: `stack install yesod-bin --install-ghc`
 4. Build libraries: `stack build`

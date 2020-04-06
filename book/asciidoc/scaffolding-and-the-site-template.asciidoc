@@ -27,7 +27,7 @@ information in this chapter is slightly outdated.
 The yesod-bin package installs an executable (conveniently named _yesod_ as
 well). This executable provides a few commands (run +stack exec \-- yesod
 --help+ to get a list). In order to generate a scaffolding, the command is
-+stack new my-project yesodweb/postgres && cd my-project+. This will generate a
++stack new my-project yesod-postgres && cd my-project+. This will generate a
 scaffolding site with a postgres database backend in a directory named
 +my-project+. You can see the other available templates using the command
 *stack templates*.
