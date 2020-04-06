@@ -50,6 +50,7 @@ well). This executable provides a few commands (run <literal>stack exec -- yesod
 scaffolding site with a postgres database backend in a directory named
 <literal>my-project</literal>. You can see the other available templates using the command
 <emphasis role="strong">stack templates</emphasis>.</simpara>
+<note><simpara>Stack version 2 or later is required to create the scaffold.</simpara></note>
 <simpara>The key thing differing in various available templates (from the
 <literal>stack templates</literal> command) is the database backend. You get a few
 choices here, including SQL and MongoDB backends, as well as
