@@ -50,7 +50,7 @@ application.</simpara>
 route declaration.</simpara>
 <section id="routing-and-handlers_pieces">
 <title>Pieces</title>
-<simpara>One of the first thing Yesod does when it gets a request is split up the
+<simpara>One of the first things Yesod does when it gets a request is split up the
 requested path into pieces. The pieces are tokenized at all forward slashes.
 For example:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">toPieces "/" = []
