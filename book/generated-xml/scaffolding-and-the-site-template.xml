@@ -53,12 +53,12 @@ scaffolding site with a postgres database backend in a directory named
 <note><simpara>Stack version 2 or later is required to create the scaffold.</simpara></note>
 <simpara>The key thing differing in various available templates (from the
 <literal>stack templates</literal> command) is the database backend. You get a few
-choices here, including SQL and MongoDB backends, as well as
-"yesod-simple" template to include no database support.  This last
+choices here, including SQL backends, as well as
+"yesodweb/simple" template to include no database support.  This last
 option also turns off a few extra dependencies, giving you a leaner
 overall site. The remainder of this chapter will focus on the
 scaffoldings for one of the database backends. There will be minor
-differences for the yesod-simple backend.</simpara>
+differences for the yesodweb/simple backend.</simpara>
 <simpara>After creating your files, install the yesod command line tool inside
 the project: <literal>stack install yesod-bin --install-ghc</literal>. Then do a <literal>stack
 build</literal> inside the directory.  In particular, the commands provided
