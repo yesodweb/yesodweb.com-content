@@ -36,12 +36,12 @@ NOTE: Stack version 2 or later is required to create the scaffold.
 
 The key thing differing in various available templates (from the
 +stack templates+ command) is the database backend. You get a few
-choices here, including SQL and MongoDB backends, as well as
-"yesod-simple" template to include no database support.  This last
+choices here, including SQL backends, as well as
+"yesodweb/simple" template to include no database support.  This last
 option also turns off a few extra dependencies, giving you a leaner
 overall site. The remainder of this chapter will focus on the
 scaffoldings for one of the database backends. There will be minor
-differences for the yesod-simple backend.
+differences for the yesodweb/simple backend.
 
 After creating your files, install the yesod command line tool inside
 the project: +stack install yesod-bin --install-ghc+. Then do a +stack
