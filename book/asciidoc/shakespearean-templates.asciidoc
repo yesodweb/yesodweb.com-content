@@ -356,7 +356,7 @@ special treatment for IDs and classes. For example, the Hamlet snippet:
 
 [source, hamlet]
 ----
-<p #firstid>Paragraph <i #secondid>italic end.
+<p #firstid>Paragraph <i #secondid>italic</i> end.
 ----
 
 generates the HTML:
