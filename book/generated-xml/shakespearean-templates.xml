@@ -289,7 +289,7 @@ is no penalty for either choice. Be aware, however, that the <emphasis role="str
 use closing tags in Hamlet is for such inline tags; normal tags are not closed.</simpara>
 <simpara>Another outcome of this is that any tags after the first tag do not have
 special treatment for IDs and classes. For example, the Hamlet snippet:</simpara>
-<programlisting language="hamlet" linenumbering="unnumbered">&lt;p #firstid&gt;Paragraph &lt;i #secondid&gt;italic end.</programlisting>
+<programlisting language="hamlet" linenumbering="unnumbered">&lt;p #firstid&gt;Paragraph &lt;i #secondid&gt;italic&lt;/i&gt; end.</programlisting>
 <simpara>generates the HTML:</simpara>
 <programlisting language="html" linenumbering="unnumbered">&lt;p id="firstid"&gt;Paragraph &lt;i #secondid&gt;italic&lt;/i&gt; end.&lt;/p&gt;</programlisting>
 <simpara>Notice how the <literal>p</literal> tag is automatically closed, and its attributes get special
