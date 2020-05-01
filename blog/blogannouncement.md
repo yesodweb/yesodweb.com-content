@@ -1,4 +1,4 @@
-New Haskell/Yesod beginner Blog
+New Haskell/Yesod Beginner Blog
 
 This is the annoncement for a new Haskell Beginners Blog, which first series of articles will handle the building of two Yesod-projects: a personal Blog with slighly powered batteries and in addition examples of functionality from a small-buisiness-website.
 
