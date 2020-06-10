@@ -189,7 +189,7 @@ getHomeR = defaultLayout $ do
         [hamlet|&lt;script src=/included-in-head.js&gt;|]
 
 main :: IO ()
-main = warp 3001 App</programlisting>
+main = warp 3000 App</programlisting>
 <simpara>Note that even though <literal>toWidgetHead</literal> was called after <literal>toWidgetBody</literal>, the
 latter <literal>&lt;script&gt;</literal> tag appears first in the generated HTML.</simpara>
 <simpara>In addition, there are a number of other functions for creating specific kinds
