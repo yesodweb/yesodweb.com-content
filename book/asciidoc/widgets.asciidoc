@@ -177,7 +177,7 @@ getHomeR = defaultLayout $ do
         [hamlet|<script src=/included-in-head.js>|]
 
 main :: IO ()
-main = warp 3001 App
+main = warp 3000 App
 ----
 
 Note that even though +toWidgetHead+ was called after +toWidgetBody+, the
