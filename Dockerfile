@@ -1,4 +1,7 @@
 from juju2013/saucy-base
+RUN sed -i.bak -r 's/(archive|security).ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
+RUN apt-get update -y
+
 maintainer Greg Weber
 
 RUN apt-get install -y adduser
