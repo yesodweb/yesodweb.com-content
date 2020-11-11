@@ -345,10 +345,9 @@ automatically switch between HTML and JSON representations depending on the
 
 === The scaffolded site
 
-Installing Yesod will give you both the Yesod library, as well as a +yesod+
-executable. This executable accepts a few commands, but the first one you'll
-want to be acquainted with is +yesod init+. It will ask you some questions, and
-then generate a folder containing the default scaffolded site. Inside that
+We'll use +stack+ to install the Yesod libraries and the +yesod+ helper
+executable. Then we'll use +stack new+ to create a scaffolded site. It
+will generate a folder containing the default scaffolded site. Inside that
 folder, you can run +stack install --only-dependencies+ to build any extra
 dependencies (such as your database backends), and then +yesod devel+ to run
 your site.
