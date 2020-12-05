@@ -1316,7 +1316,7 @@ to be backend-agnostic, such as not relying on relational features of SQL. My
 experience has been you can easily perform 95% of what you need to do with the
 high-level interface. (In fact, most of my web apps use the high level
 interface exclusively.)</simpara>
-<simpara>But occassionally you&#8217;ll want to use a feature that&#8217;s specific to a backend. One feature I&#8217;ve used in the past is full text search. In this case, we&#8217;ll use the SQL "LIKE" operator, which is not modeled in Persistent. We&#8217;ll get all people with the last name "Snoyman" and print the records out.</simpara>
+<simpara>But occasionally you&#8217;ll want to use a feature that&#8217;s specific to a backend. One feature I&#8217;ve used in the past is full text search. In this case, we&#8217;ll use the SQL "LIKE" operator, which is not modeled in Persistent. We&#8217;ll get all people with the last name "Snoyman" and print the records out.</simpara>
 <note><simpara>Actually, you <emphasis>can</emphasis> express a LIKE operator directly in the normal syntax
 due to a feature added in Persistent 0.6, which allows backend-specific
 operators. But this is still a good example, so let&#8217;s roll with it.</simpara></note>
