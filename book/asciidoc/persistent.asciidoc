@@ -1393,7 +1393,7 @@ experience has been you can easily perform 95% of what you need to do with the
 high-level interface. (In fact, most of my web apps use the high level
 interface exclusively.)
 
-But occassionally you'll want to use a feature that's specific to a backend. One feature I've used in the past is full text search. In this case, we'll use the SQL "LIKE" operator, which is not modeled in Persistent. We'll get all people with the last name "Snoyman" and print the records out.
+But occasionally you'll want to use a feature that's specific to a backend. One feature I've used in the past is full text search. In this case, we'll use the SQL "LIKE" operator, which is not modeled in Persistent. We'll get all people with the last name "Snoyman" and print the records out.
 
 NOTE: Actually, you _can_ express a LIKE operator directly in the normal syntax
 due to a feature added in Persistent 0.6, which allows backend-specific
