@@ -131,13 +131,6 @@ postSendR = do
 If we look at that type signature, we see that it lives in the master site's
 +Handler+ monad. Therefore, we need to +lift+ that call out of the subsite.
 
-The call to +runInputGet+ is a little more subtle. Theoretically, we could run
-this in either the subsite or the master site. However, we use +lift+ here as
-well for one specific reason: message translations. By using the master site,
-we can take advantage of whatever +RenderMessage+ instance the master site
-defines. This also explains why we have a +RenderMessage+ constraint on the
-+YesodChat+ typeclass.
-
 The next call to +getSubYesod+ is _not_ ++lift++ed. The reasoning here is simple:
 we want to get the subsite's foundation type in order to access the message
 channel. If we instead ++lift++ed that call, we'd get the master site's
