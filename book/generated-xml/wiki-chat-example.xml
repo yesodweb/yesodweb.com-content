@@ -128,12 +128,6 @@ postSendR = do
 <simpara><literal>getUserName</literal> is the function we defined in our <literal>YesodChat</literal> typeclass earlier.
 If we look at that type signature, we see that it lives in the master site&#8217;s
 <literal>Handler</literal> monad. Therefore, we need to <literal>lift</literal> that call out of the subsite.</simpara>
-<simpara>The call to <literal>runInputGet</literal> is a little more subtle. Theoretically, we could run
-this in either the subsite or the master site. However, we use <literal>lift</literal> here as
-well for one specific reason: message translations. By using the master site,
-we can take advantage of whatever <literal>RenderMessage</literal> instance the master site
-defines. This also explains why we have a <literal>RenderMessage</literal> constraint on the
-<literal>YesodChat</literal> typeclass.</simpara>
 <simpara>The next call to <literal>getSubYesod</literal> is <emphasis>not</emphasis> <literal>lift</literal>ed. The reasoning here is simple:
 we want to get the subsite&#8217;s foundation type in order to access the message
 channel. If we instead <literal>lift</literal>ed that call, we&#8217;d get the master site&#8217;s
