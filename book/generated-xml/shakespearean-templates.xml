@@ -311,7 +311,7 @@ pass variables in.</simpara>
 literals in an interpolation. You can use qualified modules. Both parentheses
 and the dollar sign can be used to group statements together. And at the end,
 the <literal>toHtml</literal> function is applied to the result, meaning <emphasis>any</emphasis> instance of
-<literal>ToHtml</literal> can be interpolated. Take, for instance, the following code.</simpara>
+<literal>ToMarkup</literal> can be interpolated. Take, for instance, the following code.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">-- Just ignore the quasiquote stuff for now, and that shamlet thing.
 -- It will be explained later.
 {-# LANGUAGE QuasiQuotes #-}
