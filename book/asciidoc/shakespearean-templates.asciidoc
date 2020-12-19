@@ -391,7 +391,7 @@ You can apply functions within an interpolation. You can use string and numeric
 literals in an interpolation. You can use qualified modules. Both parentheses
 and the dollar sign can be used to group statements together. And at the end,
 the +toHtml+ function is applied to the result, meaning _any_ instance of
-+ToHtml+ can be interpolated. Take, for instance, the following code.
++ToMarkup+ can be interpolated. Take, for instance, the following code.
 
 [source, haskell]
 ----
