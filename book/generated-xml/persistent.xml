@@ -177,13 +177,13 @@ can represent data that gets sent to and from a database. Its definition is:</si
     | PersistDbSpecific ByteString
     -- ^ Using 'PersistDbSpecific' allows you to use types
     -- specific to a particular backend</programlisting>
+<simpara>A <literal>PersistValue</literal> correlates to a column in a SQL database. In our person example
+above, name and age would be our <literal>PersistValues</literal>s.</simpara>
 <simpara>Each Persistent backend needs to know how to translate the relevant values into
 something the database can understand. However, it would be awkward to have to
 express all of our data simply in terms of these basic types. The next layer is
 the <literal>PersistField</literal> typeclass, which defines how an arbitrary Haskell datatype
-can be marshaled to and from a <literal>PersistValue</literal>. A <literal>PersistField</literal> correlates to a
-column in a SQL database. In our person example above, name and age would be
-our <literal>PersistField</literal>s.</simpara>
+can be marshaled to and from a <literal>PersistValue</literal>.</simpara>
 <simpara>To tie up the user side of the code, our last typeclass is <literal>PersistEntity</literal>. An
 instance of <literal>PersistEntity</literal> correlates with a table in a SQL database. This
 typeclass defines a number of functions and some associated types. To review,
