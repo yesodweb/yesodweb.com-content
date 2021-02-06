@@ -178,13 +178,14 @@ data PersistValue
     -- specific to a particular backend
 ----
 
+A +PersistValue+ correlates to a column in a SQL database. In our person example
+above, name and age would be our ++PersistValues++s.
+
 Each Persistent backend needs to know how to translate the relevant values into
 something the database can understand. However, it would be awkward to have to
 express all of our data simply in terms of these basic types. The next layer is
 the +PersistField+ typeclass, which defines how an arbitrary Haskell datatype
-can be marshaled to and from a +PersistValue+. A +PersistField+ correlates to a
-column in a SQL database. In our person example above, name and age would be
-our ++PersistField++s.
+can be marshaled to and from a +PersistValue+.
 
 To tie up the user side of the code, our last typeclass is +PersistEntity+. An
 instance of +PersistEntity+ correlates with a table in a SQL database. This
