@@ -6,7 +6,23 @@
 <article lang="en">
 <appendix id="http-conduit_http_conduit">
 <title>http-conduit</title>
-<simpara>This content has been superceded by
-<ulink url="https://haskell-lang.org/library/http-client">haskell-lang.org content on http-client</ulink>.</simpara>
+<simpara>The http-conduit and http-client libraries have moved their documentation to:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+<ulink url="https://github.com/snoyberg/http-client/blob/master/TUTORIAL.md">Tutorial on Github</ulink>
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<ulink url="https://www.stackage.org/package/http-client">http-client API docs on Stackage</ulink>
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<ulink url="https://www.stackage.org/package/http-conduit">http-conduit API docs on Stackage</ulink>
+</simpara>
+</listitem>
+</itemizedlist>
 </appendix>
 </article>
