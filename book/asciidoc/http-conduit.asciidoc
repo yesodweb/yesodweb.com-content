@@ -1,5 +1,8 @@
 [appendix]
 == http-conduit
 
-This content has been superceded by
-link:https://haskell-lang.org/library/http-client[haskell-lang.org content on http-client].
+The http-conduit and http-client libraries have moved their documentation to:
+
+* link:https://github.com/snoyberg/http-client/blob/master/TUTORIAL.md[Tutorial on Github]
+* link:https://www.stackage.org/package/http-client[http-client API docs on Stackage]
+* link:https://www.stackage.org/package/http-conduit[http-conduit API docs on Stackage]
