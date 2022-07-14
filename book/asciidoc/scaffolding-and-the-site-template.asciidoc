@@ -31,7 +31,7 @@ well). This executable provides a few commands (run +stack exec \-- yesod
 scaffolding site with a postgres database backend in a directory named
 +my-project+. You can see the other available templates using the command
 *stack templates*.
- 
+
 NOTE: Stack version 2 or later is required to create the scaffold.
 
 The key thing differing in various available templates (from the
@@ -290,6 +290,21 @@ contents as well, meaning:
 . Yesod can avoid an expensive disk write of the CSS/Javascript file contents if a file with the same hash already exists.
 
 Finally, all of your Javascript is automatically minified via hjsmin.
+
+=== Environment variables
+
+Scaffolded apps are preconfigured to support these environment variables :
+
+- *YESOD_STATIC_DIR*     : Path of static directory.
+- *YESOD_HOST*           : Host/interface the server should bind to.
+- *YESOD_PORT*           : Port to listen on.
+- *YESOD_IP_FROM_HEADER* : Get the IP address from the header when logging. Useful when sitting behind a reverse proxy.
+
+They are listed in file `/config/settings.yml`, where their default values can be defined.
+Other variables can be added by uncommenting dedicated lines :
+
+- *YESOD_APPROOT* : Explicit base for all generated URLs.
+- *PORT*          : Port for Keter.
 
 === Conclusion
 
