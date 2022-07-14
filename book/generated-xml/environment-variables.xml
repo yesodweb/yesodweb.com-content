@@ -11,8 +11,8 @@
 configuration in environment variables, instead of using config files or
 hard-coding them into the application source code (you don&#8217;t do that, right?).</simpara>
 <simpara>Yesod&#8217;s scaffolding comes built in with some support for this, most
-specifically for respecting the <literal>APPROOT</literal> environment variable to indicate how
-URLs should be generated, the <literal>PORT</literal> environment variable for which port to
+specifically for respecting the <literal>YESOD_APPROOT</literal> environment variable to indicate how
+URLs should be generated, the <literal>YESOD_PORT</literal> environment variable for which port to
 listen for requests on, and database connection settings. (Incidentally, this
 ties in nicely with <ulink url="https://github.com/snoyberg/keter">the Keter deployment
 manager</ulink>.)</simpara>
@@ -52,7 +52,7 @@ getHomeR = defaultLayout $ do
 
 main :: IO ()
 main = do
-    myApproot &lt;- fmap pack $ getEnv "APPROOT"
+    myApproot &lt;- fmap pack $ getEnv "YESOD_APPROOT"
     welcomeMessage &lt;- fmap pack $ getEnv "WELCOME_MESSAGE"
     warp 3000 App {..}</programlisting>
 <simpara>The only tricky things here are:</simpara>

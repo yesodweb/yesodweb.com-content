@@ -395,6 +395,46 @@ Yesod can avoid an expensive disk write of the CSS/Javascript file contents if a
 </orderedlist>
 <simpara>Finally, all of your Javascript is automatically minified via hjsmin.</simpara>
 </section>
+<section id="scaffolding-and-the-site-template_environment_variables">
+<title>Environment variables</title>
+<simpara>Scaffolded apps are preconfigured to support these environment variables :</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+<emphasis role="strong">YESOD_STATIC_DIR</emphasis>     : Path of static directory.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<emphasis role="strong">YESOD_HOST</emphasis>           : Host/interface the server should bind to.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<emphasis role="strong">YESOD_PORT</emphasis>           : Port to listen on.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<emphasis role="strong">YESOD_IP_FROM_HEADER</emphasis> : Get the IP address from the header when logging. Useful when sitting behind a reverse proxy.
+</simpara>
+</listitem>
+</itemizedlist>
+<simpara>They are listed in file <literal>/config/settings.yml</literal>, where their default values can be defined.
+Other variables can be added by uncommenting dedicated lines :</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+<emphasis role="strong">YESOD_APPROOT</emphasis> : Explicit base for all generated URLs.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<emphasis role="strong">PORT</emphasis>          : Port for Keter.
+</simpara>
+</listitem>
+</itemizedlist>
+</section>
 <section id="scaffolding-and-the-site-template_conclusion">
 <title>Conclusion</title>
 <simpara>The purpose of this chapter was not to explain every line that exists in the
