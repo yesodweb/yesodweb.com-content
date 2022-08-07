@@ -44,7 +44,7 @@ scaffoldings for one of the database backends. There will be minor
 differences for the yesodweb/simple backend.
 
 After creating your files, install the yesod command line tool inside
-the project: +stack install yesod-bin --install-ghc+. Then do a +stack
+the project: +stack build --copy-compiler-tool yesod-bin --install-ghc+. Then do a +stack
 build+ inside the directory.  In particular, the commands provided
 will ensure that any missing dependencies are built and installed.
 
