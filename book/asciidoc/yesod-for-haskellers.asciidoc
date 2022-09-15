@@ -913,12 +913,12 @@ import           Yesod.Core (RenderRoute (..), Yesod, mkYesod, parseRoutes,
 -- | Our foundation datatype.
 data App = App
 
-instance Yesod App
-
 mkYesod "App" [parseRoutes|
 /         HomeR GET
 /fib/#Int FibR  GET
 |]
+
+instance Yesod App
 
 getHomeR :: Handler ()
 getHomeR = redirect (FibR 1)
