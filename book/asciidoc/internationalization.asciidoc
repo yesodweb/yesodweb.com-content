@@ -69,16 +69,16 @@ plural _ _ y = y
 showInt :: Int -> String
 showInt = show
 
-instance Yesod App
-
-instance RenderMessage App FormMessage where
-    renderMessage _ _ = defaultFormMessage
-
 mkYesod "App" [parseRoutes|
 /     HomeR GET
 /buy  BuyR  GET
 /lang LangR POST
 |]
+
+instance Yesod App
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
 
 getHomeR :: Handler Html
 getHomeR = defaultLayout

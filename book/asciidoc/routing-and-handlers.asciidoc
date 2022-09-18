@@ -385,13 +385,14 @@ import qualified Data.Text as T
 import           Yesod
 
 data App = App
-instance Yesod App
 
 mkYesod "App" [parseRoutes|
 /person/#Text PersonR GET
 /year/#Integer/month/#Text/day/#Int DateR
 /wiki/*Texts WikiR GET
 |]
+
+instance Yesod App
 
 getPersonR :: Text -> Handler Html
 getPersonR name = defaultLayout [whamlet|<h1>Hello #{name}!|]
@@ -546,15 +547,16 @@ import           Control.Monad     (when)
 import           Yesod
 
 data App = App
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+|]
+
 instance Yesod App where
     -- This function controls which messages are logged
     shouldLogIO App src level =
         return True -- good for development
         -- level == LevelWarn || level == LevelError -- good for production
-
-mkYesod "App" [parseRoutes|
-/ HomeR GET
-|]
 
 getHomeR :: Handler Html
 getHomeR = do
