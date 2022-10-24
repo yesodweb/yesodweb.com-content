@@ -1,3 +1,5 @@
+N.B. The `stack image` command referenced in this blog post [has been removed](https://github.com/commercialhaskell/stack/pull/4620/commits/15c8eb45ba7a7aef6306d1b1d98604b5082678cc). Please see [Building Haskell Apps with Docker](https://www.fpcomplete.com/blog/2017/12/building-haskell-apps-with-docker/) for a more up-to-date guide.
+
 About a month ago, there were a few days of instability for yesodweb.com
 hosting. The reason for this was that I was in the midst of moving hosting of
 yesodweb.com (and a few other sites) to new hosting. I went through a few
