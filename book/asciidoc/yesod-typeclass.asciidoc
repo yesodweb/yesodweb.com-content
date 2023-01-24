@@ -72,9 +72,8 @@ construct a URL for +SomePathR+, it determines that the relative path for
 +SomePathR+ is +/some/path+, appends that to your approot and creates
 +http://static.example.com/wiki/some/path+.
 
-The default value of +approot+ is +ApprootRelative+, which essentially means
-``don't add any prefix.'' In that case, the generated URL would be
-+/some/path+. This works fine for the common case of a link within your
+The default value of +approot+ is +guessApproot+.
+This works fine for the common case of a link within your
 application, and your application being hosted at the root of your domain. But
 if you have any use cases which demand absolute URLs (such as sending an
 email), it's best to use +ApprootStatic+.
