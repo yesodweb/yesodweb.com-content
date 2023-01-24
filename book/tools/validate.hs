@@ -1,5 +1,5 @@
 #!/usr/bin/env stack
--- stack --resolver lts-11.1 script
+-- stack --resolver lts-20.8 script --package conduit --package xml-conduit --package filepath --package executable-path
 {-# LANGUAGE OverloadedStrings #-}
 import System.FilePath (takeDirectory, (</>), takeFileName)
 import Conduit

@@ -55,17 +55,18 @@ data App = App
     { persistConfig :: SqliteConf
     , connPool      :: ConnectionPool
     }
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+/blog/#BlogId BlogR GET
+|]
+
 instance Yesod App
 instance YesodPersist App where
     type YesodPersistBackend App = SqlBackend
     runDB = defaultRunDB persistConfig connPool
 instance YesodPersistRunner App where
     getDBRunner = defaultGetDBRunner connPool
-
-mkYesod "App" [parseRoutes|
-/ HomeR GET
-/blog/#BlogId BlogR GET
-|]
 
 getHomeR :: Handler Html
 getHomeR = do
@@ -394,17 +395,18 @@ data App = App
     { persistConfig :: SqliteConf
     , connPool      :: ConnectionPool
     }
+
+mkYesod "App" [parseRoutes|
+/ HomeR GET
+/blog/#BlogId BlogR GET
+|]
+
 instance Yesod App
 instance YesodPersist App where
     type YesodPersistBackend App = SqlBackend
     runDB = defaultRunDB persistConfig connPool
 instance YesodPersistRunner App where
     getDBRunner = defaultGetDBRunner connPool
-
-mkYesod "App" [parseRoutes|
-/ HomeR GET
-/blog/#BlogId BlogR GET
-|]
 
 getHomeR :: Handler TypedContent
 getHomeR = do

@@ -66,9 +66,8 @@ you to tell it the application root.</simpara>
 construct a URL for <literal>SomePathR</literal>, it determines that the relative path for
 <literal>SomePathR</literal> is <literal>/some/path</literal>, appends that to your approot and creates
 <literal>http://static.example.com/wiki/some/path</literal>.</simpara>
-<simpara>The default value of <literal>approot</literal> is <literal>ApprootRelative</literal>, which essentially means
-&#8220;don&#8217;t add any prefix.&#8221; In that case, the generated URL would be
-<literal>/some/path</literal>. This works fine for the common case of a link within your
+<simpara>The default value of <literal>approot</literal> is <literal>guessApproot</literal>.
+This works fine for the common case of a link within your
 application, and your application being hosted at the root of your domain. But
 if you have any use cases which demand absolute URLs (such as sending an
 email), it&#8217;s best to use <literal>ApprootStatic</literal>.</simpara>

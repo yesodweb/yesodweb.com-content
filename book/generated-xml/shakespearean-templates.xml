@@ -944,7 +944,7 @@ The syntax for variable interpolation for Text.Shakespeare.Text is the same
   as described above.  Note that <literal>^{..}</literal> and <literal>@{..}</literal> are also recognized in
   <literal>lt</literal> and <literal>st</literal>. If the output of a template should contain <literal>^{..}</literal>, a
   backslash can be used to prevent the interpolation,
-  e.g. <literal>[lt|2^\{23}|]</literal>. The backslash is removed from the resulting text.
+  e.g. <literal>[lt|2^\{\23}|]</literal>. The backslash is removed from the resulting text.
 </simpara>
 </listitem>
 </itemizedlist>

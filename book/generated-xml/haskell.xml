@@ -173,7 +173,7 @@ boilerplate of specifying the same language pragmas in every source file.</simpa
 <simpara>We&#8217;ll end up using quite a few language extensions in this book (at the time of
 writing, the scaffolding uses 13). We will not cover the meaning of all of
 them. Instead, please see the
-<ulink url="http://www.haskell.org/ghc/docs/latest/html/users_guide/ghc-language-features.html">GHC
+<ulink url="https://downloads.haskell.org/ghc/latest/docs/users_guide/">GHC
 documentation</ulink>.</simpara>
 </section>
 <section id="I_sect12_d1e671">
