@@ -52,6 +52,9 @@ The required dependencies for the below are: persistent, persistent-sqlite and p
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -322,6 +325,9 @@ pass it off to other Persistent functions.
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -342,7 +348,7 @@ import           Control.Monad.Reader
 import           Control.Monad.Logger
 import           Conduit
 
-share [mkPersist sqlSettings, mkSave "entityDefs"] [persistLowerCase|
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Person
     name String
     age Int Maybe
@@ -436,6 +442,9 @@ to _ask_ it to help. Let's see what this looks like:
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -456,7 +465,7 @@ import           Control.Monad.Reader
 import           Control.Monad.Logger
 import           Conduit
 
-share [mkPersist sqlSettings, mkSave "entityDefs"] [persistLowerCase|
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Person
     name String
     age Int Maybe
@@ -487,6 +496,9 @@ Persistent provides a helper function, +mkMigrate+:
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -582,6 +594,9 @@ in Haskell as a data constructor.
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -982,6 +997,9 @@ database, we want to just use the current date-time for that timestamp.
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -1026,6 +1044,9 @@ favorite programming language:
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -1067,6 +1088,9 @@ Salvador:
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -1125,6 +1149,9 @@ the related entity. So if a person has many cars:
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -1169,6 +1196,9 @@ want to track which people have shopped in which stores:
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -1345,6 +1375,9 @@ derivePersistField "Employment"
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -1402,6 +1435,9 @@ operators. But this is still a good example, so let's roll with it.
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -1455,6 +1491,9 @@ the database via the +runDB+ method. Let's see this in action.
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -1577,6 +1616,9 @@ To keep the examples in this chapter simple, we've used the SQLite backend. Just
 
 [source, haskell]
 ----
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
