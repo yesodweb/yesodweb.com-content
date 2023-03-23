@@ -26,7 +26,7 @@ applications, as well as a system for starting, monitoring, and redeploying
 running apps. If you'd like to deploy with Keter, follow these steps:
 
 . Edit the +config/keter.yaml+ file in your scaffolded application as necessary.
-. Set up some kind of server for hosting yours apps. I recommend trying Ubuntu on Amazon EC2.
+. Set up some kind of server for hosting your apps. I recommend trying Ubuntu on Amazon EC2.
 . Install Keter on that machine. Please follow the instructions on the link:https://github.com/snoyberg/keter/[Keter website], which will be the most up to date.
 . Run +yesod keter+ to generate a Keter bundle, e.g., +myapp.keter+.
 . Copy +myapp.keter+ to the +/opt/keter/incoming+ directory on your server.
@@ -150,7 +150,7 @@ Keter configuration is trivial, since it is designed to work with Yesod
 applications. But if you want to instead use Nginx, how do you set it up?
 
 In general, Nginx will listen on port 80 and your Yesod/Warp app will listen on
-some unprivileged port (lets say 4321). You will then need to provide a
+some unprivileged port (let's say 4321). You will then need to provide a
 nginx.conf file, such as:
 
 ----
