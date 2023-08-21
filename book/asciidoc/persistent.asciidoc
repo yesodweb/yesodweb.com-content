@@ -1320,7 +1320,7 @@ We know that +BlogId+ is just a type synonym for +Key Blog+, but how will +Key
 Blog+ be defined? We can't use an +Int64+, since that won't work for MongoDB.
 And we can't use +ByteString+, since that won't work for SQL databases.
 
-To allow for this, once +mpsGeneric+ is set to +True+, out resulting datatypes have a type parameter to indicate the database backend they use, so that keys can be properly encoded. This looks like:
+To allow for this, once +mpsGeneric+ is set to +True+, our resulting datatypes have a type parameter to indicate the database backend they use, so that keys can be properly encoded. This looks like:
 
 [source, haskell]
 ----
