@@ -182,6 +182,32 @@ One issue that overlapping routes introduce is ambiguity. In the example above,
 should +/foo/bar+ route to +Foo1R+ or +Foo3R+? And should +/foo/42+ route to
 +Foo2R+ or +Foo3R+? Yesod's rule for this is simple: first route wins.
 
+===== Empty +#String+ or +#Text+ as dynamic piece
+
+How to pass the empty string to routes with +#String+ or +#Text+ pieces?
+
+Consider the following route declaration:
+
+[source, routes]
+----
+/hello          HomeR  GET
+/hello/#String  HelloR GET
+----
+
+In URLs we cannot simply pass the empty string (+""+) for a dynamic path piece like in +/hello/#String+.
+Yesod's dispatch mechanism would instead use +HomeR+ for an empty string because it
+always redirects to the canonical form of the URL
+(see section <<_pieces>>).
+
+This is why Yesod puts a Minus sign (+-+) in the URL for +@{HelloR ""}+.
+The resulting URL would be +/hello/-+.
+The handler function +getHelloR :: String -> Handler Html+ will still receive the empty string.
+
+Also, to disambiguate a single actual +-+ in the URL, Yesod prefixes that piece with another Minus sign.
+Consequently, Yesod also prefixes any string consisting only of Minus signs with one single Minus sign.
+
+This applies for +#String+ and +#Text+ pieces as well.
+
 ==== Resource name
 
 Each resource pattern also has a name associated with it. That name will become
