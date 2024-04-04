@@ -184,29 +184,30 @@ should +/foo/bar+ route to +Foo1R+ or +Foo3R+? And should +/foo/42+ route to
 
 ===== Empty +#String+ or +#Text+ as dynamic piece
 
-How to pass the empty string to routes with +#String+ or +#Text+ pieces?
-
 Consider the following route declaration:
 
 [source, routes]
 ----
-/hello          HomeR  GET
-/hello/#String  HelloR GET
+/hello          HelloR     GET
+/hello/#String  HelloNameR GET
 ----
 
-In URLs we cannot simply pass the empty string (+""+) for a dynamic path piece like in +/hello/#String+.
-Yesod's dispatch mechanism would instead use +HomeR+ for an empty string because it
-always redirects to the canonical form of the URL
-(see section <<_pieces>>).
+Let's say a user requests the path +/hello/+ – which handler would respond to the request?
 
-This is why Yesod puts a Minus sign (+-+) in the URL for +@{HelloR ""}+.
-The resulting URL would be +/hello/-+.
-The handler function +getHelloR :: String -> Handler Html+ will still receive the empty string.
+It will be +HelloR+ because Yesod's dispatch mechanism removes trailing slashes and
+redirects to the canonical form of the URL (see section <<_pieces>>).
+
+If users actually want to address the +HelloNameR+ handler with an
+empty string as argument they need to request the path +/hello/-+
+instead. Yesod automatically converts the Minus sign to the empty string.
+
+Likewise, the resulting URL for +@{HelloNameR ""}+ would be +/hello/-+.
 
 Also, to disambiguate a single actual +-+ in the URL, Yesod prefixes that piece with another Minus sign.
 Consequently, Yesod also prefixes any string consisting only of Minus signs with one single Minus sign.
 
-This applies for +#String+ and +#Text+ pieces as well.
+NOTE: This conversion between empty string in Haskell and +-+ in the
+URL applies for +#String+ and +#Text+ pieces as well.
 
 ==== Resource name
 
