@@ -203,7 +203,7 @@ instead. Yesod automatically converts the Minus sign to the empty string.
 
 Likewise, the resulting URL for +@{HelloNameR ""}+ would be +/hello/-+.
 
-Also, to disambiguate a single actual +-+ in the URL, Yesod prefixes that piece with another Minus sign.
+Also, to disambiguate a single actual +-+, Yesod prefixes that piece with another Minus sign when rendering the URL.
 Consequently, Yesod also prefixes any string consisting only of Minus signs with one single Minus sign.
 
 NOTE: This conversion between empty string in Haskell and +-+ in the
