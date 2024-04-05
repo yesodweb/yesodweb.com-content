@@ -2,7 +2,7 @@ name: Update Site
 
 on:
   push:
-    branches: [master, actions-test]
+    branches: [master]
 
 jobs:
   update-site:
