@@ -402,5 +402,3 @@ quasi-quotation or external files, +warp+ or +yesod devel+, and so on. The
 examples in this book will tend towards using the choices that are easiest to
 copy-and-paste, but the more powerful options will be available when you start
 building real Yesod applications.
-
-TEST CHANGE
