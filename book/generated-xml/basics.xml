@@ -362,7 +362,6 @@ quasi-quotation or external files, <literal>warp</literal> or <literal>yesod dev
 examples in this book will tend towards using the choices that are easiest to
 copy-and-paste, but the more powerful options will be available when you start
 building real Yesod applications.</simpara>
-<simpara>TEST CHANGE</simpara>
 </section>
 </section>
 </article>
