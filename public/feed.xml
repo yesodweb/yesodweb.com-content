@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom"><title>Yesod Web Framework Blog</title><link href="/feed" rel="self"/><link href="/"/><updated>2021-02-17T02:21:04-00:00</updated><id>/</id><author><name>Yesod Web Framework Team</name></author><entry><id>/blog/2021/02/chatwisely-intro</id><link href="/blog/2021/02/chatwisely-intro"/><updated>2021-02-17T02:21:04-00:00</updated><title>We Made ChatWisely With Haskell</title><content type="html">&lt;p&gt;Three years ago, I met fellow Haskeller Brian Hurt while working with Obsidian Systems on a Reflex project. Not long after, he started telling me his ideas about how to fix social media. These ideas intrigued me, one thing led to another, and we began building ChatWisely. We thought other Haskellers might like to hear about what we’re doing and how we use Haskell to do it.&lt;/p&gt;&lt;p&gt;ChatWisely is a member-supported mini-blogging social network currently in open beta. We envision a place where people connect in a spirit of comradery. We see an elevated discourse and a way to show bullies the door by providing a platform to debate safely. Here’s how we’re doing it.&lt;/p&gt;&lt;h2 align=center&gt;Safety First&lt;/h2&gt;
+Brian and I built several mechanisms to filter out people looking for a fight or to harm others. First and foremost will be the monthly subscription fee of one dollar. We think that will discourage a large portion of toxic people. Another is a sharable mute list that we believe will help mitigate the rest. And finally, in the event of a serious Terms of Service violation, we ban payment methods rather than just accounts. &lt;h2 align=center&gt;Mini-Blogging&lt;/h2&gt;
+The big idea here is that sometimes, a short post isn’t enough. Brian and I made a way to link that short post to a longer one. So the timeline looks something like Twitter’s, but with some posts that can expand to something more detailed. These can be connected to other people’s posts to create a continuity in conversation hard to come by on other platforms. So when another member’s post inspires you to write a longer one about your experience with the ghcjs ffi (for example), you can link your post to theirs.&lt;h2 align=center&gt;Ownership of Your Timeline&lt;/h2&gt;
+Members can organize their timeline and choose to what extent they follow other people’s posts. The typical mainstream social network requires that when you follow someone you must follow everything they post, or nothing. Sure, there are filtered word lists in some cases. But none of it seems to work quite right. Instead, we have groups called caboodles that members can use to decide where other people’s posts fit, and how to share their own. So say someone likes their uncle’s cookie recipes but not his political posts. They can follow one but not the other.&lt;h2 align=center&gt;Geolocated Messaging&lt;/h2&gt;
+One day this pandemic will be over and we’ll be there to meet that day. At that time, when a member’s movie caboodle wants to organize local screenings of the latest blockbuster from the House of Mouse they can make posts visible to people in their proximity. Perhaps you want to target local Haskellers to organize a meetup, or leave them a message that pops up when they’ve found the meeting place. Also, I think running a scavenger hunt with geolocated clues sounds like a hoot.&lt;h2 align=center&gt;How It’s Built&lt;/h2&gt;
+Brian and I rely heavily on the Haskell ecosystem to build ChatWisely. Haskell’s type system reduces errors and cognitive load. GHC is our pair programming partner that tightens the delivery cycle and lets us learn how to build ChatWisely while we’re building it. Refactoring is a breeze, and unit testing is constrained to the I/O edges of the system, which means we spend less time on that and more time building the product. Here’s the principal tools we rely on to get the job done.  
+&lt;br/&gt; &lt;br/&gt;
+&lt;h4&gt; Ghcjs &lt;/h4&gt; The fact is we all hate javascript. The problem is, we can’t build web apps without it. Ghcjs lets us deal with the realities of building a product that uses a web browser for a client. The FFI lets us wrap our hand-written javascript in Haskell which helps to keep that part of the codebase pretty small.. We especially love what is built on top of that, Reflex-Dom.&lt;h4&gt; Reflex-Dom &lt;/h4&gt; Reflex helps us build a system that needs to adapt to changes in data, requirements and platform. We’re learning how to build ChatWisely as we build it, and reflex keeps up with our changing ideas on how to do that. Our first app store product will be a PWA, delivered with reflex.&lt;h4&gt; Servant &lt;/h4&gt; Servant delivers the API, and requires us to separate definition from implementation. This helps us keep the backend from turning into a big ball of mud. We can auto-generate clients, which we currently use in unit testing. They even have a way to generate a reflex client, and we’ll be adding that in the near future.&lt;h4&gt;Yesod&lt;/h4&gt; We use Yesod for marketing tasks, which largely require static pages. Currently it handles our landing page and unsubscribe mechanism for our emails. The Yesod Widget is a monoid, and therefore composable, which makes structuring html simple. &lt;h2 align=center&gt;Three Reasons Why People Should Use ChatWisely.&lt;/h2&gt;
+&lt;h4&gt;We are member supported&lt;/h4&gt; We won’t have ads, which means we have no need to manipulate people’s timelines in order to serve those ads. Their timeline should be about conversations of interest.&lt;h4&gt;We solve the tweet thread problem&lt;/h4&gt;Brian and I find tweet threads hard to follow. Our mini-blog looks like twitter in the sense that you get a timeline of short posts. However if a post is the beginning of something more developed, that message can open up to access it.&lt;h4&gt;Keep the RealWorld conversation going&lt;/h4&gt;We have delayed the development of these features for obvious reasons. But one day we’ll be together again. By then we’ll have useful geo-location tools for conference attendees and speakers to continue the conversation.&lt;p&gt;What makes a weekend conference fun for me are the conversations in-between formal talks. I get all caught up in compelling conversations, and want to keep that going. We’ll have a way to do that, without having to know or remember anyone’s email address or phone number.&lt;/p&gt;&lt;p&gt;Conference speakers will often want to build on the momentum gathered after a successful talk. Brian and I think Twitter hashtags are the terrible but often only way to do this. We’ll have a way to use proximity and common interests to help build that momentum and keep everyone engaged.&lt;/p&gt;&lt;hr&gt;&lt;p&gt;We built ChatWisely as a response to the unpleasantness all too common on mainstream social networks. Depending on our membership for support creates the place we want to meet because ad revenue and data-mining motivates engagement, not conversations and connection. No one is fooled by what mainstream social networks call engagement because that looks to us like derailed conversations, confusing timelines we only have a shallow control over, and unsafe situations.&lt;/p&gt;&lt;p&gt;Brian and I love the daily experience of building ChatWisely, the Haskell ecosystem brings joy to the experience of running our startup. You can support us on &lt;a href=&#34;https://www.patreon.com/chatwisely&#34;&gt;patreon&lt;/a&gt; and should come by and test the &lt;a href=&#34;https://chatwisely.com/i/messages&#34;&gt;beta&lt;/a&gt;. We look forward to hearing from you about any ideas or questions you may have.&lt;/p&gt;</content></entry><entry><id>/blog/2020/05/blogannouncement</id><link href="/blog/2020/05/blogannouncement"/><updated>2020-05-03T18:35:00-00:00</updated><title>A new Haskell/Yesod Beginners Blog</title><content type="html">&lt;p&gt;This is the annoncement for a new Haskell Beginners Blog, which first series of articles will handle the building of two Yesod-projects: a personal Blog with slighly powered batteries and in addition examples of functionality from a small-buisiness-website.&lt;/p&gt;&lt;p&gt;As I have decided to learn Haskell late and not long ago, this Blogpost is written out of a straight programming beginners point of view, and like so will handle also prelimiaries and standarts maybe annoying to people with a different background.&lt;/p&gt;&lt;p&gt;I was a bit afraid to use Yesod as a first step in my learning Haskell journey - you all know it is a big, non trival framework - but somehow, after a while of proving and looking into it, I felt quite save and secure to not miss the point. I mean, moving around in it&amp;#39;s structure felt somehow good and plausible. Hope to transport that in this Blog.&lt;/p&gt;&lt;p&gt;&lt;a href=&#34;https://blog.onepigayear.de&#34;&gt;https://blog.onepigayear.de&lt;/a&gt;&lt;/p&gt;</content></entry><entry><id>/blog/2019/12/bookportuguese</id><link href="/blog/2019/12/bookportuguese"/><updated>2019-12-19T03:29:00-00:00</updated><title>A new Yesod book in Portuguese</title><content type="html">&lt;p&gt;Yesod users,&lt;/p&gt;&lt;p&gt;In order to help to spread the Yesod word here in Brazil, we, &lt;a href=&#34;https://github.com/romefeller&#34;&gt;Alexandre Garcia de Oliveira&lt;/a&gt;, &lt;a href=&#34;https://github.com/ptkato&#34;&gt;Patrick Augusto da Silva&lt;/a&gt; (&lt;a href=&#34;https://twitter.com/ptkato_&#34;&gt;&lt;code&gt;@ptkato_&lt;/code&gt;&lt;/a&gt; on Twitter), and
+&lt;a href=&#34;https://github.com/cannarozzo&#34;&gt;Felipe Cannarozzo Lourenço&lt;/a&gt;, wrote a book, recently released, about Yesod
+called &lt;a href=&#34;https://www.casadocodigo.com.br/products/livro-yesod-haskell&#34;&gt;&amp;quot;Yesod e Haskell: Aplicações web com Programação Funcional pura&amp;quot;&lt;/a&gt; (&amp;quot;Yesod and Haskell: Web
+applications with pure Functional Programming&amp;quot;, in English).&lt;/p&gt;&lt;p&gt;The book covers the principles of developing a web application with Yesod. Needless
+to say, it follows the same model of Alexandre&amp;#39;s first book on Haskell, giving a much needed
+insight into the Yesod world within the Brazilian borders.&lt;/p&gt;&lt;p&gt;The book aims to allow the reader to learn Yesod from scratch, starting from the basics, like setting up
+the environment using stack, and using a monolithic example in a single file, to explain the foundations of
+the framework. The book goes through the Stackage&amp;#39;s snapshots, the difference between templates and
+scaffolding, Shakespearean Templates, &lt;i&gt;type-safe&lt;/i&gt; routing, persistent basics, authentication &amp;amp;
+authorization, finishing up with a RESTful app example.&lt;/p&gt;&lt;p&gt;The idea of writing a book about Yesod came to fruition during one of Alexandre&amp;#39;s lectures on Yesod at
+&lt;a href=&#34;https://fatecrl.edu.br&#34;&gt;FATEC-Santos&lt;/a&gt;, when it was realized that many students didn&amp;#39;t read English at all
+and Yesod documentation in Portuguese was virtually non-existent. Not only that, 
+the volition to write this book became even stronger when the TAs&amp;#39; (Patrick and Felipe) tutoring classes were almost always spent on going through the same topics, when Portuguese documentation could have easily solved the problem.&lt;/p&gt;&lt;p&gt;All the pedagogic skills to write this book were founded on top of the fact that it was written in an
+academic medium, considering that, it was shaped in such a way that fits the needs of an undergrad student
+fairly well. Now, hundreds of FATEC-Santos alumni experienced the joy of using Yesod, Santos indeed is the
+city in Brazil with the highest number of people who knows Yesod. We&amp;#39;re committed to pushing Yesod forward through the local market, and maybe in the future, even beyond.&lt;/p&gt;&lt;p&gt;The book was published by &amp;quot;Casa do Código&amp;quot; and can be found &lt;a href=&#34;https://www.casadocodigo.com.br/products/livro-yesod-haskell&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;</content></entry><entry><id>/blog/2019/02/deprecating-googleemail2</id><link href="/blog/2019/02/deprecating-googleemail2"/><updated>2019-02-12T15:49:00-00:00</updated><title>Deprecating GoogleEmail2</title><content type="html">&lt;p&gt;As I&amp;#39;m sure many readers are aware, Google+ is shutting down. This
+&lt;a href=&#34;https://github.com/yesodweb/yesod/issues/1579&#34;&gt;affects Yesod&amp;#39;s authentication
+system&lt;/a&gt;. In particular,
+any users of the &lt;code&gt;Yesod.Auth.GoogleEmail2&lt;/code&gt; module will need to
+migrate.&lt;/p&gt;&lt;p&gt;Fortunately for all of us, Patrick Brisbin has written both &lt;a href=&#34;https://www.stackage.org/haddock/lts-13.7/yesod-auth-oauth2-0.6.1.0/Yesod-Auth-OAuth2-Google.html&#34;&gt;the
+code&lt;/a&gt;
+for using Google Sign-in, but has also put together &lt;a href=&#34;https://pbrisbin.com/posts/googleemail2_deprecation/&#34;&gt;a great migration
+blog post&lt;/a&gt;. If
+you&amp;#39;re affected, please check that out for a relatively painless
+migration.&lt;/p&gt;&lt;p&gt;Earlier today, I migrated Haskellers.com in two commits: the &lt;a href=&#34;https://github.com/snoyberg/haskellers/commit/f77bba90d9684afb532639c68e64449523992535&#34;&gt;first
+did all of the
+work&lt;/a&gt;,
+and the &lt;a href=&#34;https://github.com/snoyberg/haskellers/commit/68198eb05389a96fe3250d2f3e179364531faca5&#34;&gt;second made things more
+future-proof&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;As you may be able to tell from the &lt;code&gt;GoogleEmail2&lt;/code&gt; module, this isn&amp;#39;t
+the first time we&amp;#39;ve had to migrate between Google authentication
+APIs. Hopefully this one will stick.&lt;/p&gt;</content></entry><entry><id>/blog/2018/01/upcoming-yesod-breaking-changes</id><link href="/blog/2018/01/upcoming-yesod-breaking-changes"/><updated>2018-01-11T21:29:00-00:00</updated><title>Upcoming Yesod breaking changes</title><content type="html">&lt;p&gt;With all of the talk I&amp;#39;ve had about breaking changes in my libraries,
+I definitely didn&amp;#39;t want the Yesod world to feel left out. We&amp;#39;ve been
+stable at yesod-core version 1.4 since 2014. But the changes going
+through my package ecosystem towards &lt;code&gt;MonadUnliftIO&lt;/code&gt; are going to
+affect Yesod as well. The question is: how significantly?&lt;/p&gt;&lt;p&gt;For those not aware, &lt;code&gt;MonadUnliftIO&lt;/code&gt; is an alternative typeclass to
+both &lt;code&gt;MonadBaseControl&lt;/code&gt; and the &lt;code&gt;MonadCatch&lt;/code&gt;/&lt;code&gt;MonadMask&lt;/code&gt; classes in
+&lt;code&gt;monad-control&lt;/code&gt; and &lt;code&gt;exceptions&lt;/code&gt;, respectively. I&amp;#39;ve mentioned the
+advantages of this new approach in a number of places, but the best
+resource is probably the
+&lt;a href=&#34;https://www.fpcomplete.com/blog/2017/07/announcing-new-unliftio-library&#34;&gt;release announcement blog post&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;At the simplest level, the breaking change in Yesod would consist of:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Modifying &lt;code&gt;WidgetT&lt;/code&gt;&amp;#39;s internal representation. This is necessary
+since, currently, it&amp;#39;s implemented as a &lt;code&gt;WriterT&lt;/code&gt;. Instead, to match
+with &lt;code&gt;MonadUnliftIO&lt;/code&gt;, it needs to be a &lt;code&gt;ReaderT&lt;/code&gt; holding an
+&lt;code&gt;IORef&lt;/code&gt;. This is just about as minor a breaking change as I can
+imagine, since it only affects internal modules. (Said another way:
+it could even be argued to be a non-breaking change.)&lt;/li&gt;&lt;li&gt;Drop the &lt;code&gt;MonadBaseControl&lt;/code&gt; and &lt;code&gt;MonadCatch&lt;/code&gt;/&lt;code&gt;MonadMask&lt;/code&gt;
+instances. This isn&amp;#39;t strictly necessary, but has two advantages: it
+allows reduces the dependency footprint, and further encourages
+avoiding dangerous behavior, like using &lt;code&gt;concurrently&lt;/code&gt; with a
+&lt;code&gt;StateT&lt;/code&gt; on top of &lt;code&gt;HandlerT&lt;/code&gt;.&lt;/li&gt;&lt;li&gt;Switch over to the new versions of the dependent libraries that are
+changing, in particular conduit and resourcet. (That&amp;#39;s not
+technically a breaking change, but I typically consider dropping
+support for a major version of a dependency a semi-breaking change.)&lt;/li&gt;&lt;li&gt;A number of minor cleanups that have been waiting for a breaking
+changes. This includes things like adding strictness annotations in
+a few places, and removing the defunct &lt;code&gt;GoogleEmail&lt;/code&gt; and &lt;code&gt;BrowserId&lt;/code&gt;
+modules.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;This is a perfectly reasonable set of changes to make, and we can
+easily call this Yesod 1.5 (or 2.0) and ship it. I&amp;#39;m going to share
+one more slightly larger change I&amp;#39;ve experimented with, and I&amp;#39;d
+appreciated feedback on whether it&amp;#39;s worth the breakage to users of
+Yesod.&lt;/p&gt;&lt;h2&gt;Away with transformers!&lt;/h2&gt;&lt;p&gt;&lt;i&gt;NOTE&lt;/i&gt; All comments here, as is usually the case in these discussions,
+refer to code that must be in &lt;code&gt;IO&lt;/code&gt; anyway. Pure code gets a pass.&lt;/p&gt;&lt;p&gt;You can check out the changes (which appear larger than they actually
+are) in
+&lt;a href=&#34;https://github.com/yesodweb/yesod/pull/1466&#34;&gt;the &lt;code&gt;no-transformers&lt;/code&gt; branch&lt;/a&gt;. You&amp;#39;ll
+see shortly that that&amp;#39;s a lie, but it does accurately indicate
+intent. If you look at the pattern of the blog posts and recommended
+best practices I&amp;#39;ve been discussing for the past year, it ultimately
+comes down to a simple claim: we massively overuse monad transformers
+in modern Haskell.&lt;/p&gt;&lt;p&gt;The most extreme response to this claim is that we should get rid of
+&lt;i&gt;all&lt;/i&gt; transformers, and just have our code live in &lt;code&gt;IO&lt;/code&gt;. I&amp;#39;ve made a
+slight compromise to this for ergonomics, and decided it&amp;#39;s worth
+keeping reader capabilities, because it&amp;#39;s a major pain (or at least
+&lt;i&gt;perceived&lt;/i&gt; major pain) to pass extra stuff around for, e.g., simple
+functions like &lt;code&gt;logInfo&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;The core data type for Yesod is &lt;code&gt;HandlerT&lt;/code&gt;, with code that looks like
+&lt;code&gt;getHomeR :: HandlerT App IO Html&lt;/code&gt;. Under the surface, &lt;code&gt;HandlerT&lt;/code&gt;
+looks something like:&lt;/p&gt;&lt;pre&gt;&lt;code class=&#34;haskell&#34;&gt;newtype HandlerT site m a = HandlerT (HandlerData site -&amp;gt; m a)&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Let&amp;#39;s ask a simple question: do we really need &lt;code&gt;HandlerT&lt;/code&gt; to be a
+transformer? Why not simply rewrite it to be:&lt;/p&gt;&lt;pre&gt;&lt;code class=&#34;haskell&#34;&gt;newtype HandlerFor site a = HandlerFor (HandlerData site -&amp;gt; IO a)&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;All we&amp;#39;ve done is replaced the &lt;code&gt;m&lt;/code&gt; type parameter with a concrete
+selection of &lt;code&gt;IO&lt;/code&gt;. There are already assumptions all over the place
+that your handlers will necessarily have &lt;code&gt;IO&lt;/code&gt; as the base monad, so
+we&amp;#39;re not really losing any generality. But what we gain is:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Slightly clearer error messages&lt;/li&gt;&lt;li&gt;Less type constraints, such as &lt;code&gt;MonadUnliftIO m&lt;/code&gt;, floating around&lt;/li&gt;&lt;li&gt;Internally, this actually simplifies quite a few ugly things around
+weird type families&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;We can also regain a lot of backwards compatibility with a helper type
+synonym:&lt;/p&gt;&lt;pre&gt;&lt;code class=&#34;haskell&#34;&gt;type HandlerT site m = HandlerFor site&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Plus, if you&amp;#39;re using the &lt;code&gt;Handler&lt;/code&gt; type synonym generated by the
+Template Haskell code, the new version of Yesod would just generate
+the right thing. Overall, this is a slight improvement, and we need to
+weigh the benefit of it versus the cost of breakage. But let me throw
+one other thing into the mix.&lt;/p&gt;&lt;h2&gt;Handling subsite (yes, transformers)&lt;/h2&gt;&lt;p&gt;I lied, twice: the new branch &lt;i&gt;does&lt;/i&gt; use transformers, and &lt;code&gt;HandlerT&lt;/code&gt;
+&lt;i&gt;is&lt;/i&gt; more general than &lt;code&gt;HandlerFor&lt;/code&gt;. In both cases, this has to do
+with subsites, which have historically been a real pain to write
+(using them hasn&amp;#39;t been too bad). In fact, the entire reason we have
+&lt;code&gt;HandlerT&lt;/code&gt; today is to try and make subsites work in a nicely layered
+way (which I think I failed at). Those who have been using Yesod long
+enough likely remember &lt;code&gt;GHandler&lt;/code&gt; as a previous approach for this. And
+anyone who has played with writing a subsite, and the hell which
+ensues when trying to use &lt;code&gt;defaultLayout&lt;/code&gt;, will agree that the
+situation today is not great.&lt;/p&gt;&lt;p&gt;So cutting through all of the crap: when writing a subsite, almost
+everything is the same as writing normal handler code. The following
+differences pop up:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;When you call &lt;code&gt;getYesod&lt;/code&gt;, you get the master site&amp;#39;s app data
+(e.g. &lt;code&gt;App&lt;/code&gt; in a scaffolded site). You need some way to get the
+subsite&amp;#39;s data as well (e.g., the &lt;code&gt;Static&lt;/code&gt; value in &lt;code&gt;yesod-static&lt;/code&gt;).&lt;/li&gt;&lt;li&gt;When you call &lt;code&gt;getCurrentRoute&lt;/code&gt;, it will give you a route in the
+master site. If you&amp;#39;re inside &lt;code&gt;yesod-auth&lt;/code&gt;, for instance, you don&amp;#39;t
+want to deal with all of the possible routes in the parent, but
+instead get a route for the subsite itself.&lt;/li&gt;&lt;li&gt;If I&amp;#39;m generated URLs, I need some way to convert the routes for a
+subsite into the parent site.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;In today&amp;#39;s Yesod, we provide these differences inside the &lt;code&gt;HandlerT&lt;/code&gt;
+type itself. This ends up adding some weird complications around
+special-casing the base (and common) case where &lt;code&gt;m&lt;/code&gt; is &lt;code&gt;IO&lt;/code&gt;. Instead,
+in the new branch, we have just one layer of &lt;code&gt;ReaderT&lt;/code&gt; sitting on top
+of &lt;code&gt;HandlerFor&lt;/code&gt;, providing these three pieces of functionality. And if
+you want to get a better view of this,
+&lt;a href=&#34;https://github.com/yesodweb/yesod/blob/3e06942449cad0b52e218cb7e9f2c06b45b85e69/yesod-core/Yesod/Core/Class/Dispatch.hs#L38&#34;&gt;check out the code&lt;/a&gt;.&lt;/p&gt;&lt;h2&gt;What to do?&lt;/h2&gt;&lt;p&gt;Overall, I think this design is more elegant, easier to understand,
+and simplifies the codebase. In reality, I don&amp;#39;t think it&amp;#39;s either a
+major departure from the past, or a major improvement, which is what
+leaves me on the fence about the no transformer changes.&lt;/p&gt;&lt;p&gt;We&amp;#39;re almost certainly going to have a breaking change in Yesod in the
+near future, but it need not include this change. If it doesn&amp;#39;t, the
+breaking change will be the very minor one mentioned above. If the
+general consensus is in favor of this change, then we may as well
+throw it in at the same time.&lt;/p&gt;</content></entry></feed>

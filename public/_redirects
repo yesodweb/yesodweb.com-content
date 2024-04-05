@@ -1,0 +1,3 @@
+/feed /feed.xml
+/wiki https://github.com/yesodweb/yesod-cookbook
+/wiki/* https://github.com/yesodweb/yesod-cookbook

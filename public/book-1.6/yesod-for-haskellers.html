@@ -1,0 +1,1235 @@
+<!doctype html><!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]--><!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]--><!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]--><!--[if gt IE 8]><!--><html class="no-js" lang="en"> <!--<![endif]--><head><meta charset="UTF-8"><title>Yesod for Haskellers :: Yesod Web Framework Book- Version 1.6</title><meta name="description" content="Yesod is a Haskell web framework for productive development of type-safe, RESTful, high performance web applications."><meta name="viewport" content="width=device-width,initial-scale=1"><link href="/feed" type="application/atom+xml" rel="alternate" title="Yesod Web Framework Blog">
+<style>article,aside,details,figcaption,figure,footer,header,hgroup,nav,section{display:block}audio,canvas,video{display:inline-block;*display:inline;*zoom:1}audio:not([controls]){display:none}[hidden]{display:none}html{font-size:100%;overflow-y:scroll;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{margin:0}body,button,input,select,textarea{font-family:sans-serif}a{color:#00e}a:visited{color:#551a8b}a:focus{outline:thin dotted}a:hover,a:active{outline:0}abbr[title]{border-bottom:1px dotted}b,strong{font-weight:bold}blockquote{margin:1em 40px}dfn{font-style:italic}mark{background:#ff0;color:#000}pre,code,kbd,samp{font-family:"DejaVu Sans Mono", "Droid Sans Mono", consolas, "courier new", monospace;_font-family:'courier new', monospace;font-size:.85em}pre{white-space:pre;white-space:pre-wrap;word-wrap:break-word}q{quotes:none}q:before,q:after{content:'';content:none}small{font-size:75%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-0.5em}sub{bottom:-0.25em}ul,ol{margin:1em 0;padding:0 0 0 40px}dd{margin:0 0 0 40px}nav ul,nav ol{list-style:none;list-style-image:none}img{border:0;-ms-interpolation-mode:bicubic}svg:not(:root){overflow:hidden}figure{margin:0}form{margin:0}fieldset{margin:0 2px;padding:0.35em 0.625em 0.75em}legend{border:0;*margin-left:-7px}button,input,select,textarea{font-size:100%;margin:0;vertical-align:baseline;*vertical-align:middle}button,input{line-height:normal;*overflow:visible}table button,table input{*overflow:auto}button,html input[type="button"],input[type="reset"],input[type="submit"]{cursor:pointer;-webkit-appearance:button}input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}input[type="search"]{-webkit-appearance:textfield;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}textarea{overflow:auto;vertical-align:top}table{border-collapse:collapse;border-spacing:0}pre code{display:block;padding:0.5em;background:#F4F4F4}pre code,pre .ruby .subst,pre .tag .title,pre .lisp .title{color:black}pre .string,pre .title,pre .constant,pre .parent,pre .tag .value,pre .rules .value,pre .rules .value .number,pre .preprocessor,pre .ruby .symbol,pre .ruby .symbol .string,pre .ruby .symbol .keyword,pre .ruby .symbol .keymethods,pre .instancevar,pre .aggregate,pre .template_tag,pre .django .variable,pre .smalltalk .class,pre .addition,pre .flow,pre .stream,pre .bash .variable,pre .apache .tag,pre .apache .cbracket,pre .tex .command,pre .tex .special,pre .erlang_repl .function_or_atom{color:#800}pre .comment,pre .annotation,pre .template_comment,pre .diff .header,pre .chunk{color:#888}pre .number,pre .date,pre .regexp,pre .literal,pre .smalltalk .symbol,pre .smalltalk .char,pre .go .constant,pre .change{color:#080}pre .label,pre .javadoc,pre .ruby .string,pre .decorator,pre .filter .argument,pre .localvars,pre .array,pre .attr_selector,pre .important,pre .pseudo,pre .pi,pre .doctype,pre .deletion,pre .envvar,pre .shebang,pre .apache .sqbracket,pre .nginx .built_in,pre .tex .formula,pre .erlang_repl .reserved,pre .input_number{color:#88F
+}pre .css .tag,pre .javadoctag,pre .phpdoc,pre .yardoctag{font-weight:bold}pre .keyword,pre .id,pre .phpdoc,pre .title,pre .built_in,pre .aggregate,pre .smalltalk .class,pre .winutils,pre .bash .variable,pre .apache .tag,pre .go .typename,pre .tex .command{font-weight:bold}pre .nginx .built_in{font-weight:normal}pre .xml .css,pre .xml .javascript,pre .xml .vbscript,pre .tex .formula{opacity:0.5}aside.note{padding:0.5em;border:1px dotted #000}.github-link{font-size:0.6em}.github-link a,.github-link a:visited{text-decoration:none}article > h1:first-child{margin-top:0}figure > h1{margin:0}p code{background-color:#f0f0f0}a.permalink{font-size:50%;text-decoration:none;position:absolute;left:-25px;top:10px}section > h1{position:relative}pre > code{white-space:pre;overflow-x:auto}@media print, (max-width: 700px) {article > h1:first-child{margin-top:25px}section > h1{margin-bottom:0.5em}}.warning{color:red;font-weight:bold}#main figure{border:1px solid #CCC;box-shadow:0 0 3px #CCC inset;padding:1em;margin:2ex 0}#main figure figcaption{text-size:.9em;text-align:center;color:#555}#main figure img{border:solid 1px #CCC}#container{min-width:1094px}dd,p{text-align:justify}body{font-family:'Crimson Text', serif;font-size:1.2em;background-color:#e5eef9}a,a:visited{color:#000}a:hover,a:active{color:#823}nav{box-shadow:0 -5px 20px 20px rgba(41,55,78,0.12);z-index:100;background-color:#29374e;padding:5px;font-family:'Lato';font-size:0.80em;font-weight:400;position:fixed;width:100%;top:0}nav ul{margin:0;padding:0;text-align:right}nav ul li{display:inline;margin-right:3em}nav ul li.googleplus{position:relative;top:2px;margin-right:3em}nav ul li.feedlink{position:relative;top:3px}nav a,nav a:visited{color:#eee;text-decoration:none}#spotlight{background-image:-webkit-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-moz-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-o-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-ms-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);position:absolute;width:1050px;height:300px;top:0;left:50%;margin-left:-475px;z-index:-1}div.headergroup{width:1050px;margin:0 auto;padding-top:2.6em;padding-bottom:1.3em}div.headergroup a{text-decoration:none;display:flex}div.headergroup div.homepage-logo{text-align:center;width:550px;height:105px;margin-left:75px}div.headergroup div.homepage-logo div.logo-image{background:url(/static/logo-home2-no-esod-smaller2.png?etag=uBLSXtRu) no-repeat center center;width:100%;height:75px}div.headergroup div.homepage-logo div.logo-text{color:#29374e;padding-top:0.2em;font-family:'Lato';font-weight:300;font-size:1.2em;padding-bottom:0.3em}div.headergroup div.homepage-info{text-align:left;font-family:'Lato';font-weight:300;font-size:0.8em;line-height:1.6em;width:220px}div.headergroup h2{margin-bottom:0;font-size:1.4em;margin-top:0;padding-top:0.4em;padding-bottom:1em}h1,h2,h3,h4,h5,h6,dt{color:#474f6b;font-family:'Lato';font-weight:400}h1{font-weight:300;font-size:1.8em}h2,section > section > h1{font-weight:400;font-size:1.5em;margin-bottom:0.5em}h3,section > section > section > h1{font-weight:400;font-size:1.2em;margin-bottom:0.5em}h1 span{display:none}section{display:table-cell}section h2{margin-top:2.2em;margin-bottom:0}section img{max-width:100%}section section{display:block;width:auto;padding:0;margin:0}section.why{width:600px;padding-left:90px;padding-right:90px}section.why article{width:600px}section.getting-started{background-color:#f4f4f4;width:300px;padding-left:50px;padding-right:50px}section.getting-started h2{font-size:1.2em;margin-bottom:0.7em;margin-top:1.8em}section.getting-started ul{font-family:'Lato';font-size:0.75em;font-weight:500;margin-bottom:20px;line-height:2em;list-style-type:none;margin-bottom:50px;padding-left:0}section.getting-started ul ul{font-size:.9em }section.getting-started div{font-family:'Lato';padding-left:20px}#main{box-shadow:0 10px 25px 25px rgba(41,55,78,0.05);background-color:#fff;position:relative;width:1050px;margin:0 auto}aside#announcement{box-shadow:0 0 20px 10px rgba(41,55,78,0.12);height:20px;margin:0 auto;position:relative;width:1080px;background-color:#29374e;color:#eee;padding:0.5em;font-family:'Lato';font-weight:400;font-size:0.8em;z-index:50}aside#announcement div.msg{margin-left:105px}aside#announcement div.tri-left,aside#announcement div.tri-right{width:0;height:0;position:absolute;bottom:-21px;border-style:solid}aside#announcement div.tri-left{left:0;border-width:11px 11px 10px 11px;border-color:#0b1b30 #0b1b30 transparent transparent}aside#announcement div.tri-right{right:0;border-width:11px 11px 11px 10px;border-color:#0b1b30 transparent transparent #0b1b30}aside#announcement a,aside#announcement a:visited{color:#eee;text-decoration:underline}aside#announcement span.date{font-style:italic;font-size:0.8em}#feedlink{display:inline-block;height:16px;width:16px;background:url(/static/blog.png?etag=oPHrQ5qo)}#feedlink span{display:none}dt{font-weight:400;font-size:1.05em;margin-bottom:0.7em;margin-top:2.3em}dd,p{margin:0;font-size:1em;line-height:155%;margin-bottom:0.5em}p.what{display:none;font-size:1.4em;padding:0 200px}#instantclick{display:none}@media print, (max-width: 700px) {body{background-color:#fff;padding:3px}.googleplus,.feedlink,.headergroup,#announcement,#comments,#disqus_thread,#spotlight,#license,.github-link,.oreilly,.main-listing{display:none}div .headergroup{display:none}#container > nav{background-color:#fff;box-shadow:none}#container > nav > ul{text-align:left}#container > nav > ul a,#container > nav > ul a:visited{color:#00f}#main,div#container,section.why > article{width:auto;min-width:0}#main{box-shadow:none;position:static;margin:0}section.why,section.getting-started{display:block;width:auto;padding:0;background-color:#fff}hgroup h1[itemprop=name],hgroup h2,hgroup h3{margin:0}hgroup h1[itemprop=name] img,hgroup h2 img,hgroup h3 img{display:none}dd,p,dt{margin:12px}}@media print {nav{display:none}section.getting-started{display:none}}</style><!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]--><link href="//fonts.googleapis.com/css?family=Crimson+Text:400,400italic,600,600italic,700,700italic" rel="stylesheet" type="text/css"><link href="//fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet" type="text/css"><script>document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/,'js');</script></head><body itemscope itemtype="http://schema.org/Product"><div id="spotlight"></div><div id="container"><nav><ul><li><a href="/book">book</a></li><li><a href="/wiki">cookbook</a></li><li><a href="/blog">blog</a></li><li><a href="/wiki/Home">wiki</a></li><li class="feedlink"><a href="/feed" id="feedlink"><span>newsfeed</span></a></li></ul></nav><div class="headergroup"><a href="/"><div class="homepage-logo"><div class="logo-image"></div><div class="logo-text">Yesod Web Framework</div></div><div class="homepage-info">Yesod is a Haskell web framework for productive development of type-safe, RESTful, high performance web applications.</div></a></div><aside id="announcement"><div class="tri-left"></div><div class="tri-right"></div><div class="msg"><span class="subject">Yesod for Haskellers :: Yesod Web Framework Book- Version 1.6</span></div></aside><div id="main" role="main"><section class="why"><p class="github-link"><a href="https://github.com/yesodweb/yesodweb.com-content/tree/master/book/asciidoc/yesod-for-haskellers.asciidoc">View source on Github</a>
+</p>
+<article><h1>Yesod for Haskellers</h1>
+
+
+<p>The majority of this book is built around giving practical information on how
+to get common tasks done, without drilling too much into the details of what’s
+going on under the surface. While the book presumes knowledge of Haskell, it
+does not follow the typical style of many Haskell libraries introductions. Many
+seasoned Haskellers are put off by this hiding of implementation details. The
+purpose of this chapter is to address those concerns.</p>
+<p>In this chapter, we’ll start off from a bare minimum web application, and
+build up to more complicated examples, explaining the components and their
+types along the way.</p>
+<section id="yesod-for-haskellers_hello_warp">
+<h1>Hello Warp</h1>
+<p>Let’s start off with the most bare minimum application we can think of:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, responseLBS)
+import           Network.Wai.Handler.Warp (run)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _req sendResponse = sendResponse $ responseLBS
+    status200
+    [(&quot;Content-Type&quot;, &quot;text/plain&quot;)]
+    &quot;Hello Warp!&quot;</code></pre>
+<p>Wait a minute, there’s no Yesod in there! Don’t worry, we’ll get there.
+Remember, we’re building from the ground up, and in Yesod, the ground floor is
+WAI, the Web Application Interface. WAI sits between a web <em role="strong">handler</em>, such as a
+web server or a test framework, and a web <em role="strong">application</em>. In our case, the
+handler is Warp, a high performance web server, and our application is the
+<code>app</code> function.</p>
+<p>What’s this mysterious <code>Application</code> type? It’s a type synonym defined as:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">type Application = Request
+                -&gt; (Response -&gt; IO ResponseReceived)
+                -&gt; IO ResponseReceived</code></pre>
+<p>The <code>Request</code> value contains information such as the requested path, query
+string, request headers, request body, and the IP address of the client. The
+second argument is the “send response” function. Instead of simply having the
+application return an <code>IO Response</code>, WAI uses continuation passing style to
+allow for full exception safety, similar to how the <code>bracket</code> function works.</p>
+<p>We can use this to do some simple dispatching:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, pathInfo, responseLBS)
+import           Network.Wai.Handler.Warp (run)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app req sendResponse =
+    case pathInfo req of
+        [&quot;foo&quot;, &quot;bar&quot;] -&gt; sendResponse $ responseLBS
+            status200
+            [(&quot;Content-Type&quot;, &quot;text/plain&quot;)]
+            &quot;You requested /foo/bar&quot;
+        _ -&gt; sendResponse $ responseLBS
+            status200
+            [(&quot;Content-Type&quot;, &quot;text/plain&quot;)]
+            &quot;You requested something else&quot;</code></pre>
+<p>WAI mandates that the path be split into individual fragments (the stuff
+between forward slashes) and converted into text. This allows for easy pattern
+matching. If you need the original, unmodified <code>ByteString</code>, you can use
+<code>rawPathInfo</code>. For more information on the available fields, please see the WAI
+Haddocks.</p>
+<p>That addresses the request side; what about responses? We’ve already seen
+<code>responseLBS</code>, which is a convenient way of creating a response from a lazy
+<code>ByteString</code>. That function takes three arguments: the status code, a list of
+response headers (as key/value pairs), and the body itself. But <code>responseLBS</code>
+is just a convenience wrapper. Under the surface, WAI uses blaze-builder’s
+<code>Builder</code> data type to represent the raw bytes. Let’s dig down another level
+and use that directly:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+import           Blaze.ByteString.Builder (Builder, fromByteString)
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, responseBuilder)
+import           Network.Wai.Handler.Warp (run)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _req sendResponse = sendResponse $ responseBuilder
+    status200
+    [(&quot;Content-Type&quot;, &quot;text/plain&quot;)]
+    (fromByteString &quot;Hello from blaze-builder!&quot; :: Builder)</code></pre>
+<p>This opens up some nice opportunities for efficiently building up response
+bodies, since <code>Builder</code> allows for O(1) append operations. We’re also able to
+take advantage of blaze-html, which sits on top of blaze-builder. Let’s see our
+first HTML application.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+import           Network.HTTP.Types            (status200)
+import           Network.Wai                   (Application, responseBuilder)
+import           Network.Wai.Handler.Warp      (run)
+import           Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
+import           Text.Blaze.Html5              (Html, docTypeHtml)
+import qualified Text.Blaze.Html5              as H
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _req sendResponse = sendResponse $ responseBuilder
+    status200
+    [(&quot;Content-Type&quot;, &quot;text/html&quot;)] -- yay!
+    (renderHtmlBuilder myPage)
+
+myPage :: Html
+myPage = docTypeHtml $ do
+    H.head $ do
+        H.title &quot;Hello from blaze-html and Warp&quot;
+    H.body $ do
+        H.h1 &quot;Hello from blaze-html and Warp&quot;</code></pre>
+<p>But there’s a limitation with using a pure <code>Builder</code> value: we need to create
+the entire response body before returning the <code>Response</code> value. With lazy
+evaluation, that’s not as bad as it sounds, since not all of the body will live in
+memory at once. However, if we need to perform some I/O to generate our
+response body (such as reading data from a database), we’ll be in trouble.</p>
+<p>To deal with that situation, WAI provides a means for generating streaming
+response bodies. It also allows explicit control of flushing the stream.  Let’s
+see how this works.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+import           Blaze.ByteString.Builder           (Builder, fromByteString)
+import           Blaze.ByteString.Builder.Char.Utf8 (fromShow)
+import           Control.Concurrent                 (threadDelay)
+import           Control.Monad                      (forM_)
+import           Control.Monad.Trans.Class          (lift)
+import           Data.Monoid                        ((&lt;&gt;))
+import           Network.HTTP.Types                 (status200)
+import           Network.Wai                        (Application,
+                                                     responseStream)
+import           Network.Wai.Handler.Warp           (run)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _req sendResponse = sendResponse $ responseStream
+    status200
+    [(&quot;Content-Type&quot;, &quot;text/plain&quot;)]
+    myStream
+
+myStream :: (Builder -&gt; IO ()) -&gt; IO () -&gt; IO ()
+myStream send flush = do
+    send $ fromByteString &quot;Starting streaming response.\n&quot;
+    send $ fromByteString &quot;Performing some I/O.\n&quot;
+    flush
+    -- pretend we&#39;re performing some I/O
+    threadDelay 1000000
+    send $ fromByteString &quot;I/O performed, here are some results.\n&quot;
+    forM_ [1..50 :: Int] $ \i -&gt; do
+        send $ fromByteString &quot;Got the value: &quot; &lt;&gt;
+               fromShow i &lt;&gt;
+               fromByteString &quot;\n&quot;</code></pre>
+<aside class="note"><p>wai previously relied on the conduit library for its streaming data
+abstraction, but has since gotten rid of that dependency. However, conduit is
+still well supported in the WAI ecosystem, via the wai-conduit helper package.</p></aside>
+<p>Another common requirement when dealing with a streaming response is safely
+allocating a scarce resource- such as a file handle. By <em role="strong">safely</em>, I mean
+ensuring that the resource will be released, even in the case of some
+exception. This is where the continuation passing style mentioned above comes
+into play:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+import           Blaze.ByteString.Builder (fromByteString)
+import qualified Data.ByteString          as S
+import           Data.Conduit             (Flush (Chunk), ($=))
+import           Data.Conduit.Binary      (sourceHandle)
+import qualified Data.Conduit.List        as CL
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, responseStream)
+import           Network.Wai.Handler.Warp (run)
+import           System.IO                (IOMode (ReadMode), withFile)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _req sendResponse = withFile &quot;index.html&quot; ReadMode $ \handle -&gt;
+    sendResponse $ responseStream
+        status200
+        [(&quot;Content-Type&quot;, &quot;text/html&quot;)]
+        $ \send _flush -&gt;
+            let loop = do
+                    bs &lt;- S.hGet handle 4096
+                    if S.null bs
+                        then return ()
+                        else send (fromByteString bs) &gt;&gt; loop
+             in loop</code></pre>
+<p>Notice how we’re able to take advantage of existing exception safe functions
+like <code>withFile</code> to deal with exceptions properly.</p>
+<p>But in the case of serving files, it’s more efficient to use <code>responseFile</code>,
+which can use the <code>sendfile</code> system call to avoid unnecessary buffer copies:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+import           Network.HTTP.Types       (status200)
+import           Network.Wai              (Application, responseFile)
+import           Network.Wai.Handler.Warp (run)
+
+main :: IO ()
+main = run 3000 app
+
+app :: Application
+app _req sendResponse = sendResponse $ responseFile
+    status200
+    [(&quot;Content-Type&quot;, &quot;text/html&quot;)]
+    &quot;index.html&quot;
+    Nothing -- means &quot;serve whole file&quot;
+            -- you can also serve specific ranges in the file</code></pre>
+<p>There are many aspects of WAI we haven’t covered here. One important topic is WAI middlewares. We also haven’t inspected request bodies at all. But for the purposes of understanding Yesod, we’ve covered enough for the moment.</p>
+</section>
+<section id="yesod-for-haskellers_what_about_yesod">
+<h1>What about Yesod?</h1>
+<p>In all our excitement about WAI and Warp, we still haven’t seen anything about Yesod! Since we just learnt all about WAI, our first question should be: how does Yesod interact with WAI. The answer to that is one very important function:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">toWaiApp :: YesodDispatch site =&gt; site -&gt; IO Application</code></pre>
+<aside class="note"><p>There’s an even more basic function in Yesod, called <code>toWaiAppPlain</code>. The
+distinction is that <code>toWaiAppPlain</code> doesn’t install any additional WAI
+middlewares, while <code>toWaiApp</code> provides commonly used middlewares, such as
+logging, GZIP compression, and HEAD request method handling.</p></aside>
+<p>This function takes some site value, which must be an instance of
+<code>YesodDispatch</code>, and creates an <code>Application</code>. This function lives in the <code>IO</code>
+monad, since it will likely perform actions like allocating a shared logging
+buffer. The more interesting question is what this <code>site</code> value is all about.</p>
+<p>Yesod has a concept of a <em role="strong">foundation data type</em>. This is a data type at the
+core of each application, and is used in three important ways:</p>
+<ul>
+<li>
+<p>
+It can hold onto values that are initialized and shared amongst all aspects of your application, such as an HTTP connection manager, a database connection pool, settings loaded from a file, or some shared mutable state like a counter or cache.
+</p>
+</li>
+<li>
+<p>
+Typeclass instances provide even more information about your application. The <code>Yesod</code> typeclass has various settings, such as what the default template of your app should be, or the maximum allowed request body size. The <code>YesodDispatch</code> class indicates how incoming requests should be dispatched to handler functions. And there are a number of typeclasses commonly used in Yesod helper libraries, such as <code>RenderMessage</code> for i18n support or <code>YesodJquery</code> for providing the shared location of the jQuery Javascript library.
+</p>
+</li>
+<li>
+<p>
+Associated types (i.e., type families) are used to create a related <em role="strong">route data type</em> for each application. This is a simple ADT that represents all legal routes in your application. But using this intermediate data type instead of dealing directly with strings, Yesod applications can take advantage of the compiler to prevent creating invalid links. This feature is known as <em role="strong">type safe URLs</em>.
+</p>
+</li>
+</ul>
+<p>In keeping with the spirit of this chapter, we’re going to create our first
+Yesod application the hard way, by writing everything manually. We’ll
+progressively add more convenience helpers on top as we go along.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Network.HTTP.Types            (status200)
+import           Network.Wai                   (responseBuilder)
+import           Network.Wai.Handler.Warp      (run)
+import           Text.Blaze.Html.Renderer.Utf8 (renderHtmlBuilder)
+import qualified Text.Blaze.Html5              as H
+import           Yesod.Core                    (Html, RenderRoute (..), Yesod,
+                                                YesodDispatch (..), toWaiApp)
+import           Yesod.Core.Types              (YesodRunnerEnv (..))
+
+-- | Our foundation datatype.
+data App = App
+    { welcomeMessage :: !Html
+    }
+
+instance Yesod App
+
+instance RenderRoute App where
+    data Route App = HomeR -- just one accepted URL
+        deriving (Show, Read, Eq, Ord)
+
+    renderRoute HomeR = ( [] -- empty path info, means &quot;/&quot;
+                        , [] -- empty query string
+                        )
+
+instance YesodDispatch App where
+    yesodDispatch (YesodRunnerEnv _logger site _sessionBackend _ _) _req sendResponse =
+        sendResponse $ responseBuilder
+            status200
+            [(&quot;Content-Type&quot;, &quot;text/html&quot;)]
+            (renderHtmlBuilder $ welcomeMessage site)
+
+main :: IO ()
+main = do
+    -- We could get this message from a file instead if we wanted.
+    let welcome = H.p &quot;Welcome to Yesod!&quot;
+    waiApp &lt;- toWaiApp App
+        { welcomeMessage = welcome
+        }
+    run 3000 waiApp</code></pre>
+<p>OK, we’ve added quite a few new pieces here, let’s attack them one at a time.
+The first thing we’ve done is created a new datatype, <code>App</code>. This is commonly
+used as the foundation data type name for each application, though you’re free
+to use whatever name you want. We’ve added one field to this datatype,
+<code>welcomeMessage</code>, which will hold the content for our homepage.</p>
+<p>Next we declare our <code>Yesod</code> instance. We just use the default values for all of
+the methods for this example. More interesting is the <code>RenderRoute</code> typeclass.
+This is the heart of type-safe URLs. We create an associated data type for
+<code>App</code> which lists all of our app’s accepted routes. In this case, we have just
+one: the homepage, which we call <code>HomeR</code>. It’s yet another Yesod naming
+convention to append <code>R</code> to all of the route data constructors.</p>
+<p>We also need to create a <code>renderRoute</code> method, which converts each type-safe
+route value into a tuple of path pieces and query string parameters. We’ll get
+to more interesting examples later, but for now, our homepage has an empty list
+for both of those.</p>
+<p><code>YesodDispatch</code> determines how our application behaves. It has one method,
+<code>yesodDispatch</code>, of type:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">yesodDispatch :: YesodRunnerEnv site -&gt; Application</code></pre>
+<p><code>YesodRunnerEnv</code> provides three values: a <code>Logger</code> value for outputting log
+messages, the foundation datatype value itself, and a session backend, used for
+storing and retrieving information for the user’s active session. In real Yesod
+applications, as you’ll see shortly, you don’t need to interact with these
+values directly, but it’s informative to understand what’s under the surface.</p>
+<p>The return type of <code>yesodDispatch</code> is <code>Application</code> from WAI. But as we saw
+earlier, <code>Application</code> is simply a CPSed function from <code>Request</code> to <code>Response</code>. So
+our implementation of <code>yesodDispatch</code> is able to use everything we learned
+about WAI above. Notice also how we accessed the <code>welcomeMessage</code> from our
+foundation data type.</p>
+<p>Finally, we have the <code>main</code> function. The <code>App</code> value is easy to create and, as
+you can see, you could just as easily have performed some I/O to acquire the
+welcome message. We use <code>toWaiApp</code> to obtain a WAI application, and then pass
+off our application to Warp, just like we did in the past.</p>
+<p>Congratulations, you’ve now seen your first Yesod application! (Or, at least
+your first Yesod application in this chapter.)</p>
+</section>
+<section id="yesod-for-haskellers_the_handlert_monad_transformer">
+<h1>The HandlerT monad transformer</h1>
+<p>While that example was technically using Yesod, it was incredibly uninspiring.
+There’s no question that Yesod did nothing more than get in our way relative to
+WAI. And that’s because we haven’t started taking advantage of any of Yesod’s
+features. Let’s address that, starting with the <code>HandlerT</code> monad transformer.</p>
+<p>There are many common things you’d want to do when handling a single request,
+e.g.:</p>
+<ul>
+<li>
+<p>
+Return some HTML.
+</p>
+</li>
+<li>
+<p>
+Redirect to a different URL.
+</p>
+</li>
+<li>
+<p>
+Return a 404 not found response.
+</p>
+</li>
+<li>
+<p>
+Do some logging.
+</p>
+</li>
+</ul>
+<p>To encapsulate all of this common functionality, Yesod provides a <code>HandlerT</code>
+monad transformer. The vast majority of the code you write in Yesod will live
+in this transformer, so you should get acquainted with it. Let’s start off by
+replacing our previous <code>YesodDispatch</code> instance with a new one that takes
+advantage of <code>HandlerT</code>:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Network.Wai              (pathInfo)
+import           Network.Wai.Handler.Warp (run)
+import qualified Text.Blaze.Html5         as H
+import           Yesod.Core               (HandlerT, Html, RenderRoute (..),
+                                           Yesod, YesodDispatch (..), getYesod,
+                                           notFound, toWaiApp, yesodRunner)
+
+-- | Our foundation datatype.
+data App = App
+    { welcomeMessage :: !Html
+    }
+
+instance Yesod App
+
+instance RenderRoute App where
+    data Route App = HomeR -- just one accepted URL
+        deriving (Show, Read, Eq, Ord)
+
+    renderRoute HomeR = ( [] -- empty path info, means &quot;/&quot;
+                        , [] -- empty query string
+                        )
+
+getHomeR :: HandlerT App IO Html
+getHomeR = do
+    site &lt;- getYesod
+    return $ welcomeMessage site
+
+instance YesodDispatch App where
+    yesodDispatch yesodRunnerEnv req sendResponse =
+        let maybeRoute =
+                case pathInfo req of
+                    [] -&gt; Just HomeR
+                    _  -&gt; Nothing
+            handler =
+                case maybeRoute of
+                    Nothing -&gt; notFound
+                    Just HomeR -&gt; getHomeR
+         in yesodRunner handler yesodRunnerEnv maybeRoute req sendResponse
+
+main :: IO ()
+main = do
+    -- We could get this message from a file instead if we wanted.
+    let welcome = H.p &quot;Welcome to Yesod!&quot;
+    waiApp &lt;- toWaiApp App
+        { welcomeMessage = welcome
+        }
+    run 3000 waiApp</code></pre>
+<p><code>getHomeR</code> is our first handler function. (That name is yet another naming
+convention in the Yesod world: the lower case HTTP request method, followed by
+the route constructor name.) Notice its signature: <code>HandlerT App IO Html</code>. It’s
+so common to have the monad stack <code>HandlerT App IO</code> that most applications have
+a type synonym for it, <code>type Handler = HandlerT App IO</code>. The function is
+returning some <code>Html</code>. You might be wondering if Yesod is hard-coded to only
+work with <code>Html</code> values. We’ll explain that detail in a moment.</p>
+<p>Our function body is short. We use the <code>getYesod</code> function to get the
+foundation data type value, and then return the <code>welcomeMessage</code> field. We’ll
+build up more interesting handlers as we continue.</p>
+<p>The implementation of <code>yesodDispatch</code> is now quite different. The key to it is
+the <code>yesodRunner</code> function, which is a low-level function for converting
+<code>HandlerT</code> stacks into WAI <code>Application</code>s. Let’s look at its type signature:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">yesodRunner :: (ToTypedContent res, Yesod site)
+            =&gt; HandlerT site IO res
+            -&gt; YesodRunnerEnv site
+            -&gt; Maybe (Route site)
+            -&gt; Application</code></pre>
+<p>We’re already familiar with <code>YesodRunnerEnv</code> from our previous example. As you
+can see in our call to <code>yesodRunner</code> above, we pass that value in unchanged.
+The <code>Maybe (Route site)</code> is a bit interesting, and gives us more insight into
+how type-safe URLs work. Until now, we only saw the rendering side of these
+URLs. But just as important is the <em role="strong">parsing</em> side: converting a requested path
+into a route value. In our example, this code is just a few lines, and we store
+the result in <code>maybeRoute</code>.</p>
+<aside class="note"><p>It’s true that our current parse function is small, but in a larger
+application it would need to be more complex, also dealing with issues like
+dynamic parameters. At that point, it becomes a non-trivial endeavor to ensure
+that our parsing and rendering functions remain in proper alignment.  We’ll
+discuss how Yesod deals with that later.</p></aside>
+<p>Coming back to the parameters to <code>yesodRunner</code>: we’ve now addressed the <code>Maybe
+(Route site)</code> and <code>YesodRunerEnv site</code>. To get our <code>HandlerT site IO res</code>
+value, we pattern match on <code>maybeRoute</code>. If it’s <code>Just HomeR</code>, we use
+<code>getHomeR</code>. Otherwise, we use the <code>notFound</code> function, which is a built-in
+function that returns a 404 not found response, using your default site
+template. That template can be overridden in the Yesod typeclass; out of the
+box, it’s just a boring HTML page.</p>
+<p>This almost all makes sense, except for one issue: what’s that <code>ToTypedContent</code>
+typeclass, and what does it have to do with our <code>Html</code> response? Let’s start by
+answering my question from above: no, Yesod does <em role="strong">not</em> in any way hard code
+support for <code>Html</code>. A handler function can return any value that has an
+instance of <code>ToTypedContent</code>. This typeclass (which we will examine in a moment)
+provides both a mime-type and a representation of the data that WAI can
+consume. <code>yesodRunner</code> then converts that into a WAI response, setting the
+<code>Content-Type</code> response header to the mime type, using a 200 OK status code,
+and sending the response body.</p>
+<section id="yesod-for-haskellers_to_content_to_typedcontent">
+<h1>(To)Content, (To)TypedContent</h1>
+<p>At the very core of Yesod’s content system are the following types:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data Content = ContentBuilder !Builder !(Maybe Int) -- ^ The content and optional content length.
+             | ContentSource !(Source (ResourceT IO) (Flush Builder))
+             | ContentFile !FilePath !(Maybe FilePart)
+             | ContentDontEvaluate !Content
+
+type ContentType = ByteString
+data TypedContent = TypedContent !ContentType !Content</code></pre>
+<p><code>Content</code> should remind you a bit of the WAI response types. <code>ContentBuilder</code>
+is similar to <code>responseBuilder</code>, <code>ContentSource</code> is like <code>responseStream</code> but specialized to conduit, and
+<code>ContentFile</code> is like <code>responseFile</code>. Unlike their WAI counterparts, none of
+these constructors contain information on the status code or response headers;
+that’s handled orthogonally in Yesod.</p>
+<p>The one completely new constructor is <code>ContentDontEvaluate</code>. By default, when
+you create a response body in Yesod, Yesod fully evaluates the body before
+generating the response. The reason for this is to ensure that there are no
+impure exceptions in your value. Yesod wants to make sure to catch any such
+exceptions before starting to send your response so that, if there <em role="strong">is</em> an
+exception, Yesod can generate a proper 500 internal server error response
+instead of simply dying in the middle of sending a non-error response. However,
+performing this evaluation can cause more memory usage. Therefore, Yesod
+provides a means of opting out of this protection.</p>
+<p><code>TypedContent</code> is then a minor addition to <code>Content</code>: it includes the
+<code>ContentType</code> as well. Together with a convention that an application returns a
+200 OK status unless otherwise specified, we have everything we need from the
+<code>TypedContent</code> type to create a response.</p>
+<p>Yesod <em role="strong">could</em> have taken the approach of requiring users to always return
+<code>TypedContent</code> from a handler function, but that would have required manually
+converting to that type. Instead, Yesod uses a pair of typeclasses for this,
+appropriately named <code>ToContent</code> and <code>ToTypedContent</code>. They have exactly the
+definitions you’d expect:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">class ToContent a where
+    toContent :: a -&gt; Content
+class ToContent a =&gt; ToTypedContent a where
+    toTypedContent :: a -&gt; TypedContent</code></pre>
+<p>And Yesod provides instances for many common data types, including <code>Text</code>,
+<code>Html</code>, and aeson’s <code>Value</code> type (containing JSON data). That’s how the
+<code>getHomeR</code> function was able to return <code>Html</code>: Yesod knows how to convert it to
+<code>TypedContent</code>, and from there it can be converted into a <code>WAI</code> response.</p>
+</section>
+<section id="yesod-for-haskellers_hascontenttype_and_representations">
+<h1>HasContentType and representations</h1>
+<p>This typeclass approach allows for one other nice abstraction. For many types, the type system itself lets us know what the content-type for the content should be. For example, <code>Html</code> will always be served with a <code>text/html</code> content-type.</p>
+<aside class="note"><p>This isn’t true for all instance of <code>ToTypedContent</code>. For a counter
+example, consider the <code>ToTypedContent TypedContent</code> instance.</p></aside>
+<p>Some requests to a web application can be displayed with various <em role="strong">representation</em>. For example, a request for tabular data could be served with:</p>
+<ul>
+<li>
+<p>
+An HTML table
+</p>
+</li>
+<li>
+<p>
+A CSV file
+</p>
+</li>
+<li>
+<p>
+XML
+</p>
+</li>
+<li>
+<p>
+JSON data to be consumed by some client-side Javascript
+</p>
+</li>
+</ul>
+<p>The HTTP spec allows a client to specify its preference of representation via
+the <code>accept</code> request header. And Yesod allows a handler function to use the
+<code>selectRep</code>/<code>provideRep</code> function combo to provide multiple representations,
+and have the framework automatically choose the appropriate one based on the
+client headers.</p>
+<p>The last missing piece to make this all work is the <code>HasContentType</code> typeclass:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">class ToTypedContent a =&gt; HasContentType a where
+    getContentType :: Monad m =&gt; m a -&gt; ContentType</code></pre>
+<p>The parameter <code>m a</code> is just a poor man’s <code>Proxy</code> type. And, in hindsight, we
+should have used <code>Proxy</code>, but that would now be a breaking change. There are
+instances for this typeclass for most data types supported by <code>ToTypedContent</code>.
+Below is our example from above, tweaked just a bit to provide multiple
+representations of the data:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Data.Text                (Text)
+import           Network.Wai              (pathInfo)
+import           Network.Wai.Handler.Warp (run)
+import qualified Text.Blaze.Html5         as H
+import           Yesod.Core               (HandlerT, Html, RenderRoute (..),
+                                           TypedContent, Value, Yesod,
+                                           YesodDispatch (..), getYesod,
+                                           notFound, object, provideRep,
+                                           selectRep, toWaiApp, yesodRunner,
+                                           (.=))
+
+-- | Our foundation datatype.
+data App = App
+    { welcomeMessageHtml :: !Html
+    , welcomeMessageText :: !Text
+    , welcomeMessageJson :: !Value
+    }
+
+instance Yesod App
+
+instance RenderRoute App where
+    data Route App = HomeR -- just one accepted URL
+        deriving (Show, Read, Eq, Ord)
+
+    renderRoute HomeR = ( [] -- empty path info, means &quot;/&quot;
+                        , [] -- empty query string
+                        )
+
+getHomeR :: HandlerT App IO TypedContent
+getHomeR = do
+    site &lt;- getYesod
+    selectRep $ do
+        provideRep $ return $ welcomeMessageHtml site
+        provideRep $ return $ welcomeMessageText site
+        provideRep $ return $ welcomeMessageJson site
+
+instance YesodDispatch App where
+    yesodDispatch yesodRunnerEnv req sendResponse =
+        let maybeRoute =
+                case pathInfo req of
+                    [] -&gt; Just HomeR
+                    _  -&gt; Nothing
+            handler =
+                case maybeRoute of
+                    Nothing -&gt; notFound
+                    Just HomeR -&gt; getHomeR
+         in yesodRunner handler yesodRunnerEnv maybeRoute req sendResponse
+
+main :: IO ()
+main = do
+    waiApp &lt;- toWaiApp App
+        { welcomeMessageHtml = H.p &quot;Welcome to Yesod!&quot;
+        , welcomeMessageText = &quot;Welcome to Yesod!&quot;
+        , welcomeMessageJson = object [&quot;msg&quot; .= (&quot;Welcome to Yesod!&quot; :: Text)]
+        }
+    run 3000 waiApp</code></pre>
+</section>
+<section id="yesod-for-haskellers_convenience_literal_warp_literal_function">
+<h1>Convenience <code>warp</code> function</h1>
+<p>And one minor convenience you’ll see quite a bit in the Yesod world. It’s very
+common to call <code>toWaiApp</code> to create a WAI <code>Application</code>, and then pass that to
+Warp’s <code>run</code> function. So Yesod provides a convenience <code>warp</code> wrapper function.
+We can replace our previous <code>main</code> function with the following:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">main :: IO ()
+main =
+    warp 3000 App
+        { welcomeMessageHtml = H.p &quot;Welcome to Yesod!&quot;
+        , welcomeMessageText = &quot;Welcome to Yesod!&quot;
+        , welcomeMessageJson = object [&quot;msg&quot; .= (&quot;Welcome to Yesod!&quot; :: Text)]
+        }</code></pre>
+<p>There’s also a <code>warpEnv</code> function which reads the port number from the <code>PORT</code>
+environment variable, which is useful for working with platforms such as FP
+Haskell Center, or deployment tools like Keter.</p>
+</section>
+</section>
+<section id="yesod-for-haskellers_writing_handlers">
+<h1>Writing handlers</h1>
+<p>Since the vast majority of your application will end up living in the
+<code>HandlerT</code> monad transformer, it’s not surprising that there are quite a few
+functions that work in that context. <code>HandlerT</code> is an instance of many common
+typeclasses, including <code>MonadIO</code>, <code>MonadTrans</code>, <code>MonadBaseControl</code>,
+<code>MonadLogger</code> and <code>MonadResource</code>, and so can automatically take advantage of
+those functionalities.</p>
+<p>In addition to that standard functionality, the following are some common
+categories of functions. The only requirement Yesod places on your handler
+functions is that, ultimately, they return a type which is an instance of
+<code>ToTypedContent</code>.</p>
+<p>This section is just a short overview of functionality. For more information,
+you should either look through the Haddocks, or read the rest of this book.</p>
+<section id="yesod-for-haskellers_getting_request_parameters">
+<h1>Getting request parameters</h1>
+<p>There are a few pieces of information provided by the client in a request:</p>
+<ul>
+<li>
+<p>
+The requested path. This is usually handled by Yesod’s routing framework, and is not directly queried in a handler function.
+</p>
+</li>
+<li>
+<p>
+Query string parameters. This can be queried using <code>lookupGetParam</code>.
+</p>
+</li>
+<li>
+<p>
+Request bodies. In the case of URL encoded and multipart bodies, you can use <code>lookupPostParam</code> to get the request parameter. For multipart bodies, there’s also <code>lookupFile</code> for file parameters.
+</p>
+</li>
+<li>
+<p>
+Request headers can be queried via <code>lookupHeader</code>. (And response headers can be set with <code>addHeader</code>.)
+</p>
+</li>
+<li>
+<p>
+Yesod parses cookies for you automatically, and they can be queried using <code>lookupCookie</code>. (Cookies can be <em role="strong">set</em> via the <code>setCookie</code> function.)
+</p>
+</li>
+<li>
+<p>
+Finally, Yesod provides a user session framework, where data can be set in a cryptographically secure session and associated with each user. This can be queried and set using the functions <code>lookupSession</code>, <code>setSession</code> and <code>deleteSession</code>.
+</p>
+</li>
+</ul>
+<p>While you can use these functions directly for such purposes as processing
+forms, you usually will want to use the yesod-form library, which provides a
+higher level form abstraction based on applicative functors.</p>
+</section>
+<section id="yesod-for-haskellers_short_circuiting">
+<h1>Short circuiting</h1>
+<p>In some cases, you’ll want to short circuit the handling of a request. Reasons
+for doing this would be:</p>
+<ul>
+<li>
+<p>
+Send an HTTP redirect, via the <code>redirect</code> function. This will default to using the 303 status code. You can use <code>redirectWith</code> to get more control over this.
+</p>
+</li>
+<li>
+<p>
+Return a 404 not found with <code>notFound</code>, or a 405 bad method via <code>badMethod</code>.
+</p>
+</li>
+<li>
+<p>
+Indicate some error in the request via <code>notAuthenticated</code>, <code>permissionDenied</code>, or <code>invalidArgs</code>.
+</p>
+</li>
+<li>
+<p>
+Send a special response, such as with <code>sendFile</code> or <code>sendResponseStatus</code> (to override the status 200 response code)
+</p>
+</li>
+<li>
+<p>
+<code>sendWaiResponse</code> to drop down a level of abstraction, bypass some Yesod abstractions, and use WAI itself.
+</p>
+</li>
+</ul>
+</section>
+<section id="yesod-for-haskellers_streaming">
+<h1>Streaming</h1>
+<p>So far, the examples of <code>ToTypedContent</code> instances I gave all involved
+non-streaming responses. <code>Html</code>, <code>Text</code>, and <code>Value</code> all get converted into a
+<code>ContentBuilder</code> constructor. As such, they cannot interleave I/O with sending
+data to the user. What happens if we want to perform such interleaving?</p>
+<p>When we encountered this issue in WAI, we introduced the <code>responseSource</code>
+method of constructing a response. Using <code>sendWaiResponse</code>, we could reuse that
+same method for creating a streaming response in Yesod. But there’s also a
+simpler API for doing this: <code>respondSource</code>. <code>respondSource</code> takes two
+parameters: the content type of the response, and a <code>Source</code> of <code>Flush
+Builder</code>. Yesod also provides a number of convenience functions for creating
+that <code>Source</code>, such as <code>sendChunk</code>, <code>sendChunkBS</code>, and <code>sendChunkText</code>.</p>
+<p>Here’s an example, which just converts our initial <code>responseSource</code> example
+from WAI to Yesod.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active web">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Blaze.ByteString.Builder           (fromByteString)
+import           Blaze.ByteString.Builder.Char.Utf8 (fromShow)
+import           Control.Concurrent                 (threadDelay)
+import           Control.Monad                      (forM_)
+import           Data.Monoid                        ((&lt;&gt;))
+import           Network.Wai                        (pathInfo)
+import           Yesod.Core                         (HandlerT, RenderRoute (..),
+                                                     TypedContent, Yesod,
+                                                     YesodDispatch (..), liftIO,
+                                                     notFound, respondSource,
+                                                     sendChunk, sendChunkBS,
+                                                     sendChunkText, sendFlush,
+                                                     warp, yesodRunner)
+
+-- | Our foundation datatype.
+data App = App
+
+instance Yesod App
+
+instance RenderRoute App where
+    data Route App = HomeR -- just one accepted URL
+        deriving (Show, Read, Eq, Ord)
+
+    renderRoute HomeR = ( [] -- empty path info, means &quot;/&quot;
+                        , [] -- empty query string
+                        )
+
+getHomeR :: HandlerT App IO TypedContent
+getHomeR = respondSource &quot;text/plain&quot; $ do
+    sendChunkBS &quot;Starting streaming response.\n&quot;
+    sendChunkText &quot;Performing some I/O.\n&quot;
+    sendFlush
+    -- pretend we&#39;re performing some I/O
+    liftIO $ threadDelay 1000000
+    sendChunkBS &quot;I/O performed, here are some results.\n&quot;
+    forM_ [1..50 :: Int] $ \i -&gt; do
+        sendChunk $ fromByteString &quot;Got the value: &quot; &lt;&gt;
+                    fromShow i &lt;&gt;
+                    fromByteString &quot;\n&quot;
+
+instance YesodDispatch App where
+    yesodDispatch yesodRunnerEnv req sendResponse =
+        let maybeRoute =
+                case pathInfo req of
+                    [] -&gt; Just HomeR
+                    _  -&gt; Nothing
+            handler =
+                case maybeRoute of
+                    Nothing -&gt; notFound
+                    Just HomeR -&gt; getHomeR
+         in yesodRunner handler yesodRunnerEnv maybeRoute req sendResponse
+
+main :: IO ()
+main = warp 3000 App</code></pre>
+</section>
+</section>
+<section id="yesod-for-haskellers_dynamic_parameters">
+<h1>Dynamic parameters</h1>
+<p>Now that we’ve finished our detour into the details of the <code>HandlerT</code>
+transformer, let’s get back to higher-level Yesod request processing. So far,
+all of our examples have dealt with a single supported request route. Let’s
+make this more interesting. We now want to have an application which serves
+Fibonacci numbers. If you make a request to <code>/fib/5</code>, it will return the fifth
+Fibonacci number. And if you visit <code>/</code>, it will automatically redirect you to
+<code>/fib/1</code>.</p>
+<p>In the Yesod world, the first question to ask is: how do we model our route
+data type? This is pretty straight-forward: <code>data Route App = HomeR | FibR
+Int</code>. The question is: how do we want to define our <code>RenderRoute</code> instance? We
+need to convert the <code>Int</code> to a <code>Text</code>. What function should we use?</p>
+<p>Before you answer that, realize that we’ll <em role="strong">also</em> need to be able to parse back a <code>Text</code> into an <code>Int</code> for dispatch purposes. So we need to make sure that we have a pair of functions with the property <code>fromText . toText == Just</code>. <code>Show</code>/<code>Read</code> could be a candidate for this, except that:</p>
+<ol numeration="arabic">
+<li>
+<p>
+We’d be required to convert through <code>String</code>.
+</p>
+</li>
+<li>
+<p>
+The <code>Show</code>/<code>Read</code> instances for <code>Text</code> and <code>String</code> both involve extra escaping, which we don’t want to incur.
+</p>
+</li>
+</ol>
+<p>Instead, the approach taken by Yesod is the path-pieces package, and in
+particular the <code>PathPiece</code> typeclass, defined as:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">class PathPiece s where
+    fromPathPiece :: Text -&gt; Maybe s
+    toPathPiece   :: s    -&gt; Text</code></pre>
+<p>Using this typeclass, we can write parse and render functions for our route datatype:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">instance RenderRoute App where
+    data Route App = HomeR | FibR Int
+        deriving (Show, Read, Eq, Ord)
+
+    renderRoute HomeR = ([], [])
+    renderRoute (FibR i) = ([&quot;fib&quot;, toPathPiece i], [])
+
+parseRoute&#39; [] = Just HomeR
+parseRoute&#39; [&quot;fib&quot;, i] = FibR &lt;$&gt; fromPathPiece i
+parseRoute&#39; _ = Nothing</code></pre>
+<p>And then we can write our <code>YesodDispatch</code> typeclass instance:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">instance YesodDispatch App where
+    yesodDispatch yesodRunnerEnv req sendResponse =
+        let maybeRoute = parseRoute&#39; (pathInfo req)
+            handler =
+                case maybeRoute of
+                    Nothing -&gt; notFound
+                    Just HomeR -&gt; getHomeR
+                    Just (FibR i) -&gt; getFibR i
+         in yesodRunner handler yesodRunnerEnv maybeRoute req sendResponse
+
+getHomeR = redirect (FibR 1)
+
+fibs :: [Int]
+fibs = 0 : scanl (+) 1 fibs
+
+getFibR i = return $ show $ fibs !! i</code></pre>
+<p>Notice our call to <code>redirect</code> in <code>getHomeR</code>. We’re able to use the route
+datatype as the parameter to <code>redirect</code>, and Yesod takes advantage of our
+<code>renderRoute</code> function to create a textual link.</p>
+</section>
+<section id="yesod-for-haskellers_routing_with_template_haskell">
+<h1>Routing with Template Haskell</h1>
+<p>Now let’s suppose we want to add a new route to our previous application. We’d
+have to make the following changes:</p>
+<ol numeration="arabic">
+<li>
+<p>
+Modify the <code>Route</code> datatype itself.
+</p>
+</li>
+<li>
+<p>
+Add a clause to <code>renderRoute</code>.
+</p>
+</li>
+<li>
+<p>
+Add a clause to <code>parseRoute&#39;</code>, and make sure it corresponds correctly to <code>renderRoute</code>.
+</p>
+</li>
+<li>
+<p>
+Add a clause to the case statement in <code>yesodDispatch</code> to call our handler function.
+</p>
+</li>
+<li>
+<p>
+Write our handler function.
+</p>
+</li>
+</ol>
+<p>That’s a lot of changes! And lots of manual, boilerplate changes means lots of
+potential for mistakes. Some of the mistakes can be caught by the compiler if
+you turn on warnings (forgetting to add a clause in <code>renderRoute</code> or a match in
+<code>yesodDispatch</code>&#39;s case statement), but others cannot (ensuring that
+<code>renderRoute</code> and <code>parseRoute</code> have the same logic, or adding the <code>parseRoute</code>
+clause).</p>
+<p>This is where Template Haskell comes into the Yesod world. Instead of dealing
+with all of these changes manually, Yesod declares a high level routing syntax.
+This syntax lets you specify your route syntax, dynamic parameters, constructor
+names, and accepted request methods, and automatically generates parse, render,
+and dispatch functions.</p>
+<p>To get an idea of how much manual coding this saves, have a look at our
+previous example converted to the Template Haskell version:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active web">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE ViewPatterns      #-}
+import           Yesod.Core (RenderRoute (..), Yesod, mkYesod, parseRoutes,
+                             redirect, warp)
+
+-- | Our foundation datatype.
+data App = App
+
+mkYesod &quot;App&quot; [parseRoutes|
+/         HomeR GET
+/fib/#Int FibR  GET
+|]
+
+instance Yesod App
+
+getHomeR :: Handler ()
+getHomeR = redirect (FibR 1)
+
+fibs :: [Int]
+fibs = 0 : scanl (+) 1 fibs
+
+getFibR :: Int -&gt; Handler String
+getFibR i = return $ show $ fibs !! i
+
+main :: IO ()
+main = warp 3000 App</code></pre>
+<p>What’s wonderful about this is, as the developer, you can now focus on the
+important part of your application, and not get involved in the details of
+writing parsers and renderers. There are of course some downsides to the usage
+of Template Haskell:</p>
+<ul>
+<li>
+<p>
+Compile times are a bit slower.
+</p>
+</li>
+<li>
+<p>
+The details of what’s going on behind the scenes aren’t easily apparent. (Though you can use <code>cabal haddock</code> to see what identifiers have been generated for you.)
+</p>
+</li>
+<li>
+<p>
+You don’t have as much fine-grained control. For example, in the Yesod route syntax, each dynamic parameter has to be a separate field in the route constructor, as opposed to bundling fields together. This is a conscious trade-off in Yesod between flexibility and complexity.
+</p>
+</li>
+</ul>
+<p>This usage of Template Haskell is likely the most controversial decision in
+Yesod. I personally think the benefits definitely justify its usage. But if
+you’d rather avoid Template Haskell, you’re free to do so. Every example so far
+in this chapter has done so, and you can follow those techniques. We also have
+another, simpler approach in the Yesod world: <code>LiteApp</code>.</p>
+<section id="yesod-for-haskellers_liteapp">
+<h1>LiteApp</h1>
+<p><code>LiteApp</code> allows you to throw away type safe URLs and Template Haskell. It uses
+a simple routing DSL in pure Haskell. Once again, as a simple comparison, let’s
+rewrite our Fibonacci example to use it.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active web">import           Data.Text  (pack)
+import           Yesod.Core (LiteHandler, dispatchTo, dispatchTo, liteApp,
+                             onStatic, redirect, warp, withDynamic)
+
+getHomeR :: LiteHandler ()
+getHomeR = redirect &quot;/fib/1&quot;
+
+fibs :: [Int]
+fibs = 0 : scanl (+) 1 fibs
+
+getFibR :: Int -&gt; LiteHandler String
+getFibR i = return $ show $ fibs !! i
+
+main :: IO ()
+main = warp 3000 $ liteApp $ do
+    dispatchTo getHomeR
+    onStatic (pack &quot;fib&quot;) $ withDynamic $ \i -&gt; dispatchTo (getFibR i)</code></pre>
+<p>There you go, a simple Yesod app without any language extensions at all!
+However, even this application still demonstrates some type safety. Yesod will
+use <code>fromPathPiece</code> to convert the parameter for <code>getFibR</code> from <code>Text</code> to an
+<code>Int</code>, so any invalid parameter will be got by Yesod itself. It’s just one less
+piece of checking that you have to perform.</p>
+</section>
+</section>
+<section id="yesod-for-haskellers_shakespeare">
+<h1>Shakespeare</h1>
+<p>While generating plain text pages can be fun, it’s hardly what one normally
+expects from a web framework. As you’d hope, Yesod comes built in with support
+for generating HTML, CSS and Javascript as well.</p>
+<p>Before we get into templating languages, let’s do it the raw, low-level way,
+and then build up to something a bit more pleasant.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active web">import           Data.Text  (pack)
+import           Yesod.Core
+
+getHomeR :: LiteHandler TypedContent
+getHomeR = return $ TypedContent typeHtml $ toContent
+    &quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;Hi There!&lt;/title&gt;\
+    \&lt;link rel=&#39;stylesheet&#39; href=&#39;/style.css&#39;&gt;\
+    \&lt;script src=&#39;/script.js&#39;&gt;&lt;/script&gt;&lt;/head&gt;\
+    \&lt;body&gt;&lt;h1&gt;Hello World!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;&quot;
+
+getStyleR :: LiteHandler TypedContent
+getStyleR = return $ TypedContent typeCss $ toContent
+    &quot;h1 { color: red }&quot;
+
+getScriptR :: LiteHandler TypedContent
+getScriptR = return $ TypedContent typeJavascript $ toContent
+    &quot;alert(&#39;Yay, Javascript works too!&#39;);&quot;
+
+main :: IO ()
+main = warp 3000 $ liteApp $ do
+    dispatchTo getHomeR
+    onStatic (pack &quot;style.css&quot;) $ dispatchTo getStyleR
+    onStatic (pack &quot;script.js&quot;) $ dispatchTo getScriptR</code></pre>
+<p>We’re just reusing all of the <code>TypedContent</code> stuff we’ve already learnt. We now
+have three separate routes, providing HTML, CSS and Javascript. We write our
+content as <code>String</code>s, convert them to <code>Content</code> using <code>toContent</code>, then wrap
+them with a <code>TypedContent</code> constructor to give them the appropriate
+content-type headers.</p>
+<p>But as usual, we can do better. Dealing with <code>String</code>s is not very efficient,
+and it’s tedious to have to manually put in the content type all the time. But
+we already know the solution to those problems: use the <code>Html</code> datatype from
+<code>blaze-html</code>. Let’s convert our <code>getHomeR</code> function to use it:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active web">import           Data.Text                   (pack)
+import           Text.Blaze.Html5            (toValue, (!))
+import qualified Text.Blaze.Html5            as H
+import qualified Text.Blaze.Html5.Attributes as A
+import           Yesod.Core
+
+getHomeR :: LiteHandler Html
+getHomeR = return $ H.docTypeHtml $ do
+    H.head $ do
+        H.title $ toHtml &quot;Hi There!&quot;
+        H.link ! A.rel (toValue &quot;stylesheet&quot;) ! A.href (toValue &quot;/style.css&quot;)
+        H.script ! A.src (toValue &quot;/script.js&quot;) $ return ()
+    H.body $ do
+        H.h1 $ toHtml &quot;Hello World!&quot;
+
+getStyleR :: LiteHandler TypedContent
+getStyleR = return $ TypedContent typeCss $ toContent
+    &quot;h1 { color: red }&quot;
+
+getScriptR :: LiteHandler TypedContent
+getScriptR = return $ TypedContent typeJavascript $ toContent
+    &quot;alert(&#39;Yay, Javascript works too!&#39;);&quot;
+
+main :: IO ()
+main = warp 3000 $ liteApp $ do
+    dispatchTo getHomeR
+    onStatic (pack &quot;style.css&quot;) $ dispatchTo getStyleR
+    onStatic (pack &quot;script.js&quot;) $ dispatchTo getScriptR</code></pre>
+<p>Ahh, far nicer. <code>blaze-html</code> provides a convenient combinator library, and will
+execute far faster in most cases than whatever <code>String</code> concatenation you might
+attempt.</p>
+<p>If you’re happy with <code>blaze-html</code> combinators, by all means use them. However,
+many people like to use a more specialized templating language. Yesod’s
+standard provider for this is the Shakespearean languages: Hamlet, Lucius, and
+Julius. You are by all means welcome to use a different system if so desired,
+the only requirement is that you can get a <code>Content</code> value from the template.</p>
+<p>Since Shakespearean templates are compile-time checked, their usage requires
+either quasiquotation or Template Haskell. We’ll go for the former approach
+here. Please see the Shakespeare chapter in the book for more information.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active web">{-# LANGUAGE QuasiQuotes #-}
+import           Data.Text   (Text, pack)
+import           Text.Julius (Javascript)
+import           Text.Lucius (Css)
+import           Yesod.Core
+
+getHomeR :: LiteHandler Html
+getHomeR = withUrlRenderer $
+    [hamlet|
+        $doctype 5
+        &lt;html&gt;
+            &lt;head&gt;
+                &lt;title&gt;Hi There!
+                &lt;link rel=stylesheet href=/style.css&gt;
+                &lt;script src=/script.js&gt;
+            &lt;body&gt;
+                &lt;h1&gt;Hello World!
+    |]
+
+getStyleR :: LiteHandler Css
+getStyleR = withUrlRenderer [lucius|h1 { color: red }|]
+
+getScriptR :: LiteHandler Javascript
+getScriptR = withUrlRenderer [julius|alert(&#39;Yay, Javascript works too!&#39;);|]
+
+main :: IO ()
+main = warp 3000 $ liteApp $ do
+    dispatchTo getHomeR
+    onStatic (pack &quot;style.css&quot;) $ dispatchTo getStyleR
+    onStatic (pack &quot;script.js&quot;) $ dispatchTo getScriptR</code></pre>
+<section id="yesod-for-haskellers_url_rendering_function">
+<h1>URL rendering function</h1>
+<p>Likely the most confusing part of this is the <code>withUrlRenderer</code> calls. This
+gets into one of the most powerful features of Yesod: type-safe URLs. If you
+notice in our HTML, we’re providing links to the CSS and Javascript URLs via
+strings. This leads to a duplication of that information, as in our <code>main</code>
+function we have to provide those strings a second time. This is very fragile:
+our codebase is one refactor away from having broken links.</p>
+<p>The recommended approach instead would be to use our type-safe URL datatype in
+our template instead of including explicit strings. As mentioned above,
+<code>LiteApp</code> doesn’t provide any meaningful type-safe URLs, so we don’t have that
+option here. But if you use the Template Haskell generators, you get type-safe
+URLs for free.</p>
+<p>In any event, the Shakespearean templates all expect to receive a function to
+handle the rendering of a type-safe URL. Since we don’t actually use any
+type-safe URLs, just about any function would work here (the function will be
+ignored entirely), but <code>withUrlRenderer</code> is a convenient way of doing this.</p>
+<p>As we’ll see next, <code>withUrlRenderer</code> isn’t really needed most of the time,
+since Widgets end up providing the renderer function for us automatically.</p>
+</section>
+</section>
+<section id="yesod-for-haskellers_widgets">
+<h1>Widgets</h1>
+<p>Dealing with HTML, CSS and Javascript as individual components can be nice in
+many cases. However, when you want to build up reusable components for a page,
+it can get in the way of composability. If you want more motivation for why
+widgets are useful, please see the widget chapter. For now, let’s just dig into
+using them.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active web">{-# LANGUAGE QuasiQuotes #-}
+import           Yesod.Core
+
+getHomeR :: LiteHandler Html
+getHomeR = defaultLayout $ do
+    setTitle $ toHtml &quot;Hi There!&quot;
+    [whamlet|&lt;h1&gt;Hello World!|]
+    toWidget [lucius|h1 { color: red }|]
+    toWidget [julius|alert(&#39;Yay, Javascript works too!&#39;);|]
+
+main :: IO ()
+main = warp 3000 $ liteApp $ dispatchTo getHomeR</code></pre>
+<p>This is the same example as above, but we’ve now condensed it into a single
+handler. Yesod will automatically handle providing the CSS and Javascript to
+the HTML. By default, it will place them in <code>style</code> and <code>script</code> tags in the
+<code>head</code> and <code>body</code> of the page, respectively, but Yesod provides many
+customization settings to do other things (such as automatically creating
+temporary static files and linking to them).</p>
+<p>Widgets also have another advantage. The <code>defaultLayout</code> function is a member
+of the <code>Yesod</code> typeclass, and can be modified to provide a customized
+look-and-feel for your website. Many built-in pieces of Yesod, such as error
+messages, take advantage of the widget system, so by using widgets, you get a
+consistent feel throughout your site.</p>
+</section>
+<section id="yesod-for-haskellers_details_we_won_8217_t_cover">
+<h1>Details we won’t cover</h1>
+<p>Hopefully this chapter has pulled back enough of the “magic” in Yesod to let
+you understand what’s going on under the surface. We could of course continue
+using this approach for analyze the rest of the Yesod ecosystem, but that would
+be mostly redundant with the rest of this book. Hopefully you can now feel more
+informed as you read chapters on Persistent, forms, sessions, and subsites.</p>
+</section>
+</article>
+</section>
+<section class="getting-started"><h2> Chapters</h2>
+<ul><li>Basics
+<ul><li><a href="/book-1.6/introduction">Introduction</a>
+</li>
+<li><a href="/book-1.6/haskell">Haskell</a>
+</li>
+<li><a href="/book-1.6/basics">Basics</a>
+</li>
+<li><a href="/book-1.6/shakespearean-templates">Shakespearean Templates</a>
+</li>
+<li><a href="/book-1.6/widgets">Widgets</a>
+</li>
+<li><a href="/book-1.6/yesod-typeclass">Yesod Typeclass</a>
+</li>
+<li><a href="/book-1.6/routing-and-handlers">Routing and Handlers</a>
+</li>
+<li><a href="/book-1.6/forms">Forms</a>
+</li>
+<li><a href="/book-1.6/sessions">Sessions</a>
+</li>
+<li><a href="/book-1.6/persistent">Persistent</a>
+</li>
+<li><a href="/book-1.6/deploying-your-webapp">Deploying your Webapp</a>
+</li>
+</ul>
+</li>
+<li>Advanced
+<ul><li><a href="/book-1.6/restful-content">RESTful Content</a>
+</li>
+<li><a href="/book-1.6/yesods-monads">Yesod’s Monads</a>
+</li>
+<li><a href="/book-1.6/authentication-and-authorization">Authentication and Authorization</a>
+</li>
+<li><a href="/book-1.6/scaffolding-and-the-site-template">Scaffolding and the Site Template</a>
+</li>
+<li><a href="/book-1.6/internationalization">Internationalization</a>
+</li>
+<li><a href="/book-1.6/creating-a-subsite">Creating a Subsite</a>
+</li>
+<li><a href="/book-1.6/understanding-request">Understanding a Request</a>
+</li>
+<li><a href="/book-1.6/sql-joins">SQL Joins</a>
+</li>
+<li><a href="/book-1.6/yesod-for-haskellers">Yesod for Haskellers</a>
+</li>
+</ul>
+</li>
+<li>Examples
+<ul><li><a href="/book-1.6/initializing-foundation-data">Initializing data in the foundation datatype</a>
+</li>
+<li><a href="/book-1.6/blog-example-advanced">Blog: i18n, authentication, authorization, and database</a>
+</li>
+<li><a href="/book-1.6/wiki-chat-example">Wiki: markdown, chat subsite, event source</a>
+</li>
+<li><a href="/book-1.6/json-web-service">JSON Web Service</a>
+</li>
+<li><a href="/book-1.6/case-study-sphinx">Case Study: Sphinx-based Search</a>
+</li>
+<li><a href="/book-1.6/visitor-counter">Visitor counter</a>
+</li>
+<li><a href="/book-1.6/single-process-pubsub">Single process pub-sub</a>
+</li>
+<li><a href="/book-1.6/environment-variables">Environment variables for configuration</a>
+</li>
+<li><a href="/book-1.6/route-attributes">Route attributes</a>
+</li>
+</ul>
+</li>
+<li>Appendices
+<ul><li><a href="/book-1.6/monad-control">monad-control</a>
+</li>
+<li><a href="/book-1.6/web-application-interface">Web Application Interface</a>
+</li>
+<li><a href="/book-1.6/settings-types">Settings Types</a>
+</li>
+<li><a href="/book-1.6/http-conduit">http-conduit</a>
+</li>
+<li><a href="/book-1.6/xml">xml-conduit</a>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script><script src="//ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script><script>var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function c(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function j(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function g(t,s){var r="";for(var q=0;q<t.childNodes.length;q++){if(t.childNodes[q].nodeType==3){var p=t.childNodes[q].nodeValue;if(s){p=p.replace(/\n/g,"")}r+=p}else{if(t.childNodes[q].nodeName=="BR"){r+="\n"}else{r+=g(t.childNodes[q])}}}if(/MSIE [678]/.test(navigator.userAgent)){r=r.replace(/\r/g,"\n")}return r}function a(s){var q=s.className.split(/\s+/);q=q.concat(s.parentNode.className.split(/\s+/));for(var p=0;p<q.length;p++){var r=q[p].replace(/^language-/,"");if(d[r]||r=="no-highlight"){return r}}}function b(p){var q=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{q.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);q.push({event:"stop",offset:t,node:s.childNodes[r]})}}}return t})(p,0);return q}function l(y,z,x){var r=0;var w="";var t=[];function u(){if(y.length&&z.length){if(y[0].offset!=z[0].offset){return(y[0].offset<z[0].offset)?y:z}else{return z[0].event=="start"?y:z}}else{return y.length?y:z}}function s(C){var D="<"+C.nodeName.toLowerCase();for(var A=0;A<C.attributes.length;A++){var B=C.attributes[A];D+=" "+B.nodeName.toLowerCase();if(B.nodeValue!=undefined&&B.nodeValue!=false&&B.nodeValue!=null){D+='="'+m(B.nodeValue)+'"'}}return D+">"}while(y.length||z.length){var v=u().splice(0,1)[0];w+=m(x.substr(r,v.offset-r));r=v.offset;if(v.event=="start"){w+=s(v.node);t.push(v.node)}else{if(v.event=="stop"){var q=t.length;do{q--;var p=t[q];w+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);t.splice(q,1);while(q<t.length){w+=s(t[q]);q++}}}}w+=x.substr(r);return w}function i(){function p(u,t,v){if(u.compiled){return}if(!v){u.bR=c(t,u.b?u.b:"\\B|\\b");if(!u.e&&!u.eW){u.e="\\B|\\b"}if(u.e){u.eR=c(t,u.e)}}if(u.i){u.iR=c(t,u.i)}if(u.r==undefined){u.r=1}if(u.k){u.lR=c(t,u.l||hljs.IR,true)}for(var s in u.k){if(!u.k.hasOwnProperty(s)){continue}if(u.k[s] instanceof Object){u.kG=u.k}else{u.kG={keyword:u.k}}break}if(!u.c){u.c=[]}u.compiled=true;for(var r=0;r<u.c.length;r++){p(u.c[r],t,false)}if(u.starts){p(u.starts,t,false)}}for(var q in d){if(!d.hasOwnProperty(q)){continue}p(d[q].dM,d[q],true)}}function e(J,D){if(!i.called){i();i.called=true}function z(r,M){for(var L=0;L<M.c.length;L++){if(M.c[L].bR.test(r)){return M.c[L]}}}function w(L,r){if(C[L].e&&C[L].eR.test(r)){return 1}if(C[L].eW){var M=w(L-1,r);return M?M+1:0}return 0}function x(r,L){return L.iR&&L.iR.test(r)}function A(O,N){var M=[];for(var L=0;L<O.c.length;L++){M.push(O.c[L].b)}var r=C.length-1;do{if(C[r].e){M.push(C[r].e)}r--}while(C[r+1].eW);if(O.i){M.push(O.i)}return c(N,"("+M.join("|")+")",true)}function s(M,L){var N=C[C.length-1];if(!N.t){N.t=A(N,H)}N.t.lastIndex=L;var r=N.t.exec(M);if(r){return[M.substr(L,r.index-L),r[0],false]}else{return[M.substr(L),"",true]}}function p(O,r){var L=H.cI?r[0].toLowerCase():r[0];for(var N in O.kG){if(!O.kG.hasOwnProperty(N)){continue}var M=O.kG[N].hasOwnProperty(L);if(M){return[N,M]}}return false}function F(M,O){if(!O.k){return m(M)}var N="";var P=0;O.lR.lastIndex=0;var L=O.lR.exec(M);while(L){N+=m(M.substr(P,L.index-P));var r=p(O,L);if(r){t+=r[1];N+='<span class="'+r[0]+'">'+m(L[0])+"</span>"}else{N+=m(L[0])}P=O.lR.lastIndex;L=O.lR.exec(M)}N+=m(M.substr(P,M.length-P));return N}function K(r,M){if(M.sL&&d[M.sL]){var L=e(M.sL,r);t+=L.keyword_count;return L.value}else{return F(r,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){q+=L;M.buffer=""}else{if(M.eB){q+=m(r)+L;M.buffer=""}else{q+=L;M.buffer=r}}C.push(M);B+=M.r}function E(O,L,Q){var R=C[C.length-1];if(Q){q+=K(R.buffer+O,R);return false}var M=z(L,R);if(M){q+=K(R.buffer+O,R);I(M,L);return M.rB}var r=w(C.length-1,L);if(r){var N=R.cN?"</span>":"";if(R.rE){q+=K(R.buffer+O,R)+N}else{if(R.eE){q+=K(R.buffer+O,R)+N+m(L)}else{q+=K(R.buffer+O+L,R)+N}}while(r>1){N=C[C.length-2].cN?"</span>":"";q+=N;r--;C.length--}var P=C[C.length-1];C.length--;C[C.length-1].buffer="";if(P.starts){I(P.starts,"")}return R.rE}if(x(L,R)){throw"Illegal"}}var H=d[J];var C=[H.dM];var B=0;var t=0;var q="";try{var v=0;H.dM.buffer="";do{var y=s(D,v);var u=E(y[0],y[1],y[2]);v+=y[0].length;if(!u){v+=y[1].length}}while(!y[2]);if(C.length>1){throw"Illegal"}return{r:B,keyword_count:t,value:q}}catch(G){if(G=="Illegal"){return{r:0,keyword_count:0,value:m(D)}}else{throw G}}}function f(t){var r={keyword_count:0,r:0,value:m(t)};var q=r;for(var p in d){if(!d.hasOwnProperty(p)){continue}var s=e(p,t);s.language=p;if(s.keyword_count+s.r>q.keyword_count+q.r){q=s}if(s.keyword_count+s.r>r.keyword_count+r.r){q=r;r=s}}if(q.language){r.second_best=q}return r}function h(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function o(u,x,q){var y=g(u,q);var s=a(u);if(s=="no-highlight"){return}if(s){var w=e(s,y)}else{var w=f(y);s=w.language}var p=b(u);if(p.length){var r=document.createElement("pre");r.innerHTML=w.value;w.value=l(p,b(r),y)}w.value=h(w.value,x,q);var t=u.className;if(!t.match("(\\s|^)(language-)?"+s+"(\\s|$)")){t=t?(t+" "+s):s}if(/MSIE [678]/.test(navigator.userAgent)&&u.tagName=="CODE"&&u.parentNode.tagName=="PRE"){var r=u.parentNode;var v=document.createElement("div");v.innerHTML="<pre><code>"+w.value+"</code></pre>";u=v.firstChild.firstChild;v.firstChild.cN=r.cN;r.parentNode.replaceChild(v.firstChild,r)}else{u.innerHTML=w.value}u.className=t;u.result={language:s,kw:w.keyword_count,re:w.r};if(w.second_best){u.second_best={language:w.second_best.language,kw:w.second_best.keyword_count,re:w.second_best.r}}}function k(){if(k.called){return}k.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=j(r[p]);if(q){o(q,hljs.tabReplace)}}}function n(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",k,false);window.addEventListener("load",k,false)}else{if(window.attachEvent){window.attachEvent("onload",k)}else{window.onload=k}}}var d={};this.LANGUAGES=d;this.highlight=e;this.highlightAuto=f;this.fixMarkup=h;this.highlightBlock=o;this.initHighlighting=k;this.initHighlightingOnLoad=n;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0x[A-Za-z0-9]+|\\d+(\\.\\d+)?)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.inherit=function(p,s){var r={};for(var q in p){r[q]=p[q]}if(s){for(var q in s){r[q]=s[q]}}return r}}();hljs.LANGUAGES.bash=function(){var d={"true":1,"false":1};var b={cN:"variable",b:"\\$([a-zA-Z0-9_]+)\\b"};var a={cN:"variable",b:"\\$\\{(([^}])|(\\\\}))+\\}",c:[hljs.CNM]};var c={cN:"string",b:'"',e:'"',i:"\\n",c:[hljs.BE,b,a],r:0};var e={cN:"test_condition",b:"",e:"",c:[c,b,a,hljs.CNM],k:{literal:d},r:0};return{dM:{k:{keyword:{"if":1,then:1,"else":1,fi:1,"for":1,"break":1,"continue":1,"while":1,"in":1,"do":1,done:1,echo:1,exit:1,"return":1,set:1,declare:1},literal:d},c:[{cN:"shebang",b:"(#!\\/bin\\/bash)|(#!\\/bin\\/sh)",r:10},hljs.HCM,hljs.CNM,c,b,a,hljs.inherit(e,{b:"\\[ ",e:" \\]",r:0}),hljs.inherit(e,{b:"\\[\\[ ",e:" \\]\\]"})]}}}();hljs.LANGUAGES.javascript={dM:{k:{keyword:{"in":1,"if":1,"for":1,"while":1,"finally":1,"var":1,"new":1,"function":1,"do":1,"return":1,"void":1,"else":1,"break":1,"catch":1,"instanceof":1,"with":1,"throw":1,"case":1,"default":1,"try":1,"this":1,"switch":1,"continue":1,"typeof":1,"delete":1},literal:{"true":1,"false":1,"null":1}},c:[hljs.ASM,hljs.QSM,hljs.CLCM,hljs.CBLCLM,hljs.CNM,{b:"("+hljs.RSR+"|case|return|throw)\\s*",k:{"return":1,"throw":1,"case":1},c:[hljs.CLCM,hljs.CBLCLM,{cN:"regexp",b:"/",e:"/[gim]*",c:[{b:"\\\\/"}]}],r:0},{cN:"function",b:"\\bfunction\\b",e:"{",k:{"function":1},c:[{cN:"title",b:"[A-Za-z$_][0-9A-Za-z$_]*"},{cN:"params",b:"\\(",e:"\\)",c:[hljs.ASM,hljs.QSM,hljs.CLCM,hljs.CBLCLM]}]}]}};hljs.LANGUAGES.css=function(){var a={cN:"function",b:hljs.IR+"\\(",e:"\\)",c:[{eW:true,eE:true,c:[hljs.NM,hljs.ASM,hljs.QSM]}]};return{cI:true,dM:{i:"[=/|']",c:[hljs.CBLCLM,{cN:"id",b:"\\#[A-Za-z0-9_-]+"},{cN:"class",b:"\\.[A-Za-z0-9_-]+",r:0},{cN:"attr_selector",b:"\\[",e:"\\]",i:"$"},{cN:"pseudo",b:":(:)?[a-zA-Z0-9\\_\\-\\+\\(\\)\\\"\\']+"},{cN:"at_rule",b:"@(font-face|page)",l:"[a-z-]+",k:{"font-face":1,page:1}},{cN:"at_rule",b:"@",e:"[{;]",eE:true,k:{"import":1,page:1,media:1,charset:1},c:[a,hljs.ASM,hljs.QSM,hljs.NM]},{cN:"tag",b:hljs.IR,r:0},{cN:"rules",b:"{",e:"}",i:"[^\\s]",r:0,c:[hljs.CBLCLM,{cN:"rule",b:"[^\\s]",rB:true,e:";",eW:true,c:[{cN:"attribute",b:"[A-Z\\_\\.\\-]+",e:":",eE:true,i:"[^\\s]",starts:{cN:"value",eW:true,eE:true,c:[a,hljs.NM,hljs.QSM,hljs.ASM,hljs.CBLCLM,{cN:"hexcolor",b:"\\#[0-9A-F]+"},{cN:"important",b:"!important"}]}}]}]}]}}}();hljs.LANGUAGES.xml=function(){var b="[A-Za-z0-9\\._:-]+";var a={eW:true,c:[{cN:"attribute",b:b,r:0},{b:'="',rB:true,e:'"',c:[{cN:"value",b:'"',eW:true}]},{b:"='",rB:true,e:"'",c:[{cN:"value",b:"'",eW:true}]},{b:"=",c:[{cN:"value",b:"[^\\s/>]+"}]}]};return{cI:true,dM:{c:[{cN:"pi",b:"<\\?",e:"\\?>",r:10},{cN:"doctype",b:"<!DOCTYPE",e:">",r:10,c:[{b:"\\[",e:"\\]"}]},{cN:"comment",b:"<!--",e:"-->",r:10},{cN:"cdata",b:"<\\!\\[CDATA\\[",e:"\\]\\]>",r:10},{cN:"tag",b:"<style",e:">",k:{title:{style:1}},c:[a],starts:{cN:"css",e:"</style>",rE:true,sL:"css"}},{cN:"tag",b:"<script",e:">",k:{title:{script:1}},c:[a],starts:{cN:"javascript",e:"<\/script>",rE:true,sL:"javascript"}},{cN:"vbscript",b:"<%",e:"%>",sL:"vbscript"},{cN:"tag",b:"</?",e:"/?>",c:[{cN:"title",b:"[^ />]+"},a]}]}}}();hljs.LANGUAGES.java={dM:{k:{"false":1,"synchronized":1,"int":1,"abstract":1,"float":1,"private":1,"char":1,"interface":1,"boolean":1,"static":1,"null":1,"if":1,"const":1,"for":1,"true":1,"while":1,"long":1,"throw":1,strictfp:1,"finally":1,"protected":1,"extends":1,"import":1,"native":1,"final":1,"implements":1,"return":1,"void":1,"enum":1,"else":1,"break":1,"transient":1,"new":1,"catch":1,"instanceof":1,"byte":1,"super":1,"class":1,"volatile":1,"case":1,assert:1,"short":1,"package":1,"default":1,"double":1,"public":1,"try":1,"this":1,"switch":1,"continue":1,"throws":1},c:[{cN:"javadoc",b:"/\\*\\*",e:"\\*/",c:[{cN:"javadoctag",b:"@[A-Za-z]+"}],r:10},hljs.CLCM,hljs.CBLCLM,hljs.ASM,hljs.QSM,{cN:"class",b:"(class |interface )",e:"{",k:{"class":1,"interface":1},i:":",c:[{b:"(implements|extends)",k:{"extends":1,"implements":1},r:10},{cN:"title",b:hljs.UIR}]},hljs.CNM,{cN:"annotation",b:"@[A-Za-z]+"}]}};hljs.LANGUAGES.haskell=function(){var a={cN:"label",b:"\\b[A-Z][\\w']*",r:0};var b={cN:"container",b:"\\(",e:"\\)",c:[{cN:"label",b:"\\b[A-Z][\\w\\(\\)\\.']*"},{cN:"title",b:"[_a-z][\\w']*"}]};return{dM:{k:{keyword:{let:1,"in":1,"if":1,then:1,"else":1,"case":1,of:1,where:1,"do":1,module:1,"import":1,hiding:1,qualified:1,type:1,data:1,newtype:1,deriving:1,"class":1,instance:1,"null":1,not:1,as:1}},c:[{cN:"comment",b:"--",e:"$"},{cN:"comment",b:"{-",e:"-}"},{cN:"string",b:"\\s+'",e:"'",c:[hljs.BE],r:0},hljs.QSM,{cN:"import",b:"\\bimport",e:"$",k:{"import":1,qualified:1,as:1,hiding:1},c:[b]},{cN:"module",b:"\\bmodule",e:"where",k:{module:1,where:1},c:[b]},{cN:"class",b:"\\b(class|instance|data|(new)?type)",e:"(where|$)",k:{"class":1,where:1,instance:1,data:1,type:1,newtype:1,deriving:1},c:[a]},hljs.CNM,{cN:"shebang",b:"#!\\/usr\\/bin\\/env runhaskell",e:"$"},a,{cN:"title",b:"^[_a-z][\\w']*"}]}}}();hljs.LANGUAGES.sql={cI:true,dM:{i:"[^\\s]",c:[{cN:"operator",b:"(begin|start|commit|rollback|savepoint|lock|alter|create|drop|rename|call|delete|do|handler|insert|load|replace|select|truncate|update|set|show|pragma)\\b",e:";|$",k:{keyword:{all:1,partial:1,global:1,month:1,current_timestamp:1,using:1,go:1,revoke:1,smallint:1,indicator:1,"end-exec":1,disconnect:1,zone:1,"with":1,character:1,assertion:1,to:1,add:1,current_user:1,usage:1,input:1,local:1,alter:1,match:1,collate:1,real:1,then:1,rollback:1,get:1,read:1,timestamp:1,session_user:1,not:1,integer:1,bit:1,unique:1,day:1,minute:1,desc:1,insert:1,execute:1,like:1,ilike:2,level:1,decimal:1,drop:1,"continue":1,isolation:1,found:1,where:1,constraints:1,domain:1,right:1,national:1,some:1,module:1,transaction:1,relative:1,second:1,connect:1,escape:1,close:1,system_user:1,"for":1,deferred:1,section:1,cast:1,current:1,sqlstate:1,allocate:1,intersect:1,deallocate:1,numeric:1,"public":1,preserve:1,full:1,"goto":1,initially:1,asc:1,no:1,key:1,output:1,collation:1,group:1,by:1,union:1,session:1,both:1,last:1,language:1,constraint:1,column:1,of:1,space:1,foreign:1,deferrable:1,prior:1,connection:1,unknown:1,action:1,commit:1,view:1,or:1,first:1,into:1,"float":1,year:1,primary:1,cascaded:1,except:1,restrict:1,set:1,references:1,names:1,table:1,outer:1,open:1,select:1,size:1,are:1,rows:1,from:1,prepare:1,distinct:1,leading:1,create:1,only:1,next:1,inner:1,authorization:1,schema:1,corresponding:1,option:1,declare:1,precision:1,immediate:1,"else":1,timezone_minute:1,external:1,varying:1,translation:1,"true":1,"case":1,exception:1,join:1,hour:1,"default":1,"double":1,scroll:1,value:1,cursor:1,descriptor:1,values:1,dec:1,fetch:1,procedure:1,"delete":1,and:1,"false":1,"int":1,is:1,describe:1,"char":1,as:1,at:1,"in":1,varchar:1,"null":1,trailing:1,any:1,absolute:1,current_time:1,end:1,grant:1,privileges:1,when:1,cross:1,check:1,write:1,current_date:1,pad:1,begin:1,temporary:1,exec:1,time:1,update:1,catalog:1,user:1,sql:1,date:1,on:1,identity:1,timezone_hour:1,natural:1,whenever:1,interval:1,work:1,order:1,cascade:1,diagnostics:1,nchar:1,having:1,left:1,call:1,"do":1,handler:1,load:1,replace:1,truncate:1,start:1,lock:1,show:1,pragma:1},aggregate:{count:1,sum:1,min:1,max:1,avg:1}},c:[{cN:"string",b:"'",e:"'",c:[hljs.BE,{b:"''"}],r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE,{b:'""'}],r:0},{cN:"string",b:"`",e:"`",c:[hljs.BE]},hljs.CNM,{b:"\\n"}]},hljs.CBLCLM,{cN:"comment",b:"--",e:"$"}]}};hljs.LANGUAGES.nginx=function(){var c={cN:"variable",b:"\\$\\d+"};var b={cN:"variable",b:"\\${",e:"}"};var a={cN:"variable",b:"[\\$\\@]"+hljs.UIR};return{dM:{c:[hljs.HCM,{b:hljs.UIR,e:";|{",rE:true,k:{accept_mutex:1,accept_mutex_delay:1,access_log:1,add_after_body:1,add_before_body:1,add_header:1,addition_types:1,alias:1,allow:1,ancient_browser:1,ancient_browser:1,ancient_browser_value:1,ancient_browser_value:1,auth_basic:1,auth_basic_user_file:1,autoindex:1,autoindex_exact_size:1,autoindex_localtime:1,"break":1,charset:1,charset:1,charset_map:1,charset_map:1,charset_types:1,charset_types:1,client_body_buffer_size:1,client_body_in_file_only:1,client_body_in_single_buffer:1,client_body_temp_path:1,client_body_timeout:1,client_header_buffer_size:1,client_header_timeout:1,client_max_body_size:1,connection_pool_size:1,connections:1,create_full_put_path:1,daemon:1,dav_access:1,dav_methods:1,debug_connection:1,debug_points:1,default_type:1,deny:1,directio:1,directio_alignment:1,echo:1,echo_after_body:1,echo_before_body:1,echo_blocking_sleep:1,echo_duplicate:1,echo_end:1,echo_exec:1,echo_flush:1,echo_foreach_split:1,echo_location:1,echo_location_async:1,echo_read_request_body:1,echo_request_body:1,echo_reset_timer:1,echo_sleep:1,echo_subrequest:1,echo_subrequest_async:1,empty_gif:1,empty_gif:1,env:1,error_log:1,error_log:1,error_page:1,events:1,expires:1,fastcgi_bind:1,fastcgi_buffer_size:1,fastcgi_buffers:1,fastcgi_busy_buffers_size:1,fastcgi_cache:1,fastcgi_cache_key:1,fastcgi_cache_methods:1,fastcgi_cache_min_uses:1,fastcgi_cache_path:1,fastcgi_cache_use_stale:1,fastcgi_cache_valid:1,fastcgi_catch_stderr:1,fastcgi_connect_timeout:1,fastcgi_hide_header:1,fastcgi_ignore_client_abort:1,fastcgi_ignore_headers:1,fastcgi_index:1,fastcgi_intercept_errors:1,fastcgi_max_temp_file_size:1,fastcgi_next_upstream:1,fastcgi_param:1,fastcgi_pass:1,fastcgi_pass_header:1,fastcgi_pass_request_body:1,fastcgi_pass_request_headers:1,fastcgi_read_timeout:1,fastcgi_send_lowat:1,fastcgi_send_timeout:1,fastcgi_split_path_info:1,fastcgi_store:1,fastcgi_store_access:1,fastcgi_temp_file_write_size:1,fastcgi_temp_path:1,fastcgi_upstream_fail_timeout:1,fastcgi_upstream_max_fails:1,flv:1,geo:1,geo:1,geoip_city:1,geoip_country:1,gzip:1,gzip_buffers:1,gzip_comp_level:1,gzip_disable:1,gzip_hash:1,gzip_http_version:1,gzip_min_length:1,gzip_no_buffer:1,gzip_proxied:1,gzip_static:1,gzip_types:1,gzip_vary:1,gzip_window:1,http:1,"if":1,if_modified_since:1,ignore_invalid_headers:1,image_filter:1,image_filter_buffer:1,image_filter_jpeg_quality:1,image_filter_transparency:1,include:1,index:1,internal:1,ip_hash:1,js:1,js_load:1,js_require:1,js_utf8:1,keepalive_requests:1,keepalive_timeout:1,kqueue_changes:1,kqueue_events:1,large_client_header_buffers:1,limit_conn:1,limit_conn_log_level:1,limit_except:1,limit_rate:1,limit_rate_after:1,limit_req:1,limit_req_log_level:1,limit_req_zone:1,limit_zone:1,lingering_time:1,lingering_timeout:1,listen:1,location:1,lock_file:1,log_format:1,log_not_found:1,log_subrequest:1,map:1,map_hash_bucket_size:1,map_hash_max_size:1,master_process:1,memcached_bind:1,memcached_buffer_size:1,memcached_connect_timeout:1,memcached_next_upstream:1,memcached_pass:1,memcached_read_timeout:1,memcached_send_timeout:1,memcached_upstream_fail_timeout:1,memcached_upstream_max_fails:1,merge_slashes:1,min_delete_depth:1,modern_browser:1,modern_browser:1,modern_browser_value:1,modern_browser_value:1,more_clear_headers:1,more_clear_input_headers:1,more_set_headers:1,more_set_input_headers:1,msie_padding:1,msie_refresh:1,multi_accept:1,open_file_cache:1,open_file_cache_errors:1,open_file_cache_events:1,open_file_cache_min_uses:1,open_file_cache_retest:1,open_file_cache_valid:1,open_log_file_cache:1,optimize_server_names:1,output_buffers:1,override_charset:1,override_charset:1,perl:1,perl_modules:1,perl_require:1,perl_set:1,pid:1,port_in_redirect:1,post_action:1,postpone_gzipping:1,postpone_output:1,proxy_bind:1,proxy_buffer_size:1,proxy_buffering:1,proxy_buffers:1,proxy_busy_buffers_size:1,proxy_cache:1,proxy_cache_key:1,proxy_cache_methods:1,proxy_cache_min_uses:1,proxy_cache_path:1,proxy_cache_use_stale:1,proxy_cache_valid:1,proxy_connect_timeout:1,proxy_headers_hash_bucket_size:1,proxy_headers_hash_max_size:1,proxy_hide_header:1,proxy_ignore_client_abort:1,proxy_ignore_headers:1,proxy_intercept_errors:1,proxy_max_temp_file_size:1,proxy_method:1,proxy_next_upstream:1,proxy_pass:1,proxy_pass_header:1,proxy_pass_request_body:1,proxy_pass_request_headers:1,proxy_read_timeout:1,proxy_redirect:1,proxy_send_lowat:1,proxy_send_timeout:1,proxy_set_body:1,proxy_set_header:1,proxy_store:1,proxy_store_access:1,proxy_temp_file_write_size:1,proxy_temp_path:1,proxy_upstream_fail_timeout:1,proxy_upstream_max_fails:1,push_authorized_channels_only:1,push_channel_group:1,push_max_channel_id_length:1,push_max_channel_subscribers:1,push_max_message_buffer_length:1,push_max_reserved_memory:1,push_message_buffer_length:1,push_message_timeout:1,push_min_message_buffer_length:1,push_min_message_recipients:1,push_publisher:1,push_store_messages:1,push_subscriber:1,push_subscriber_concurrency:1,random_index:1,read_ahead:1,real_ip_header:1,recursive_error_pages:1,request_pool_size:1,reset_timedout_connection:1,resolver:1,resolver_timeout:1,"return":1,rewrite:1,rewrite_log:1,root:1,satisfy:1,satisfy_any:1,send_lowat:1,send_timeout:1,sendfile:1,sendfile_max_chunk:1,server:1,server:1,server_name:1,server_name_in_redirect:1,server_names_hash_bucket_size:1,server_names_hash_max_size:1,server_tokens:1,set:1,set_real_ip_from:1,source_charset:1,source_charset:1,ssi:1,ssi_ignore_recycled_buffers:1,ssi_min_file_chunk:1,ssi_silent_errors:1,ssi_types:1,ssi_value_length:1,ssl:1,ssl_certificate:1,ssl_certificate_key:1,ssl_ciphers:1,ssl_client_certificate:1,ssl_crl:1,ssl_dhparam:1,ssl_prefer_server_ciphers:1,ssl_protocols:1,ssl_session_cache:1,ssl_session_timeout:1,ssl_verify_client:1,ssl_verify_depth:1,sub_filter:1,sub_filter_once:1,sub_filter_types:1,tcp_nodelay:1,tcp_nopush:1,timer_resolution:1,try_files:1,types:1,types_hash_bucket_size:1,types_hash_max_size:1,underscores_in_headers:1,uninitialized_variable_warn:1,upstream:1,use:1,user:1,userid:1,userid:1,userid_domain:1,userid_domain:1,userid_expires:1,userid_expires:1,userid_mark:1,userid_name:1,userid_name:1,userid_p3p:1,userid_p3p:1,userid_path:1,userid_path:1,userid_service:1,userid_service:1,valid_referers:1,variables_hash_bucket_size:1,variables_hash_max_size:1,worker_connections:1,worker_cpu_affinity:1,worker_priority:1,worker_processes:1,worker_rlimit_core:1,worker_rlimit_nofile:1,worker_rlimit_sigpending:1,working_directory:1,xml_entities:1,xslt_stylesheet:1,xslt_types:1},r:0,c:[hljs.HCM,{b:"\\s",e:"[;{]",rB:true,rE:true,l:"[a-z/]+",k:{built_in:{on:1,off:1,yes:1,no:1,"true":1,"false":1,none:1,blocked:1,debug:1,info:1,notice:1,warn:1,error:1,crit:1,select:1,permanent:1,redirect:1,kqueue:1,rtsig:1,epoll:1,poll:1,"/dev/poll":1}},r:0,c:[hljs.HCM,{cN:"string",b:'"',e:'"',c:[hljs.BE,c,b,a],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE,c,b,a],r:0},{cN:"string",b:"([a-z]+):/",e:"[;\\s]",rE:true},{cN:"regexp",b:"\\s\\^",e:"\\s|{|;",rE:true,c:[hljs.BE,c,b,a]},{cN:"regexp",b:"~\\*?\\s+",e:"\\s|{|;",rE:true,c:[hljs.BE,c,b,a]},{cN:"regexp",b:"\\*(\\.[a-z\\-]+)+",c:[hljs.BE,c,b,a]},{cN:"regexp",b:"([a-z\\-]+\\.)+\\*",c:[hljs.BE,c,b,a]},{cN:"number",b:"\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b"},{cN:"number",b:"\\s\\d+[kKmMgGdshdwy]*\\b",r:0},c,b,a]}]}]}}}();$(function(){
+    $.each($("section[id] > h1"), function(i, e){
+        var $e = $(e),
+            link = $("<a class='permalink'>¶</a>");
+        link.attr("href", "#" + $e.parent().attr("id"));
+
+        $e.prepend(link);
+    });
+});
+hljs.initHighlightingOnLoad();
+</script><footer id="license" style="text-align:center;font-size:0.8em">All content on this site is available under the
+<a href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
+<br>
+Content outside the book section is available under
+<a href="https://raw.github.com/yesodweb/yesodweb.com/master/LICENSE">the MIT license</a>
+as well.</footer>
+</div></div><script>window._gaq = [['_setAccount','UA-1434510-13'],['_trackPageview'],['_trackPageLoadTime']];(function() {var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true; ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);})();</script><!-- Prompt IE 6 users to install Chrome Frame. Remove this if you want to support IE 6.  chromium.org/developers/how-tos/chrome-frame-getting-started --><!--[if lt IE 7 ]><script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script><script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script><![endif]--></body></html>

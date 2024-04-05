@@ -1,0 +1,932 @@
+<!doctype html><!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]--><!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]--><!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]--><!--[if gt IE 8]><!--><html class="no-js" lang="en"> <!--<![endif]--><head><meta charset="UTF-8"><title>Shakespearean Templates :: Yesod Web Framework Book- Version 1.1</title><meta name="description" content="Yesod is a Haskell web framework for productive development of type-safe, RESTful, high performance web applications."><meta name="viewport" content="width=device-width,initial-scale=1"><link href="/feed" type="application/atom+xml" rel="alternate" title="Yesod Web Framework Blog">
+<style>article,aside,details,figcaption,figure,footer,header,hgroup,nav,section{display:block}audio,canvas,video{display:inline-block;*display:inline;*zoom:1}audio:not([controls]){display:none}[hidden]{display:none}html{font-size:100%;overflow-y:scroll;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{margin:0}body,button,input,select,textarea{font-family:sans-serif}a{color:#00e}a:visited{color:#551a8b}a:focus{outline:thin dotted}a:hover,a:active{outline:0}abbr[title]{border-bottom:1px dotted}b,strong{font-weight:bold}blockquote{margin:1em 40px}dfn{font-style:italic}mark{background:#ff0;color:#000}pre,code,kbd,samp{font-family:"DejaVu Sans Mono", "Droid Sans Mono", consolas, "courier new", monospace;_font-family:'courier new', monospace;font-size:.85em}pre{white-space:pre;white-space:pre-wrap;word-wrap:break-word}q{quotes:none}q:before,q:after{content:'';content:none}small{font-size:75%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-0.5em}sub{bottom:-0.25em}ul,ol{margin:1em 0;padding:0 0 0 40px}dd{margin:0 0 0 40px}nav ul,nav ol{list-style:none;list-style-image:none}img{border:0;-ms-interpolation-mode:bicubic}svg:not(:root){overflow:hidden}figure{margin:0}form{margin:0}fieldset{margin:0 2px;padding:0.35em 0.625em 0.75em}legend{border:0;*margin-left:-7px}button,input,select,textarea{font-size:100%;margin:0;vertical-align:baseline;*vertical-align:middle}button,input{line-height:normal;*overflow:visible}table button,table input{*overflow:auto}button,html input[type="button"],input[type="reset"],input[type="submit"]{cursor:pointer;-webkit-appearance:button}input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}input[type="search"]{-webkit-appearance:textfield;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}textarea{overflow:auto;vertical-align:top}table{border-collapse:collapse;border-spacing:0}pre code{display:block;padding:0.5em;background:#F4F4F4}pre code,pre .ruby .subst,pre .tag .title,pre .lisp .title{color:black}pre .string,pre .title,pre .constant,pre .parent,pre .tag .value,pre .rules .value,pre .rules .value .number,pre .preprocessor,pre .ruby .symbol,pre .ruby .symbol .string,pre .ruby .symbol .keyword,pre .ruby .symbol .keymethods,pre .instancevar,pre .aggregate,pre .template_tag,pre .django .variable,pre .smalltalk .class,pre .addition,pre .flow,pre .stream,pre .bash .variable,pre .apache .tag,pre .apache .cbracket,pre .tex .command,pre .tex .special,pre .erlang_repl .function_or_atom{color:#800}pre .comment,pre .annotation,pre .template_comment,pre .diff .header,pre .chunk{color:#888}pre .number,pre .date,pre .regexp,pre .literal,pre .smalltalk .symbol,pre .smalltalk .char,pre .go .constant,pre .change{color:#080}pre .label,pre .javadoc,pre .ruby .string,pre .decorator,pre .filter .argument,pre .localvars,pre .array,pre .attr_selector,pre .important,pre .pseudo,pre .pi,pre .doctype,pre .deletion,pre .envvar,pre .shebang,pre .apache .sqbracket,pre .nginx .built_in,pre .tex .formula,pre .erlang_repl .reserved,pre .input_number{color:#88F
+}pre .css .tag,pre .javadoctag,pre .phpdoc,pre .yardoctag{font-weight:bold}pre .keyword,pre .id,pre .phpdoc,pre .title,pre .built_in,pre .aggregate,pre .smalltalk .class,pre .winutils,pre .bash .variable,pre .apache .tag,pre .go .typename,pre .tex .command{font-weight:bold}pre .nginx .built_in{font-weight:normal}pre .xml .css,pre .xml .javascript,pre .xml .vbscript,pre .tex .formula{opacity:0.5}aside.note{padding:0.5em;border:1px dotted #000}.github-link{font-size:0.6em}.github-link a,.github-link a:visited{text-decoration:none}article > h1:first-child{margin-top:0}figure > h1{margin:0}p code{background-color:#f0f0f0}a.permalink{font-size:50%;text-decoration:none;position:absolute;left:-25px;top:10px}section > h1{position:relative}pre > code{white-space:pre;overflow-x:auto}@media print, (max-width: 700px) {article > h1:first-child{margin-top:25px}section > h1{margin-bottom:0.5em}}.warning{color:red;font-weight:bold}#main figure{border:1px solid #CCC;box-shadow:0 0 3px #CCC inset;padding:1em;margin:2ex 0}#main figure figcaption{text-size:.9em;text-align:center;color:#555}#main figure img{border:solid 1px #CCC}#container{min-width:1094px}dd,p{text-align:justify}body{font-family:'Crimson Text', serif;font-size:1.2em;background-color:#e5eef9}a,a:visited{color:#000}a:hover,a:active{color:#823}nav{box-shadow:0 -5px 20px 20px rgba(41,55,78,0.12);z-index:100;background-color:#29374e;padding:5px;font-family:'Lato';font-size:0.80em;font-weight:400;position:fixed;width:100%;top:0}nav ul{margin:0;padding:0;text-align:right}nav ul li{display:inline;margin-right:3em}nav ul li.googleplus{position:relative;top:2px;margin-right:3em}nav ul li.feedlink{position:relative;top:3px}nav a,nav a:visited{color:#eee;text-decoration:none}#spotlight{background-image:-webkit-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-moz-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-o-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-ms-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);position:absolute;width:1050px;height:300px;top:0;left:50%;margin-left:-475px;z-index:-1}div.headergroup{width:1050px;margin:0 auto;padding-top:2.6em;padding-bottom:1.3em}div.headergroup a{text-decoration:none;display:flex}div.headergroup div.homepage-logo{text-align:center;width:550px;height:105px;margin-left:75px}div.headergroup div.homepage-logo div.logo-image{background:url(/static/logo-home2-no-esod-smaller2.png?etag=uBLSXtRu) no-repeat center center;width:100%;height:75px}div.headergroup div.homepage-logo div.logo-text{color:#29374e;padding-top:0.2em;font-family:'Lato';font-weight:300;font-size:1.2em;padding-bottom:0.3em}div.headergroup div.homepage-info{text-align:left;font-family:'Lato';font-weight:300;font-size:0.8em;line-height:1.6em;width:220px}div.headergroup h2{margin-bottom:0;font-size:1.4em;margin-top:0;padding-top:0.4em;padding-bottom:1em}h1,h2,h3,h4,h5,h6,dt{color:#474f6b;font-family:'Lato';font-weight:400}h1{font-weight:300;font-size:1.8em}h2,section > section > h1{font-weight:400;font-size:1.5em;margin-bottom:0.5em}h3,section > section > section > h1{font-weight:400;font-size:1.2em;margin-bottom:0.5em}h1 span{display:none}section{display:table-cell}section h2{margin-top:2.2em;margin-bottom:0}section img{max-width:100%}section section{display:block;width:auto;padding:0;margin:0}section.why{width:600px;padding-left:90px;padding-right:90px}section.why article{width:600px}section.getting-started{background-color:#f4f4f4;width:300px;padding-left:50px;padding-right:50px}section.getting-started h2{font-size:1.2em;margin-bottom:0.7em;margin-top:1.8em}section.getting-started ul{font-family:'Lato';font-size:0.75em;font-weight:500;margin-bottom:20px;line-height:2em;list-style-type:none;margin-bottom:50px;padding-left:0}section.getting-started ul ul{font-size:.9em }section.getting-started div{font-family:'Lato';padding-left:20px}#main{box-shadow:0 10px 25px 25px rgba(41,55,78,0.05);background-color:#fff;position:relative;width:1050px;margin:0 auto}aside#announcement{box-shadow:0 0 20px 10px rgba(41,55,78,0.12);height:20px;margin:0 auto;position:relative;width:1080px;background-color:#29374e;color:#eee;padding:0.5em;font-family:'Lato';font-weight:400;font-size:0.8em;z-index:50}aside#announcement div.msg{margin-left:105px}aside#announcement div.tri-left,aside#announcement div.tri-right{width:0;height:0;position:absolute;bottom:-21px;border-style:solid}aside#announcement div.tri-left{left:0;border-width:11px 11px 10px 11px;border-color:#0b1b30 #0b1b30 transparent transparent}aside#announcement div.tri-right{right:0;border-width:11px 11px 11px 10px;border-color:#0b1b30 transparent transparent #0b1b30}aside#announcement a,aside#announcement a:visited{color:#eee;text-decoration:underline}aside#announcement span.date{font-style:italic;font-size:0.8em}#feedlink{display:inline-block;height:16px;width:16px;background:url(/static/blog.png?etag=oPHrQ5qo)}#feedlink span{display:none}dt{font-weight:400;font-size:1.05em;margin-bottom:0.7em;margin-top:2.3em}dd,p{margin:0;font-size:1em;line-height:155%;margin-bottom:0.5em}p.what{display:none;font-size:1.4em;padding:0 200px}#instantclick{display:none}@media print, (max-width: 700px) {body{background-color:#fff;padding:3px}.googleplus,.feedlink,.headergroup,#announcement,#comments,#disqus_thread,#spotlight,#license,.github-link,.oreilly,.main-listing{display:none}div .headergroup{display:none}#container > nav{background-color:#fff;box-shadow:none}#container > nav > ul{text-align:left}#container > nav > ul a,#container > nav > ul a:visited{color:#00f}#main,div#container,section.why > article{width:auto;min-width:0}#main{box-shadow:none;position:static;margin:0}section.why,section.getting-started{display:block;width:auto;padding:0;background-color:#fff}hgroup h1[itemprop=name],hgroup h2,hgroup h3{margin:0}hgroup h1[itemprop=name] img,hgroup h2 img,hgroup h3 img{display:none}dd,p,dt{margin:12px}}@media print {nav{display:none}section.getting-started{display:none}}</style><!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]--><link href="//fonts.googleapis.com/css?family=Crimson+Text:400,400italic,600,600italic,700,700italic" rel="stylesheet" type="text/css"><link href="//fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet" type="text/css"><script>document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/,'js');</script></head><body itemscope itemtype="http://schema.org/Product"><div id="spotlight"></div><div id="container"><nav><ul><li><a href="/book">book</a></li><li><a href="/wiki">cookbook</a></li><li><a href="/blog">blog</a></li><li><a href="/wiki/Home">wiki</a></li><li class="feedlink"><a href="/feed" id="feedlink"><span>newsfeed</span></a></li></ul></nav><div class="headergroup"><a href="/"><div class="homepage-logo"><div class="logo-image"></div><div class="logo-text">Yesod Web Framework</div></div><div class="homepage-info">Yesod is a Haskell web framework for productive development of type-safe, RESTful, high performance web applications.</div></a></div><aside id="announcement"><div class="tri-left"></div><div class="tri-right"></div><div class="msg"><span class="subject">Shakespearean Templates :: Yesod Web Framework Book- Version 1.1</span></div></aside><div id="main" role="main"><section class="why"><p class="github-link"><a href="https://github.com/yesodweb/yesodweb.com-content/tree/version1.1/book/chapters/shakespearean-templates.xml">View source on Github</a>
+</p>
+<article><h1>Shakespearean Templates</h1>
+
+   
+   <p></p>
+   <p></p>
+   <p>Yesod uses the Shakespearean family of template languages as its standard approach to HTML, CSS
+   and Javascript creation. This language family shares some common syntax, as well as overarching
+    principles:<ul>
+     <li>
+      <p>As little interference to the underlying language as possible, while providing
+     conveniences where unobtrusive.</p>
+     </li>
+     <li>
+      <p>Compile-time guarantees on well-formed content.</p>
+     </li>
+     <li>
+      <p>Static type safety, greatly helping the prevention of <a href="http://en.wikipedia.org/wiki/Cross-site_scripting">XSS
+      (cross-site scripting)</a> attacks.</p>
+     </li>
+     <li>
+      <p>Automated checking of valid URLs, whenever possible, through <span class="term">type-safe
+     URLs</span>.</p>
+     </li>
+    </ul>
+   </p>
+   <p>There is nothing inherently tying Yesod to these languages, or the other way around:
+   each can be used independently of the other. This chapter will address these template languages
+   on their own, while the remainder of the book will use them to enhance Yesod application
+   development.</p>
+   <section>
+    <h1>Synopsis</h1>
+    <p></p>
+    <p>There are four main languages at play: Hamlet is an HTML templating language, Julius is
+            for Javascript, and Cassius and Lucius are both for CSS. Hamlet and Cassius are both
+            whitespace-sensitive formats, using indentation to denote nesting. By contrast, Lucius
+            is a superset of CSS, keeping CSS&#39;s braces for denoting nesting. Julius is a simple
+            passthrough language for producing Javascript; the only added feature is variable
+            interpolation.</p>
+    <section>
+     <h1>Hamlet (HTML)</h1>
+     <p></p>
+     <pre><code>$doctype 5
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;#{pageTitle} - My Site
+        &lt;link rel=stylesheet href=@{Stylesheet}&gt;
+    &lt;body&gt;
+        &lt;h1 .page-title&gt;#{pageTitle}
+        &lt;p&gt;Here is a list of your friends:
+        $if null friends
+            &lt;p&gt;Sorry, I lied, you don&#39;t have any friends.
+        $else
+            &lt;ul&gt;
+                $forall Friend name age &lt;- friends
+                    &lt;li&gt;#{name} (#{age} years old)
+        &lt;footer&gt;^{copyright}</code></pre>
+    </section>
+    <section>
+     <h1>Cassius (CSS)</h1>
+     <p></p>
+     <pre><code>#myid
+    color: #{red}
+    font-size: #{bodyFontSize}
+foo bar baz
+    background-image: url(@{MyBackgroundR})</code></pre>
+    </section>
+    <section>
+     <h1>Lucius (CSS)</h1>
+     <p></p>
+     <pre><code>section.blog {
+    padding: 1em;
+    border: 1px solid #000;
+    h1 {
+        color: #{headingColor};
+    }
+}</code></pre>
+    </section>
+    <section>
+     <h1>Julius (Javascript)</h1>
+     <p></p>
+     <pre><code>$(function(){
+    $(&quot;section.#{sectionClass}&quot;).hide();
+    $(&quot;#mybutton&quot;).click(function(){document.location = &quot;@{SomeRouteR}&quot;;});
+    ^{addBling}
+});</code></pre>
+    </section>
+   </section>
+   <section>
+    <h1>Types</h1>
+    <p></p>
+    <p>Before we jump into syntax, let&#39;s take a look at the various types involved. We
+   mentioned in the introduction that types help protect us from XSS attacks. For example, let&#39;s say
+   that we have an HTML template that should display someone&#39;s name; it might look like
+    this:<pre><code>&lt;p&gt;Hello, my name is #{name}</code></pre>
+     <aside class="note">
+      <p>
+       <code>#{...}</code> is how we do variable interpolation in
+    Shakespeare.</p>
+     </aside>
+    </p>
+    <p>What should happen to <span class="varname">name</span>, and what should its datatype be?
+   A naive approach would be to use a <code>Text</code> value, and insert it verbatim. But that
+   would give us quite a problem when <code>name=&quot;&lt;script
+    src=&#39;http://nefarious.com/evil.js&#39;&gt;&lt;/script&gt;&quot;</code>. What we want is to be able to
+   entity-encode the name, so that <code>&lt;</code> becomes <code>&amp;lt;</code>.</p>
+    <p>An equally naive approach is to simply entity-encode <em role="bold">every</em> piece of text
+   that gets embedded. What happens when you have some preexisting HTML generated from another
+   process? For example, on the Yesod website, all Haskell code snippets are run through a
+   colorizing function that wraps up words in appropriate <code>span</code> tags. If we
+   entity escaped everything, code snippets would be completely unreadable!</p>
+    <p>Instead, we have an <code>Html</code> datatype. In order to generate an
+    <code>Html</code> value, we have two options for APIs: the <code>ToHtml</code> typeclass
+   provides a way to convert <code>String</code> and <code>Text</code> values into
+    <code>Html</code>, via its <code>toHtml</code> function, automatically escaping entities
+   along the way. This would be the approach we&#39;d want for the name above. For the code snippet
+   example, we would use the preEscaped family of functions.</p>
+    <p>When you use variable interpolation in Hamlet (the HTML Shakespeare language), it
+   automatically applies a <code>toHtml</code> call to the value inside. So if you interpolate a
+    <code>String</code>, it will be entity-escaped. But if you provide an <code>Html</code>
+   value, it will appear unmodified. In the code snippet example, we might interpolate with
+   something like <code>#{preEscapedText myHaskellHtml}</code>.</p>
+    <aside class="note">
+     <p>The <code>Html</code> datatype, as well as the functions mentioned, are all
+   provided by the <span class="apiname">blaze-html</span> package. This allows Hamlet to interact
+   with all other blaze-html packages, and lets Hamlet provide a general solution for producing
+   blaze-html values. Also, we get to take advantage of blaze-html&#39;s amazing performance.</p>
+    </aside>
+    <p>Similarly, we have <code>Css</code>/<code>ToCss</code>, as
+   well as <code>Javascript</code>/<code>ToJavascript</code>. These
+   provide some compile-time sanity checks that we haven&#39;t accidently stuck some HTML in our
+   CSS.</p>
+    <aside class="note">
+     <p>One other advantage on the CSS side is some helper datatypes for colors and units.
+   For example:<pre><code>.red { color: #{colorRed} }</code></pre>Please see the
+   Haddock documentation for more details.</p>
+    </aside>
+    <section>
+     <h1>Type-safe URLs</h1>
+     <p></p>
+     <p>Possibly the most unique feature in Yesod is type-safe URLs, and the ability to use
+   them conveniently is provided directly by Shakespeare. Usage is nearly identical to variable
+   interpolation, we just use the at-sign (@) instead of the hash (#). We&#39;ll cover the syntax later;
+   first, let&#39;s clarify the intuition.</p>
+     <p>Suppose we have an application with two routes: <span class="filepath">http://example.com/profile/home</span> is the homepage, and <span class="filepath">http://example.com/display/time</span> displays the current time. And let&#39;s say we want to
+   link from the homepage to the time. I can think of three different ways of constructing the
+    URL:<ol>
+       <li>
+        <p>As a relative link: <span class="filepath">../display/time</span>
+        </p>
+       </li>
+       <li>
+        <p>As an absolute link, without a domain: <span class="filepath">/display/time</span>
+        </p>
+       </li>
+       <li>
+        <p>As an absolute link, with a domain: <span class="filepath">http://example.com/display/time</span>
+        </p>
+       </li>
+      </ol>
+     </p>
+     <p>There are problems with each approach: the first will break if either URL changes. Also, it&#39;s
+   not suitable for all use cases; RSS and Atom feeds, for instance, require absolute URLs. The
+   second is more resilient to change than the first, but still won&#39;t be acceptable for RSS and
+   Atom. And while the third works fine for all use cases, you&#39;ll need to update every single URL in
+   your application whenever your domain name changes. You think that doesn&#39;t happen often? Just
+   wait till you move from your development to staging and finally production server.</p>
+     <p>But more importantly, there is one huge problem with all approaches: if you change your routes
+   at all, the compiler won&#39;t warn you about the broken links. Not to mention that typos can wreak
+   havoc as well.</p>
+     <p>The goal of type-safe URLs is to let the compiler check things for us as much as
+   possible. In order to facilitate this, our first step must be to move away from plain old text,
+   which the compiler doesn&#39;t understand, to some well defined datatypes. For our simple
+   application, let&#39;s model our routes with a sum
+   type:<pre language="haskell"><code class="haskell">data MyRoute = Home | Time</code></pre>
+     </p>
+     <p>Instead of placing a link like /display/time in our template, we can use the
+    <code>Time</code> constructor. But at the end of the day, HTML is made up of text, not data
+   types, so we need some way to convert these values to text. We call this a <span class="term">URL
+    rendering function</span>, and a simple one
+   is:<pre language="haskell"><code class="haskell">renderMyRoute :: MyRoute -&gt; Text
+renderMyRoute Home = &quot;http://example.com/profile/home&quot;
+renderMyRoute Time = &quot;http://example.com/display/time&quot;</code></pre>
+     </p>
+     <p>
+      <aside class="note">
+       <p>URL rendering functions are actually a bit more complicated than this. They need to address
+    query string parameters, handle records within the constructor, and more intelligently handle
+    the domain name. But in practice, you don&#39;t need to worry about this, since Yesod will
+    automatically create your render functions. The one thing to point out is that the type
+    signature is actually a little more complicated to handle query
+    strings:<pre language="haskell"><code class="haskell">type Query = [(Text, Text)]
+type Render url = url -&gt; Query -&gt; Text
+renderMyRoute :: Render MyRoute
+renderMyRoute Home _ = ...
+renderMyRoute Time _ = ...</code></pre>
+       </p>
+      </aside>
+     </p>
+     <p>OK, we have our render function, and we have type-safe URLs embedded in the templates.
+   How does this fit together exactly? Instead of generating an <code>Html</code> (or
+    <code>Css</code> or <code>Javascript</code>) value directly, Shakespearean templates
+   actually produce a function, which takes this render function and produces HTML. To see this
+   better, let&#39;s have a quick (fake) peek at how Hamlet would work under the surface. Supposing we
+   had a
+   template:<pre><code>&lt;a href=@{Time}&gt;The time</code></pre>this
+   would translate roughly into the Haskell
+   code:<pre language="haskell"><code class="haskell">\render -&gt; mconcat [&quot;&lt;a href=&#39;&quot;, render Time, &quot;&#39;&gt;The time&lt;/a&gt;&quot;]</code></pre>
+     </p>
+    </section>
+   </section>
+   <section>
+    <h1>Syntax</h1>
+    <p></p>
+    <p>All Shakespearean languages share the same interpolation syntax, and are able to
+            utilize type-safe URLs. They differ in the syntax specific for their target language
+            (HTML, CSS, or Javascript).</p>
+    <section>
+     <h1>Hamlet Syntax</h1>
+     <p></p>
+     <p>Hamlet is the most sophisticated of the languages. Not only does it provide
+            syntax for generating HTML, it also allows for basic control structures: conditionals,
+            looping, and maybes.</p>
+     <section>
+      <h1>Tags</h1>
+      <p></p>
+      <p>Obviously tags will play an important part of any HTML template language. In Hamlet, we try to
+   stick very close to existing HTML syntax to make the language more comfortable. However, instead
+   of using closing tags to denote nesting, we use indentation. So something like this in
+   HTML:<pre><code>&lt;body&gt;
+&lt;p&gt;Some paragraph.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Item 1&lt;/li&gt;
+&lt;li&gt;Item 2&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/body&gt;</code></pre>would
+   be<pre><code>&lt;body&gt;
+    &lt;p&gt;Some paragraph.
+    &lt;ul&gt;
+        &lt;li&gt;Item 1
+        &lt;li&gt;Item 2</code></pre>
+      </p>
+      <p>In general, we find this to be easier to follow than HTML once you get accustomed to it. The
+   only tricky part comes with dealing with whitespace before and after tags. For example, let&#39;s say
+   you want to create the
+   HTML<pre><code>&lt;p&gt;Paragraph &lt;i&gt;italic&lt;/i&gt; end.&lt;/p&gt;</code></pre>We want to make sure
+   that there is a whitespace preserved after the word &quot;Paragraph&quot; and before the word &quot;end&quot;. To do
+   so, we use two simple escape
+   characters:<pre><code>&lt;p&gt;
+    Paragraph #
+    &lt;i&gt;italic
+    \ end.</code></pre>The
+   whitespace escape rules are actually very simple:<ol>
+        <li>
+         <p>If the first non-space character in a line is a backslash, the backslash is ignored.</p>
+        </li>
+        <li>
+         <p>If the last character in a line is a hash, it is ignored.</p>
+        </li>
+       </ol>
+      </p>
+      <p>One other thing. Hamlet does <em role="bold">not</em> escape entities within its content.
+   This is done on purpose to allow existing HTML to be more easily copied in. So the example above
+   could also be written
+   as:<pre><code>&lt;p&gt;Paragraph &lt;i&gt;italic&lt;/i&gt; end.</code></pre>Notice
+   that the first tag will be automatically closed by Hamlet, while the inner &quot;i&quot; tag will not. You
+   are free to use whichever approach you want, there is no penalty for either choice. Be aware,
+   however, that the <em role="bold">only</em> time you use closing tags in Hamlet is for such inline tags; normal
+   tags are not closed.</p>
+     </section>
+     <section>
+      <h1>Interpolation</h1>
+      <p></p>
+      <p>What we have so far is a nice, simplified HTML, but it doesn&#39;t let us interact with our Haskell
+   code at all. How do we pass in variables? Simple: with
+   interpolation:<pre><code>&lt;head&gt;
+    &lt;title&gt;#{title}</code></pre>The hash followed by a pair
+   of braces denotes <em role="bold">variable interpolation</em>. In the case above, the <code>title</code>
+   variable from the scope in which the template was called will be used. Let me state that again:
+   Hamlet automatically has access to the variables in scope when it&#39;s called. There is no need to
+   specifically pass variables in.</p>
+      <p>You can apply functions within an interpolation. You can use string and numeric
+   literals in an interpolation. You can use qualified modules. Both parentheses and the dollar sign
+   can be used to group statements together. And at the end, the <code>toHtml</code>
+   function is applied to the result, meaning <em>any</em> instance of <code>ToHtml</code> can be interpolated. Take, for instance, the following code.</p>
+      <pre language="haskell"><code class="haskell active">-- Just ignore the quasiquote stuff for now, and that shamlet thing.
+-- It will be explained later.
+{-# LANGUAGE QuasiQuotes #-}
+import Text.Hamlet (shamlet)
+import Text.Blaze.Renderer.String (renderHtml)
+import Data.Char (toLower)
+import Data.List (sort)
+
+data Person = Person
+    { name :: String
+    , age  :: Int
+    }
+
+main :: IO ()
+main = putStrLn $ renderHtml [shamlet|
+&lt;p&gt;Hello, my name is #{name person} and I am #{show $ age person}.
+&lt;p&gt;
+    Let&#39;s do some funny stuff with my name: #
+    &lt;b&gt;#{sort $ map toLower (name person)}
+&lt;p&gt;Oh, and in 5 years I&#39;ll be #{show ((+) 5 (age person))} years old.
+|]
+  where
+    person = Person &quot;Michael&quot; 26</code></pre>
+      <p>What about our much-touted type-safe URLs? They are almost identical to variable
+   interpolation in every way, except they start with an at-sign (@) instead. In addition, there is
+   embedding via a caret (^) which allows you to embed another template of the same type. The next
+   code sample demonstrates both of these.</p>
+      <pre language="haskell"><code class="haskell active">{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE OverloadedStrings #-}
+import Text.Hamlet (HtmlUrl, hamlet)
+import Text.Blaze.Renderer.String (renderHtml)
+import Data.Text (Text)
+
+data MyRoute = Home
+
+render :: MyRoute -&gt; [(Text, Text)] -&gt; Text
+render Home _ = &quot;/home&quot;
+
+footer :: HtmlUrl MyRoute
+footer = [hamlet|
+&lt;footer&gt;
+    Return to #
+    &lt;a href=@{Home}&gt;Homepage
+    .
+|]
+
+main :: IO ()
+main = putStrLn $ renderHtml $ [hamlet|
+&lt;body&gt;
+    &lt;p&gt;This is my page.
+    ^{footer}
+|] render</code></pre>
+     </section>
+     <section>
+      <h1>Attributes</h1>
+      <p></p>
+      <p>In that last example, we put an href attribute on the &quot;a&quot; tag. Let&#39;s elaborate on the
+    syntax:<ul>
+        <li>
+         <p>You can have interpolations within the attribute value.</p>
+        </li>
+        <li>
+         <p>The equals sign and value for an attribute are optional, just like in HTML. So
+      <code>&lt;input type=checkbox checked&gt;</code> is perfectly valid.</p>
+        </li>
+        <li>
+         <p>There are two convenience attributes: for id, you can use the hash, and for classes,
+     the period. In other words, <code>&lt;p #paragraphid .class1
+     .class2&gt;</code>.</p>
+        </li>
+        <li>
+         <p>While quotes around the attribute value are optional, they are required if you want
+     to embed spaces.</p>
+        </li>
+        <li>
+         <p>You can add an attribute optionally by using colons. To make a checkbox only checked
+     if the variable isChecked is True, you would write <code>&lt;input type=checkbox
+      :isChecked:checked&gt;</code>. To have a paragraph be optionally red, you could use <code>&lt;p :isRed:style=&quot;color:red&quot;&gt;</code>.</p>
+        </li>
+       </ul>
+      </p>
+     </section>
+     <section>
+      <h1>Conditionals</h1>
+      <p></p>
+      <p>Eventually, you&#39;ll want to put in some logic in your page. The goal of Hamlet is to
+            make the logic as minimalistic as possible, pushing the heavy lifting into Haskell. As
+            such, our logical statements are very basic... so basic, that it&#39;s <code>if</code>,
+                <code>elseif</code>, and
+            <code>else</code>.<pre><code>$if isAdmin
+    &lt;p&gt;Welcome to the admin section.
+$elseif isLoggedIn
+    &lt;p&gt;You are not the administrator.
+$else
+    &lt;p&gt;I don&#39;t know who you are. Please log in so I can decide if you get access.</code></pre>All
+            the same rules of normal interpolation apply to the content of the conditionals.</p>
+     </section>
+     <section>
+      <h1>Maybe</h1>
+      <p></p>
+      <p>Similarly, we have a special construct for dealing with Maybe values. This could
+   technically be dealt with using <code>if</code>, <code>isJust</code> and
+    <code>fromJust</code>, but this is more convenient and avoids partial
+   functions.<pre><code>$maybe name &lt;- maybeName
+    &lt;p&gt;Your name is #{name}
+$nothing
+    &lt;p&gt;I don&#39;t know your name.</code></pre>In
+   addition to simple identifiers, you can use a few other, more complicated values on the left hand
+   side, such as constructors and tuples.</p>
+      <pre><code>$maybe Person firstName lastName &lt;- maybePerson
+    &lt;p&gt;Your name is #{firstName} #{lastName}</code></pre>
+      <p>The right-hand-side follows the same rules as interpolations, allow variables, function
+   application, and so on.</p>
+     </section>
+     <section>
+      <h1>Forall</h1>
+      <p></p>
+      <p>And what about looping over lists? We have you covered there
+   too:<pre><code>$if null people
+    &lt;p&gt;No people.
+$else
+    &lt;ul&gt;
+        $forall person &lt;- people
+            &lt;li&gt;#{person}</code></pre>
+      </p>
+     </section>
+     <section>
+      <h1>Case</h1>
+      <p></p>
+      <p>Pattern matching is one of the great strengths of Haskell. Sum types let you cleanly model many
+   real-world types, and <code>case</code> statements let you safely match, letting the compiler
+   warn you if you missed a case. Hamlet gives you the same power.</p>
+      <pre><code>$case foo
+    $of Left bar
+        &lt;p&gt;It was left: #{bar}
+    $of Right baz
+        &lt;p&gt;It was right: #{baz}</code></pre>
+     </section>
+     <section>
+      <h1>With</h1>
+      <p></p>
+      <p>Rounding out our statements, we have <code>with</code>. It&#39;s basically just a
+            convenience for declaring a synonym for a long
+            expression.<pre><code>$with foo &lt;- some very (long ugly) expression that $ should only $ happen once
+    &lt;p&gt;But I&#39;m going to use #{foo} multiple times. #{foo}</code></pre>
+      </p>
+     </section>
+     <section>
+      <h1>Doctype</h1>
+      <p></p>
+      <p>Last bit of syntactic sugar: the doctype statement. We have support for a number of
+            different versions of a <code>doctype</code>, though we recommend <code>$doctype
+                5</code> for modern web applications, which generates <code>&lt;!DOCTYPE
+                html&gt;</code>.<pre><code>$doctype 5
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;Hamlet is Awesome
+    &lt;body&gt;
+        &lt;p&gt;All done.</code></pre>
+       <aside class="note">
+        <p>There
+                is an older and still supported syntax: three exclamation points
+                    (<code>!!!</code>). You may still see this in code out there. We have no
+                plans to remove support for this, but in general find the <code>$doctype</code>
+                approach easier to read.</p>
+       </aside>
+      </p>
+     </section>
+    </section>
+    <section>
+     <h1>Cassius Syntax</h1>
+     <p></p>
+     <p>Cassius is the original CSS template language. It uses simple whitespace rules to delimit
+   blocks, making braces and semicolons unnecessary. It supports both variable and URL
+   interpolation, but not embedding. The syntax is very
+   straight-forward:<pre><code>#banner
+    border: 1px solid #{bannerColor}
+    background-image: url(@{BannerImageR})</code></pre>
+     </p>
+    </section>
+    <section>
+     <h1>Lucius Syntax</h1>
+     <p></p>
+     <p>While Cassius uses a modified, whitespace-sensitive syntax for CSS, Lucius is true to
+   the original. You can take any CSS file out there and it will be a valid Lucius file. There are,
+   however, a few additions to Lucius:<ul>
+       <li>
+        <p>Like Cassius, we allow both variable and URL interpolation.</p>
+       </li>
+       <li>
+        <p>CSS blocks are allowed to nest.</p>
+       </li>
+       <li>
+        <p>You can declare variables in your templates.</p>
+       </li>
+      </ul>
+     </p>
+     <p>Starting the with second point: let&#39;s say you want to have some special styling for
+   some tags within your <code>article</code>. In plain ol&#39; CSS, you&#39;d have to
+   write:<pre><code>article code { background-color: grey; }
+article p { text-indent: 2em; }
+article a { text-decoration: none; }</code></pre>In
+   this case, there aren&#39;t that many clauses, but having to type out article each time is still a
+   bit of a nuisance. Imagine if you had a dozen or so of these. Not the worst thing in the world,
+   but a bit of an annoyance. Lucius helps you out
+   here:<pre><code>article {
+    code { background-color: grey; }
+    p { text-indent: 2em; }
+    a { text-decoration: none; }
+}</code></pre>
+     </p>
+     <p>Having Lucius variables allows you to avoid repeating yourself. A simple example would be to
+   define a commonly used color:</p>
+     <pre><code>@textcolor: #ccc; /* just because we hate our users */
+body { color: #{textcolor} }
+a:link, a:visited { color: #{textcolor} }</code></pre>
+     <p>Other than that, Lucius is identical to CSS.</p>
+    </section>
+    <section>
+     <h1>Julius Syntax</h1>
+     <p></p>
+     <p>Julius is the simplest of the languages discussed here. In fact, some might even say
+   it&#39;s really just Javascript. Julius allows the three forms of interpolation we&#39;ve mentioned so
+   far, and otherwise applies no transformations to your content.<aside class="note">
+       <p>If you use Julius
+    with the scaffolded Yesod site, you may notice that your Javascript is automatically minified.
+    This is not a feature of Julius; instead, Yesod uses the <span class="apiname">hjsmin</span>
+    package to minify Julius output.</p>
+      </aside>
+     </p>
+    </section>
+   </section>
+   <section>
+    <h1>Calling Shakespeare</h1>
+    <p></p>
+    <p>The question of course arises at some point: how do I actually use this stuff? There are three
+   different ways to call out to Shakespeare from your Haskell code:</p>
+    <dl>
+     <dt>Quasiquotes</dt><dd>
+       <p>Quasiquotes allow you to embed arbitrary content within your Haskell, and for it to be
+     converted into Haskell code at compile time.</p>
+      </dd>
+     <dt>External file</dt><dd>
+       <p>In this case, the template code is in a separate file which is referenced via Template
+     Haskell.</p>
+      </dd>
+     <dt>Reload mode</dt><dd>
+       <p>Both of the above modes require a full recompile to see any changes. In reload
+     mode, your template is kept in a separate file and referenced via Template Haskell. But at
+     runtime, the external file is reparsed from scratch each time.<aside class="note">
+         <p>Reload mode is not
+      available for Hamlet, only for Cassius, Lucius and Julius. There are too many sophisticated
+      features in Hamlet that rely directly on the Haskell compiler and could not feasible be
+      reimplemented at runtime.</p>
+        </aside>
+       </p>
+      </dd>
+    </dl>
+    <p>One of the first two approaches should be used in production. They both embed the entirety of
+   the template in the final executable, simplifying deployment and increasing performance. The
+   advantage of the quasiquoter is the simplicity: everything stays in a single file. For short
+   templates, this can be a very good fit. However, in general, the external file approach is
+   recommended because:<ul>
+      <li>
+       <p>It follows nicely in the tradition of separate logic from presentation.</p>
+      </li>
+      <li>
+       <p>You can easily switch between external file and debug mode with some simple CPP macros,
+     meaning you can keep rapid development and still achieve high performance in production.</p>
+      </li>
+     </ul>
+    </p>
+    <p>Since these are special QuasiQuoters and Template Haskell functions, you need to be
+   sure to enable the appropriate language extensions and use correct syntax. You can see a simple
+   example of each in the figures.</p>
+    <figure id="calling-shakespeare-x17">
+     <h1>Quasiquoter</h1>
+     <pre language="haskell"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-} -- we&#39;re using Text below
+{-# LANGUAGE QuasiQuotes #-}
+import Text.Hamlet (HtmlUrl, hamlet)
+import Data.Text (Text)
+import Text.Blaze.Renderer.String (renderHtml)
+
+data MyRoute = Home | Time | Stylesheet
+
+render :: MyRoute -&gt; [(Text, Text)] -&gt; Text
+render Home _ = &quot;/home&quot;
+render Time _ = &quot;/time&quot;
+render Stylesheet _ = &quot;/style.css&quot;
+
+template :: Text -&gt; HtmlUrl MyRoute
+template title = [hamlet|
+$doctype 5
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;#{title}
+        &lt;link rel=stylesheet href=@{Stylesheet}&gt;
+    &lt;body&gt;
+        &lt;h1&gt;#{title}
+|]
+
+main :: IO ()
+main = putStrLn $ renderHtml $ template &quot;My Title&quot; render</code></pre>
+    </figure>
+    <figure id="calling-shakespeare-x20">
+     <h1>External file</h1>
+     <pre language="haskell"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-} -- we&#39;re using Text below
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE CPP #-} -- to control production versus debug
+import Text.Lucius (CssUrl, luciusFile, luciusFileDebug, renderCss)
+import Data.Text (Text)
+import qualified Data.Text.Lazy.IO as TLIO
+
+data MyRoute = Home | Time | Stylesheet
+
+render :: MyRoute -&gt; [(Text, Text)] -&gt; Text
+render Home _ = &quot;/home&quot;
+render Time _ = &quot;/time&quot;
+render Stylesheet _ = &quot;/style.css&quot;
+
+template :: CssUrl MyRoute
+#if PRODUCTION
+template = $(luciusFile &quot;template.lucius&quot;)
+#else
+template = $(luciusFileDebug &quot;template.lucius&quot;)
+#endif
+
+main :: IO ()
+main = TLIO.putStrLn $ renderCss $ template render</code></pre>
+     <pre><code>-- @template.lucius
+foo { bar: baz }</code></pre>
+    </figure>
+    <p>The naming scheme for the functions is very consistent.</p>
+    <table>
+     <h1></h1>
+     <tgroup cols="4">
+      <thead>
+       <tr>
+        <td>Language</td>
+        <td>Quasiquoter</td>
+        <td>External file</td>
+        <td>Reload</td>
+       </tr>
+      </thead>
+      <tbody>
+       <tr>
+        <td>Hamlet</td>
+        <td>
+         <span class="apiname">hamlet</span>
+        </td>
+        <td>
+         <code>hamletFile</code>
+        </td>
+        <td>
+         <em>N/A</em>
+        </td>
+       </tr>
+       <tr>
+        <td>Cassius</td>
+        <td>
+         <code>cassius</code>
+        </td>
+        <td>
+         <code>cassiusFile</code>
+        </td>
+        <td>
+         <code>cassiusFileReload</code>
+        </td>
+       </tr>
+       <tr>
+        <td>Lucius</td>
+        <td>
+         <code>lucius</code>
+        </td>
+        <td>
+         <code>luciusFile</code>
+        </td>
+        <td>
+         <code>luciusFileReload</code>
+        </td>
+       </tr>
+       <tr>
+        <td>Julius</td>
+        <td>
+         <code>julius</code>
+        </td>
+        <td>
+         <code>juliusFile</code>
+        </td>
+        <td>
+         <code>juliusFileReload</code>
+        </td>
+       </tr>
+      </tbody>
+     </tgroup>
+    </table>
+    <section>
+     <h1>Alternate Hamlet Types</h1>
+     <p></p>
+     <p>So far, we&#39;ve seen how to generate an <code>HtmlUrl</code> value from Hamlet, which is a
+   piece of HTML with embedded type-safe URLs. There are currently three other values we can
+   generate using Hamlet: plain HTML, HTML with URLs <em role="bold">and</em> internationalized messages, and
+   widgets. That last one will be covered in the widgets chapter.</p>
+     <p>To generate plain HTML without any embedded URLs, we use &quot;simplified Hamlet&quot;. There are a few
+    changes:<ul>
+       <li>
+        <p>We use a different set of functions, prefixed with an &quot;s&quot;. So the quasiquoter is
+      <code>shamlet</code> and the external file function is <code>shamletFile</code>. How
+     we pronounce those is still up for debate.</p>
+       </li>
+       <li>
+        <p>No URL interpolation is allowed. Doing so will result in a compile-time error.</p>
+       </li>
+       <li>
+        <p>Embedding (the caret-interpolator) no longer allows arbitrary <code>HtmlUrl</code> values. The rule is that the embedded value must have the same type as the
+     template itself, so in this case it must be <code>Html</code>. That means that for
+      <code>shamlet</code>, embedding can be completely replaced with normal variable
+     interpolation (with a hash).</p>
+       </li>
+      </ul>
+     </p>
+     <p>Dealing with internationalization (i18n) in Hamlet is a bit complicated. Hamlet
+   supports i18n via a message datatype, very similar in concept and implementation to a type-safe
+   URL. As a motivating example, let&#39;s say we want to have an application that tells you hello and
+   how many apples you have eaten. We could represent those messages with a
+   datatype.<pre language="haskell"><code class="haskell">data Msg = Hello | Apples Int</code></pre>Next,
+   we would want to be able to convert that into something human-readable, so we define some render
+   functions:<pre language="haskell"><code class="haskell">renderEnglish :: Msg -&gt; Text
+renderEnglish Hello = &quot;Hello&quot;
+renderEnglish (Apples 0) = &quot;You did not buy any apples.&quot;
+renderEnglish (Apples 1) = &quot;You bought 1 apple.&quot;
+renderEnglish (Apples i) = T.concat [&quot;You bought &quot;, T.pack $ show i, &quot; apples.&quot;]</code></pre>Now
+   we want to interpolate those Msg values directly in the template. For that, we use underscore
+   interpolation.<pre><code>$doctype 5
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;i18n
+    &lt;body&gt;
+        &lt;h1&gt;_{Hello}
+        &lt;p&gt;_{Apples count}</code></pre>
+     </p>
+     <p>This kind of a template now needs some way to turn those values into HTML. So just
+   like type-safe URLs, we pass in a render function. To represent this, we define a new type
+   synonym:<pre language="haskell"><code class="haskell">type Render url = url -&gt; [(Text, Text)] -&gt; Text
+type Translate msg = msg -&gt; Html
+type HtmlUrlI18n msg url = Translate msg -&gt; Render url -&gt; Html</code></pre>At
+   this point, you can pass <code>renderEnglish</code>, <code>renderSpanish</code>, or <code>renderKlingon</code> to this template, and it
+   will generate nicely translated output (depending, of course, on the quality of your
+   translators). The complete program is:</p>
+     <pre language="haskell"><code class="haskell active">{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE OverloadedStrings #-}
+import Data.Text (Text)
+import qualified Data.Text as T
+import Text.Hamlet (HtmlUrlI18n, ihamlet)
+import Text.Blaze (toHtml)
+import Text.Blaze.Renderer.String (renderHtml)
+
+data MyRoute = Home | Time | Stylesheet
+
+renderUrl :: MyRoute -&gt; [(Text, Text)] -&gt; Text
+renderUrl Home _ = &quot;/home&quot;
+renderUrl Time _ = &quot;/time&quot;
+renderUrl Stylesheet _ = &quot;/style.css&quot;
+
+data Msg = Hello | Apples Int
+
+renderEnglish :: Msg -&gt; Text
+renderEnglish Hello = &quot;Hello&quot;
+renderEnglish (Apples 0) = &quot;You did not buy any apples.&quot;
+renderEnglish (Apples 1) = &quot;You bought 1 apple.&quot;
+renderEnglish (Apples i) = T.concat [&quot;You bought &quot;, T.pack $ show i, &quot; apples.&quot;]
+
+template :: Int -&gt; HtmlUrlI18n Msg MyRoute
+template count = [ihamlet|
+$doctype 5
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;i18n
+    &lt;body&gt;
+        &lt;h1&gt;_{Hello}
+        &lt;p&gt;_{Apples count}
+|]
+
+main :: IO ()
+main = putStrLn $ renderHtml
+     $ (template 5) (toHtml . renderEnglish) renderUrl</code></pre>
+    </section>
+   </section>
+   <section>
+    <h1>Other Shakespeare</h1>
+    <p></p>
+    <p>In addition to HTML, CSS and Javascript helpers, there is also some more general-purpose
+   Shakespeare available. <span class="apiname">shakespeare-text</span> provides a simple way to create
+   interpolated strings, much like people are accustomed to in scripting languages like Ruby and
+   Python. This package&#39;s utility is definitely not limited to Yesod.</p>
+    <pre language="haskell"><code class="haskell active">{-# LANGUAGE QuasiQuotes, OverloadedStrings #-}
+import Text.Shakespeare.Text
+import qualified Data.Text.Lazy.IO as TLIO
+import Data.Text (Text)
+import Control.Monad (forM_)
+
+data Item = Item
+    { itemName :: Text
+    , itemQty :: Int
+    }
+
+items :: [Item]
+items =
+    [ Item &quot;apples&quot; 5
+    , Item &quot;bananas&quot; 10
+    ]
+
+main :: IO ()
+main = forM_ items $ \item -&gt; TLIO.putStrLn
+    [lt|You have #{show $ itemQty item} #{itemName item}.|]</code></pre>
+    <p>Some quick points about this simple example:</p>
+    <ul>
+     <li>
+      <p>Notice that we have three different textual datatypes involved
+     (<code>String</code>, strict <code>Text</code> and lazy <code>Text</code>). They
+    all play together well.</p>
+     </li>
+     <li>
+      <p>We use a quasiquoter named <code>lt</code>, which generates lazy text. There is also
+     <code>st</code>.</p>
+     </li>
+     <li>
+      <p>Also, there are longer names for these quasiquoters (<code>ltext</code> and
+     <code>stext</code>).</p>
+     </li>
+    </ul>
+   </section>
+   <section>
+    <h1>General Recommendations</h1>
+    <p></p>
+    <p>Here are some general hints from the Yesod community on how to get the most out of
+                                                  Shakespeare.</p>
+    <ul>
+     <li>
+      <p>For actual sites, use external files. For libraries, it&#39;s OK to use quasiquoters, assuming they aren&#39;t too long.</p>
+     </li>
+     <li>
+      <p>Patrick Brisbin has put together a <a href="https://github.com/pbrisbin/html-template-syntax">Vim code
+                    highlighter</a> that can help out immensely.</p>
+     </li>
+     <li>
+      <p>You should almost always start Hamlet tags on their own line instead of embedding
+                                                  start/end tags after an existing tag. The only
+                                                  exception to this is the occasional
+                                                  <code>&lt;i&gt;</code> or
+                                                  <code>&lt;b&gt;</code> tag inside a large
+                                                  block of text.</p>
+     </li>
+    </ul>
+   </section>
+  </article>
+</section>
+<section class="getting-started"><p class="warning">Note: You are looking at version 1.1 of the book, which is three versions behind</p>
+<h2> Chapters</h2>
+<ul><li>Basics
+<ul><li><a href="/book-1.1/introduction">Introduction</a>
+</li>
+<li><a href="/book-1.1/haskell">Haskell</a>
+</li>
+<li><a href="/book-1.1/basics">Basics</a>
+</li>
+<li><a href="/book-1.1/shakespearean-templates">Shakespearean Templates</a>
+</li>
+<li><a href="/book-1.1/widgets">Widgets</a>
+</li>
+<li><a href="/book-1.1/yesod-typeclass">Yesod Typeclass</a>
+</li>
+<li><a href="/book-1.1/routing-and-handlers">Routing and Handlers</a>
+</li>
+<li><a href="/book-1.1/forms">Forms</a>
+</li>
+<li><a href="/book-1.1/sessions">Sessions</a>
+</li>
+<li><a href="/book-1.1/persistent">Persistent</a>
+</li>
+<li><a href="/book-1.1/deploying-your-webapp">Deploying your Webapp</a>
+</li>
+</ul>
+</li>
+<li>Advanced
+<ul><li><a href="/book-1.1/restful-content">RESTful Content</a>
+</li>
+<li><a href="/book-1.1/yesods-monads">Yesod&#39;s Monads</a>
+</li>
+<li><a href="/book-1.1/authentication-and-authorization">Authentication and Authorization</a>
+</li>
+<li><a href="/book-1.1/scaffolding-and-the-site-template">Scaffolding and the Site Template</a>
+</li>
+<li><a href="/book-1.1/internationalization">Internationalization</a>
+</li>
+<li><a href="/book-1.1/creating-a-subsite">Creating a Subsite</a>
+</li>
+</ul>
+</li>
+<li>Examples
+<ul><li><a href="/book-1.1/blog-example-advanced">Blog: i18n, authentication, authorization, and database</a>
+</li>
+<li><a href="/book-1.1/wiki-chat-example">Wiki: markdown, chat subsite, event source</a>
+</li>
+<li><a href="/book-1.1/json-web-service">JSON Web Service</a>
+</li>
+<li><a href="/book-1.1/case-study-sphinx">Case Study: Sphinx-based Search</a>
+</li>
+</ul>
+</li>
+<li>Appendices
+<ul><li><a href="/book-1.1/monad-control">monad-control</a>
+</li>
+<li><a href="/book-1.1/conduits">Conduit</a>
+</li>
+<li><a href="/book-1.1/web-application-interface">Web Application Interface</a>
+</li>
+<li><a href="/book-1.1/settings-types">Settings Types</a>
+</li>
+<li><a href="/book-1.1/http-conduit">http-conduit</a>
+</li>
+<li><a href="/book-1.1/xml">xml-conduit</a>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script><script src="//ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script><script>var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function c(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function j(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function g(t,s){var r="";for(var q=0;q<t.childNodes.length;q++){if(t.childNodes[q].nodeType==3){var p=t.childNodes[q].nodeValue;if(s){p=p.replace(/\n/g,"")}r+=p}else{if(t.childNodes[q].nodeName=="BR"){r+="\n"}else{r+=g(t.childNodes[q])}}}if(/MSIE [678]/.test(navigator.userAgent)){r=r.replace(/\r/g,"\n")}return r}function a(s){var q=s.className.split(/\s+/);q=q.concat(s.parentNode.className.split(/\s+/));for(var p=0;p<q.length;p++){var r=q[p].replace(/^language-/,"");if(d[r]||r=="no-highlight"){return r}}}function b(p){var q=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{q.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);q.push({event:"stop",offset:t,node:s.childNodes[r]})}}}return t})(p,0);return q}function l(y,z,x){var r=0;var w="";var t=[];function u(){if(y.length&&z.length){if(y[0].offset!=z[0].offset){return(y[0].offset<z[0].offset)?y:z}else{return z[0].event=="start"?y:z}}else{return y.length?y:z}}function s(C){var D="<"+C.nodeName.toLowerCase();for(var A=0;A<C.attributes.length;A++){var B=C.attributes[A];D+=" "+B.nodeName.toLowerCase();if(B.nodeValue!=undefined&&B.nodeValue!=false&&B.nodeValue!=null){D+='="'+m(B.nodeValue)+'"'}}return D+">"}while(y.length||z.length){var v=u().splice(0,1)[0];w+=m(x.substr(r,v.offset-r));r=v.offset;if(v.event=="start"){w+=s(v.node);t.push(v.node)}else{if(v.event=="stop"){var q=t.length;do{q--;var p=t[q];w+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);t.splice(q,1);while(q<t.length){w+=s(t[q]);q++}}}}w+=x.substr(r);return w}function i(){function p(u,t,v){if(u.compiled){return}if(!v){u.bR=c(t,u.b?u.b:"\\B|\\b");if(!u.e&&!u.eW){u.e="\\B|\\b"}if(u.e){u.eR=c(t,u.e)}}if(u.i){u.iR=c(t,u.i)}if(u.r==undefined){u.r=1}if(u.k){u.lR=c(t,u.l||hljs.IR,true)}for(var s in u.k){if(!u.k.hasOwnProperty(s)){continue}if(u.k[s] instanceof Object){u.kG=u.k}else{u.kG={keyword:u.k}}break}if(!u.c){u.c=[]}u.compiled=true;for(var r=0;r<u.c.length;r++){p(u.c[r],t,false)}if(u.starts){p(u.starts,t,false)}}for(var q in d){if(!d.hasOwnProperty(q)){continue}p(d[q].dM,d[q],true)}}function e(J,D){if(!i.called){i();i.called=true}function z(r,M){for(var L=0;L<M.c.length;L++){if(M.c[L].bR.test(r)){return M.c[L]}}}function w(L,r){if(C[L].e&&C[L].eR.test(r)){return 1}if(C[L].eW){var M=w(L-1,r);return M?M+1:0}return 0}function x(r,L){return L.iR&&L.iR.test(r)}function A(O,N){var M=[];for(var L=0;L<O.c.length;L++){M.push(O.c[L].b)}var r=C.length-1;do{if(C[r].e){M.push(C[r].e)}r--}while(C[r+1].eW);if(O.i){M.push(O.i)}return c(N,"("+M.join("|")+")",true)}function s(M,L){var N=C[C.length-1];if(!N.t){N.t=A(N,H)}N.t.lastIndex=L;var r=N.t.exec(M);if(r){return[M.substr(L,r.index-L),r[0],false]}else{return[M.substr(L),"",true]}}function p(O,r){var L=H.cI?r[0].toLowerCase():r[0];for(var N in O.kG){if(!O.kG.hasOwnProperty(N)){continue}var M=O.kG[N].hasOwnProperty(L);if(M){return[N,M]}}return false}function F(M,O){if(!O.k){return m(M)}var N="";var P=0;O.lR.lastIndex=0;var L=O.lR.exec(M);while(L){N+=m(M.substr(P,L.index-P));var r=p(O,L);if(r){t+=r[1];N+='<span class="'+r[0]+'">'+m(L[0])+"</span>"}else{N+=m(L[0])}P=O.lR.lastIndex;L=O.lR.exec(M)}N+=m(M.substr(P,M.length-P));return N}function K(r,M){if(M.sL&&d[M.sL]){var L=e(M.sL,r);t+=L.keyword_count;return L.value}else{return F(r,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){q+=L;M.buffer=""}else{if(M.eB){q+=m(r)+L;M.buffer=""}else{q+=L;M.buffer=r}}C.push(M);B+=M.r}function E(O,L,Q){var R=C[C.length-1];if(Q){q+=K(R.buffer+O,R);return false}var M=z(L,R);if(M){q+=K(R.buffer+O,R);I(M,L);return M.rB}var r=w(C.length-1,L);if(r){var N=R.cN?"</span>":"";if(R.rE){q+=K(R.buffer+O,R)+N}else{if(R.eE){q+=K(R.buffer+O,R)+N+m(L)}else{q+=K(R.buffer+O+L,R)+N}}while(r>1){N=C[C.length-2].cN?"</span>":"";q+=N;r--;C.length--}var P=C[C.length-1];C.length--;C[C.length-1].buffer="";if(P.starts){I(P.starts,"")}return R.rE}if(x(L,R)){throw"Illegal"}}var H=d[J];var C=[H.dM];var B=0;var t=0;var q="";try{var v=0;H.dM.buffer="";do{var y=s(D,v);var u=E(y[0],y[1],y[2]);v+=y[0].length;if(!u){v+=y[1].length}}while(!y[2]);if(C.length>1){throw"Illegal"}return{r:B,keyword_count:t,value:q}}catch(G){if(G=="Illegal"){return{r:0,keyword_count:0,value:m(D)}}else{throw G}}}function f(t){var r={keyword_count:0,r:0,value:m(t)};var q=r;for(var p in d){if(!d.hasOwnProperty(p)){continue}var s=e(p,t);s.language=p;if(s.keyword_count+s.r>q.keyword_count+q.r){q=s}if(s.keyword_count+s.r>r.keyword_count+r.r){q=r;r=s}}if(q.language){r.second_best=q}return r}function h(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function o(u,x,q){var y=g(u,q);var s=a(u);if(s=="no-highlight"){return}if(s){var w=e(s,y)}else{var w=f(y);s=w.language}var p=b(u);if(p.length){var r=document.createElement("pre");r.innerHTML=w.value;w.value=l(p,b(r),y)}w.value=h(w.value,x,q);var t=u.className;if(!t.match("(\\s|^)(language-)?"+s+"(\\s|$)")){t=t?(t+" "+s):s}if(/MSIE [678]/.test(navigator.userAgent)&&u.tagName=="CODE"&&u.parentNode.tagName=="PRE"){var r=u.parentNode;var v=document.createElement("div");v.innerHTML="<pre><code>"+w.value+"</code></pre>";u=v.firstChild.firstChild;v.firstChild.cN=r.cN;r.parentNode.replaceChild(v.firstChild,r)}else{u.innerHTML=w.value}u.className=t;u.result={language:s,kw:w.keyword_count,re:w.r};if(w.second_best){u.second_best={language:w.second_best.language,kw:w.second_best.keyword_count,re:w.second_best.r}}}function k(){if(k.called){return}k.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=j(r[p]);if(q){o(q,hljs.tabReplace)}}}function n(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",k,false);window.addEventListener("load",k,false)}else{if(window.attachEvent){window.attachEvent("onload",k)}else{window.onload=k}}}var d={};this.LANGUAGES=d;this.highlight=e;this.highlightAuto=f;this.fixMarkup=h;this.highlightBlock=o;this.initHighlighting=k;this.initHighlightingOnLoad=n;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0x[A-Za-z0-9]+|\\d+(\\.\\d+)?)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.inherit=function(p,s){var r={};for(var q in p){r[q]=p[q]}if(s){for(var q in s){r[q]=s[q]}}return r}}();hljs.LANGUAGES.bash=function(){var d={"true":1,"false":1};var b={cN:"variable",b:"\\$([a-zA-Z0-9_]+)\\b"};var a={cN:"variable",b:"\\$\\{(([^}])|(\\\\}))+\\}",c:[hljs.CNM]};var c={cN:"string",b:'"',e:'"',i:"\\n",c:[hljs.BE,b,a],r:0};var e={cN:"test_condition",b:"",e:"",c:[c,b,a,hljs.CNM],k:{literal:d},r:0};return{dM:{k:{keyword:{"if":1,then:1,"else":1,fi:1,"for":1,"break":1,"continue":1,"while":1,"in":1,"do":1,done:1,echo:1,exit:1,"return":1,set:1,declare:1},literal:d},c:[{cN:"shebang",b:"(#!\\/bin\\/bash)|(#!\\/bin\\/sh)",r:10},hljs.HCM,hljs.CNM,c,b,a,hljs.inherit(e,{b:"\\[ ",e:" \\]",r:0}),hljs.inherit(e,{b:"\\[\\[ ",e:" \\]\\]"})]}}}();hljs.LANGUAGES.javascript={dM:{k:{keyword:{"in":1,"if":1,"for":1,"while":1,"finally":1,"var":1,"new":1,"function":1,"do":1,"return":1,"void":1,"else":1,"break":1,"catch":1,"instanceof":1,"with":1,"throw":1,"case":1,"default":1,"try":1,"this":1,"switch":1,"continue":1,"typeof":1,"delete":1},literal:{"true":1,"false":1,"null":1}},c:[hljs.ASM,hljs.QSM,hljs.CLCM,hljs.CBLCLM,hljs.CNM,{b:"("+hljs.RSR+"|case|return|throw)\\s*",k:{"return":1,"throw":1,"case":1},c:[hljs.CLCM,hljs.CBLCLM,{cN:"regexp",b:"/",e:"/[gim]*",c:[{b:"\\\\/"}]}],r:0},{cN:"function",b:"\\bfunction\\b",e:"{",k:{"function":1},c:[{cN:"title",b:"[A-Za-z$_][0-9A-Za-z$_]*"},{cN:"params",b:"\\(",e:"\\)",c:[hljs.ASM,hljs.QSM,hljs.CLCM,hljs.CBLCLM]}]}]}};hljs.LANGUAGES.css=function(){var a={cN:"function",b:hljs.IR+"\\(",e:"\\)",c:[{eW:true,eE:true,c:[hljs.NM,hljs.ASM,hljs.QSM]}]};return{cI:true,dM:{i:"[=/|']",c:[hljs.CBLCLM,{cN:"id",b:"\\#[A-Za-z0-9_-]+"},{cN:"class",b:"\\.[A-Za-z0-9_-]+",r:0},{cN:"attr_selector",b:"\\[",e:"\\]",i:"$"},{cN:"pseudo",b:":(:)?[a-zA-Z0-9\\_\\-\\+\\(\\)\\\"\\']+"},{cN:"at_rule",b:"@(font-face|page)",l:"[a-z-]+",k:{"font-face":1,page:1}},{cN:"at_rule",b:"@",e:"[{;]",eE:true,k:{"import":1,page:1,media:1,charset:1},c:[a,hljs.ASM,hljs.QSM,hljs.NM]},{cN:"tag",b:hljs.IR,r:0},{cN:"rules",b:"{",e:"}",i:"[^\\s]",r:0,c:[hljs.CBLCLM,{cN:"rule",b:"[^\\s]",rB:true,e:";",eW:true,c:[{cN:"attribute",b:"[A-Z\\_\\.\\-]+",e:":",eE:true,i:"[^\\s]",starts:{cN:"value",eW:true,eE:true,c:[a,hljs.NM,hljs.QSM,hljs.ASM,hljs.CBLCLM,{cN:"hexcolor",b:"\\#[0-9A-F]+"},{cN:"important",b:"!important"}]}}]}]}]}}}();hljs.LANGUAGES.xml=function(){var b="[A-Za-z0-9\\._:-]+";var a={eW:true,c:[{cN:"attribute",b:b,r:0},{b:'="',rB:true,e:'"',c:[{cN:"value",b:'"',eW:true}]},{b:"='",rB:true,e:"'",c:[{cN:"value",b:"'",eW:true}]},{b:"=",c:[{cN:"value",b:"[^\\s/>]+"}]}]};return{cI:true,dM:{c:[{cN:"pi",b:"<\\?",e:"\\?>",r:10},{cN:"doctype",b:"<!DOCTYPE",e:">",r:10,c:[{b:"\\[",e:"\\]"}]},{cN:"comment",b:"<!--",e:"-->",r:10},{cN:"cdata",b:"<\\!\\[CDATA\\[",e:"\\]\\]>",r:10},{cN:"tag",b:"<style",e:">",k:{title:{style:1}},c:[a],starts:{cN:"css",e:"</style>",rE:true,sL:"css"}},{cN:"tag",b:"<script",e:">",k:{title:{script:1}},c:[a],starts:{cN:"javascript",e:"<\/script>",rE:true,sL:"javascript"}},{cN:"vbscript",b:"<%",e:"%>",sL:"vbscript"},{cN:"tag",b:"</?",e:"/?>",c:[{cN:"title",b:"[^ />]+"},a]}]}}}();hljs.LANGUAGES.java={dM:{k:{"false":1,"synchronized":1,"int":1,"abstract":1,"float":1,"private":1,"char":1,"interface":1,"boolean":1,"static":1,"null":1,"if":1,"const":1,"for":1,"true":1,"while":1,"long":1,"throw":1,strictfp:1,"finally":1,"protected":1,"extends":1,"import":1,"native":1,"final":1,"implements":1,"return":1,"void":1,"enum":1,"else":1,"break":1,"transient":1,"new":1,"catch":1,"instanceof":1,"byte":1,"super":1,"class":1,"volatile":1,"case":1,assert:1,"short":1,"package":1,"default":1,"double":1,"public":1,"try":1,"this":1,"switch":1,"continue":1,"throws":1},c:[{cN:"javadoc",b:"/\\*\\*",e:"\\*/",c:[{cN:"javadoctag",b:"@[A-Za-z]+"}],r:10},hljs.CLCM,hljs.CBLCLM,hljs.ASM,hljs.QSM,{cN:"class",b:"(class |interface )",e:"{",k:{"class":1,"interface":1},i:":",c:[{b:"(implements|extends)",k:{"extends":1,"implements":1},r:10},{cN:"title",b:hljs.UIR}]},hljs.CNM,{cN:"annotation",b:"@[A-Za-z]+"}]}};hljs.LANGUAGES.haskell=function(){var a={cN:"label",b:"\\b[A-Z][\\w']*",r:0};var b={cN:"container",b:"\\(",e:"\\)",c:[{cN:"label",b:"\\b[A-Z][\\w\\(\\)\\.']*"},{cN:"title",b:"[_a-z][\\w']*"}]};return{dM:{k:{keyword:{let:1,"in":1,"if":1,then:1,"else":1,"case":1,of:1,where:1,"do":1,module:1,"import":1,hiding:1,qualified:1,type:1,data:1,newtype:1,deriving:1,"class":1,instance:1,"null":1,not:1,as:1}},c:[{cN:"comment",b:"--",e:"$"},{cN:"comment",b:"{-",e:"-}"},{cN:"string",b:"\\s+'",e:"'",c:[hljs.BE],r:0},hljs.QSM,{cN:"import",b:"\\bimport",e:"$",k:{"import":1,qualified:1,as:1,hiding:1},c:[b]},{cN:"module",b:"\\bmodule",e:"where",k:{module:1,where:1},c:[b]},{cN:"class",b:"\\b(class|instance|data|(new)?type)",e:"(where|$)",k:{"class":1,where:1,instance:1,data:1,type:1,newtype:1,deriving:1},c:[a]},hljs.CNM,{cN:"shebang",b:"#!\\/usr\\/bin\\/env runhaskell",e:"$"},a,{cN:"title",b:"^[_a-z][\\w']*"}]}}}();hljs.LANGUAGES.sql={cI:true,dM:{i:"[^\\s]",c:[{cN:"operator",b:"(begin|start|commit|rollback|savepoint|lock|alter|create|drop|rename|call|delete|do|handler|insert|load|replace|select|truncate|update|set|show|pragma)\\b",e:";|$",k:{keyword:{all:1,partial:1,global:1,month:1,current_timestamp:1,using:1,go:1,revoke:1,smallint:1,indicator:1,"end-exec":1,disconnect:1,zone:1,"with":1,character:1,assertion:1,to:1,add:1,current_user:1,usage:1,input:1,local:1,alter:1,match:1,collate:1,real:1,then:1,rollback:1,get:1,read:1,timestamp:1,session_user:1,not:1,integer:1,bit:1,unique:1,day:1,minute:1,desc:1,insert:1,execute:1,like:1,ilike:2,level:1,decimal:1,drop:1,"continue":1,isolation:1,found:1,where:1,constraints:1,domain:1,right:1,national:1,some:1,module:1,transaction:1,relative:1,second:1,connect:1,escape:1,close:1,system_user:1,"for":1,deferred:1,section:1,cast:1,current:1,sqlstate:1,allocate:1,intersect:1,deallocate:1,numeric:1,"public":1,preserve:1,full:1,"goto":1,initially:1,asc:1,no:1,key:1,output:1,collation:1,group:1,by:1,union:1,session:1,both:1,last:1,language:1,constraint:1,column:1,of:1,space:1,foreign:1,deferrable:1,prior:1,connection:1,unknown:1,action:1,commit:1,view:1,or:1,first:1,into:1,"float":1,year:1,primary:1,cascaded:1,except:1,restrict:1,set:1,references:1,names:1,table:1,outer:1,open:1,select:1,size:1,are:1,rows:1,from:1,prepare:1,distinct:1,leading:1,create:1,only:1,next:1,inner:1,authorization:1,schema:1,corresponding:1,option:1,declare:1,precision:1,immediate:1,"else":1,timezone_minute:1,external:1,varying:1,translation:1,"true":1,"case":1,exception:1,join:1,hour:1,"default":1,"double":1,scroll:1,value:1,cursor:1,descriptor:1,values:1,dec:1,fetch:1,procedure:1,"delete":1,and:1,"false":1,"int":1,is:1,describe:1,"char":1,as:1,at:1,"in":1,varchar:1,"null":1,trailing:1,any:1,absolute:1,current_time:1,end:1,grant:1,privileges:1,when:1,cross:1,check:1,write:1,current_date:1,pad:1,begin:1,temporary:1,exec:1,time:1,update:1,catalog:1,user:1,sql:1,date:1,on:1,identity:1,timezone_hour:1,natural:1,whenever:1,interval:1,work:1,order:1,cascade:1,diagnostics:1,nchar:1,having:1,left:1,call:1,"do":1,handler:1,load:1,replace:1,truncate:1,start:1,lock:1,show:1,pragma:1},aggregate:{count:1,sum:1,min:1,max:1,avg:1}},c:[{cN:"string",b:"'",e:"'",c:[hljs.BE,{b:"''"}],r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE,{b:'""'}],r:0},{cN:"string",b:"`",e:"`",c:[hljs.BE]},hljs.CNM,{b:"\\n"}]},hljs.CBLCLM,{cN:"comment",b:"--",e:"$"}]}};hljs.LANGUAGES.nginx=function(){var c={cN:"variable",b:"\\$\\d+"};var b={cN:"variable",b:"\\${",e:"}"};var a={cN:"variable",b:"[\\$\\@]"+hljs.UIR};return{dM:{c:[hljs.HCM,{b:hljs.UIR,e:";|{",rE:true,k:{accept_mutex:1,accept_mutex_delay:1,access_log:1,add_after_body:1,add_before_body:1,add_header:1,addition_types:1,alias:1,allow:1,ancient_browser:1,ancient_browser:1,ancient_browser_value:1,ancient_browser_value:1,auth_basic:1,auth_basic_user_file:1,autoindex:1,autoindex_exact_size:1,autoindex_localtime:1,"break":1,charset:1,charset:1,charset_map:1,charset_map:1,charset_types:1,charset_types:1,client_body_buffer_size:1,client_body_in_file_only:1,client_body_in_single_buffer:1,client_body_temp_path:1,client_body_timeout:1,client_header_buffer_size:1,client_header_timeout:1,client_max_body_size:1,connection_pool_size:1,connections:1,create_full_put_path:1,daemon:1,dav_access:1,dav_methods:1,debug_connection:1,debug_points:1,default_type:1,deny:1,directio:1,directio_alignment:1,echo:1,echo_after_body:1,echo_before_body:1,echo_blocking_sleep:1,echo_duplicate:1,echo_end:1,echo_exec:1,echo_flush:1,echo_foreach_split:1,echo_location:1,echo_location_async:1,echo_read_request_body:1,echo_request_body:1,echo_reset_timer:1,echo_sleep:1,echo_subrequest:1,echo_subrequest_async:1,empty_gif:1,empty_gif:1,env:1,error_log:1,error_log:1,error_page:1,events:1,expires:1,fastcgi_bind:1,fastcgi_buffer_size:1,fastcgi_buffers:1,fastcgi_busy_buffers_size:1,fastcgi_cache:1,fastcgi_cache_key:1,fastcgi_cache_methods:1,fastcgi_cache_min_uses:1,fastcgi_cache_path:1,fastcgi_cache_use_stale:1,fastcgi_cache_valid:1,fastcgi_catch_stderr:1,fastcgi_connect_timeout:1,fastcgi_hide_header:1,fastcgi_ignore_client_abort:1,fastcgi_ignore_headers:1,fastcgi_index:1,fastcgi_intercept_errors:1,fastcgi_max_temp_file_size:1,fastcgi_next_upstream:1,fastcgi_param:1,fastcgi_pass:1,fastcgi_pass_header:1,fastcgi_pass_request_body:1,fastcgi_pass_request_headers:1,fastcgi_read_timeout:1,fastcgi_send_lowat:1,fastcgi_send_timeout:1,fastcgi_split_path_info:1,fastcgi_store:1,fastcgi_store_access:1,fastcgi_temp_file_write_size:1,fastcgi_temp_path:1,fastcgi_upstream_fail_timeout:1,fastcgi_upstream_max_fails:1,flv:1,geo:1,geo:1,geoip_city:1,geoip_country:1,gzip:1,gzip_buffers:1,gzip_comp_level:1,gzip_disable:1,gzip_hash:1,gzip_http_version:1,gzip_min_length:1,gzip_no_buffer:1,gzip_proxied:1,gzip_static:1,gzip_types:1,gzip_vary:1,gzip_window:1,http:1,"if":1,if_modified_since:1,ignore_invalid_headers:1,image_filter:1,image_filter_buffer:1,image_filter_jpeg_quality:1,image_filter_transparency:1,include:1,index:1,internal:1,ip_hash:1,js:1,js_load:1,js_require:1,js_utf8:1,keepalive_requests:1,keepalive_timeout:1,kqueue_changes:1,kqueue_events:1,large_client_header_buffers:1,limit_conn:1,limit_conn_log_level:1,limit_except:1,limit_rate:1,limit_rate_after:1,limit_req:1,limit_req_log_level:1,limit_req_zone:1,limit_zone:1,lingering_time:1,lingering_timeout:1,listen:1,location:1,lock_file:1,log_format:1,log_not_found:1,log_subrequest:1,map:1,map_hash_bucket_size:1,map_hash_max_size:1,master_process:1,memcached_bind:1,memcached_buffer_size:1,memcached_connect_timeout:1,memcached_next_upstream:1,memcached_pass:1,memcached_read_timeout:1,memcached_send_timeout:1,memcached_upstream_fail_timeout:1,memcached_upstream_max_fails:1,merge_slashes:1,min_delete_depth:1,modern_browser:1,modern_browser:1,modern_browser_value:1,modern_browser_value:1,more_clear_headers:1,more_clear_input_headers:1,more_set_headers:1,more_set_input_headers:1,msie_padding:1,msie_refresh:1,multi_accept:1,open_file_cache:1,open_file_cache_errors:1,open_file_cache_events:1,open_file_cache_min_uses:1,open_file_cache_retest:1,open_file_cache_valid:1,open_log_file_cache:1,optimize_server_names:1,output_buffers:1,override_charset:1,override_charset:1,perl:1,perl_modules:1,perl_require:1,perl_set:1,pid:1,port_in_redirect:1,post_action:1,postpone_gzipping:1,postpone_output:1,proxy_bind:1,proxy_buffer_size:1,proxy_buffering:1,proxy_buffers:1,proxy_busy_buffers_size:1,proxy_cache:1,proxy_cache_key:1,proxy_cache_methods:1,proxy_cache_min_uses:1,proxy_cache_path:1,proxy_cache_use_stale:1,proxy_cache_valid:1,proxy_connect_timeout:1,proxy_headers_hash_bucket_size:1,proxy_headers_hash_max_size:1,proxy_hide_header:1,proxy_ignore_client_abort:1,proxy_ignore_headers:1,proxy_intercept_errors:1,proxy_max_temp_file_size:1,proxy_method:1,proxy_next_upstream:1,proxy_pass:1,proxy_pass_header:1,proxy_pass_request_body:1,proxy_pass_request_headers:1,proxy_read_timeout:1,proxy_redirect:1,proxy_send_lowat:1,proxy_send_timeout:1,proxy_set_body:1,proxy_set_header:1,proxy_store:1,proxy_store_access:1,proxy_temp_file_write_size:1,proxy_temp_path:1,proxy_upstream_fail_timeout:1,proxy_upstream_max_fails:1,push_authorized_channels_only:1,push_channel_group:1,push_max_channel_id_length:1,push_max_channel_subscribers:1,push_max_message_buffer_length:1,push_max_reserved_memory:1,push_message_buffer_length:1,push_message_timeout:1,push_min_message_buffer_length:1,push_min_message_recipients:1,push_publisher:1,push_store_messages:1,push_subscriber:1,push_subscriber_concurrency:1,random_index:1,read_ahead:1,real_ip_header:1,recursive_error_pages:1,request_pool_size:1,reset_timedout_connection:1,resolver:1,resolver_timeout:1,"return":1,rewrite:1,rewrite_log:1,root:1,satisfy:1,satisfy_any:1,send_lowat:1,send_timeout:1,sendfile:1,sendfile_max_chunk:1,server:1,server:1,server_name:1,server_name_in_redirect:1,server_names_hash_bucket_size:1,server_names_hash_max_size:1,server_tokens:1,set:1,set_real_ip_from:1,source_charset:1,source_charset:1,ssi:1,ssi_ignore_recycled_buffers:1,ssi_min_file_chunk:1,ssi_silent_errors:1,ssi_types:1,ssi_value_length:1,ssl:1,ssl_certificate:1,ssl_certificate_key:1,ssl_ciphers:1,ssl_client_certificate:1,ssl_crl:1,ssl_dhparam:1,ssl_prefer_server_ciphers:1,ssl_protocols:1,ssl_session_cache:1,ssl_session_timeout:1,ssl_verify_client:1,ssl_verify_depth:1,sub_filter:1,sub_filter_once:1,sub_filter_types:1,tcp_nodelay:1,tcp_nopush:1,timer_resolution:1,try_files:1,types:1,types_hash_bucket_size:1,types_hash_max_size:1,underscores_in_headers:1,uninitialized_variable_warn:1,upstream:1,use:1,user:1,userid:1,userid:1,userid_domain:1,userid_domain:1,userid_expires:1,userid_expires:1,userid_mark:1,userid_name:1,userid_name:1,userid_p3p:1,userid_p3p:1,userid_path:1,userid_path:1,userid_service:1,userid_service:1,valid_referers:1,variables_hash_bucket_size:1,variables_hash_max_size:1,worker_connections:1,worker_cpu_affinity:1,worker_priority:1,worker_processes:1,worker_rlimit_core:1,worker_rlimit_nofile:1,worker_rlimit_sigpending:1,working_directory:1,xml_entities:1,xslt_stylesheet:1,xslt_types:1},r:0,c:[hljs.HCM,{b:"\\s",e:"[;{]",rB:true,rE:true,l:"[a-z/]+",k:{built_in:{on:1,off:1,yes:1,no:1,"true":1,"false":1,none:1,blocked:1,debug:1,info:1,notice:1,warn:1,error:1,crit:1,select:1,permanent:1,redirect:1,kqueue:1,rtsig:1,epoll:1,poll:1,"/dev/poll":1}},r:0,c:[hljs.HCM,{cN:"string",b:'"',e:'"',c:[hljs.BE,c,b,a],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE,c,b,a],r:0},{cN:"string",b:"([a-z]+):/",e:"[;\\s]",rE:true},{cN:"regexp",b:"\\s\\^",e:"\\s|{|;",rE:true,c:[hljs.BE,c,b,a]},{cN:"regexp",b:"~\\*?\\s+",e:"\\s|{|;",rE:true,c:[hljs.BE,c,b,a]},{cN:"regexp",b:"\\*(\\.[a-z\\-]+)+",c:[hljs.BE,c,b,a]},{cN:"regexp",b:"([a-z\\-]+\\.)+\\*",c:[hljs.BE,c,b,a]},{cN:"number",b:"\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b"},{cN:"number",b:"\\s\\d+[kKmMgGdshdwy]*\\b",r:0},c,b,a]}]}]}}}();$(function(){
+    $.each($("section[id] > h1"), function(i, e){
+        var $e = $(e),
+            link = $("<a class='permalink'>¶</a>");
+        link.attr("href", "#" + $e.parent().attr("id"));
+
+        $e.prepend(link);
+    });
+});
+hljs.initHighlightingOnLoad();
+</script><footer id="license" style="text-align:center;font-size:0.8em">All content on this site is available under the
+<a href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
+<br>
+Content outside the book section is available under
+<a href="https://raw.github.com/yesodweb/yesodweb.com/master/LICENSE">the MIT license</a>
+as well.</footer>
+</div></div><script>window._gaq = [['_setAccount','UA-1434510-13'],['_trackPageview'],['_trackPageLoadTime']];(function() {var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true; ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);})();</script><!-- Prompt IE 6 users to install Chrome Frame. Remove this if you want to support IE 6.  chromium.org/developers/how-tos/chrome-frame-getting-started --><!--[if lt IE 7 ]><script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script><script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script><![endif]--></body></html>

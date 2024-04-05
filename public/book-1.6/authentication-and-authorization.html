@@ -1,0 +1,661 @@
+<!doctype html><!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]--><!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]--><!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]--><!--[if gt IE 8]><!--><html class="no-js" lang="en"> <!--<![endif]--><head><meta charset="UTF-8"><title>Authentication and Authorization :: Yesod Web Framework Book- Version 1.6</title><meta name="description" content="Yesod is a Haskell web framework for productive development of type-safe, RESTful, high performance web applications."><meta name="viewport" content="width=device-width,initial-scale=1"><link href="/feed" type="application/atom+xml" rel="alternate" title="Yesod Web Framework Blog">
+<style>article,aside,details,figcaption,figure,footer,header,hgroup,nav,section{display:block}audio,canvas,video{display:inline-block;*display:inline;*zoom:1}audio:not([controls]){display:none}[hidden]{display:none}html{font-size:100%;overflow-y:scroll;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{margin:0}body,button,input,select,textarea{font-family:sans-serif}a{color:#00e}a:visited{color:#551a8b}a:focus{outline:thin dotted}a:hover,a:active{outline:0}abbr[title]{border-bottom:1px dotted}b,strong{font-weight:bold}blockquote{margin:1em 40px}dfn{font-style:italic}mark{background:#ff0;color:#000}pre,code,kbd,samp{font-family:"DejaVu Sans Mono", "Droid Sans Mono", consolas, "courier new", monospace;_font-family:'courier new', monospace;font-size:.85em}pre{white-space:pre;white-space:pre-wrap;word-wrap:break-word}q{quotes:none}q:before,q:after{content:'';content:none}small{font-size:75%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-0.5em}sub{bottom:-0.25em}ul,ol{margin:1em 0;padding:0 0 0 40px}dd{margin:0 0 0 40px}nav ul,nav ol{list-style:none;list-style-image:none}img{border:0;-ms-interpolation-mode:bicubic}svg:not(:root){overflow:hidden}figure{margin:0}form{margin:0}fieldset{margin:0 2px;padding:0.35em 0.625em 0.75em}legend{border:0;*margin-left:-7px}button,input,select,textarea{font-size:100%;margin:0;vertical-align:baseline;*vertical-align:middle}button,input{line-height:normal;*overflow:visible}table button,table input{*overflow:auto}button,html input[type="button"],input[type="reset"],input[type="submit"]{cursor:pointer;-webkit-appearance:button}input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}input[type="search"]{-webkit-appearance:textfield;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}textarea{overflow:auto;vertical-align:top}table{border-collapse:collapse;border-spacing:0}pre code{display:block;padding:0.5em;background:#F4F4F4}pre code,pre .ruby .subst,pre .tag .title,pre .lisp .title{color:black}pre .string,pre .title,pre .constant,pre .parent,pre .tag .value,pre .rules .value,pre .rules .value .number,pre .preprocessor,pre .ruby .symbol,pre .ruby .symbol .string,pre .ruby .symbol .keyword,pre .ruby .symbol .keymethods,pre .instancevar,pre .aggregate,pre .template_tag,pre .django .variable,pre .smalltalk .class,pre .addition,pre .flow,pre .stream,pre .bash .variable,pre .apache .tag,pre .apache .cbracket,pre .tex .command,pre .tex .special,pre .erlang_repl .function_or_atom{color:#800}pre .comment,pre .annotation,pre .template_comment,pre .diff .header,pre .chunk{color:#888}pre .number,pre .date,pre .regexp,pre .literal,pre .smalltalk .symbol,pre .smalltalk .char,pre .go .constant,pre .change{color:#080}pre .label,pre .javadoc,pre .ruby .string,pre .decorator,pre .filter .argument,pre .localvars,pre .array,pre .attr_selector,pre .important,pre .pseudo,pre .pi,pre .doctype,pre .deletion,pre .envvar,pre .shebang,pre .apache .sqbracket,pre .nginx .built_in,pre .tex .formula,pre .erlang_repl .reserved,pre .input_number{color:#88F
+}pre .css .tag,pre .javadoctag,pre .phpdoc,pre .yardoctag{font-weight:bold}pre .keyword,pre .id,pre .phpdoc,pre .title,pre .built_in,pre .aggregate,pre .smalltalk .class,pre .winutils,pre .bash .variable,pre .apache .tag,pre .go .typename,pre .tex .command{font-weight:bold}pre .nginx .built_in{font-weight:normal}pre .xml .css,pre .xml .javascript,pre .xml .vbscript,pre .tex .formula{opacity:0.5}aside.note{padding:0.5em;border:1px dotted #000}.github-link{font-size:0.6em}.github-link a,.github-link a:visited{text-decoration:none}article > h1:first-child{margin-top:0}figure > h1{margin:0}p code{background-color:#f0f0f0}a.permalink{font-size:50%;text-decoration:none;position:absolute;left:-25px;top:10px}section > h1{position:relative}pre > code{white-space:pre;overflow-x:auto}@media print, (max-width: 700px) {article > h1:first-child{margin-top:25px}section > h1{margin-bottom:0.5em}}.warning{color:red;font-weight:bold}#main figure{border:1px solid #CCC;box-shadow:0 0 3px #CCC inset;padding:1em;margin:2ex 0}#main figure figcaption{text-size:.9em;text-align:center;color:#555}#main figure img{border:solid 1px #CCC}#container{min-width:1094px}dd,p{text-align:justify}body{font-family:'Crimson Text', serif;font-size:1.2em;background-color:#e5eef9}a,a:visited{color:#000}a:hover,a:active{color:#823}nav{box-shadow:0 -5px 20px 20px rgba(41,55,78,0.12);z-index:100;background-color:#29374e;padding:5px;font-family:'Lato';font-size:0.80em;font-weight:400;position:fixed;width:100%;top:0}nav ul{margin:0;padding:0;text-align:right}nav ul li{display:inline;margin-right:3em}nav ul li.googleplus{position:relative;top:2px;margin-right:3em}nav ul li.feedlink{position:relative;top:3px}nav a,nav a:visited{color:#eee;text-decoration:none}#spotlight{background-image:-webkit-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-moz-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-o-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-ms-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);position:absolute;width:1050px;height:300px;top:0;left:50%;margin-left:-475px;z-index:-1}div.headergroup{width:1050px;margin:0 auto;padding-top:2.6em;padding-bottom:1.3em}div.headergroup a{text-decoration:none;display:flex}div.headergroup div.homepage-logo{text-align:center;width:550px;height:105px;margin-left:75px}div.headergroup div.homepage-logo div.logo-image{background:url(/static/logo-home2-no-esod-smaller2.png?etag=uBLSXtRu) no-repeat center center;width:100%;height:75px}div.headergroup div.homepage-logo div.logo-text{color:#29374e;padding-top:0.2em;font-family:'Lato';font-weight:300;font-size:1.2em;padding-bottom:0.3em}div.headergroup div.homepage-info{text-align:left;font-family:'Lato';font-weight:300;font-size:0.8em;line-height:1.6em;width:220px}div.headergroup h2{margin-bottom:0;font-size:1.4em;margin-top:0;padding-top:0.4em;padding-bottom:1em}h1,h2,h3,h4,h5,h6,dt{color:#474f6b;font-family:'Lato';font-weight:400}h1{font-weight:300;font-size:1.8em}h2,section > section > h1{font-weight:400;font-size:1.5em;margin-bottom:0.5em}h3,section > section > section > h1{font-weight:400;font-size:1.2em;margin-bottom:0.5em}h1 span{display:none}section{display:table-cell}section h2{margin-top:2.2em;margin-bottom:0}section img{max-width:100%}section section{display:block;width:auto;padding:0;margin:0}section.why{width:600px;padding-left:90px;padding-right:90px}section.why article{width:600px}section.getting-started{background-color:#f4f4f4;width:300px;padding-left:50px;padding-right:50px}section.getting-started h2{font-size:1.2em;margin-bottom:0.7em;margin-top:1.8em}section.getting-started ul{font-family:'Lato';font-size:0.75em;font-weight:500;margin-bottom:20px;line-height:2em;list-style-type:none;margin-bottom:50px;padding-left:0}section.getting-started ul ul{font-size:.9em }section.getting-started div{font-family:'Lato';padding-left:20px}#main{box-shadow:0 10px 25px 25px rgba(41,55,78,0.05);background-color:#fff;position:relative;width:1050px;margin:0 auto}aside#announcement{box-shadow:0 0 20px 10px rgba(41,55,78,0.12);height:20px;margin:0 auto;position:relative;width:1080px;background-color:#29374e;color:#eee;padding:0.5em;font-family:'Lato';font-weight:400;font-size:0.8em;z-index:50}aside#announcement div.msg{margin-left:105px}aside#announcement div.tri-left,aside#announcement div.tri-right{width:0;height:0;position:absolute;bottom:-21px;border-style:solid}aside#announcement div.tri-left{left:0;border-width:11px 11px 10px 11px;border-color:#0b1b30 #0b1b30 transparent transparent}aside#announcement div.tri-right{right:0;border-width:11px 11px 11px 10px;border-color:#0b1b30 transparent transparent #0b1b30}aside#announcement a,aside#announcement a:visited{color:#eee;text-decoration:underline}aside#announcement span.date{font-style:italic;font-size:0.8em}#feedlink{display:inline-block;height:16px;width:16px;background:url(/static/blog.png?etag=oPHrQ5qo)}#feedlink span{display:none}dt{font-weight:400;font-size:1.05em;margin-bottom:0.7em;margin-top:2.3em}dd,p{margin:0;font-size:1em;line-height:155%;margin-bottom:0.5em}p.what{display:none;font-size:1.4em;padding:0 200px}#instantclick{display:none}@media print, (max-width: 700px) {body{background-color:#fff;padding:3px}.googleplus,.feedlink,.headergroup,#announcement,#comments,#disqus_thread,#spotlight,#license,.github-link,.oreilly,.main-listing{display:none}div .headergroup{display:none}#container > nav{background-color:#fff;box-shadow:none}#container > nav > ul{text-align:left}#container > nav > ul a,#container > nav > ul a:visited{color:#00f}#main,div#container,section.why > article{width:auto;min-width:0}#main{box-shadow:none;position:static;margin:0}section.why,section.getting-started{display:block;width:auto;padding:0;background-color:#fff}hgroup h1[itemprop=name],hgroup h2,hgroup h3{margin:0}hgroup h1[itemprop=name] img,hgroup h2 img,hgroup h3 img{display:none}dd,p,dt{margin:12px}}@media print {nav{display:none}section.getting-started{display:none}}</style><!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]--><link href="//fonts.googleapis.com/css?family=Crimson+Text:400,400italic,600,600italic,700,700italic" rel="stylesheet" type="text/css"><link href="//fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet" type="text/css"><script>document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/,'js');</script></head><body itemscope itemtype="http://schema.org/Product"><div id="spotlight"></div><div id="container"><nav><ul><li><a href="/book">book</a></li><li><a href="/wiki">cookbook</a></li><li><a href="/blog">blog</a></li><li><a href="/wiki/Home">wiki</a></li><li class="feedlink"><a href="/feed" id="feedlink"><span>newsfeed</span></a></li></ul></nav><div class="headergroup"><a href="/"><div class="homepage-logo"><div class="logo-image"></div><div class="logo-text">Yesod Web Framework</div></div><div class="homepage-info">Yesod is a Haskell web framework for productive development of type-safe, RESTful, high performance web applications.</div></a></div><aside id="announcement"><div class="tri-left"></div><div class="tri-right"></div><div class="msg"><span class="subject">Authentication and Authorization :: Yesod Web Framework Book- Version 1.6</span></div></aside><div id="main" role="main"><section class="why"><p class="github-link"><a href="https://github.com/yesodweb/yesodweb.com-content/tree/master/book/asciidoc/authentication-and-authorization.asciidoc">View source on Github</a>
+</p>
+<article><h1>Authentication and Authorization</h1>
+
+
+<p>Authentication and authorization are two very related, and yet separate,
+concepts. While the former deals with identifying a user, the latter determines
+what a user is allowed to do. Unfortunately, since both terms are often
+abbreviated as &quot;auth,&quot; the concepts are often conflated.</p>
+<p>Yesod provides built-in support for a number of third-party authentication
+systems, such as OpenID, BrowserID and OAuth. These are systems where your
+application trusts some external system for validating a user’s credentials.
+Additionally, there is support for more commonly used username/password and
+email/password systems. The former route ensures simplicity for users (no new
+passwords to remember) and implementors (no need to deal with an entire
+security architecture), while the latter gives the developer more control.</p>
+<p>On the authorization side, we are able to take advantage of REST and type-safe
+URLs to create simple, declarative systems. Additionally, since all
+authorization code is written in Haskell, you have the full flexibility of the
+language at your disposal.</p>
+<p>This chapter will cover how to set up an &quot;auth&quot; solution in Yesod and discuss
+some trade-offs in the different authentication options.</p>
+<section id="authentication-and-authorization_overview">
+<h1>Overview</h1>
+<p>The yesod-auth package provides a unified interface for a number of different
+authentication plugins. The only real requirement for these backends is that
+they identify a user based on some unique string. In OpenID, for instance, this
+would be the actual OpenID value. In BrowserID, it’s the email address. For
+HashDB (which uses a database of hashed passwords), it’s the username.</p>
+<p>Each authentication plugin provides its own system for logging in, whether it
+be via passing tokens with an external site or an email/password form. After a
+successful login, the plugin sets a value in the user’s session to indicate
+his/her <code>AuthId</code>. This <code>AuthId</code> is usually a Persistent ID from a table used
+for keeping track of users.</p>
+<p>There are a few functions available for querying a user’s <code>AuthId</code>, most
+commonly <code>maybeAuthId</code>, <code>requireAuthId</code>, <code>maybeAuth</code> and <code>requireAuth</code>. The
+“require” versions will redirect to a login page if the user is not logged in,
+while the second set of functions (the ones <em role="strong">not</em> ending in <code>Id</code>) give both the
+table ID <em>and</em> entity value.</p>
+<p>Since all of the storage of <code>AuthId</code> is built on top of sessions, all of the
+rules from there apply. In particular, the data is stored in an encrypted,
+HMACed client cookie, which automatically times out after a certain configurable
+period of inactivity. Additionally, since there is no server-side component to sessions,
+logging out simply deletes the data from the session cookie; if a user reuses an
+older cookie value, the session will still be valid.</p>
+<aside class="note"><p>You can replace the default client-side sessions with server side
+sessions, to provide a forced logout capability, if this is desired.  Also, if
+you wish to secure your sessions from man in the middle (MITM) attacks, you
+should serve your site over SSL and harden your sessions via <code>sslOnlySessions</code>
+and <code>sslOnlyMiddleware</code>, as described in the sessions chapter.</p></aside>
+<p>On the flip side, authorization is handled by a few methods inside the <code>Yesod</code>
+typeclass. For every request, these methods are run to determine if access
+should be allowed, denied, or if the user needs to be authenticated. By
+default, these methods allow access for every request. Alternatively, you can
+implement authorization in a more ad-hoc way by adding calls to <code>requireAuth</code>
+and the like within individual handler functions, though this undermines many
+of the benefits of a declarative authorization system.</p>
+</section>
+<section id="authentication-and-authorization_authenticate_me">
+<h1>Authenticate Me</h1>
+<p>Let’s jump right in with an example of authentication. For the Google OAuth authentication to work you should follow these steps:</p>
+<ol numeration="arabic">
+<li>
+<p>
+Read on <a href="https://developers.google.com/identity/protocols/OAuth2">Google Developers Help</a> how to obtain OAuth 2.0 credentials such as a client ID and client secret that are known to both Google and your application.
+</p>
+</li>
+<li>
+<p>
+Set <code>Authorized redirect URIs</code> to <code>http://localhost:3000/auth/page/googleemail2/complete</code>.
+</p>
+</li>
+<li>
+<p>
+Enable <code>Google+ API</code> and <code>Contacts API</code>.
+</p>
+</li>
+<li>
+<p>
+Once you have the <code>clientId</code> and <code>secretId</code>, replace them in the code below.
+</p>
+</li>
+</ol>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+import           Data.Default                (def)
+import           Data.Text                   (Text)
+import           Network.HTTP.Client.Conduit (Manager, newManager)
+import           Yesod
+import           Yesod.Auth
+import           Yesod.Auth.GoogleEmail2
+
+
+-- Replace with Google client ID.
+clientId :: Text
+clientId = &quot;&quot;
+
+-- Replace with Google secret ID.
+clientSecret :: Text
+clientSecret = &quot;&quot;
+
+data App = App
+    { httpManager :: Manager
+    }
+
+mkYesod &quot;App&quot; [parseRoutes|
+/ HomeR GET
+/auth AuthR Auth getAuth
+|]
+
+instance Yesod App where
+    -- Note: In order to log in with BrowserID, you must correctly
+    -- set your hostname here.
+    approot = ApprootStatic &quot;http://localhost:3000&quot;
+
+instance YesodAuth App where
+    type AuthId App = Text
+    authenticate = return . Authenticated . credsIdent
+
+    loginDest _ = HomeR
+    logoutDest _ = HomeR
+
+    authPlugins _ = [ authGoogleEmail clientId clientSecret ]
+
+    -- The default maybeAuthId assumes a Persistent database. We&#39;re going for a
+    -- simpler AuthId, so we&#39;ll just do a direct lookup in the session.
+    maybeAuthId = lookupSession &quot;_ID&quot;
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+getHomeR :: Handler Html
+getHomeR = do
+    maid &lt;- maybeAuthId
+    defaultLayout
+        [whamlet|
+            &lt;p&gt;Your current auth ID: #{show maid}
+            $maybe _ &lt;- maid
+                &lt;p&gt;
+                    &lt;a href=@{AuthR LogoutR}&gt;Logout
+            $nothing
+                &lt;p&gt;
+                    &lt;a href=@{AuthR LoginR}&gt;Go to the login page
+        |]
+
+main :: IO ()
+main = do
+    man &lt;- newManager
+    warp 3000 $ App man</code></pre>
+<p>We’ll start with the route declarations. First, we declare our standard <code>HomeR</code>
+route, and then we set up the authentication subsite. Remember that a subsite
+needs four parameters: the path to the subsite, the route name, the subsite
+name, and a function to get the subsite value. In other words, based on the
+line:</p>
+<pre language="routes" linenumbering="unnumbered"><code>/auth AuthR Auth getAuth</code></pre>
+<p>We need to have <code>getAuth :: MyAuthSite → Auth</code>. While we haven’t written
+that function ourselves, yesod-auth provides it automatically. With other
+subsites (like static files), we provide configuration settings in the subsite
+value, and therefore need to specify the get function. In the auth subsite, we
+specify these settings in a separate typeclass, <code>YesodAuth</code>.</p>
+<aside class="note"><p>Why not use the subsite value? There are a number of settings we would
+like to give for an auth subsite, and doing so from a record type would be
+inconvenient. Also, since we want to have an <code>AuthId</code> associated type, a
+typeclass is more natural. And why not use a typeclass for all
+subsites? It comes with a downside: you can then only have a single instance
+per site, disallowing serving different sets of static files from different
+routes. Also, the subsite value works better when we want to load data at app
+initialization.</p></aside>
+<p>So what exactly goes in this <code>YesodAuth</code> instance? There are five required declarations:</p>
+<ul>
+<li>
+<p>
+<code>AuthId</code> is an associated type. This is the value <code>yesod-auth</code> will give you
+  when you ask if a user is logged in (via <code>maybeAuthId</code> or <code>requireAuthId</code>).
+  In our case, we’re simply using <code>Text</code>, to store the raw identifier- email
+  address in our case, as we’ll soon see.
+</p>
+</li>
+<li>
+<p>
+<code>authenticate</code> gets the actual <code>AuthId</code> from the <code>Creds</code> (credentials) data
+  type. This type has three pieces of information: the authentication backend
+  used (googleemail in our case), the actual identifier, and an
+  associated list of arbitrary extra information. Each backend provides
+  different extra information; see their docs for more information.
+</p>
+</li>
+<li>
+<p>
+<code>loginDest</code> gives the route to redirect to after a successful login.
+</p>
+</li>
+<li>
+<p>
+Likewise, <code>logoutDest</code> gives the route to redirect to after a logout.
+</p>
+</li>
+<li>
+<p>
+<code>authPlugins</code> is a list of individual authentication backends to use. In our example, we’re using Google OAuth, which authenticates a user using their Google account.
+</p>
+</li>
+</ul>
+<p>In addition to these five methods, there are other methods available to control
+other behavior of the authentication system, such as what the login page looks
+like. For more information, please
+<a href="https://www.stackage.org/package/yesod-auth">see the API documentation</a>.</p>
+<p>In our <code>HomeR</code> handler, we have some simple links to the login and logout
+pages, depending on whether or not the user is logged in. Notice how we
+construct these subsite links: first we give the subsite route name (<code>AuthR</code>),
+followed by the route within the subsite (<code>LoginR</code> and <code>LogoutR</code>).</p>
+</section>
+<section id="authentication-and-authorization_email">
+<h1>Email</h1>
+<p>For many use cases, third-party authentication of email will be sufficient.
+Occasionally, you’ll want users to create passwords on your site. The
+scaffolded site does not include this setup, because:</p>
+<ul>
+<li>
+<p>
+In order to securely accept passwords, you need to be running over SSL. Many
+  users are not serving their sites over SSL.
+</p>
+</li>
+<li>
+<p>
+While the email backend properly salts and hashes passwords, a compromised
+  database could still be problematic. Again, we make no assumptions that Yesod
+  users are following secure deployment practices.
+</p>
+</li>
+<li>
+<p>
+You need to have a working system for sending email. Many web servers these
+  days are not equipped to deal with all of the spam protection measures used
+  by mail servers.
+</p>
+</li>
+</ul>
+<aside class="note"><p>The example below will use the system’s built-in <em>sendmail</em> executable.
+If you would like to avoid the hassle of dealing with an email server yourself,
+you can use Amazon SES. There is a package called
+<a href="https://www.stackage.org/package/mime-mail-ses">mime-mail-ses</a> which
+provides a drop-in replacement for the sendmail code used below. This is the
+approach I generally recommend, and what I use on most of my sites, including
+FP Haskell Center and Haskellers.com.</p></aside>
+<p>But assuming you are able to meet these demands, and you want to have a
+separate password login specifically for your site, Yesod offers a built-in
+backend. It requires quite a bit of code to set up, since it needs to store
+passwords securely in the database and send a number of different emails to
+users (verify account, password retrieval, etc.).</p>
+<p>Let’s have a look at a site that provides email authentication, storing
+passwords in a Persistent SQLite database.</p>
+<aside class="note"><p>Even if you don’t have an email server, for debugging purposes the
+verification link is printed in the console.</p></aside>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
+import           Control.Monad            (join)
+import           Control.Monad.Logger     (runNoLoggingT)
+import           Data.Maybe               (isJust)
+import           Data.Text                (Text, unpack)
+import qualified Data.Text.Lazy.Encoding
+import           Data.Typeable            (Typeable)
+import           Database.Persist.Sqlite
+import           Database.Persist.TH
+import           Network.Mail.Mime
+import           Text.Blaze.Html.Renderer.Utf8 (renderHtml)
+import           Text.Hamlet                   (shamlet)
+import           Text.Shakespeare.Text         (stext)
+import           Yesod
+import           Yesod.Auth
+import           Yesod.Auth.Email
+
+share [mkPersist sqlSettings { mpsGeneric = False }, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+User
+    email Text
+    password Text Maybe -- Password may not be set yet
+    verkey Text Maybe -- Used for resetting passwords
+    verified Bool
+    UniqueUser email
+    deriving Typeable
+|]
+
+data App = App SqlBackend
+
+mkYesod &quot;App&quot; [parseRoutes|
+/ HomeR GET
+/auth AuthR Auth getAuth
+|]
+
+instance Yesod App where
+    -- Emails will include links, so be sure to include an approot so that
+    -- the links are valid!
+    approot = ApprootStatic &quot;http://localhost:3000&quot;
+    yesodMiddleware = defaultCsrfMiddleware . defaultYesodMiddleware
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+-- Set up Persistent
+instance YesodPersist App where
+    type YesodPersistBackend App = SqlBackend
+    runDB f = do
+        App conn &lt;- getYesod
+        runSqlConn f conn
+
+instance YesodAuth App where
+    type AuthId App = UserId
+
+    loginDest _ = HomeR
+    logoutDest _ = HomeR
+    authPlugins _ = [authEmail]
+
+    -- Need to find the UserId for the given email address.
+    authenticate creds = liftHandler $ runDB $ do
+        x &lt;- insertBy $ User (credsIdent creds) Nothing Nothing False
+        return $ Authenticated $
+            case x of
+                Left (Entity userid _) -&gt; userid -- existing user
+                Right userid -&gt; userid -- newly added user
+
+instance YesodAuthPersist App
+
+-- Here&#39;s all of the email-specific code
+instance YesodAuthEmail App where
+    type AuthEmailId App = UserId
+
+    afterPasswordRoute _ = HomeR
+
+    addUnverified email verkey =
+        liftHandler $ runDB $ insert $ User email Nothing (Just verkey) False
+
+    sendVerifyEmail email _ verurl = do
+        -- Print out to the console the verification email, for easier
+        -- debugging.
+        liftIO $ putStrLn $ &quot;Copy/ Paste this URL in your browser:&quot; ++ unpack verurl
+
+        -- Send email.
+        liftIO $ renderSendMail (emptyMail $ Address Nothing &quot;noreply&quot;)
+            { mailTo = [Address Nothing email]
+            , mailHeaders =
+                [ (&quot;Subject&quot;, &quot;Verify your email address&quot;)
+                ]
+            , mailParts = [[textPart, htmlPart]]
+            }
+      where
+        textPart = Part
+            { partType = &quot;text/plain; charset=utf-8&quot;
+            , partEncoding = None
+            , partDisposition = DefaultDisposition
+            , partContent = PartContent $ Data.Text.Lazy.Encoding.encodeUtf8
+                [stext|
+                    Please confirm your email address by clicking on the link below.
+
+                    #{verurl}
+
+                    Thank you
+                |]
+            , partHeaders = []
+            }
+        htmlPart = Part
+            { partType = &quot;text/html; charset=utf-8&quot;
+            , partEncoding = None
+            , partDisposition = DefaultDisposition
+            , partContent = PartContent $ renderHtml
+                [shamlet|
+                    &lt;p&gt;Please confirm your email address by clicking on the link below.
+                    &lt;p&gt;
+                        &lt;a href=#{verurl}&gt;#{verurl}
+                    &lt;p&gt;Thank you
+                |]
+            , partHeaders = []
+            }
+    getVerifyKey = liftHandler . runDB . fmap (join . fmap userVerkey) . get
+    setVerifyKey uid key = liftHandler $ runDB $ update uid [UserVerkey =. Just key]
+    verifyAccount uid = liftHandler $ runDB $ do
+        mu &lt;- get uid
+        case mu of
+            Nothing -&gt; return Nothing
+            Just u -&gt; do
+                update uid [UserVerified =. True, UserVerkey =. Nothing]
+                return $ Just uid
+    getPassword = liftHandler . runDB . fmap (join . fmap userPassword) . get
+    setPassword uid pass = liftHandler . runDB $ update uid [UserPassword =. Just pass]
+    getEmailCreds email = liftHandler $ runDB $ do
+        mu &lt;- getBy $ UniqueUser email
+        case mu of
+            Nothing -&gt; return Nothing
+            Just (Entity uid u) -&gt; return $ Just EmailCreds
+                { emailCredsId = uid
+                , emailCredsAuthId = Just uid
+                , emailCredsStatus = isJust $ userPassword u
+                , emailCredsVerkey = userVerkey u
+                , emailCredsEmail = email
+                }
+    getEmail = liftHandler . runDB . fmap (fmap userEmail) . get
+
+getHomeR :: Handler Html
+getHomeR = do
+    maid &lt;- maybeAuthId
+    defaultLayout
+        [whamlet|
+            &lt;p&gt;Your current auth ID: #{show maid}
+            $maybe _ &lt;- maid
+                &lt;p&gt;
+                    &lt;a href=@{AuthR LogoutR}&gt;Logout
+            $nothing
+                &lt;p&gt;
+                    &lt;a href=@{AuthR LoginR}&gt;Go to the login page
+        |]
+
+main :: IO ()
+main = runNoLoggingT $ withSqliteConn &quot;email.db3&quot; $ \conn -&gt; liftIO $ do
+    runSqlConn (runMigration migrateAll) conn
+    warp 3000 $ App conn</code></pre>
+</section>
+<section id="authentication-and-authorization_authorization">
+<h1>Authorization</h1>
+<p>Once you can authenticate your users, you can use their credentials to
+<em>authorize</em> requests. Authorization in Yesod is simple and declarative: most of
+the time, you just need to add the <code>authRoute</code> and <code>isAuthorized</code> methods to
+your Yesod typeclass instance. Let’s see an example.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
+import           Data.Default         (def)
+import           Data.Text            (Text)
+import           Network.HTTP.Conduit (Manager, newManager, tlsManagerSettings)
+import           Yesod
+import           Yesod.Auth
+import           Yesod.Auth.Dummy -- just for testing, don&#39;t use in real life!!!
+
+data App = App
+    { httpManager :: Manager
+    }
+
+mkYesod &quot;App&quot; [parseRoutes|
+/      HomeR  GET POST
+/admin AdminR GET
+/auth  AuthR  Auth getAuth
+|]
+
+instance Yesod App where
+    authRoute _ = Just $ AuthR LoginR
+
+    -- route name, then a boolean indicating if it&#39;s a write request
+    isAuthorized HomeR True = isAdmin
+    isAuthorized AdminR _ = isAdmin
+
+    -- anyone can access other pages
+    isAuthorized _ _ = return Authorized
+
+isAdmin = do
+    mu &lt;- maybeAuthId
+    return $ case mu of
+        Nothing -&gt; AuthenticationRequired
+        Just &quot;admin&quot; -&gt; Authorized
+        Just _ -&gt; Unauthorized &quot;You must be an admin&quot;
+
+instance YesodAuth App where
+    type AuthId App = Text
+    authenticate = return . Authenticated . credsIdent
+
+    loginDest _ = HomeR
+    logoutDest _ = HomeR
+
+    authPlugins _ = [authDummy]
+
+    maybeAuthId = lookupSession &quot;_ID&quot;
+
+instance RenderMessage App FormMessage where
+    renderMessage _ _ = defaultFormMessage
+
+getHomeR :: Handler Html
+getHomeR = do
+    maid &lt;- maybeAuthId
+    defaultLayout
+        [whamlet|
+            &lt;p&gt;Note: Log in as &quot;admin&quot; to be an administrator.
+            &lt;p&gt;Your current auth ID: #{show maid}
+            $maybe _ &lt;- maid
+                &lt;p&gt;
+                    &lt;a href=@{AuthR LogoutR}&gt;Logout
+            &lt;p&gt;
+                &lt;a href=@{AdminR}&gt;Go to admin page
+            &lt;form method=post&gt;
+                Make a change (admins only)
+                \ #
+                &lt;input type=submit&gt;
+        |]
+
+postHomeR :: Handler ()
+postHomeR = do
+    setMessage &quot;You made some change to the page&quot;
+    redirect HomeR
+
+getAdminR :: Handler Html
+getAdminR = defaultLayout
+    [whamlet|
+        &lt;p&gt;I guess you&#39;re an admin!
+        &lt;p&gt;
+            &lt;a href=@{HomeR}&gt;Return to homepage
+    |]
+
+main :: IO ()
+main = do
+    manager &lt;- newManager tlsManagerSettings
+    warp 3000 $ App manager</code></pre>
+<p><code>authRoute</code> should be your login page, almost always <code>AuthR LoginR</code>.
+<code>isAuthorized</code> is a function that takes two parameters: the requested route,
+and whether or not the request was a &quot;write&quot; request. You can actually change
+the meaning of what a write request is using the <code>isWriteRequest</code> method, but
+the out-of-the-box version follows RESTful principles: anything but a <code>GET</code>,
+<code>HEAD</code>, <code>OPTIONS</code> or <code>TRACE</code> request is a write request.</p>
+<p>What’s convenient about the body of <code>isAuthorized</code> is that you can run any
+<code>Handler</code> code you want. This means you can:</p>
+<ul>
+<li>
+<p>
+Access the filesystem (normal IO)
+</p>
+</li>
+<li>
+<p>
+Lookup values in the database
+</p>
+</li>
+<li>
+<p>
+Pull any session or request values you want
+</p>
+</li>
+</ul>
+<p>Using these techniques, you can develop as sophisticated an authorization
+system as you like, or even tie into existing systems used by your
+organization.</p>
+</section>
+<section id="authentication-and-authorization_conclusion">
+<h1>Conclusion</h1>
+<p>This chapter covered the basics of setting up user authentication, as well as
+how the built-in authorization functions provide a simple, declarative approach
+for users. While these are complicated concepts, with many approaches, Yesod
+should provide you with the building blocks you need to create your own
+customized auth solution.</p>
+</section>
+</article>
+</section>
+<section class="getting-started"><h2> Chapters</h2>
+<ul><li>Basics
+<ul><li><a href="/book-1.6/introduction">Introduction</a>
+</li>
+<li><a href="/book-1.6/haskell">Haskell</a>
+</li>
+<li><a href="/book-1.6/basics">Basics</a>
+</li>
+<li><a href="/book-1.6/shakespearean-templates">Shakespearean Templates</a>
+</li>
+<li><a href="/book-1.6/widgets">Widgets</a>
+</li>
+<li><a href="/book-1.6/yesod-typeclass">Yesod Typeclass</a>
+</li>
+<li><a href="/book-1.6/routing-and-handlers">Routing and Handlers</a>
+</li>
+<li><a href="/book-1.6/forms">Forms</a>
+</li>
+<li><a href="/book-1.6/sessions">Sessions</a>
+</li>
+<li><a href="/book-1.6/persistent">Persistent</a>
+</li>
+<li><a href="/book-1.6/deploying-your-webapp">Deploying your Webapp</a>
+</li>
+</ul>
+</li>
+<li>Advanced
+<ul><li><a href="/book-1.6/restful-content">RESTful Content</a>
+</li>
+<li><a href="/book-1.6/yesods-monads">Yesod’s Monads</a>
+</li>
+<li><a href="/book-1.6/authentication-and-authorization">Authentication and Authorization</a>
+</li>
+<li><a href="/book-1.6/scaffolding-and-the-site-template">Scaffolding and the Site Template</a>
+</li>
+<li><a href="/book-1.6/internationalization">Internationalization</a>
+</li>
+<li><a href="/book-1.6/creating-a-subsite">Creating a Subsite</a>
+</li>
+<li><a href="/book-1.6/understanding-request">Understanding a Request</a>
+</li>
+<li><a href="/book-1.6/sql-joins">SQL Joins</a>
+</li>
+<li><a href="/book-1.6/yesod-for-haskellers">Yesod for Haskellers</a>
+</li>
+</ul>
+</li>
+<li>Examples
+<ul><li><a href="/book-1.6/initializing-foundation-data">Initializing data in the foundation datatype</a>
+</li>
+<li><a href="/book-1.6/blog-example-advanced">Blog: i18n, authentication, authorization, and database</a>
+</li>
+<li><a href="/book-1.6/wiki-chat-example">Wiki: markdown, chat subsite, event source</a>
+</li>
+<li><a href="/book-1.6/json-web-service">JSON Web Service</a>
+</li>
+<li><a href="/book-1.6/case-study-sphinx">Case Study: Sphinx-based Search</a>
+</li>
+<li><a href="/book-1.6/visitor-counter">Visitor counter</a>
+</li>
+<li><a href="/book-1.6/single-process-pubsub">Single process pub-sub</a>
+</li>
+<li><a href="/book-1.6/environment-variables">Environment variables for configuration</a>
+</li>
+<li><a href="/book-1.6/route-attributes">Route attributes</a>
+</li>
+</ul>
+</li>
+<li>Appendices
+<ul><li><a href="/book-1.6/monad-control">monad-control</a>
+</li>
+<li><a href="/book-1.6/web-application-interface">Web Application Interface</a>
+</li>
+<li><a href="/book-1.6/settings-types">Settings Types</a>
+</li>
+<li><a href="/book-1.6/http-conduit">http-conduit</a>
+</li>
+<li><a href="/book-1.6/xml">xml-conduit</a>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script><script src="//ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script><script>var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function c(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function j(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function g(t,s){var r="";for(var q=0;q<t.childNodes.length;q++){if(t.childNodes[q].nodeType==3){var p=t.childNodes[q].nodeValue;if(s){p=p.replace(/\n/g,"")}r+=p}else{if(t.childNodes[q].nodeName=="BR"){r+="\n"}else{r+=g(t.childNodes[q])}}}if(/MSIE [678]/.test(navigator.userAgent)){r=r.replace(/\r/g,"\n")}return r}function a(s){var q=s.className.split(/\s+/);q=q.concat(s.parentNode.className.split(/\s+/));for(var p=0;p<q.length;p++){var r=q[p].replace(/^language-/,"");if(d[r]||r=="no-highlight"){return r}}}function b(p){var q=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{q.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);q.push({event:"stop",offset:t,node:s.childNodes[r]})}}}return t})(p,0);return q}function l(y,z,x){var r=0;var w="";var t=[];function u(){if(y.length&&z.length){if(y[0].offset!=z[0].offset){return(y[0].offset<z[0].offset)?y:z}else{return z[0].event=="start"?y:z}}else{return y.length?y:z}}function s(C){var D="<"+C.nodeName.toLowerCase();for(var A=0;A<C.attributes.length;A++){var B=C.attributes[A];D+=" "+B.nodeName.toLowerCase();if(B.nodeValue!=undefined&&B.nodeValue!=false&&B.nodeValue!=null){D+='="'+m(B.nodeValue)+'"'}}return D+">"}while(y.length||z.length){var v=u().splice(0,1)[0];w+=m(x.substr(r,v.offset-r));r=v.offset;if(v.event=="start"){w+=s(v.node);t.push(v.node)}else{if(v.event=="stop"){var q=t.length;do{q--;var p=t[q];w+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);t.splice(q,1);while(q<t.length){w+=s(t[q]);q++}}}}w+=x.substr(r);return w}function i(){function p(u,t,v){if(u.compiled){return}if(!v){u.bR=c(t,u.b?u.b:"\\B|\\b");if(!u.e&&!u.eW){u.e="\\B|\\b"}if(u.e){u.eR=c(t,u.e)}}if(u.i){u.iR=c(t,u.i)}if(u.r==undefined){u.r=1}if(u.k){u.lR=c(t,u.l||hljs.IR,true)}for(var s in u.k){if(!u.k.hasOwnProperty(s)){continue}if(u.k[s] instanceof Object){u.kG=u.k}else{u.kG={keyword:u.k}}break}if(!u.c){u.c=[]}u.compiled=true;for(var r=0;r<u.c.length;r++){p(u.c[r],t,false)}if(u.starts){p(u.starts,t,false)}}for(var q in d){if(!d.hasOwnProperty(q)){continue}p(d[q].dM,d[q],true)}}function e(J,D){if(!i.called){i();i.called=true}function z(r,M){for(var L=0;L<M.c.length;L++){if(M.c[L].bR.test(r)){return M.c[L]}}}function w(L,r){if(C[L].e&&C[L].eR.test(r)){return 1}if(C[L].eW){var M=w(L-1,r);return M?M+1:0}return 0}function x(r,L){return L.iR&&L.iR.test(r)}function A(O,N){var M=[];for(var L=0;L<O.c.length;L++){M.push(O.c[L].b)}var r=C.length-1;do{if(C[r].e){M.push(C[r].e)}r--}while(C[r+1].eW);if(O.i){M.push(O.i)}return c(N,"("+M.join("|")+")",true)}function s(M,L){var N=C[C.length-1];if(!N.t){N.t=A(N,H)}N.t.lastIndex=L;var r=N.t.exec(M);if(r){return[M.substr(L,r.index-L),r[0],false]}else{return[M.substr(L),"",true]}}function p(O,r){var L=H.cI?r[0].toLowerCase():r[0];for(var N in O.kG){if(!O.kG.hasOwnProperty(N)){continue}var M=O.kG[N].hasOwnProperty(L);if(M){return[N,M]}}return false}function F(M,O){if(!O.k){return m(M)}var N="";var P=0;O.lR.lastIndex=0;var L=O.lR.exec(M);while(L){N+=m(M.substr(P,L.index-P));var r=p(O,L);if(r){t+=r[1];N+='<span class="'+r[0]+'">'+m(L[0])+"</span>"}else{N+=m(L[0])}P=O.lR.lastIndex;L=O.lR.exec(M)}N+=m(M.substr(P,M.length-P));return N}function K(r,M){if(M.sL&&d[M.sL]){var L=e(M.sL,r);t+=L.keyword_count;return L.value}else{return F(r,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){q+=L;M.buffer=""}else{if(M.eB){q+=m(r)+L;M.buffer=""}else{q+=L;M.buffer=r}}C.push(M);B+=M.r}function E(O,L,Q){var R=C[C.length-1];if(Q){q+=K(R.buffer+O,R);return false}var M=z(L,R);if(M){q+=K(R.buffer+O,R);I(M,L);return M.rB}var r=w(C.length-1,L);if(r){var N=R.cN?"</span>":"";if(R.rE){q+=K(R.buffer+O,R)+N}else{if(R.eE){q+=K(R.buffer+O,R)+N+m(L)}else{q+=K(R.buffer+O+L,R)+N}}while(r>1){N=C[C.length-2].cN?"</span>":"";q+=N;r--;C.length--}var P=C[C.length-1];C.length--;C[C.length-1].buffer="";if(P.starts){I(P.starts,"")}return R.rE}if(x(L,R)){throw"Illegal"}}var H=d[J];var C=[H.dM];var B=0;var t=0;var q="";try{var v=0;H.dM.buffer="";do{var y=s(D,v);var u=E(y[0],y[1],y[2]);v+=y[0].length;if(!u){v+=y[1].length}}while(!y[2]);if(C.length>1){throw"Illegal"}return{r:B,keyword_count:t,value:q}}catch(G){if(G=="Illegal"){return{r:0,keyword_count:0,value:m(D)}}else{throw G}}}function f(t){var r={keyword_count:0,r:0,value:m(t)};var q=r;for(var p in d){if(!d.hasOwnProperty(p)){continue}var s=e(p,t);s.language=p;if(s.keyword_count+s.r>q.keyword_count+q.r){q=s}if(s.keyword_count+s.r>r.keyword_count+r.r){q=r;r=s}}if(q.language){r.second_best=q}return r}function h(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function o(u,x,q){var y=g(u,q);var s=a(u);if(s=="no-highlight"){return}if(s){var w=e(s,y)}else{var w=f(y);s=w.language}var p=b(u);if(p.length){var r=document.createElement("pre");r.innerHTML=w.value;w.value=l(p,b(r),y)}w.value=h(w.value,x,q);var t=u.className;if(!t.match("(\\s|^)(language-)?"+s+"(\\s|$)")){t=t?(t+" "+s):s}if(/MSIE [678]/.test(navigator.userAgent)&&u.tagName=="CODE"&&u.parentNode.tagName=="PRE"){var r=u.parentNode;var v=document.createElement("div");v.innerHTML="<pre><code>"+w.value+"</code></pre>";u=v.firstChild.firstChild;v.firstChild.cN=r.cN;r.parentNode.replaceChild(v.firstChild,r)}else{u.innerHTML=w.value}u.className=t;u.result={language:s,kw:w.keyword_count,re:w.r};if(w.second_best){u.second_best={language:w.second_best.language,kw:w.second_best.keyword_count,re:w.second_best.r}}}function k(){if(k.called){return}k.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=j(r[p]);if(q){o(q,hljs.tabReplace)}}}function n(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",k,false);window.addEventListener("load",k,false)}else{if(window.attachEvent){window.attachEvent("onload",k)}else{window.onload=k}}}var d={};this.LANGUAGES=d;this.highlight=e;this.highlightAuto=f;this.fixMarkup=h;this.highlightBlock=o;this.initHighlighting=k;this.initHighlightingOnLoad=n;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0x[A-Za-z0-9]+|\\d+(\\.\\d+)?)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.inherit=function(p,s){var r={};for(var q in p){r[q]=p[q]}if(s){for(var q in s){r[q]=s[q]}}return r}}();hljs.LANGUAGES.bash=function(){var d={"true":1,"false":1};var b={cN:"variable",b:"\\$([a-zA-Z0-9_]+)\\b"};var a={cN:"variable",b:"\\$\\{(([^}])|(\\\\}))+\\}",c:[hljs.CNM]};var c={cN:"string",b:'"',e:'"',i:"\\n",c:[hljs.BE,b,a],r:0};var e={cN:"test_condition",b:"",e:"",c:[c,b,a,hljs.CNM],k:{literal:d},r:0};return{dM:{k:{keyword:{"if":1,then:1,"else":1,fi:1,"for":1,"break":1,"continue":1,"while":1,"in":1,"do":1,done:1,echo:1,exit:1,"return":1,set:1,declare:1},literal:d},c:[{cN:"shebang",b:"(#!\\/bin\\/bash)|(#!\\/bin\\/sh)",r:10},hljs.HCM,hljs.CNM,c,b,a,hljs.inherit(e,{b:"\\[ ",e:" \\]",r:0}),hljs.inherit(e,{b:"\\[\\[ ",e:" \\]\\]"})]}}}();hljs.LANGUAGES.javascript={dM:{k:{keyword:{"in":1,"if":1,"for":1,"while":1,"finally":1,"var":1,"new":1,"function":1,"do":1,"return":1,"void":1,"else":1,"break":1,"catch":1,"instanceof":1,"with":1,"throw":1,"case":1,"default":1,"try":1,"this":1,"switch":1,"continue":1,"typeof":1,"delete":1},literal:{"true":1,"false":1,"null":1}},c:[hljs.ASM,hljs.QSM,hljs.CLCM,hljs.CBLCLM,hljs.CNM,{b:"("+hljs.RSR+"|case|return|throw)\\s*",k:{"return":1,"throw":1,"case":1},c:[hljs.CLCM,hljs.CBLCLM,{cN:"regexp",b:"/",e:"/[gim]*",c:[{b:"\\\\/"}]}],r:0},{cN:"function",b:"\\bfunction\\b",e:"{",k:{"function":1},c:[{cN:"title",b:"[A-Za-z$_][0-9A-Za-z$_]*"},{cN:"params",b:"\\(",e:"\\)",c:[hljs.ASM,hljs.QSM,hljs.CLCM,hljs.CBLCLM]}]}]}};hljs.LANGUAGES.css=function(){var a={cN:"function",b:hljs.IR+"\\(",e:"\\)",c:[{eW:true,eE:true,c:[hljs.NM,hljs.ASM,hljs.QSM]}]};return{cI:true,dM:{i:"[=/|']",c:[hljs.CBLCLM,{cN:"id",b:"\\#[A-Za-z0-9_-]+"},{cN:"class",b:"\\.[A-Za-z0-9_-]+",r:0},{cN:"attr_selector",b:"\\[",e:"\\]",i:"$"},{cN:"pseudo",b:":(:)?[a-zA-Z0-9\\_\\-\\+\\(\\)\\\"\\']+"},{cN:"at_rule",b:"@(font-face|page)",l:"[a-z-]+",k:{"font-face":1,page:1}},{cN:"at_rule",b:"@",e:"[{;]",eE:true,k:{"import":1,page:1,media:1,charset:1},c:[a,hljs.ASM,hljs.QSM,hljs.NM]},{cN:"tag",b:hljs.IR,r:0},{cN:"rules",b:"{",e:"}",i:"[^\\s]",r:0,c:[hljs.CBLCLM,{cN:"rule",b:"[^\\s]",rB:true,e:";",eW:true,c:[{cN:"attribute",b:"[A-Z\\_\\.\\-]+",e:":",eE:true,i:"[^\\s]",starts:{cN:"value",eW:true,eE:true,c:[a,hljs.NM,hljs.QSM,hljs.ASM,hljs.CBLCLM,{cN:"hexcolor",b:"\\#[0-9A-F]+"},{cN:"important",b:"!important"}]}}]}]}]}}}();hljs.LANGUAGES.xml=function(){var b="[A-Za-z0-9\\._:-]+";var a={eW:true,c:[{cN:"attribute",b:b,r:0},{b:'="',rB:true,e:'"',c:[{cN:"value",b:'"',eW:true}]},{b:"='",rB:true,e:"'",c:[{cN:"value",b:"'",eW:true}]},{b:"=",c:[{cN:"value",b:"[^\\s/>]+"}]}]};return{cI:true,dM:{c:[{cN:"pi",b:"<\\?",e:"\\?>",r:10},{cN:"doctype",b:"<!DOCTYPE",e:">",r:10,c:[{b:"\\[",e:"\\]"}]},{cN:"comment",b:"<!--",e:"-->",r:10},{cN:"cdata",b:"<\\!\\[CDATA\\[",e:"\\]\\]>",r:10},{cN:"tag",b:"<style",e:">",k:{title:{style:1}},c:[a],starts:{cN:"css",e:"</style>",rE:true,sL:"css"}},{cN:"tag",b:"<script",e:">",k:{title:{script:1}},c:[a],starts:{cN:"javascript",e:"<\/script>",rE:true,sL:"javascript"}},{cN:"vbscript",b:"<%",e:"%>",sL:"vbscript"},{cN:"tag",b:"</?",e:"/?>",c:[{cN:"title",b:"[^ />]+"},a]}]}}}();hljs.LANGUAGES.java={dM:{k:{"false":1,"synchronized":1,"int":1,"abstract":1,"float":1,"private":1,"char":1,"interface":1,"boolean":1,"static":1,"null":1,"if":1,"const":1,"for":1,"true":1,"while":1,"long":1,"throw":1,strictfp:1,"finally":1,"protected":1,"extends":1,"import":1,"native":1,"final":1,"implements":1,"return":1,"void":1,"enum":1,"else":1,"break":1,"transient":1,"new":1,"catch":1,"instanceof":1,"byte":1,"super":1,"class":1,"volatile":1,"case":1,assert:1,"short":1,"package":1,"default":1,"double":1,"public":1,"try":1,"this":1,"switch":1,"continue":1,"throws":1},c:[{cN:"javadoc",b:"/\\*\\*",e:"\\*/",c:[{cN:"javadoctag",b:"@[A-Za-z]+"}],r:10},hljs.CLCM,hljs.CBLCLM,hljs.ASM,hljs.QSM,{cN:"class",b:"(class |interface )",e:"{",k:{"class":1,"interface":1},i:":",c:[{b:"(implements|extends)",k:{"extends":1,"implements":1},r:10},{cN:"title",b:hljs.UIR}]},hljs.CNM,{cN:"annotation",b:"@[A-Za-z]+"}]}};hljs.LANGUAGES.haskell=function(){var a={cN:"label",b:"\\b[A-Z][\\w']*",r:0};var b={cN:"container",b:"\\(",e:"\\)",c:[{cN:"label",b:"\\b[A-Z][\\w\\(\\)\\.']*"},{cN:"title",b:"[_a-z][\\w']*"}]};return{dM:{k:{keyword:{let:1,"in":1,"if":1,then:1,"else":1,"case":1,of:1,where:1,"do":1,module:1,"import":1,hiding:1,qualified:1,type:1,data:1,newtype:1,deriving:1,"class":1,instance:1,"null":1,not:1,as:1}},c:[{cN:"comment",b:"--",e:"$"},{cN:"comment",b:"{-",e:"-}"},{cN:"string",b:"\\s+'",e:"'",c:[hljs.BE],r:0},hljs.QSM,{cN:"import",b:"\\bimport",e:"$",k:{"import":1,qualified:1,as:1,hiding:1},c:[b]},{cN:"module",b:"\\bmodule",e:"where",k:{module:1,where:1},c:[b]},{cN:"class",b:"\\b(class|instance|data|(new)?type)",e:"(where|$)",k:{"class":1,where:1,instance:1,data:1,type:1,newtype:1,deriving:1},c:[a]},hljs.CNM,{cN:"shebang",b:"#!\\/usr\\/bin\\/env runhaskell",e:"$"},a,{cN:"title",b:"^[_a-z][\\w']*"}]}}}();hljs.LANGUAGES.sql={cI:true,dM:{i:"[^\\s]",c:[{cN:"operator",b:"(begin|start|commit|rollback|savepoint|lock|alter|create|drop|rename|call|delete|do|handler|insert|load|replace|select|truncate|update|set|show|pragma)\\b",e:";|$",k:{keyword:{all:1,partial:1,global:1,month:1,current_timestamp:1,using:1,go:1,revoke:1,smallint:1,indicator:1,"end-exec":1,disconnect:1,zone:1,"with":1,character:1,assertion:1,to:1,add:1,current_user:1,usage:1,input:1,local:1,alter:1,match:1,collate:1,real:1,then:1,rollback:1,get:1,read:1,timestamp:1,session_user:1,not:1,integer:1,bit:1,unique:1,day:1,minute:1,desc:1,insert:1,execute:1,like:1,ilike:2,level:1,decimal:1,drop:1,"continue":1,isolation:1,found:1,where:1,constraints:1,domain:1,right:1,national:1,some:1,module:1,transaction:1,relative:1,second:1,connect:1,escape:1,close:1,system_user:1,"for":1,deferred:1,section:1,cast:1,current:1,sqlstate:1,allocate:1,intersect:1,deallocate:1,numeric:1,"public":1,preserve:1,full:1,"goto":1,initially:1,asc:1,no:1,key:1,output:1,collation:1,group:1,by:1,union:1,session:1,both:1,last:1,language:1,constraint:1,column:1,of:1,space:1,foreign:1,deferrable:1,prior:1,connection:1,unknown:1,action:1,commit:1,view:1,or:1,first:1,into:1,"float":1,year:1,primary:1,cascaded:1,except:1,restrict:1,set:1,references:1,names:1,table:1,outer:1,open:1,select:1,size:1,are:1,rows:1,from:1,prepare:1,distinct:1,leading:1,create:1,only:1,next:1,inner:1,authorization:1,schema:1,corresponding:1,option:1,declare:1,precision:1,immediate:1,"else":1,timezone_minute:1,external:1,varying:1,translation:1,"true":1,"case":1,exception:1,join:1,hour:1,"default":1,"double":1,scroll:1,value:1,cursor:1,descriptor:1,values:1,dec:1,fetch:1,procedure:1,"delete":1,and:1,"false":1,"int":1,is:1,describe:1,"char":1,as:1,at:1,"in":1,varchar:1,"null":1,trailing:1,any:1,absolute:1,current_time:1,end:1,grant:1,privileges:1,when:1,cross:1,check:1,write:1,current_date:1,pad:1,begin:1,temporary:1,exec:1,time:1,update:1,catalog:1,user:1,sql:1,date:1,on:1,identity:1,timezone_hour:1,natural:1,whenever:1,interval:1,work:1,order:1,cascade:1,diagnostics:1,nchar:1,having:1,left:1,call:1,"do":1,handler:1,load:1,replace:1,truncate:1,start:1,lock:1,show:1,pragma:1},aggregate:{count:1,sum:1,min:1,max:1,avg:1}},c:[{cN:"string",b:"'",e:"'",c:[hljs.BE,{b:"''"}],r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE,{b:'""'}],r:0},{cN:"string",b:"`",e:"`",c:[hljs.BE]},hljs.CNM,{b:"\\n"}]},hljs.CBLCLM,{cN:"comment",b:"--",e:"$"}]}};hljs.LANGUAGES.nginx=function(){var c={cN:"variable",b:"\\$\\d+"};var b={cN:"variable",b:"\\${",e:"}"};var a={cN:"variable",b:"[\\$\\@]"+hljs.UIR};return{dM:{c:[hljs.HCM,{b:hljs.UIR,e:";|{",rE:true,k:{accept_mutex:1,accept_mutex_delay:1,access_log:1,add_after_body:1,add_before_body:1,add_header:1,addition_types:1,alias:1,allow:1,ancient_browser:1,ancient_browser:1,ancient_browser_value:1,ancient_browser_value:1,auth_basic:1,auth_basic_user_file:1,autoindex:1,autoindex_exact_size:1,autoindex_localtime:1,"break":1,charset:1,charset:1,charset_map:1,charset_map:1,charset_types:1,charset_types:1,client_body_buffer_size:1,client_body_in_file_only:1,client_body_in_single_buffer:1,client_body_temp_path:1,client_body_timeout:1,client_header_buffer_size:1,client_header_timeout:1,client_max_body_size:1,connection_pool_size:1,connections:1,create_full_put_path:1,daemon:1,dav_access:1,dav_methods:1,debug_connection:1,debug_points:1,default_type:1,deny:1,directio:1,directio_alignment:1,echo:1,echo_after_body:1,echo_before_body:1,echo_blocking_sleep:1,echo_duplicate:1,echo_end:1,echo_exec:1,echo_flush:1,echo_foreach_split:1,echo_location:1,echo_location_async:1,echo_read_request_body:1,echo_request_body:1,echo_reset_timer:1,echo_sleep:1,echo_subrequest:1,echo_subrequest_async:1,empty_gif:1,empty_gif:1,env:1,error_log:1,error_log:1,error_page:1,events:1,expires:1,fastcgi_bind:1,fastcgi_buffer_size:1,fastcgi_buffers:1,fastcgi_busy_buffers_size:1,fastcgi_cache:1,fastcgi_cache_key:1,fastcgi_cache_methods:1,fastcgi_cache_min_uses:1,fastcgi_cache_path:1,fastcgi_cache_use_stale:1,fastcgi_cache_valid:1,fastcgi_catch_stderr:1,fastcgi_connect_timeout:1,fastcgi_hide_header:1,fastcgi_ignore_client_abort:1,fastcgi_ignore_headers:1,fastcgi_index:1,fastcgi_intercept_errors:1,fastcgi_max_temp_file_size:1,fastcgi_next_upstream:1,fastcgi_param:1,fastcgi_pass:1,fastcgi_pass_header:1,fastcgi_pass_request_body:1,fastcgi_pass_request_headers:1,fastcgi_read_timeout:1,fastcgi_send_lowat:1,fastcgi_send_timeout:1,fastcgi_split_path_info:1,fastcgi_store:1,fastcgi_store_access:1,fastcgi_temp_file_write_size:1,fastcgi_temp_path:1,fastcgi_upstream_fail_timeout:1,fastcgi_upstream_max_fails:1,flv:1,geo:1,geo:1,geoip_city:1,geoip_country:1,gzip:1,gzip_buffers:1,gzip_comp_level:1,gzip_disable:1,gzip_hash:1,gzip_http_version:1,gzip_min_length:1,gzip_no_buffer:1,gzip_proxied:1,gzip_static:1,gzip_types:1,gzip_vary:1,gzip_window:1,http:1,"if":1,if_modified_since:1,ignore_invalid_headers:1,image_filter:1,image_filter_buffer:1,image_filter_jpeg_quality:1,image_filter_transparency:1,include:1,index:1,internal:1,ip_hash:1,js:1,js_load:1,js_require:1,js_utf8:1,keepalive_requests:1,keepalive_timeout:1,kqueue_changes:1,kqueue_events:1,large_client_header_buffers:1,limit_conn:1,limit_conn_log_level:1,limit_except:1,limit_rate:1,limit_rate_after:1,limit_req:1,limit_req_log_level:1,limit_req_zone:1,limit_zone:1,lingering_time:1,lingering_timeout:1,listen:1,location:1,lock_file:1,log_format:1,log_not_found:1,log_subrequest:1,map:1,map_hash_bucket_size:1,map_hash_max_size:1,master_process:1,memcached_bind:1,memcached_buffer_size:1,memcached_connect_timeout:1,memcached_next_upstream:1,memcached_pass:1,memcached_read_timeout:1,memcached_send_timeout:1,memcached_upstream_fail_timeout:1,memcached_upstream_max_fails:1,merge_slashes:1,min_delete_depth:1,modern_browser:1,modern_browser:1,modern_browser_value:1,modern_browser_value:1,more_clear_headers:1,more_clear_input_headers:1,more_set_headers:1,more_set_input_headers:1,msie_padding:1,msie_refresh:1,multi_accept:1,open_file_cache:1,open_file_cache_errors:1,open_file_cache_events:1,open_file_cache_min_uses:1,open_file_cache_retest:1,open_file_cache_valid:1,open_log_file_cache:1,optimize_server_names:1,output_buffers:1,override_charset:1,override_charset:1,perl:1,perl_modules:1,perl_require:1,perl_set:1,pid:1,port_in_redirect:1,post_action:1,postpone_gzipping:1,postpone_output:1,proxy_bind:1,proxy_buffer_size:1,proxy_buffering:1,proxy_buffers:1,proxy_busy_buffers_size:1,proxy_cache:1,proxy_cache_key:1,proxy_cache_methods:1,proxy_cache_min_uses:1,proxy_cache_path:1,proxy_cache_use_stale:1,proxy_cache_valid:1,proxy_connect_timeout:1,proxy_headers_hash_bucket_size:1,proxy_headers_hash_max_size:1,proxy_hide_header:1,proxy_ignore_client_abort:1,proxy_ignore_headers:1,proxy_intercept_errors:1,proxy_max_temp_file_size:1,proxy_method:1,proxy_next_upstream:1,proxy_pass:1,proxy_pass_header:1,proxy_pass_request_body:1,proxy_pass_request_headers:1,proxy_read_timeout:1,proxy_redirect:1,proxy_send_lowat:1,proxy_send_timeout:1,proxy_set_body:1,proxy_set_header:1,proxy_store:1,proxy_store_access:1,proxy_temp_file_write_size:1,proxy_temp_path:1,proxy_upstream_fail_timeout:1,proxy_upstream_max_fails:1,push_authorized_channels_only:1,push_channel_group:1,push_max_channel_id_length:1,push_max_channel_subscribers:1,push_max_message_buffer_length:1,push_max_reserved_memory:1,push_message_buffer_length:1,push_message_timeout:1,push_min_message_buffer_length:1,push_min_message_recipients:1,push_publisher:1,push_store_messages:1,push_subscriber:1,push_subscriber_concurrency:1,random_index:1,read_ahead:1,real_ip_header:1,recursive_error_pages:1,request_pool_size:1,reset_timedout_connection:1,resolver:1,resolver_timeout:1,"return":1,rewrite:1,rewrite_log:1,root:1,satisfy:1,satisfy_any:1,send_lowat:1,send_timeout:1,sendfile:1,sendfile_max_chunk:1,server:1,server:1,server_name:1,server_name_in_redirect:1,server_names_hash_bucket_size:1,server_names_hash_max_size:1,server_tokens:1,set:1,set_real_ip_from:1,source_charset:1,source_charset:1,ssi:1,ssi_ignore_recycled_buffers:1,ssi_min_file_chunk:1,ssi_silent_errors:1,ssi_types:1,ssi_value_length:1,ssl:1,ssl_certificate:1,ssl_certificate_key:1,ssl_ciphers:1,ssl_client_certificate:1,ssl_crl:1,ssl_dhparam:1,ssl_prefer_server_ciphers:1,ssl_protocols:1,ssl_session_cache:1,ssl_session_timeout:1,ssl_verify_client:1,ssl_verify_depth:1,sub_filter:1,sub_filter_once:1,sub_filter_types:1,tcp_nodelay:1,tcp_nopush:1,timer_resolution:1,try_files:1,types:1,types_hash_bucket_size:1,types_hash_max_size:1,underscores_in_headers:1,uninitialized_variable_warn:1,upstream:1,use:1,user:1,userid:1,userid:1,userid_domain:1,userid_domain:1,userid_expires:1,userid_expires:1,userid_mark:1,userid_name:1,userid_name:1,userid_p3p:1,userid_p3p:1,userid_path:1,userid_path:1,userid_service:1,userid_service:1,valid_referers:1,variables_hash_bucket_size:1,variables_hash_max_size:1,worker_connections:1,worker_cpu_affinity:1,worker_priority:1,worker_processes:1,worker_rlimit_core:1,worker_rlimit_nofile:1,worker_rlimit_sigpending:1,working_directory:1,xml_entities:1,xslt_stylesheet:1,xslt_types:1},r:0,c:[hljs.HCM,{b:"\\s",e:"[;{]",rB:true,rE:true,l:"[a-z/]+",k:{built_in:{on:1,off:1,yes:1,no:1,"true":1,"false":1,none:1,blocked:1,debug:1,info:1,notice:1,warn:1,error:1,crit:1,select:1,permanent:1,redirect:1,kqueue:1,rtsig:1,epoll:1,poll:1,"/dev/poll":1}},r:0,c:[hljs.HCM,{cN:"string",b:'"',e:'"',c:[hljs.BE,c,b,a],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE,c,b,a],r:0},{cN:"string",b:"([a-z]+):/",e:"[;\\s]",rE:true},{cN:"regexp",b:"\\s\\^",e:"\\s|{|;",rE:true,c:[hljs.BE,c,b,a]},{cN:"regexp",b:"~\\*?\\s+",e:"\\s|{|;",rE:true,c:[hljs.BE,c,b,a]},{cN:"regexp",b:"\\*(\\.[a-z\\-]+)+",c:[hljs.BE,c,b,a]},{cN:"regexp",b:"([a-z\\-]+\\.)+\\*",c:[hljs.BE,c,b,a]},{cN:"number",b:"\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b"},{cN:"number",b:"\\s\\d+[kKmMgGdshdwy]*\\b",r:0},c,b,a]}]}]}}}();$(function(){
+    $.each($("section[id] > h1"), function(i, e){
+        var $e = $(e),
+            link = $("<a class='permalink'>¶</a>");
+        link.attr("href", "#" + $e.parent().attr("id"));
+
+        $e.prepend(link);
+    });
+});
+hljs.initHighlightingOnLoad();
+</script><footer id="license" style="text-align:center;font-size:0.8em">All content on this site is available under the
+<a href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
+<br>
+Content outside the book section is available under
+<a href="https://raw.github.com/yesodweb/yesodweb.com/master/LICENSE">the MIT license</a>
+as well.</footer>
+</div></div><script>window._gaq = [['_setAccount','UA-1434510-13'],['_trackPageview'],['_trackPageLoadTime']];(function() {var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true; ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);})();</script><!-- Prompt IE 6 users to install Chrome Frame. Remove this if you want to support IE 6.  chromium.org/developers/how-tos/chrome-frame-getting-started --><!--[if lt IE 7 ]><script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script><script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script><![endif]--></body></html>

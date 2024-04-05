@@ -1,0 +1,31 @@
+name: Update Site
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  update-site:
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just@1.16.0
+
+      - name: Setup tools
+        run: sudo apt-get install -y asciidoc
+
+
+      - name: Generate XML from Asciidoc
+        run: just generate
+      # Other steps that change files in the repository
+
+      # Commit all changed files back to the repository
+      - uses: stefanzweifel/git-auto-commit-action@v5

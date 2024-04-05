@@ -1,0 +1,834 @@
+<!doctype html><!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]--><!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]--><!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]--><!--[if gt IE 8]><!--><html class="no-js" lang="en"> <!--<![endif]--><head><meta charset="UTF-8"><title>xml-conduit :: Yesod Web Framework Book- Version 1.2</title><meta name="description" content="Yesod is a Haskell web framework for productive development of type-safe, RESTful, high performance web applications."><meta name="viewport" content="width=device-width,initial-scale=1"><link href="/feed" type="application/atom+xml" rel="alternate" title="Yesod Web Framework Blog">
+<style>article,aside,details,figcaption,figure,footer,header,hgroup,nav,section{display:block}audio,canvas,video{display:inline-block;*display:inline;*zoom:1}audio:not([controls]){display:none}[hidden]{display:none}html{font-size:100%;overflow-y:scroll;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{margin:0}body,button,input,select,textarea{font-family:sans-serif}a{color:#00e}a:visited{color:#551a8b}a:focus{outline:thin dotted}a:hover,a:active{outline:0}abbr[title]{border-bottom:1px dotted}b,strong{font-weight:bold}blockquote{margin:1em 40px}dfn{font-style:italic}mark{background:#ff0;color:#000}pre,code,kbd,samp{font-family:"DejaVu Sans Mono", "Droid Sans Mono", consolas, "courier new", monospace;_font-family:'courier new', monospace;font-size:.85em}pre{white-space:pre;white-space:pre-wrap;word-wrap:break-word}q{quotes:none}q:before,q:after{content:'';content:none}small{font-size:75%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-0.5em}sub{bottom:-0.25em}ul,ol{margin:1em 0;padding:0 0 0 40px}dd{margin:0 0 0 40px}nav ul,nav ol{list-style:none;list-style-image:none}img{border:0;-ms-interpolation-mode:bicubic}svg:not(:root){overflow:hidden}figure{margin:0}form{margin:0}fieldset{margin:0 2px;padding:0.35em 0.625em 0.75em}legend{border:0;*margin-left:-7px}button,input,select,textarea{font-size:100%;margin:0;vertical-align:baseline;*vertical-align:middle}button,input{line-height:normal;*overflow:visible}table button,table input{*overflow:auto}button,html input[type="button"],input[type="reset"],input[type="submit"]{cursor:pointer;-webkit-appearance:button}input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}input[type="search"]{-webkit-appearance:textfield;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}textarea{overflow:auto;vertical-align:top}table{border-collapse:collapse;border-spacing:0}pre code{display:block;padding:0.5em;background:#F4F4F4}pre code,pre .ruby .subst,pre .tag .title,pre .lisp .title{color:black}pre .string,pre .title,pre .constant,pre .parent,pre .tag .value,pre .rules .value,pre .rules .value .number,pre .preprocessor,pre .ruby .symbol,pre .ruby .symbol .string,pre .ruby .symbol .keyword,pre .ruby .symbol .keymethods,pre .instancevar,pre .aggregate,pre .template_tag,pre .django .variable,pre .smalltalk .class,pre .addition,pre .flow,pre .stream,pre .bash .variable,pre .apache .tag,pre .apache .cbracket,pre .tex .command,pre .tex .special,pre .erlang_repl .function_or_atom{color:#800}pre .comment,pre .annotation,pre .template_comment,pre .diff .header,pre .chunk{color:#888}pre .number,pre .date,pre .regexp,pre .literal,pre .smalltalk .symbol,pre .smalltalk .char,pre .go .constant,pre .change{color:#080}pre .label,pre .javadoc,pre .ruby .string,pre .decorator,pre .filter .argument,pre .localvars,pre .array,pre .attr_selector,pre .important,pre .pseudo,pre .pi,pre .doctype,pre .deletion,pre .envvar,pre .shebang,pre .apache .sqbracket,pre .nginx .built_in,pre .tex .formula,pre .erlang_repl .reserved,pre .input_number{color:#88F
+}pre .css .tag,pre .javadoctag,pre .phpdoc,pre .yardoctag{font-weight:bold}pre .keyword,pre .id,pre .phpdoc,pre .title,pre .built_in,pre .aggregate,pre .smalltalk .class,pre .winutils,pre .bash .variable,pre .apache .tag,pre .go .typename,pre .tex .command{font-weight:bold}pre .nginx .built_in{font-weight:normal}pre .xml .css,pre .xml .javascript,pre .xml .vbscript,pre .tex .formula{opacity:0.5}aside.note{padding:0.5em;border:1px dotted #000}.github-link{font-size:0.6em}.github-link a,.github-link a:visited{text-decoration:none}article > h1:first-child{margin-top:0}figure > h1{margin:0}p code{background-color:#f0f0f0}a.permalink{font-size:50%;text-decoration:none;position:absolute;left:-25px;top:10px}section > h1{position:relative}pre > code{white-space:pre;overflow-x:auto}@media print, (max-width: 700px) {article > h1:first-child{margin-top:25px}section > h1{margin-bottom:0.5em}}.warning{color:red;font-weight:bold}#main figure{border:1px solid #CCC;box-shadow:0 0 3px #CCC inset;padding:1em;margin:2ex 0}#main figure figcaption{text-size:.9em;text-align:center;color:#555}#main figure img{border:solid 1px #CCC}#container{min-width:1094px}dd,p{text-align:justify}body{font-family:'Crimson Text', serif;font-size:1.2em;background-color:#e5eef9}a,a:visited{color:#000}a:hover,a:active{color:#823}nav{box-shadow:0 -5px 20px 20px rgba(41,55,78,0.12);z-index:100;background-color:#29374e;padding:5px;font-family:'Lato';font-size:0.80em;font-weight:400;position:fixed;width:100%;top:0}nav ul{margin:0;padding:0;text-align:right}nav ul li{display:inline;margin-right:3em}nav ul li.googleplus{position:relative;top:2px;margin-right:3em}nav ul li.feedlink{position:relative;top:3px}nav a,nav a:visited{color:#eee;text-decoration:none}#spotlight{background-image:-webkit-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-moz-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-o-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-ms-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);position:absolute;width:1050px;height:300px;top:0;left:50%;margin-left:-475px;z-index:-1}div.headergroup{width:1050px;margin:0 auto;padding-top:2.6em;padding-bottom:1.3em}div.headergroup a{text-decoration:none;display:flex}div.headergroup div.homepage-logo{text-align:center;width:550px;height:105px;margin-left:75px}div.headergroup div.homepage-logo div.logo-image{background:url(/static/logo-home2-no-esod-smaller2.png?etag=uBLSXtRu) no-repeat center center;width:100%;height:75px}div.headergroup div.homepage-logo div.logo-text{color:#29374e;padding-top:0.2em;font-family:'Lato';font-weight:300;font-size:1.2em;padding-bottom:0.3em}div.headergroup div.homepage-info{text-align:left;font-family:'Lato';font-weight:300;font-size:0.8em;line-height:1.6em;width:220px}div.headergroup h2{margin-bottom:0;font-size:1.4em;margin-top:0;padding-top:0.4em;padding-bottom:1em}h1,h2,h3,h4,h5,h6,dt{color:#474f6b;font-family:'Lato';font-weight:400}h1{font-weight:300;font-size:1.8em}h2,section > section > h1{font-weight:400;font-size:1.5em;margin-bottom:0.5em}h3,section > section > section > h1{font-weight:400;font-size:1.2em;margin-bottom:0.5em}h1 span{display:none}section{display:table-cell}section h2{margin-top:2.2em;margin-bottom:0}section img{max-width:100%}section section{display:block;width:auto;padding:0;margin:0}section.why{width:600px;padding-left:90px;padding-right:90px}section.why article{width:600px}section.getting-started{background-color:#f4f4f4;width:300px;padding-left:50px;padding-right:50px}section.getting-started h2{font-size:1.2em;margin-bottom:0.7em;margin-top:1.8em}section.getting-started ul{font-family:'Lato';font-size:0.75em;font-weight:500;margin-bottom:20px;line-height:2em;list-style-type:none;margin-bottom:50px;padding-left:0}section.getting-started ul ul{font-size:.9em }section.getting-started div{font-family:'Lato';padding-left:20px}#main{box-shadow:0 10px 25px 25px rgba(41,55,78,0.05);background-color:#fff;position:relative;width:1050px;margin:0 auto}aside#announcement{box-shadow:0 0 20px 10px rgba(41,55,78,0.12);height:20px;margin:0 auto;position:relative;width:1080px;background-color:#29374e;color:#eee;padding:0.5em;font-family:'Lato';font-weight:400;font-size:0.8em;z-index:50}aside#announcement div.msg{margin-left:105px}aside#announcement div.tri-left,aside#announcement div.tri-right{width:0;height:0;position:absolute;bottom:-21px;border-style:solid}aside#announcement div.tri-left{left:0;border-width:11px 11px 10px 11px;border-color:#0b1b30 #0b1b30 transparent transparent}aside#announcement div.tri-right{right:0;border-width:11px 11px 11px 10px;border-color:#0b1b30 transparent transparent #0b1b30}aside#announcement a,aside#announcement a:visited{color:#eee;text-decoration:underline}aside#announcement span.date{font-style:italic;font-size:0.8em}#feedlink{display:inline-block;height:16px;width:16px;background:url(/static/blog.png?etag=oPHrQ5qo)}#feedlink span{display:none}dt{font-weight:400;font-size:1.05em;margin-bottom:0.7em;margin-top:2.3em}dd,p{margin:0;font-size:1em;line-height:155%;margin-bottom:0.5em}p.what{display:none;font-size:1.4em;padding:0 200px}#instantclick{display:none}@media print, (max-width: 700px) {body{background-color:#fff;padding:3px}.googleplus,.feedlink,.headergroup,#announcement,#comments,#disqus_thread,#spotlight,#license,.github-link,.oreilly,.main-listing{display:none}div .headergroup{display:none}#container > nav{background-color:#fff;box-shadow:none}#container > nav > ul{text-align:left}#container > nav > ul a,#container > nav > ul a:visited{color:#00f}#main,div#container,section.why > article{width:auto;min-width:0}#main{box-shadow:none;position:static;margin:0}section.why,section.getting-started{display:block;width:auto;padding:0;background-color:#fff}hgroup h1[itemprop=name],hgroup h2,hgroup h3{margin:0}hgroup h1[itemprop=name] img,hgroup h2 img,hgroup h3 img{display:none}dd,p,dt{margin:12px}}@media print {nav{display:none}section.getting-started{display:none}}</style><!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]--><link href="//fonts.googleapis.com/css?family=Crimson+Text:400,400italic,600,600italic,700,700italic" rel="stylesheet" type="text/css"><link href="//fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet" type="text/css"><script>document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/,'js');</script></head><body itemscope itemtype="http://schema.org/Product"><div id="spotlight"></div><div id="container"><nav><ul><li><a href="/book">book</a></li><li><a href="/wiki">cookbook</a></li><li><a href="/blog">blog</a></li><li><a href="/wiki/Home">wiki</a></li><li class="feedlink"><a href="/feed" id="feedlink"><span>newsfeed</span></a></li></ul></nav><div class="headergroup"><a href="/"><div class="homepage-logo"><div class="logo-image"></div><div class="logo-text">Yesod Web Framework</div></div><div class="homepage-info">Yesod is a Haskell web framework for productive development of type-safe, RESTful, high performance web applications.</div></a></div><aside id="announcement"><div class="tri-left"></div><div class="tri-right"></div><div class="msg"><span class="subject">xml-conduit :: Yesod Web Framework Book- Version 1.2</span></div></aside><div id="main" role="main"><section class="why"><p class="github-link"><a href="https://github.com/yesodweb/yesodweb.com-content/tree/version1.2/book/xml.asciidoc">View source on Github</a>
+</p>
+<article><h1>xml-conduit</h1>
+
+
+<p>Many developers cringe at the thought of dealing with XML files. XML has the
+reputation of having a complicated data model, with obfuscated libraries and
+huge layers of complexity sitting between you and your goal. I’d like to posit
+that a lot of that pain is actually a language and library issue, not inherent
+to XML.</p>
+<p>Once again, Haskell’s type system allows us to easily break down the problem to
+its most basic form. The xml-types package neatly deconstructs the XML data
+model (both a streaming and DOM-based approach) into some simple ADTs.
+Haskell’s standard immutable data structures make it easier to apply transforms
+to documents, and a simple set of functions makes parsing and rendering a
+breeze.</p>
+<p>We’re going to be covering the xml-conduit package. Under the surface, this
+package uses a lot of the approaches Yesod in general does for high
+performance: blaze-builder, text, conduit and attoparsec. But from a user
+perspective, it provides everything from the simplest APIs
+(<code>readFile</code>/<code>writeFile</code>) through full control of XML event streams.</p>
+<p>In addition to <code>xml-conduit</code>, there are a few related packages that come into
+play, like xml-hamlet and xml2html. We’ll cover both how to use all these
+packages, and when they should be used.</p>
+<section id="xml_synopsis">
+<h1>Synopsis</h1>
+<pre language="xml" linenumbering="unnumbered"><code>&lt;!-- Input XML file --&gt;
+&lt;document title=&quot;My Title&quot;&gt;
+    &lt;para&gt;This is a paragraph. It has &lt;em&gt;emphasized&lt;/em&gt; and &lt;strong&gt;strong&lt;/strong&gt; words.&lt;/para&gt;
+    &lt;image href=&quot;myimage.png&quot;/&gt;
+&lt;/document&gt;</code></pre>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+import qualified Data.Map        as M
+import           Prelude         hiding (readFile, writeFile)
+import           Text.Hamlet.XML
+import           Text.XML
+
+main :: IO ()
+main = do
+    -- readFile will throw any parse errors as runtime exceptions
+    -- def uses the default settings
+    Document prologue root epilogue &lt;- readFile def &quot;input.xml&quot;
+
+    -- root is the root element of the document, let&#39;s modify it
+    let root&#39; = transform root
+
+    -- And now we write out. Let&#39;s indent our output
+    writeFile def
+        { rsPretty = True
+        } &quot;output.html&quot; $ Document prologue root&#39; epilogue
+
+-- We&#39;ll turn out &lt;document&gt; into an XHTML document
+transform :: Element -&gt; Element
+transform (Element _name attrs children) = Element &quot;html&quot; M.empty
+    [xml|
+        &lt;head&gt;
+            &lt;title&gt;
+                $maybe title &lt;- M.lookup &quot;title&quot; attrs
+                    \#{title}
+                $nothing
+                    Untitled Document
+        &lt;body&gt;
+            $forall child &lt;- children
+                ^{goNode child}
+    |]
+
+goNode :: Node -&gt; [Node]
+goNode (NodeElement e) = [NodeElement $ goElem e]
+goNode (NodeContent t) = [NodeContent t]
+goNode (NodeComment _) = [] -- hide comments
+goNode (NodeInstruction _) = [] -- and hide processing instructions too
+
+-- convert each source element to its XHTML equivalent
+goElem :: Element -&gt; Element
+goElem (Element &quot;para&quot; attrs children) =
+    Element &quot;p&quot; attrs $ concatMap goNode children
+goElem (Element &quot;em&quot; attrs children) =
+    Element &quot;i&quot; attrs $ concatMap goNode children
+goElem (Element &quot;strong&quot; attrs children) =
+    Element &quot;b&quot; attrs $ concatMap goNode children
+goElem (Element &quot;image&quot; attrs _children) =
+    Element &quot;img&quot; (fixAttr attrs) [] -- images can&#39;t have children
+  where
+    fixAttr mattrs
+        | &quot;href&quot; `M.member` mattrs  = M.delete &quot;href&quot; $ M.insert &quot;src&quot; (mattrs M.! &quot;href&quot;) mattrs
+        | otherwise                 = mattrs
+goElem (Element name attrs children) =
+    -- don&#39;t know what to do, just pass it through...
+    Element name attrs $ concatMap goNode children</code></pre>
+<pre language="xhtml" linenumbering="unnumbered"><code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!-- Output XHTML --&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;
+            My Title
+        &lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;p&gt;
+            This is a paragraph. It has
+            &lt;i&gt;
+                emphasized
+            &lt;/i&gt;
+            and
+            &lt;b&gt;
+                strong
+            &lt;/b&gt;
+            words.
+        &lt;/p&gt;
+        &lt;img src=&quot;myimage.png&quot;/&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+</section>
+<section id="xml_types">
+<h1>Types</h1>
+<p>Let’s take a bottom-up approach to analyzing types. This section will also
+serve as a primer on the XML data model itself, so don’t worry if you’re not
+completely familiar with it.</p>
+<p>I think the first place where Haskell really shows its strength is with the
+<code>Name</code> datatype. Many languages (like Java) struggle with properly expressing
+names. The issue is that there are in fact three components to a name: its
+local name, its namespace (optional), and its prefix (also optional). Let’s
+look at some XML to explain:</p>
+<pre language="xml" linenumbering="unnumbered"><code>&lt;no-namespace/&gt;
+&lt;no-prefix xmlns=&quot;first-namespace&quot; first-attr=&quot;value1&quot;/&gt;
+&lt;foo:with-prefix xmlns:foo=&quot;second-namespace&quot; foo:second-attr=&quot;value2&quot;/&gt;</code></pre>
+<p>The first tag has a local name of <code>no-namespace</code>, and no namespace or prefix.
+The second tag (local name: <code>no-prefix</code>) <em>also</em> has no prefix, but it does have
+a namespace (<code>first-namespace</code>). <code>first-attr</code>, however, does <em>not</em> inherit that
+namespace: attribute namespaces must always be explicitly set with a prefix.</p>
+<aside class="note"><p>Namespaces are almost always URIs of some sort, though there is nothing
+in any specification requiring that it be so.</p></aside>
+<p>The third tag has a local name of <code>with-prefix</code>, a prefix of <code>foo</code> and a
+namespace of <code>second-namespace</code>. Its attribute has a <code>second-attr</code> local name
+and the same prefix and namespace. The <code>xmlns</code> and <code>xmlns:foo</code> attributes are
+part of the namespace specification, and are not considered attributes of their
+respective elements.</p>
+<p>So let’s review what we need from a name: every name has a local name, and it
+can optionally have a prefix and namespace. Seems like a simple fit for a
+record type:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data Name = Name
+    { nameLocalName :: Text
+    , nameNamespace :: Maybe Text
+    , namePrefix    :: Maybe Text
+    }</code></pre>
+<p>According the XML namespace standard, two names are considered equivalent
+if they have the same localname and namespace. In other words, the prefix is
+not important. Therefore, <code>xml-types</code> defines <code>Eq</code> and <code>Ord</code> instances that
+ignore the prefix.</p>
+<p>The last class instance worth mentioning is <code>IsString</code>. It would be very
+tedious to have to manually type out <code>Name &quot;p&quot; Nothing Nothing</code> every time we
+want a paragraph. If you turn on <code>OverloadedStrings</code>, <code>&quot;p&quot;</code> will resolve to
+that all by itself! In addition, the <code>IsString</code> instance recognizes something
+called Clark notation, which allows you to prefix the namespace surrounded in
+curly brackets. In other words:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">&quot;{namespace}element&quot; == Name &quot;element&quot; (Just &quot;namespace&quot;) Nothing
+&quot;element&quot; == Name &quot;element&quot; Nothing Nothing</code></pre>
+<section id="xml_the_four_types_of_nodes">
+<h1>The Four Types of Nodes</h1>
+<p>XML documents are a tree of nested nodes. There are in fact four different
+types of nodes allowed: elements, content (i.e., text), comments, and
+processing instructions.</p>
+<aside class="note">
+<p>You may not be familiar with that last one, it’s less commonly used. It is marked up as:</p>
+<pre language="xml" linenumbering="unnumbered"><code>&lt;?target data?&gt;</code></pre>
+<p>There are two surprising facts about processing instructions (PIs):</p>
+<ul>
+<li>
+<p>
+PIs don’t have attributes. While often times you’ll see processing
+  instructions that appear to have attributes, there are in fact no rules about
+  that data of an instruction.
+</p>
+</li>
+<li>
+<p>
+The <code>&lt;?xml …?&gt;</code> stuff at the beginning of a document is not a
+  processing instruction. It is simply the beginning of the document (known as
+  the XML declaration), and happens to look an awful lot like a PI. The
+  difference though is that the <code>&lt;?xml …?&gt;</code> line will not appear in
+  your parsed content.
+</p>
+</li>
+</ul>
+</aside>
+<p>Since processing instructions have two pieces of text associated with them (the
+target and the data), we have a simple data type:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data Instruction = Instruction
+    { instructionTarget :: Text
+    , instructionData :: Text
+    }</code></pre>
+<p>Comments have no special datatype, since they are just text. But content is an
+interesting one: it could contain either plain text or unresolved entities
+(e.g., <code>&amp;copyright-statement;</code>). xml-types keeps those unresolved entities
+in all the data types in order to completely match the spec. However, in
+practice, it can be very tedious to program against those data types. And in
+most use cases, an unresolved entity is going to end up as an error anyway.</p>
+<p>Therefore, the <code>Text.XML</code> module defines its own set of datatypes for nodes,
+elements and documents that removes all unresolved entities. If you need to
+deal with unresolved entities instead, you should use the <code>Text.XML.Unresolved</code>
+module.  From now on, we’ll be focusing only on the <code>Text.XML</code> data types,
+though they are almost identical to the <code>xml-types</code> versions.</p>
+<p>Anyway, after that detour: content is just a piece of text, and therefore it
+too does not have a special datatype. The last node type is an element, which
+contains three pieces of information: a name, a map of attribute name/value
+pairs, and a list of children nodes. (In <code>xml-types</code>, this value could contain
+unresolved entities as well.) So our <code>Element</code> is defined as:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data Element = Element
+    { elementName :: Name
+    , elementAttributes :: Map Name Text
+    , elementNodes :: [Node]
+    }</code></pre>
+<p>Which of course begs the question: what does a <code>Node</code> look like? This is where
+Haskell really shines: its sum types model the XML data model perfectly.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data Node
+    = NodeElement Element
+    | NodeInstruction Instruction
+    | NodeContent Text
+    | NodeComment Text</code></pre>
+</section>
+<section id="xml_documents">
+<h1>Documents</h1>
+<p>So now we have elements and nodes, but what about an entire document? Let’s
+just lay out the datatypes:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data Document = Document
+    { documentPrologue :: Prologue
+    , documentRoot :: Element
+    , documentEpilogue :: [Miscellaneous]
+    }
+
+data Prologue = Prologue
+    { prologueBefore :: [Miscellaneous]
+    , prologueDoctype :: Maybe Doctype
+    , prologueAfter :: [Miscellaneous]
+    }
+
+data Miscellaneous
+    = MiscInstruction Instruction
+    | MiscComment Text
+
+data Doctype = Doctype
+    { doctypeName :: Text
+    , doctypeID :: Maybe ExternalID
+    }
+
+data ExternalID
+    = SystemID Text
+    | PublicID Text Text</code></pre>
+<p>The XML spec says that a document has a single root element (<code>documentRoot</code>).
+It also has an optional doctype statement. Before and after both the doctype
+and the root element, you are allowed to have comments and processing
+instructions. (You can also have whitespace, but that is ignored in the
+parsing.)</p>
+<p>So what’s up with the doctype? Well, it specifies the root element of the
+document, and then optional public and system identifiers. These are used to
+refer to DTD files, which give more information about the file (e.g.,
+validation rules, default attributes, entity resolution). Let’s see some
+examples:</p>
+<pre language="xml" linenumbering="unnumbered"><code>&lt;!DOCTYPE root&gt; &lt;!-- no external identifier --&gt;
+&lt;!DOCTYPE root SYSTEM &quot;root.dtd&quot;&gt; &lt;!-- a system identifier --&gt;
+&lt;!DOCTYPE root PUBLIC &quot;My Root Public Identifier&quot; &quot;root.dtd&quot;&gt; &lt;!-- public identifiers have a system ID as well --&gt;</code></pre>
+<p>And that, my friends, is the entire XML data model. For many parsing purposes,
+you’ll be able to simply ignore the entire <code>Document</code> datatype and go
+immediately to the <code>documentRoot</code>.</p>
+</section>
+<section id="xml_events">
+<h1>Events</h1>
+<p>In addition to the document API, <code>xml-types</code> defines an Event datatype. This
+can be used for constructing streaming tools, which can be much more memory
+efficient for certain kinds of processing (eg, adding an extra attribute to all
+elements). We will not be covering the streaming API currently, though it
+should look very familiar after analyzing the document API.</p>
+<aside class="note"><p>You can see an example of the streaming API in the Sphinx case study.</p></aside>
+</section>
+</section>
+<section id="xml_text_xml">
+<h1>Text.XML</h1>
+<p>The recommended entry point to xml-conduit is the Text.XML module. This module
+exports all of the datatypes you’ll need to manipulate XML in a DOM fashion, as
+well as a number of different approaches for parsing and rendering XML content.
+Let’s start with the simple ones:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">readFile  :: ParseSettings  -&gt; FilePath -&gt; IO Document
+writeFile :: RenderSettings -&gt; FilePath -&gt; Document -&gt; IO ()</code></pre>
+<p>This introduces the <code>ParseSettings</code> and <code>RenderSettings</code> datatypes. You can use
+these to modify the behavior of the parser and renderer, such as adding
+character entities and turning on pretty (i.e., indented) output. Both these
+types are instances of the Default typeclass, so you can simply use <code>def</code> when
+these need to be supplied. That is how we will supply these values through the
+rest of the chapter; please see the API docs for more information.</p>
+<p>It’s worth pointing out that in addition to the file-based API, there is also a
+text- and bytestring-based API. The bytestring-powered functions all perform
+intelligent encoding detections, and support UTF-8, UTF-16 and UTF-32, in
+either big or little endian, with and without a Byte-Order Marker (BOM). All
+output is generated in UTF-8.</p>
+<p>For complex data lookups, we recommend using the higher-level cursors API. The
+standard <code>Text.XML</code> API not only forms the basis for that higher level, but is
+also a great API for simple XML transformations and for XML generation. See the
+synopsis for an example.</p>
+<section id="xml_a_note_about_file_paths">
+<h1>A note about file paths</h1>
+<p>In the type signature above, we have a type <code>FilePath</code>. However, <em role="strong">this isn’t
+Prelude.FilePath</em>. The standard <code>Prelude</code> defines a type synonym <code>type FilePath
+= [Char]</code>. Unfortunately, there are many limitations to using such an
+approach, including confusion of filename character encodings and differences
+in path separators.</p>
+<p>Instead, <code>xml-conduit</code> uses the system-filepath package, which defines an
+abstract <code>FilePath</code> type. I’ve personally found this to be a much nicer
+approach to work with. The package is fairly easy to follow, so I won’t go into
+details here. But I do want to give a few quick explanations of how to use it:</p>
+<ul>
+<li>
+<p>
+Since a <code>FilePath</code> is an instance of <code>IsString</code>, you can type in regular
+  strings and they will be treated properly, as long as the <code>OverloadedStrings</code>
+  extension is enabled. (I highly recommend enabling it anyway, as it makes
+  dealing with <code>Text</code> values much more pleasant.)
+</p>
+</li>
+<li>
+<p>
+If you need to explicitly convert to or from <code>Prelude</code>&#39;s <code>FilePath</code>, you
+  should use the encodeString and decodeString, respectively. This takes into
+  account file path encodings.
+</p>
+</li>
+<li>
+<p>
+Instead of manually splicing together directory names and file names with
+  extensions, use the operators in the <code>Filesystem.Path.CurrentOS</code> module, e.g.
+  <code>myfolder &lt;/&gt; filename &lt;.&gt; extension</code>.
+</p>
+</li>
+</ul>
+</section>
+</section>
+<section id="xml_cursor">
+<h1>Cursor</h1>
+<p>Suppose you want to pull the title out of an XHTML document. You could do so
+with the <code>Text.XML</code> interface we just described, using standard pattern
+matching on the children of elements. But that would get very tedious, very
+quickly. Probably the gold standard for these kinds of lookups is XPath, where
+you would be able to write <code>/html/head/title</code>. And that’s exactly what inspired
+the design of the Text.XML.Cursor combinators.</p>
+<p>A cursor is an XML node that knows its location in the tree; it’s able to
+traverse upwards, sideways, and downwards. (Under the surface, this is achieved
+by <a href="http://www.haskell.org/haskellwiki/Tying_the_Knot">tying the knot</a>.)
+There are two functions available for creating cursors from <code>Text.XML</code> types:
+<code>fromDocument</code> and <code>fromNode</code>.</p>
+<p>We also have the concept of an Axis, defined as <code>type Axis = Cursor -&gt;
+[Cursor]</code>. It’s easiest to get started by looking at example axes: child
+returns zero or more cursors that are the child of the current one, parent
+returns the single parent cursor of the input, or an empty list if the input is
+the root element, and so on.</p>
+<p>In addition, there are some axes that take predicates. <code>element</code> is a commonly
+used function that filters down to only elements which match the given name.
+For example, <code>element &quot;title&quot;</code> will return the input element if its name is
+&quot;title&quot;, or an empty list otherwise.</p>
+<p>Another common function which isn’t quite an axis is <code>content :: Cursor
+-&gt; [Text]</code>. For all content nodes, it returns the contained text;
+otherwise, it returns an empty list.</p>
+<p>And thanks to the monad instance for lists, it’s easy to string all of these
+together. For example, to do our title lookup, we would write the following
+program:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+import Prelude hiding (readFile)
+import Text.XML
+import Text.XML.Cursor
+import qualified Data.Text as T
+
+main :: IO ()
+main = do
+    doc &lt;- readFile def &quot;test.xml&quot;
+    let cursor = fromDocument doc
+    print $ T.concat $
+            child cursor &gt;&gt;= element &quot;head&quot; &gt;&gt;= child
+                         &gt;&gt;= element &quot;title&quot; &gt;&gt;= descendant &gt;&gt;= content</code></pre>
+<p>What this says is:</p>
+<ol numeration="arabic">
+<li>
+<p>
+Get me all the child nodes of the root element
+</p>
+</li>
+<li>
+<p>
+Filter down to only the elements named &quot;head&quot;
+</p>
+</li>
+<li>
+<p>
+Get all the children of all those head elements
+</p>
+</li>
+<li>
+<p>
+Filter down to only the elements named &quot;title&quot;
+</p>
+</li>
+<li>
+<p>
+Get all the descendants of all those title elements. (A descendant is a
+  child, or a descendant of a child. Yes, that was a recursive definition.)
+</p>
+</li>
+<li>
+<p>
+Get only the text nodes.
+</p>
+</li>
+</ol>
+<p>So for the input document:</p>
+<pre language="xml" linenumbering="unnumbered"><code>&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;My &lt;b&gt;Title&lt;/b&gt;&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;p&gt;Foo bar baz&lt;/p&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>We end up with the output <code>My Title</code>. This is all well and good, but it’s much
+more verbose than the XPath solution. To combat this verbosity, Aristid
+Breitkreuz added a set of operators to the Cursor module to handle many common
+cases. So we can rewrite our example as:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+import Prelude hiding (readFile)
+import Text.XML
+import Text.XML.Cursor
+import qualified Data.Text as T
+
+main :: IO ()
+main = do
+    doc &lt;- readFile def &quot;test.xml&quot;
+    let cursor = fromDocument doc
+    print $ T.concat $
+        cursor $/ element &quot;head&quot; &amp;/ element &quot;title&quot; &amp;// content</code></pre>
+<p><code>$/</code> says to apply the axis on the right to the children of the cursor on the
+left. <code>&amp;/</code> is almost identical, but is instead used to combine two axes
+together. This is a general rule in <code>Text.XML.Cursor</code>: operators beginning with
+$ directly apply an axis, while &amp; will combine two together. <code>&amp;//</code> is
+used for applying an axis to all descendants.</p>
+<p>Let’s go for a more complex, if more contrived, example. We have a document
+that looks like:</p>
+<pre language="xml" linenumbering="unnumbered"><code>&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;Headings&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;hgroup&gt;
+            &lt;h1&gt;Heading 1 foo&lt;/h1&gt;
+            &lt;h2 class=&quot;foo&quot;&gt;Heading 2 foo&lt;/h2&gt;
+        &lt;/hgroup&gt;
+        &lt;hgroup&gt;
+            &lt;h1&gt;Heading 1 bar&lt;/h1&gt;
+            &lt;h2 class=&quot;bar&quot;&gt;Heading 2 bar&lt;/h2&gt;
+        &lt;/hgroup&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>We want to get the content of all the <code>h1</code> tags which precede an <code>h2</code> tag with
+a <code>class</code> attribute of &quot;bar&quot;. To perform this convoluted lookup, we can write:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+import Prelude hiding (readFile)
+import Text.XML
+import Text.XML.Cursor
+import qualified Data.Text as T
+
+main :: IO ()
+main = do
+    doc &lt;- readFile def &quot;test2.xml&quot;
+    let cursor = fromDocument doc
+    print $ T.concat $
+        cursor $// element &quot;h2&quot;
+               &gt;=&gt; attributeIs &quot;class&quot; &quot;bar&quot;
+               &gt;=&gt; precedingSibling
+               &gt;=&gt; element &quot;h1&quot;
+               &amp;// content</code></pre>
+<p>Let’s step through that. First we get all h2 elements in the document. (<code>$//</code>
+gets all descendants of the root element.) Then we filter out only those with
+<code>class=bar</code>. That <code>&gt;=&gt;</code> operator is actually the standard operator from
+Control.Monad; yet another advantage of the monad instance of lists.
+<code>precedingSibling</code> finds all nodes that come before our node <em role="strong">and</em> share the
+same parent. (There is also a <code>preceding</code> axis which takes all elements earlier
+in the tree.) We then take just the <code>h1</code> elements, and then grab their content.</p>
+<aside class="note"><p>The equivalent XPath, for comparison, would be <code>//h2[@class =
+&#39;bar&#39;]/preceding-sibling::h1//text()</code>.</p></aside>
+<p>While the cursor API isn’t quite as succinct as XPath, it has the advantages of
+being standard Haskell code, and of type safety.</p>
+</section>
+<section id="xml_xml_hamlet">
+<h1>xml-hamlet</h1>
+<p>Thanks to the simplicity of Haskell’s data type system, creating XML content
+with the <code>Text.XML API</code> is easy, if a bit verbose. The following code:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">{-# LANGUAGE OverloadedStrings #-}
+import           Data.Map (empty)
+import           Prelude  hiding (writeFile)
+import           Text.XML
+
+main :: IO ()
+main =
+    writeFile def &quot;test3.xml&quot; $ Document (Prologue [] Nothing []) root []
+  where
+    root = Element &quot;html&quot; empty
+        [ NodeElement $ Element &quot;head&quot; empty
+            [ NodeElement $ Element &quot;title&quot; empty
+                [ NodeContent &quot;My &quot;
+                , NodeElement $ Element &quot;b&quot; empty
+                    [ NodeContent &quot;Title&quot;
+                    ]
+                ]
+            ]
+        , NodeElement $ Element &quot;body&quot; empty
+            [ NodeElement $ Element &quot;p&quot; empty
+                [ NodeContent &quot;foo bar baz&quot;
+                ]
+            ]
+        ]</code></pre>
+<p>produces</p>
+<pre>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;html&gt;&lt;head&gt;&lt;title&gt;My &lt;b&gt;Title&lt;/b&gt;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;p&gt;foo bar baz&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</pre>
+<p>This is leaps and bounds easier than having to deal with an imperative,
+mutable-value-based API (cough, Java, cough), but it’s far from pleasant, and
+obscures what we’re really trying to achieve. To simplify things, we have the
+xml-hamlet package, which using Quasi-Quotation to allow you to type in your
+XML in a natural syntax. For example, the above could be rewritten as:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+import           Data.Map        (empty)
+import           Prelude         hiding (writeFile)
+import           Text.Hamlet.XML
+import           Text.XML
+
+main :: IO ()
+main =
+    writeFile def &quot;test3.xml&quot; $ Document (Prologue [] Nothing []) root []
+  where
+    root = Element &quot;html&quot; empty [xml|
+&lt;head&gt;
+    &lt;title&gt;
+        My #
+        &lt;b&gt;Title
+&lt;body&gt;
+    &lt;p&gt;foo bar baz
+|]</code></pre>
+<p>Let’s make a few points:</p>
+<ul>
+<li>
+<p>
+The syntax is almost identical to normal Hamlet, except URL-interpolation
+  (@{…}) has been removed. As such:
+</p>
+<ul>
+<li>
+<p>
+No close tags.
+</p>
+</li>
+<li>
+<p>
+Whitespace-sensitive.
+</p>
+</li>
+<li>
+<p>
+If you want to have whitespace at the end of a line, use a # at the end. At
+   the beginning, use a backslash.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p>
+An <code>xml</code> interpolation will return a list of <code>Node</code>s. So you still need to
+  wrap up the output in all the normal <code>Document</code> and root <code>Element</code>
+  constructs.
+</p>
+</li>
+<li>
+<p>
+There is no support for the special <code>.class</code> and <code>#id</code> attribute forms.
+</p>
+</li>
+</ul>
+<p>And like normal Hamlet, you can use variable interpolation and control
+structures. So a slightly more complex example would be:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+import Text.XML
+import Text.Hamlet.XML
+import Prelude hiding (writeFile)
+import Data.Text (Text, pack)
+import Data.Map (empty)
+
+data Person = Person
+    { personName :: Text
+    , personAge :: Int
+    }
+
+people :: [Person]
+people =
+    [ Person &quot;Michael&quot; 26
+    , Person &quot;Miriam&quot; 25
+    , Person &quot;Eliezer&quot; 3
+    , Person &quot;Gavriella&quot; 1
+    ]
+
+main :: IO ()
+main =
+    writeFile def &quot;people.xml&quot; $ Document (Prologue [] Nothing []) root []
+  where
+    root = Element &quot;html&quot; empty [xml|
+&lt;head&gt;
+    &lt;title&gt;Some People
+&lt;body&gt;
+    &lt;h1&gt;Some People
+    $if null people
+        &lt;p&gt;There are no people.
+    $else
+        &lt;dl&gt;
+            $forall person &lt;- people
+                ^{personNodes person}
+|]
+
+personNodes :: Person -&gt; [Node]
+personNodes person = [xml|
+&lt;dt&gt;#{personName person}
+&lt;dd&gt;#{pack $ show $ personAge person}
+|]</code></pre>
+<p>A few more notes:</p>
+<ul>
+<li>
+<p>
+The caret-interpolation (^{…}) takes a list of nodes, and so can easily
+  embed other <code>xml</code>-quotations.
+</p>
+</li>
+<li>
+<p>
+Unlike Hamlet, hash-interpolations (#{…}) are not polymorphic, and can
+  <em>only</em> accept <code>Text</code> values.
+</p>
+</li>
+</ul>
+</section>
+<section id="xml_xml2html">
+<h1>xml2html</h1>
+<p>So far in this chapter, our examples have revolved around XHTML. I’ve done that
+so far simply because it is likely to be the most familiar form of XML for most
+of our readers. But there’s an ugly side to all this that we must acknowledge:
+not all XHTML will be correct HTML. The following discrepancies exist:</p>
+<ul>
+<li>
+<p>
+There are some void tags (e.g., <code>img</code>, <code>br</code>) in HTML which do not need to
+  have close tags, and in fact are not allowed to.
+</p>
+</li>
+<li>
+<p>
+HTML does not understand self-closing tags, so
+  <code>&lt;script&gt;&lt;/script&gt;</code> and <code>&lt;script/&gt;</code> mean very different
+  things.
+</p>
+</li>
+<li>
+<p>
+Combining the previous two points: you are free to self-close void tags,
+  though to a browser it won’t mean anything.
+</p>
+</li>
+<li>
+<p>
+In order to avoid quirks mode, you should start your HTML documents with a
+  <code>DOCTYPE</code> statement.
+</p>
+</li>
+<li>
+<p>
+We do not want the XML declaration <code>&lt;?xml …?&gt;</code> at the top of an HTML
+  page.
+</p>
+</li>
+<li>
+<p>
+We do not want any namespaces used in HTML, while XHTML is fully namespaced.
+</p>
+</li>
+<li>
+<p>
+The contents of <code>&lt;style&gt;</code> and <code>&lt;script&gt;</code> tags should not be
+  escaped.
+</p>
+</li>
+</ul>
+<p>Fortunately, <code>xml-conduit</code> provides <code>ToHtml</code> instances for <code>Node</code>s,
+<code>Document</code>s, and <code>Element</code>s which respect these discrepancies. So by just
+using <code>toHtml</code>, we can get the correct output.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+import           Data.Map                        (empty)
+import           Text.Blaze.Html                 (toHtml)
+import           Text.Blaze.Html.Renderer.String (renderHtml)
+import           Text.Hamlet.XML
+import           Text.XML
+
+main :: IO ()
+main = putStr $ renderHtml $ toHtml $ Document (Prologue [] Nothing []) root []
+
+root :: Element
+root = Element &quot;html&quot; empty [xml|
+&lt;head&gt;
+    &lt;title&gt;Test
+    &lt;script&gt;if (5 &lt; 6 || 8 &gt; 9) alert(&quot;Hello World!&quot;);
+    &lt;style&gt;body &gt; h1 { color: red }
+&lt;body&gt;
+    &lt;h1&gt;Hello World!
+|]</code></pre>
+<p>Outputs: (whitespace added)</p>
+<pre language="html" linenumbering="unnumbered"><code>&lt;!DOCTYPE HTML&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;Test&lt;/title&gt;
+        &lt;script&gt;if (5 &lt; 6 || 8 &gt; 9) alert(&quot;Hello World!&quot;);&lt;/script&gt;
+        &lt;style&gt;body &gt; h1 { color: red }&lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;h1&gt;Hello World!&lt;/h1&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+</section>
+</article>
+</section>
+<section class="getting-started"><p class="warning">Note: You are looking at version 1.2 of the book, which is two versions behind</p>
+<h2> Chapters</h2>
+<ul><li>Basics
+<ul><li><a href="/book-1.2/introduction">Introduction</a>
+</li>
+<li><a href="/book-1.2/haskell">Haskell</a>
+</li>
+<li><a href="/book-1.2/basics">Basics</a>
+</li>
+<li><a href="/book-1.2/shakespearean-templates">Shakespearean Templates</a>
+</li>
+<li><a href="/book-1.2/widgets">Widgets</a>
+</li>
+<li><a href="/book-1.2/yesod-typeclass">Yesod Typeclass</a>
+</li>
+<li><a href="/book-1.2/routing-and-handlers">Routing and Handlers</a>
+</li>
+<li><a href="/book-1.2/forms">Forms</a>
+</li>
+<li><a href="/book-1.2/sessions">Sessions</a>
+</li>
+<li><a href="/book-1.2/persistent">Persistent</a>
+</li>
+<li><a href="/book-1.2/deploying-your-webapp">Deploying your Webapp</a>
+</li>
+</ul>
+</li>
+<li>Advanced
+<ul><li><a href="/book-1.2/restful-content">RESTful Content</a>
+</li>
+<li><a href="/book-1.2/yesods-monads">Yesod’s Monads</a>
+</li>
+<li><a href="/book-1.2/authentication-and-authorization">Authentication and Authorization</a>
+</li>
+<li><a href="/book-1.2/scaffolding-and-the-site-template">Scaffolding and the Site Template</a>
+</li>
+<li><a href="/book-1.2/internationalization">Internationalization</a>
+</li>
+<li><a href="/book-1.2/creating-a-subsite">Creating a Subsite</a>
+</li>
+<li><a href="/book-1.2/understanding-request">Understanding a Request</a>
+</li>
+<li><a href="/book-1.2/yesod-for-haskellers">Yesod for Haskellers</a>
+</li>
+</ul>
+</li>
+<li>Examples
+<ul><li><a href="/book-1.2/initializing-foundation-data">Initializing data in the foundation datatype</a>
+</li>
+<li><a href="/book-1.2/blog-example-advanced">Blog: i18n, authentication, authorization, and database</a>
+</li>
+<li><a href="/book-1.2/wiki-chat-example">Wiki: markdown, chat subsite, event source</a>
+</li>
+<li><a href="/book-1.2/json-web-service">JSON Web Service</a>
+</li>
+<li><a href="/book-1.2/case-study-sphinx">Case Study: Sphinx-based Search</a>
+</li>
+<li><a href="/book-1.2/visitor-counter">Visitor counter</a>
+</li>
+<li><a href="/book-1.2/single-process-pubsub">Single process pub-sub</a>
+</li>
+<li><a href="/book-1.2/environment-variables">Environment variables for configuration</a>
+</li>
+<li><a href="/book-1.2/route-attributes">Route attributes</a>
+</li>
+</ul>
+</li>
+<li>Appendices
+<ul><li><a href="/book-1.2/monad-control">monad-control</a>
+</li>
+<li><a href="/book-1.2/conduits">Conduit</a>
+</li>
+<li><a href="/book-1.2/web-application-interface">Web Application Interface</a>
+</li>
+<li><a href="/book-1.2/settings-types">Settings Types</a>
+</li>
+<li><a href="/book-1.2/http-conduit">http-conduit</a>
+</li>
+<li><a href="/book-1.2/xml">xml-conduit</a>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script><script src="//ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script><script>var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function c(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function j(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function g(t,s){var r="";for(var q=0;q<t.childNodes.length;q++){if(t.childNodes[q].nodeType==3){var p=t.childNodes[q].nodeValue;if(s){p=p.replace(/\n/g,"")}r+=p}else{if(t.childNodes[q].nodeName=="BR"){r+="\n"}else{r+=g(t.childNodes[q])}}}if(/MSIE [678]/.test(navigator.userAgent)){r=r.replace(/\r/g,"\n")}return r}function a(s){var q=s.className.split(/\s+/);q=q.concat(s.parentNode.className.split(/\s+/));for(var p=0;p<q.length;p++){var r=q[p].replace(/^language-/,"");if(d[r]||r=="no-highlight"){return r}}}function b(p){var q=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{q.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);q.push({event:"stop",offset:t,node:s.childNodes[r]})}}}return t})(p,0);return q}function l(y,z,x){var r=0;var w="";var t=[];function u(){if(y.length&&z.length){if(y[0].offset!=z[0].offset){return(y[0].offset<z[0].offset)?y:z}else{return z[0].event=="start"?y:z}}else{return y.length?y:z}}function s(C){var D="<"+C.nodeName.toLowerCase();for(var A=0;A<C.attributes.length;A++){var B=C.attributes[A];D+=" "+B.nodeName.toLowerCase();if(B.nodeValue!=undefined&&B.nodeValue!=false&&B.nodeValue!=null){D+='="'+m(B.nodeValue)+'"'}}return D+">"}while(y.length||z.length){var v=u().splice(0,1)[0];w+=m(x.substr(r,v.offset-r));r=v.offset;if(v.event=="start"){w+=s(v.node);t.push(v.node)}else{if(v.event=="stop"){var q=t.length;do{q--;var p=t[q];w+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);t.splice(q,1);while(q<t.length){w+=s(t[q]);q++}}}}w+=x.substr(r);return w}function i(){function p(u,t,v){if(u.compiled){return}if(!v){u.bR=c(t,u.b?u.b:"\\B|\\b");if(!u.e&&!u.eW){u.e="\\B|\\b"}if(u.e){u.eR=c(t,u.e)}}if(u.i){u.iR=c(t,u.i)}if(u.r==undefined){u.r=1}if(u.k){u.lR=c(t,u.l||hljs.IR,true)}for(var s in u.k){if(!u.k.hasOwnProperty(s)){continue}if(u.k[s] instanceof Object){u.kG=u.k}else{u.kG={keyword:u.k}}break}if(!u.c){u.c=[]}u.compiled=true;for(var r=0;r<u.c.length;r++){p(u.c[r],t,false)}if(u.starts){p(u.starts,t,false)}}for(var q in d){if(!d.hasOwnProperty(q)){continue}p(d[q].dM,d[q],true)}}function e(J,D){if(!i.called){i();i.called=true}function z(r,M){for(var L=0;L<M.c.length;L++){if(M.c[L].bR.test(r)){return M.c[L]}}}function w(L,r){if(C[L].e&&C[L].eR.test(r)){return 1}if(C[L].eW){var M=w(L-1,r);return M?M+1:0}return 0}function x(r,L){return L.iR&&L.iR.test(r)}function A(O,N){var M=[];for(var L=0;L<O.c.length;L++){M.push(O.c[L].b)}var r=C.length-1;do{if(C[r].e){M.push(C[r].e)}r--}while(C[r+1].eW);if(O.i){M.push(O.i)}return c(N,"("+M.join("|")+")",true)}function s(M,L){var N=C[C.length-1];if(!N.t){N.t=A(N,H)}N.t.lastIndex=L;var r=N.t.exec(M);if(r){return[M.substr(L,r.index-L),r[0],false]}else{return[M.substr(L),"",true]}}function p(O,r){var L=H.cI?r[0].toLowerCase():r[0];for(var N in O.kG){if(!O.kG.hasOwnProperty(N)){continue}var M=O.kG[N].hasOwnProperty(L);if(M){return[N,M]}}return false}function F(M,O){if(!O.k){return m(M)}var N="";var P=0;O.lR.lastIndex=0;var L=O.lR.exec(M);while(L){N+=m(M.substr(P,L.index-P));var r=p(O,L);if(r){t+=r[1];N+='<span class="'+r[0]+'">'+m(L[0])+"</span>"}else{N+=m(L[0])}P=O.lR.lastIndex;L=O.lR.exec(M)}N+=m(M.substr(P,M.length-P));return N}function K(r,M){if(M.sL&&d[M.sL]){var L=e(M.sL,r);t+=L.keyword_count;return L.value}else{return F(r,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){q+=L;M.buffer=""}else{if(M.eB){q+=m(r)+L;M.buffer=""}else{q+=L;M.buffer=r}}C.push(M);B+=M.r}function E(O,L,Q){var R=C[C.length-1];if(Q){q+=K(R.buffer+O,R);return false}var M=z(L,R);if(M){q+=K(R.buffer+O,R);I(M,L);return M.rB}var r=w(C.length-1,L);if(r){var N=R.cN?"</span>":"";if(R.rE){q+=K(R.buffer+O,R)+N}else{if(R.eE){q+=K(R.buffer+O,R)+N+m(L)}else{q+=K(R.buffer+O+L,R)+N}}while(r>1){N=C[C.length-2].cN?"</span>":"";q+=N;r--;C.length--}var P=C[C.length-1];C.length--;C[C.length-1].buffer="";if(P.starts){I(P.starts,"")}return R.rE}if(x(L,R)){throw"Illegal"}}var H=d[J];var C=[H.dM];var B=0;var t=0;var q="";try{var v=0;H.dM.buffer="";do{var y=s(D,v);var u=E(y[0],y[1],y[2]);v+=y[0].length;if(!u){v+=y[1].length}}while(!y[2]);if(C.length>1){throw"Illegal"}return{r:B,keyword_count:t,value:q}}catch(G){if(G=="Illegal"){return{r:0,keyword_count:0,value:m(D)}}else{throw G}}}function f(t){var r={keyword_count:0,r:0,value:m(t)};var q=r;for(var p in d){if(!d.hasOwnProperty(p)){continue}var s=e(p,t);s.language=p;if(s.keyword_count+s.r>q.keyword_count+q.r){q=s}if(s.keyword_count+s.r>r.keyword_count+r.r){q=r;r=s}}if(q.language){r.second_best=q}return r}function h(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function o(u,x,q){var y=g(u,q);var s=a(u);if(s=="no-highlight"){return}if(s){var w=e(s,y)}else{var w=f(y);s=w.language}var p=b(u);if(p.length){var r=document.createElement("pre");r.innerHTML=w.value;w.value=l(p,b(r),y)}w.value=h(w.value,x,q);var t=u.className;if(!t.match("(\\s|^)(language-)?"+s+"(\\s|$)")){t=t?(t+" "+s):s}if(/MSIE [678]/.test(navigator.userAgent)&&u.tagName=="CODE"&&u.parentNode.tagName=="PRE"){var r=u.parentNode;var v=document.createElement("div");v.innerHTML="<pre><code>"+w.value+"</code></pre>";u=v.firstChild.firstChild;v.firstChild.cN=r.cN;r.parentNode.replaceChild(v.firstChild,r)}else{u.innerHTML=w.value}u.className=t;u.result={language:s,kw:w.keyword_count,re:w.r};if(w.second_best){u.second_best={language:w.second_best.language,kw:w.second_best.keyword_count,re:w.second_best.r}}}function k(){if(k.called){return}k.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=j(r[p]);if(q){o(q,hljs.tabReplace)}}}function n(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",k,false);window.addEventListener("load",k,false)}else{if(window.attachEvent){window.attachEvent("onload",k)}else{window.onload=k}}}var d={};this.LANGUAGES=d;this.highlight=e;this.highlightAuto=f;this.fixMarkup=h;this.highlightBlock=o;this.initHighlighting=k;this.initHighlightingOnLoad=n;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0x[A-Za-z0-9]+|\\d+(\\.\\d+)?)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.inherit=function(p,s){var r={};for(var q in p){r[q]=p[q]}if(s){for(var q in s){r[q]=s[q]}}return r}}();hljs.LANGUAGES.bash=function(){var d={"true":1,"false":1};var b={cN:"variable",b:"\\$([a-zA-Z0-9_]+)\\b"};var a={cN:"variable",b:"\\$\\{(([^}])|(\\\\}))+\\}",c:[hljs.CNM]};var c={cN:"string",b:'"',e:'"',i:"\\n",c:[hljs.BE,b,a],r:0};var e={cN:"test_condition",b:"",e:"",c:[c,b,a,hljs.CNM],k:{literal:d},r:0};return{dM:{k:{keyword:{"if":1,then:1,"else":1,fi:1,"for":1,"break":1,"continue":1,"while":1,"in":1,"do":1,done:1,echo:1,exit:1,"return":1,set:1,declare:1},literal:d},c:[{cN:"shebang",b:"(#!\\/bin\\/bash)|(#!\\/bin\\/sh)",r:10},hljs.HCM,hljs.CNM,c,b,a,hljs.inherit(e,{b:"\\[ ",e:" \\]",r:0}),hljs.inherit(e,{b:"\\[\\[ ",e:" \\]\\]"})]}}}();hljs.LANGUAGES.javascript={dM:{k:{keyword:{"in":1,"if":1,"for":1,"while":1,"finally":1,"var":1,"new":1,"function":1,"do":1,"return":1,"void":1,"else":1,"break":1,"catch":1,"instanceof":1,"with":1,"throw":1,"case":1,"default":1,"try":1,"this":1,"switch":1,"continue":1,"typeof":1,"delete":1},literal:{"true":1,"false":1,"null":1}},c:[hljs.ASM,hljs.QSM,hljs.CLCM,hljs.CBLCLM,hljs.CNM,{b:"("+hljs.RSR+"|case|return|throw)\\s*",k:{"return":1,"throw":1,"case":1},c:[hljs.CLCM,hljs.CBLCLM,{cN:"regexp",b:"/",e:"/[gim]*",c:[{b:"\\\\/"}]}],r:0},{cN:"function",b:"\\bfunction\\b",e:"{",k:{"function":1},c:[{cN:"title",b:"[A-Za-z$_][0-9A-Za-z$_]*"},{cN:"params",b:"\\(",e:"\\)",c:[hljs.ASM,hljs.QSM,hljs.CLCM,hljs.CBLCLM]}]}]}};hljs.LANGUAGES.css=function(){var a={cN:"function",b:hljs.IR+"\\(",e:"\\)",c:[{eW:true,eE:true,c:[hljs.NM,hljs.ASM,hljs.QSM]}]};return{cI:true,dM:{i:"[=/|']",c:[hljs.CBLCLM,{cN:"id",b:"\\#[A-Za-z0-9_-]+"},{cN:"class",b:"\\.[A-Za-z0-9_-]+",r:0},{cN:"attr_selector",b:"\\[",e:"\\]",i:"$"},{cN:"pseudo",b:":(:)?[a-zA-Z0-9\\_\\-\\+\\(\\)\\\"\\']+"},{cN:"at_rule",b:"@(font-face|page)",l:"[a-z-]+",k:{"font-face":1,page:1}},{cN:"at_rule",b:"@",e:"[{;]",eE:true,k:{"import":1,page:1,media:1,charset:1},c:[a,hljs.ASM,hljs.QSM,hljs.NM]},{cN:"tag",b:hljs.IR,r:0},{cN:"rules",b:"{",e:"}",i:"[^\\s]",r:0,c:[hljs.CBLCLM,{cN:"rule",b:"[^\\s]",rB:true,e:";",eW:true,c:[{cN:"attribute",b:"[A-Z\\_\\.\\-]+",e:":",eE:true,i:"[^\\s]",starts:{cN:"value",eW:true,eE:true,c:[a,hljs.NM,hljs.QSM,hljs.ASM,hljs.CBLCLM,{cN:"hexcolor",b:"\\#[0-9A-F]+"},{cN:"important",b:"!important"}]}}]}]}]}}}();hljs.LANGUAGES.xml=function(){var b="[A-Za-z0-9\\._:-]+";var a={eW:true,c:[{cN:"attribute",b:b,r:0},{b:'="',rB:true,e:'"',c:[{cN:"value",b:'"',eW:true}]},{b:"='",rB:true,e:"'",c:[{cN:"value",b:"'",eW:true}]},{b:"=",c:[{cN:"value",b:"[^\\s/>]+"}]}]};return{cI:true,dM:{c:[{cN:"pi",b:"<\\?",e:"\\?>",r:10},{cN:"doctype",b:"<!DOCTYPE",e:">",r:10,c:[{b:"\\[",e:"\\]"}]},{cN:"comment",b:"<!--",e:"-->",r:10},{cN:"cdata",b:"<\\!\\[CDATA\\[",e:"\\]\\]>",r:10},{cN:"tag",b:"<style",e:">",k:{title:{style:1}},c:[a],starts:{cN:"css",e:"</style>",rE:true,sL:"css"}},{cN:"tag",b:"<script",e:">",k:{title:{script:1}},c:[a],starts:{cN:"javascript",e:"<\/script>",rE:true,sL:"javascript"}},{cN:"vbscript",b:"<%",e:"%>",sL:"vbscript"},{cN:"tag",b:"</?",e:"/?>",c:[{cN:"title",b:"[^ />]+"},a]}]}}}();hljs.LANGUAGES.java={dM:{k:{"false":1,"synchronized":1,"int":1,"abstract":1,"float":1,"private":1,"char":1,"interface":1,"boolean":1,"static":1,"null":1,"if":1,"const":1,"for":1,"true":1,"while":1,"long":1,"throw":1,strictfp:1,"finally":1,"protected":1,"extends":1,"import":1,"native":1,"final":1,"implements":1,"return":1,"void":1,"enum":1,"else":1,"break":1,"transient":1,"new":1,"catch":1,"instanceof":1,"byte":1,"super":1,"class":1,"volatile":1,"case":1,assert:1,"short":1,"package":1,"default":1,"double":1,"public":1,"try":1,"this":1,"switch":1,"continue":1,"throws":1},c:[{cN:"javadoc",b:"/\\*\\*",e:"\\*/",c:[{cN:"javadoctag",b:"@[A-Za-z]+"}],r:10},hljs.CLCM,hljs.CBLCLM,hljs.ASM,hljs.QSM,{cN:"class",b:"(class |interface )",e:"{",k:{"class":1,"interface":1},i:":",c:[{b:"(implements|extends)",k:{"extends":1,"implements":1},r:10},{cN:"title",b:hljs.UIR}]},hljs.CNM,{cN:"annotation",b:"@[A-Za-z]+"}]}};hljs.LANGUAGES.haskell=function(){var a={cN:"label",b:"\\b[A-Z][\\w']*",r:0};var b={cN:"container",b:"\\(",e:"\\)",c:[{cN:"label",b:"\\b[A-Z][\\w\\(\\)\\.']*"},{cN:"title",b:"[_a-z][\\w']*"}]};return{dM:{k:{keyword:{let:1,"in":1,"if":1,then:1,"else":1,"case":1,of:1,where:1,"do":1,module:1,"import":1,hiding:1,qualified:1,type:1,data:1,newtype:1,deriving:1,"class":1,instance:1,"null":1,not:1,as:1}},c:[{cN:"comment",b:"--",e:"$"},{cN:"comment",b:"{-",e:"-}"},{cN:"string",b:"\\s+'",e:"'",c:[hljs.BE],r:0},hljs.QSM,{cN:"import",b:"\\bimport",e:"$",k:{"import":1,qualified:1,as:1,hiding:1},c:[b]},{cN:"module",b:"\\bmodule",e:"where",k:{module:1,where:1},c:[b]},{cN:"class",b:"\\b(class|instance|data|(new)?type)",e:"(where|$)",k:{"class":1,where:1,instance:1,data:1,type:1,newtype:1,deriving:1},c:[a]},hljs.CNM,{cN:"shebang",b:"#!\\/usr\\/bin\\/env runhaskell",e:"$"},a,{cN:"title",b:"^[_a-z][\\w']*"}]}}}();hljs.LANGUAGES.sql={cI:true,dM:{i:"[^\\s]",c:[{cN:"operator",b:"(begin|start|commit|rollback|savepoint|lock|alter|create|drop|rename|call|delete|do|handler|insert|load|replace|select|truncate|update|set|show|pragma)\\b",e:";|$",k:{keyword:{all:1,partial:1,global:1,month:1,current_timestamp:1,using:1,go:1,revoke:1,smallint:1,indicator:1,"end-exec":1,disconnect:1,zone:1,"with":1,character:1,assertion:1,to:1,add:1,current_user:1,usage:1,input:1,local:1,alter:1,match:1,collate:1,real:1,then:1,rollback:1,get:1,read:1,timestamp:1,session_user:1,not:1,integer:1,bit:1,unique:1,day:1,minute:1,desc:1,insert:1,execute:1,like:1,ilike:2,level:1,decimal:1,drop:1,"continue":1,isolation:1,found:1,where:1,constraints:1,domain:1,right:1,national:1,some:1,module:1,transaction:1,relative:1,second:1,connect:1,escape:1,close:1,system_user:1,"for":1,deferred:1,section:1,cast:1,current:1,sqlstate:1,allocate:1,intersect:1,deallocate:1,numeric:1,"public":1,preserve:1,full:1,"goto":1,initially:1,asc:1,no:1,key:1,output:1,collation:1,group:1,by:1,union:1,session:1,both:1,last:1,language:1,constraint:1,column:1,of:1,space:1,foreign:1,deferrable:1,prior:1,connection:1,unknown:1,action:1,commit:1,view:1,or:1,first:1,into:1,"float":1,year:1,primary:1,cascaded:1,except:1,restrict:1,set:1,references:1,names:1,table:1,outer:1,open:1,select:1,size:1,are:1,rows:1,from:1,prepare:1,distinct:1,leading:1,create:1,only:1,next:1,inner:1,authorization:1,schema:1,corresponding:1,option:1,declare:1,precision:1,immediate:1,"else":1,timezone_minute:1,external:1,varying:1,translation:1,"true":1,"case":1,exception:1,join:1,hour:1,"default":1,"double":1,scroll:1,value:1,cursor:1,descriptor:1,values:1,dec:1,fetch:1,procedure:1,"delete":1,and:1,"false":1,"int":1,is:1,describe:1,"char":1,as:1,at:1,"in":1,varchar:1,"null":1,trailing:1,any:1,absolute:1,current_time:1,end:1,grant:1,privileges:1,when:1,cross:1,check:1,write:1,current_date:1,pad:1,begin:1,temporary:1,exec:1,time:1,update:1,catalog:1,user:1,sql:1,date:1,on:1,identity:1,timezone_hour:1,natural:1,whenever:1,interval:1,work:1,order:1,cascade:1,diagnostics:1,nchar:1,having:1,left:1,call:1,"do":1,handler:1,load:1,replace:1,truncate:1,start:1,lock:1,show:1,pragma:1},aggregate:{count:1,sum:1,min:1,max:1,avg:1}},c:[{cN:"string",b:"'",e:"'",c:[hljs.BE,{b:"''"}],r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE,{b:'""'}],r:0},{cN:"string",b:"`",e:"`",c:[hljs.BE]},hljs.CNM,{b:"\\n"}]},hljs.CBLCLM,{cN:"comment",b:"--",e:"$"}]}};hljs.LANGUAGES.nginx=function(){var c={cN:"variable",b:"\\$\\d+"};var b={cN:"variable",b:"\\${",e:"}"};var a={cN:"variable",b:"[\\$\\@]"+hljs.UIR};return{dM:{c:[hljs.HCM,{b:hljs.UIR,e:";|{",rE:true,k:{accept_mutex:1,accept_mutex_delay:1,access_log:1,add_after_body:1,add_before_body:1,add_header:1,addition_types:1,alias:1,allow:1,ancient_browser:1,ancient_browser:1,ancient_browser_value:1,ancient_browser_value:1,auth_basic:1,auth_basic_user_file:1,autoindex:1,autoindex_exact_size:1,autoindex_localtime:1,"break":1,charset:1,charset:1,charset_map:1,charset_map:1,charset_types:1,charset_types:1,client_body_buffer_size:1,client_body_in_file_only:1,client_body_in_single_buffer:1,client_body_temp_path:1,client_body_timeout:1,client_header_buffer_size:1,client_header_timeout:1,client_max_body_size:1,connection_pool_size:1,connections:1,create_full_put_path:1,daemon:1,dav_access:1,dav_methods:1,debug_connection:1,debug_points:1,default_type:1,deny:1,directio:1,directio_alignment:1,echo:1,echo_after_body:1,echo_before_body:1,echo_blocking_sleep:1,echo_duplicate:1,echo_end:1,echo_exec:1,echo_flush:1,echo_foreach_split:1,echo_location:1,echo_location_async:1,echo_read_request_body:1,echo_request_body:1,echo_reset_timer:1,echo_sleep:1,echo_subrequest:1,echo_subrequest_async:1,empty_gif:1,empty_gif:1,env:1,error_log:1,error_log:1,error_page:1,events:1,expires:1,fastcgi_bind:1,fastcgi_buffer_size:1,fastcgi_buffers:1,fastcgi_busy_buffers_size:1,fastcgi_cache:1,fastcgi_cache_key:1,fastcgi_cache_methods:1,fastcgi_cache_min_uses:1,fastcgi_cache_path:1,fastcgi_cache_use_stale:1,fastcgi_cache_valid:1,fastcgi_catch_stderr:1,fastcgi_connect_timeout:1,fastcgi_hide_header:1,fastcgi_ignore_client_abort:1,fastcgi_ignore_headers:1,fastcgi_index:1,fastcgi_intercept_errors:1,fastcgi_max_temp_file_size:1,fastcgi_next_upstream:1,fastcgi_param:1,fastcgi_pass:1,fastcgi_pass_header:1,fastcgi_pass_request_body:1,fastcgi_pass_request_headers:1,fastcgi_read_timeout:1,fastcgi_send_lowat:1,fastcgi_send_timeout:1,fastcgi_split_path_info:1,fastcgi_store:1,fastcgi_store_access:1,fastcgi_temp_file_write_size:1,fastcgi_temp_path:1,fastcgi_upstream_fail_timeout:1,fastcgi_upstream_max_fails:1,flv:1,geo:1,geo:1,geoip_city:1,geoip_country:1,gzip:1,gzip_buffers:1,gzip_comp_level:1,gzip_disable:1,gzip_hash:1,gzip_http_version:1,gzip_min_length:1,gzip_no_buffer:1,gzip_proxied:1,gzip_static:1,gzip_types:1,gzip_vary:1,gzip_window:1,http:1,"if":1,if_modified_since:1,ignore_invalid_headers:1,image_filter:1,image_filter_buffer:1,image_filter_jpeg_quality:1,image_filter_transparency:1,include:1,index:1,internal:1,ip_hash:1,js:1,js_load:1,js_require:1,js_utf8:1,keepalive_requests:1,keepalive_timeout:1,kqueue_changes:1,kqueue_events:1,large_client_header_buffers:1,limit_conn:1,limit_conn_log_level:1,limit_except:1,limit_rate:1,limit_rate_after:1,limit_req:1,limit_req_log_level:1,limit_req_zone:1,limit_zone:1,lingering_time:1,lingering_timeout:1,listen:1,location:1,lock_file:1,log_format:1,log_not_found:1,log_subrequest:1,map:1,map_hash_bucket_size:1,map_hash_max_size:1,master_process:1,memcached_bind:1,memcached_buffer_size:1,memcached_connect_timeout:1,memcached_next_upstream:1,memcached_pass:1,memcached_read_timeout:1,memcached_send_timeout:1,memcached_upstream_fail_timeout:1,memcached_upstream_max_fails:1,merge_slashes:1,min_delete_depth:1,modern_browser:1,modern_browser:1,modern_browser_value:1,modern_browser_value:1,more_clear_headers:1,more_clear_input_headers:1,more_set_headers:1,more_set_input_headers:1,msie_padding:1,msie_refresh:1,multi_accept:1,open_file_cache:1,open_file_cache_errors:1,open_file_cache_events:1,open_file_cache_min_uses:1,open_file_cache_retest:1,open_file_cache_valid:1,open_log_file_cache:1,optimize_server_names:1,output_buffers:1,override_charset:1,override_charset:1,perl:1,perl_modules:1,perl_require:1,perl_set:1,pid:1,port_in_redirect:1,post_action:1,postpone_gzipping:1,postpone_output:1,proxy_bind:1,proxy_buffer_size:1,proxy_buffering:1,proxy_buffers:1,proxy_busy_buffers_size:1,proxy_cache:1,proxy_cache_key:1,proxy_cache_methods:1,proxy_cache_min_uses:1,proxy_cache_path:1,proxy_cache_use_stale:1,proxy_cache_valid:1,proxy_connect_timeout:1,proxy_headers_hash_bucket_size:1,proxy_headers_hash_max_size:1,proxy_hide_header:1,proxy_ignore_client_abort:1,proxy_ignore_headers:1,proxy_intercept_errors:1,proxy_max_temp_file_size:1,proxy_method:1,proxy_next_upstream:1,proxy_pass:1,proxy_pass_header:1,proxy_pass_request_body:1,proxy_pass_request_headers:1,proxy_read_timeout:1,proxy_redirect:1,proxy_send_lowat:1,proxy_send_timeout:1,proxy_set_body:1,proxy_set_header:1,proxy_store:1,proxy_store_access:1,proxy_temp_file_write_size:1,proxy_temp_path:1,proxy_upstream_fail_timeout:1,proxy_upstream_max_fails:1,push_authorized_channels_only:1,push_channel_group:1,push_max_channel_id_length:1,push_max_channel_subscribers:1,push_max_message_buffer_length:1,push_max_reserved_memory:1,push_message_buffer_length:1,push_message_timeout:1,push_min_message_buffer_length:1,push_min_message_recipients:1,push_publisher:1,push_store_messages:1,push_subscriber:1,push_subscriber_concurrency:1,random_index:1,read_ahead:1,real_ip_header:1,recursive_error_pages:1,request_pool_size:1,reset_timedout_connection:1,resolver:1,resolver_timeout:1,"return":1,rewrite:1,rewrite_log:1,root:1,satisfy:1,satisfy_any:1,send_lowat:1,send_timeout:1,sendfile:1,sendfile_max_chunk:1,server:1,server:1,server_name:1,server_name_in_redirect:1,server_names_hash_bucket_size:1,server_names_hash_max_size:1,server_tokens:1,set:1,set_real_ip_from:1,source_charset:1,source_charset:1,ssi:1,ssi_ignore_recycled_buffers:1,ssi_min_file_chunk:1,ssi_silent_errors:1,ssi_types:1,ssi_value_length:1,ssl:1,ssl_certificate:1,ssl_certificate_key:1,ssl_ciphers:1,ssl_client_certificate:1,ssl_crl:1,ssl_dhparam:1,ssl_prefer_server_ciphers:1,ssl_protocols:1,ssl_session_cache:1,ssl_session_timeout:1,ssl_verify_client:1,ssl_verify_depth:1,sub_filter:1,sub_filter_once:1,sub_filter_types:1,tcp_nodelay:1,tcp_nopush:1,timer_resolution:1,try_files:1,types:1,types_hash_bucket_size:1,types_hash_max_size:1,underscores_in_headers:1,uninitialized_variable_warn:1,upstream:1,use:1,user:1,userid:1,userid:1,userid_domain:1,userid_domain:1,userid_expires:1,userid_expires:1,userid_mark:1,userid_name:1,userid_name:1,userid_p3p:1,userid_p3p:1,userid_path:1,userid_path:1,userid_service:1,userid_service:1,valid_referers:1,variables_hash_bucket_size:1,variables_hash_max_size:1,worker_connections:1,worker_cpu_affinity:1,worker_priority:1,worker_processes:1,worker_rlimit_core:1,worker_rlimit_nofile:1,worker_rlimit_sigpending:1,working_directory:1,xml_entities:1,xslt_stylesheet:1,xslt_types:1},r:0,c:[hljs.HCM,{b:"\\s",e:"[;{]",rB:true,rE:true,l:"[a-z/]+",k:{built_in:{on:1,off:1,yes:1,no:1,"true":1,"false":1,none:1,blocked:1,debug:1,info:1,notice:1,warn:1,error:1,crit:1,select:1,permanent:1,redirect:1,kqueue:1,rtsig:1,epoll:1,poll:1,"/dev/poll":1}},r:0,c:[hljs.HCM,{cN:"string",b:'"',e:'"',c:[hljs.BE,c,b,a],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE,c,b,a],r:0},{cN:"string",b:"([a-z]+):/",e:"[;\\s]",rE:true},{cN:"regexp",b:"\\s\\^",e:"\\s|{|;",rE:true,c:[hljs.BE,c,b,a]},{cN:"regexp",b:"~\\*?\\s+",e:"\\s|{|;",rE:true,c:[hljs.BE,c,b,a]},{cN:"regexp",b:"\\*(\\.[a-z\\-]+)+",c:[hljs.BE,c,b,a]},{cN:"regexp",b:"([a-z\\-]+\\.)+\\*",c:[hljs.BE,c,b,a]},{cN:"number",b:"\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b"},{cN:"number",b:"\\s\\d+[kKmMgGdshdwy]*\\b",r:0},c,b,a]}]}]}}}();$(function(){
+    $.each($("section[id] > h1"), function(i, e){
+        var $e = $(e),
+            link = $("<a class='permalink'>¶</a>");
+        link.attr("href", "#" + $e.parent().attr("id"));
+
+        $e.prepend(link);
+    });
+});
+hljs.initHighlightingOnLoad();
+</script><footer id="license" style="text-align:center;font-size:0.8em">All content on this site is available under the
+<a href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
+<br>
+Content outside the book section is available under
+<a href="https://raw.github.com/yesodweb/yesodweb.com/master/LICENSE">the MIT license</a>
+as well.</footer>
+</div></div><script>window._gaq = [['_setAccount','UA-1434510-13'],['_trackPageview'],['_trackPageLoadTime']];(function() {var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true; ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);})();</script><!-- Prompt IE 6 users to install Chrome Frame. Remove this if you want to support IE 6.  chromium.org/developers/how-tos/chrome-frame-getting-started --><!--[if lt IE 7 ]><script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script><script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script><![endif]--></body></html>
