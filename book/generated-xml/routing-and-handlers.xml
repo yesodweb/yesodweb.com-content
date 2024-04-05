@@ -188,6 +188,23 @@ syntax should be preferred as it&#8217;s clearer what the goal is.</simpara></no
 should <literal>/foo/bar</literal> route to <literal>Foo1R</literal> or <literal>Foo3R</literal>? And should <literal>/foo/42</literal> route to
 <literal>Foo2R</literal> or <literal>Foo3R</literal>? Yesod&#8217;s rule for this is simple: first route wins.</simpara>
 </section>
+<section id="routing-and-handlers_empty_literal_string_literal_or_literal_text_literal_as_dynamic_piece">
+<title>Empty <literal>#String</literal> or <literal>#Text</literal> as dynamic piece</title>
+<simpara>Consider the following route declaration:</simpara>
+<programlisting language="routes" linenumbering="unnumbered">/hello          HelloR     GET
+/hello/#String  HelloNameR GET</programlisting>
+<simpara>Let&#8217;s say a user requests the path <literal>/hello/</literal> – which handler would respond to the request?</simpara>
+<simpara>It will be <literal>HelloR</literal> because Yesod&#8217;s dispatch mechanism removes trailing slashes and
+redirects to the canonical form of the URL (see section <xref linkend="_pieces"/>).</simpara>
+<simpara>If users actually want to address the <literal>HelloNameR</literal> handler with an
+empty string as argument they need to request the path <literal>/hello/-</literal>
+instead. Yesod automatically converts the Minus sign to the empty string.</simpara>
+<simpara>Likewise, the resulting URL for <literal>@{HelloNameR ""}</literal> would be <literal>/hello/-</literal>.</simpara>
+<simpara>Also, to disambiguate a single actual <literal>-</literal>, Yesod prefixes that piece with another Minus sign when rendering the URL.
+Consequently, Yesod also prefixes any string consisting only of Minus signs with one single Minus sign.</simpara>
+<note><simpara>This conversion between empty string in Haskell and <literal>-</literal> in the
+URL applies for <literal>#String</literal> and <literal>#Text</literal> pieces as well.</simpara></note>
+</section>
 </section>
 <section id="routing-and-handlers_resource_name">
 <title>Resource name</title>

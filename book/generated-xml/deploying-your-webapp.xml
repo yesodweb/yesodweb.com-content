@@ -34,7 +34,7 @@ Edit the <literal>config/keter.yaml</literal> file in your scaffolded applicatio
 </listitem>
 <listitem>
 <simpara>
-Set up some kind of server for hosting yours apps. I recommend trying Ubuntu on Amazon EC2.
+Set up some kind of server for hosting your apps. I recommend trying Ubuntu on Amazon EC2.
 </simpara>
 </listitem>
 <listitem>
@@ -245,7 +245,7 @@ behind it instead.</simpara>
 <simpara>Keter configuration is trivial, since it is designed to work with Yesod
 applications. But if you want to instead use Nginx, how do you set it up?</simpara>
 <simpara>In general, Nginx will listen on port 80 and your Yesod/Warp app will listen on
-some unprivileged port (lets say 4321). You will then need to provide a
+some unprivileged port (let&#8217;s say 4321). You will then need to provide a
 nginx.conf file, such as:</simpara>
 <screen>daemon off; # Don't run nginx in the background, good for monitoring apps
 events {

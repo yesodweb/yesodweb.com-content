@@ -59,7 +59,10 @@ Persistent on its own.</simpara>
 <section id="persistent_synopsis">
 <title>Synopsis</title>
 <simpara>The required dependencies for the below are: persistent, persistent-sqlite and persistent-template.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -333,7 +336,10 @@ filter, the types of the filtering value match the field. There&#8217;s another
 associated newtype for the database primary key of this entity.</simpara>
 <simpara>We can use the generated <literal>Person</literal> type like any other Haskell type, and then
 pass it off to other Persistent functions.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -342,11 +348,6 @@ pass it off to other Persistent functions.</simpara>
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE DerivingStrategies         #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE UndecidableInstances       #-}
-{-# LANGUAGE DataKinds                  #-}
 
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
@@ -358,7 +359,7 @@ import           Control.Monad.Reader
 import           Control.Monad.Logger
 import           Conduit
 
-share [mkPersist sqlSettings, mkEntityDefList "entityDefs"] [persistLowerCase|
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Person
     name String
     age Int Maybe
@@ -445,7 +446,10 @@ an error message about a missing table.</simpara>
 <simpara>For SQL databases, one of the major pains can be managing schema changes.
 Instead of leaving this to the user, Persistent steps in to help, but you have
 to <emphasis>ask</emphasis> it to help. Let&#8217;s see what this looks like:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -454,11 +458,6 @@ to <emphasis>ask</emphasis> it to help. Let&#8217;s see what this looks like:</s
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE DerivingStrategies         #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE UndecidableInstances       #-}
-{-# LANGUAGE DataKinds                  #-}
 
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
@@ -470,7 +469,7 @@ import           Control.Monad.Reader
 import           Control.Monad.Logger
 import           Conduit
 
-share [mkPersist sqlSettings, mkEntityDefList "entityDefs"] [persistLowerCase|
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Person
     name String
     age Int Maybe
@@ -494,7 +493,10 @@ review and testing that should take place before production deployments.</simpar
 <simpara>This works when dealing with just a few entities, but can quickly get tiresome
 once we are dealing with a dozen entities. Instead of repeating yourself,
 Persistent provides a helper function, <literal>mkMigrate</literal>:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -597,7 +599,10 @@ unique.</simpara>
 <simpara>While each field name must begin with a lowercase letter, the uniqueness
 constraints must begin with an uppercase letter, since it will be represented
 in Haskell as a data constructor.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -719,8 +724,7 @@ rowsep="1" colsep="1"
 <entry align="left" valign="top"><simpara>A <literal>Source</literal> containing all the IDs and values from the database. This allows you to write streaming code.</simpara>
 <simpara>NOTE: A <literal>Source</literal> is a stream of data, and is part of the <literal>conduit</literal> package. I
 recommend reading the
-<ulink url="https://www.fpcomplete.com/user/snoyberg/library-documentation/conduit-overview">School
-of Haskell conduit tutorial</ulink> to get started.</simpara></entry>
+<ulink url="https://github.com/snoyberg/conduit">Official Conduit tutorial</ulink> to get started.</simpara></entry>
 </row>
 <row>
 <entry align="left" valign="top"><simpara>selectList</simpara></entry>
@@ -994,7 +998,10 @@ two words on a line.</simpara>
 <simpara>Suppose we want to have a <literal>Person</literal> entity with an (optional) age and the
 timestamp of when he/she was added to the system. For entities already in the
 database, we want to just use the current date-time for that timestamp.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -1031,7 +1038,10 @@ nullable.</simpara>
 understood by the database. In this case, it uses the database&#8217;s built-in
 <literal>CURRENT_TIME</literal> function. Suppose that we now want to add a field for a person&#8217;s
 favorite programming language:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -1064,7 +1074,10 @@ database schema and automatic migrations.</simpara></note>
 properly interpret it. Finally, Persistent can use double quotes for containing
 white space, so if we want to set someone&#8217;s default home country to be El
 Salvador:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -1111,7 +1124,10 @@ up-to-date list is maintained
 <simpara>Persistent allows references between your data types in a manner that is
 consistent with supporting non-SQL databases. We do this by embedding an ID in
 the related entity. So if a person has many cars:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -1150,7 +1166,10 @@ many-to-many relationships, we need a join entity, which has a one-to-many
 relationship with each of the original tables. It is also a good idea to use
 uniqueness constraints on these. For example, to model a situation where we
 want to track which people have shopped in which stores:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -1244,7 +1263,7 @@ Post
 <simpara>We know that <literal>BlogId</literal> is just a type synonym for <literal>Key Blog</literal>, but how will <literal>Key
 Blog</literal> be defined? We can&#8217;t use an <literal>Int64</literal>, since that won&#8217;t work for MongoDB.
 And we can&#8217;t use <literal>ByteString</literal>, since that won&#8217;t work for SQL databases.</simpara>
-<simpara>To allow for this, once <literal>mpsGeneric</literal> is set to <literal>True</literal>, out resulting datatypes have a type parameter to indicate the database backend they use, so that keys can be properly encoded. This looks like:</simpara>
+<simpara>To allow for this, once <literal>mpsGeneric</literal> is set to <literal>True</literal>, our resulting datatypes have a type parameter to indicate the database backend they use, so that keys can be properly encoded. This looks like:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">data BlogGeneric backend = Blog { blogTitle :: Text }
 data PostGeneric backend = Post
     { postTitle  :: Text
@@ -1281,7 +1300,10 @@ import Database.Persist.TH
 data Employment = Employed | Unemployed | Retired
     deriving (Show, Read, Eq)
 derivePersistField "Employment"</programlisting>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -1330,7 +1352,10 @@ interface exclusively.)</simpara>
 <note><simpara>Actually, you <emphasis>can</emphasis> express a LIKE operator directly in the normal syntax
 due to a feature added in Persistent 0.6, which allows backend-specific
 operators. But this is still a good example, so let&#8217;s roll with it.</simpara></note>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -1377,7 +1402,10 @@ here to point out how it works under the surface.</simpara>
 <simpara>The yesod-persistent package provides the meeting point between Persistent and
 Yesod. It provides the <literal>YesodPersist</literal> typeclass, which standardizes access to
 the database via the <literal>runDB</literal> method. Let&#8217;s see this in action.</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -1484,7 +1512,10 @@ Persistent knowledge should transfer over easily.</simpara>
 <section id="persistent_something_besides_sqlite">
 <title>Something besides SQLite</title>
 <simpara>To keep the examples in this chapter simple, we&#8217;ve used the SQLite backend. Just to round things out, here&#8217;s our original synopsis rewritten to work with PostgreSQL:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE EmptyDataDecls             #-}
+<programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
