@@ -195,7 +195,7 @@ Consider the following route declaration:
 Let's say a user requests the path +/hello/+ – which handler would respond to the request?
 
 It will be +HelloR+ because Yesod's dispatch mechanism removes trailing slashes and
-redirects to the canonical form of the URL (see section <<_pieces>>).
+redirects to the canonical form of the URL.
 
 If users actually want to address the +HelloNameR+ handler with an
 empty string as argument they need to request the path +/hello/-+

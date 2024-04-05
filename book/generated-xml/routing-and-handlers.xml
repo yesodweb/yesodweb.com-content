@@ -195,7 +195,7 @@ should <literal>/foo/bar</literal> route to <literal>Foo1R</literal> or <literal
 /hello/#String  HelloNameR GET</programlisting>
 <simpara>Let&#8217;s say a user requests the path <literal>/hello/</literal> – which handler would respond to the request?</simpara>
 <simpara>It will be <literal>HelloR</literal> because Yesod&#8217;s dispatch mechanism removes trailing slashes and
-redirects to the canonical form of the URL (see section <xref linkend="_pieces"/>).</simpara>
+redirects to the canonical form of the URL.</simpara>
 <simpara>If users actually want to address the <literal>HelloNameR</literal> handler with an
 empty string as argument they need to request the path <literal>/hello/-</literal>
 instead. Yesod automatically converts the Minus sign to the empty string.</simpara>
