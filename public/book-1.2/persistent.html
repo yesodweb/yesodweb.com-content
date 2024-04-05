@@ -1,0 +1,1514 @@
+<!doctype html><!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]--><!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]--><!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]--><!--[if gt IE 8]><!--><html class="no-js" lang="en"> <!--<![endif]--><head><meta charset="UTF-8"><title>Persistent :: Yesod Web Framework Book- Version 1.2</title><meta name="description" content="Yesod is a Haskell web framework for productive development of type-safe, RESTful, high performance web applications."><meta name="viewport" content="width=device-width,initial-scale=1"><link href="/feed" type="application/atom+xml" rel="alternate" title="Yesod Web Framework Blog">
+<style>article,aside,details,figcaption,figure,footer,header,hgroup,nav,section{display:block}audio,canvas,video{display:inline-block;*display:inline;*zoom:1}audio:not([controls]){display:none}[hidden]{display:none}html{font-size:100%;overflow-y:scroll;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{margin:0}body,button,input,select,textarea{font-family:sans-serif}a{color:#00e}a:visited{color:#551a8b}a:focus{outline:thin dotted}a:hover,a:active{outline:0}abbr[title]{border-bottom:1px dotted}b,strong{font-weight:bold}blockquote{margin:1em 40px}dfn{font-style:italic}mark{background:#ff0;color:#000}pre,code,kbd,samp{font-family:"DejaVu Sans Mono", "Droid Sans Mono", consolas, "courier new", monospace;_font-family:'courier new', monospace;font-size:.85em}pre{white-space:pre;white-space:pre-wrap;word-wrap:break-word}q{quotes:none}q:before,q:after{content:'';content:none}small{font-size:75%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-0.5em}sub{bottom:-0.25em}ul,ol{margin:1em 0;padding:0 0 0 40px}dd{margin:0 0 0 40px}nav ul,nav ol{list-style:none;list-style-image:none}img{border:0;-ms-interpolation-mode:bicubic}svg:not(:root){overflow:hidden}figure{margin:0}form{margin:0}fieldset{margin:0 2px;padding:0.35em 0.625em 0.75em}legend{border:0;*margin-left:-7px}button,input,select,textarea{font-size:100%;margin:0;vertical-align:baseline;*vertical-align:middle}button,input{line-height:normal;*overflow:visible}table button,table input{*overflow:auto}button,html input[type="button"],input[type="reset"],input[type="submit"]{cursor:pointer;-webkit-appearance:button}input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}input[type="search"]{-webkit-appearance:textfield;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}textarea{overflow:auto;vertical-align:top}table{border-collapse:collapse;border-spacing:0}pre code{display:block;padding:0.5em;background:#F4F4F4}pre code,pre .ruby .subst,pre .tag .title,pre .lisp .title{color:black}pre .string,pre .title,pre .constant,pre .parent,pre .tag .value,pre .rules .value,pre .rules .value .number,pre .preprocessor,pre .ruby .symbol,pre .ruby .symbol .string,pre .ruby .symbol .keyword,pre .ruby .symbol .keymethods,pre .instancevar,pre .aggregate,pre .template_tag,pre .django .variable,pre .smalltalk .class,pre .addition,pre .flow,pre .stream,pre .bash .variable,pre .apache .tag,pre .apache .cbracket,pre .tex .command,pre .tex .special,pre .erlang_repl .function_or_atom{color:#800}pre .comment,pre .annotation,pre .template_comment,pre .diff .header,pre .chunk{color:#888}pre .number,pre .date,pre .regexp,pre .literal,pre .smalltalk .symbol,pre .smalltalk .char,pre .go .constant,pre .change{color:#080}pre .label,pre .javadoc,pre .ruby .string,pre .decorator,pre .filter .argument,pre .localvars,pre .array,pre .attr_selector,pre .important,pre .pseudo,pre .pi,pre .doctype,pre .deletion,pre .envvar,pre .shebang,pre .apache .sqbracket,pre .nginx .built_in,pre .tex .formula,pre .erlang_repl .reserved,pre .input_number{color:#88F
+}pre .css .tag,pre .javadoctag,pre .phpdoc,pre .yardoctag{font-weight:bold}pre .keyword,pre .id,pre .phpdoc,pre .title,pre .built_in,pre .aggregate,pre .smalltalk .class,pre .winutils,pre .bash .variable,pre .apache .tag,pre .go .typename,pre .tex .command{font-weight:bold}pre .nginx .built_in{font-weight:normal}pre .xml .css,pre .xml .javascript,pre .xml .vbscript,pre .tex .formula{opacity:0.5}aside.note{padding:0.5em;border:1px dotted #000}.github-link{font-size:0.6em}.github-link a,.github-link a:visited{text-decoration:none}article > h1:first-child{margin-top:0}figure > h1{margin:0}p code{background-color:#f0f0f0}a.permalink{font-size:50%;text-decoration:none;position:absolute;left:-25px;top:10px}section > h1{position:relative}pre > code{white-space:pre;overflow-x:auto}@media print, (max-width: 700px) {article > h1:first-child{margin-top:25px}section > h1{margin-bottom:0.5em}}.warning{color:red;font-weight:bold}#main figure{border:1px solid #CCC;box-shadow:0 0 3px #CCC inset;padding:1em;margin:2ex 0}#main figure figcaption{text-size:.9em;text-align:center;color:#555}#main figure img{border:solid 1px #CCC}#container{min-width:1094px}dd,p{text-align:justify}body{font-family:'Crimson Text', serif;font-size:1.2em;background-color:#e5eef9}a,a:visited{color:#000}a:hover,a:active{color:#823}nav{box-shadow:0 -5px 20px 20px rgba(41,55,78,0.12);z-index:100;background-color:#29374e;padding:5px;font-family:'Lato';font-size:0.80em;font-weight:400;position:fixed;width:100%;top:0}nav ul{margin:0;padding:0;text-align:right}nav ul li{display:inline;margin-right:3em}nav ul li.googleplus{position:relative;top:2px;margin-right:3em}nav ul li.feedlink{position:relative;top:3px}nav a,nav a:visited{color:#eee;text-decoration:none}#spotlight{background-image:-webkit-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-moz-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-o-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:-ms-radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);background-image:radial-gradient(50% 50%, circle farthest-side, #fff, #e5eef9 100%);position:absolute;width:1050px;height:300px;top:0;left:50%;margin-left:-475px;z-index:-1}div.headergroup{width:1050px;margin:0 auto;padding-top:2.6em;padding-bottom:1.3em}div.headergroup a{text-decoration:none;display:flex}div.headergroup div.homepage-logo{text-align:center;width:550px;height:105px;margin-left:75px}div.headergroup div.homepage-logo div.logo-image{background:url(/static/logo-home2-no-esod-smaller2.png?etag=uBLSXtRu) no-repeat center center;width:100%;height:75px}div.headergroup div.homepage-logo div.logo-text{color:#29374e;padding-top:0.2em;font-family:'Lato';font-weight:300;font-size:1.2em;padding-bottom:0.3em}div.headergroup div.homepage-info{text-align:left;font-family:'Lato';font-weight:300;font-size:0.8em;line-height:1.6em;width:220px}div.headergroup h2{margin-bottom:0;font-size:1.4em;margin-top:0;padding-top:0.4em;padding-bottom:1em}h1,h2,h3,h4,h5,h6,dt{color:#474f6b;font-family:'Lato';font-weight:400}h1{font-weight:300;font-size:1.8em}h2,section > section > h1{font-weight:400;font-size:1.5em;margin-bottom:0.5em}h3,section > section > section > h1{font-weight:400;font-size:1.2em;margin-bottom:0.5em}h1 span{display:none}section{display:table-cell}section h2{margin-top:2.2em;margin-bottom:0}section img{max-width:100%}section section{display:block;width:auto;padding:0;margin:0}section.why{width:600px;padding-left:90px;padding-right:90px}section.why article{width:600px}section.getting-started{background-color:#f4f4f4;width:300px;padding-left:50px;padding-right:50px}section.getting-started h2{font-size:1.2em;margin-bottom:0.7em;margin-top:1.8em}section.getting-started ul{font-family:'Lato';font-size:0.75em;font-weight:500;margin-bottom:20px;line-height:2em;list-style-type:none;margin-bottom:50px;padding-left:0}section.getting-started ul ul{font-size:.9em }section.getting-started div{font-family:'Lato';padding-left:20px}#main{box-shadow:0 10px 25px 25px rgba(41,55,78,0.05);background-color:#fff;position:relative;width:1050px;margin:0 auto}aside#announcement{box-shadow:0 0 20px 10px rgba(41,55,78,0.12);height:20px;margin:0 auto;position:relative;width:1080px;background-color:#29374e;color:#eee;padding:0.5em;font-family:'Lato';font-weight:400;font-size:0.8em;z-index:50}aside#announcement div.msg{margin-left:105px}aside#announcement div.tri-left,aside#announcement div.tri-right{width:0;height:0;position:absolute;bottom:-21px;border-style:solid}aside#announcement div.tri-left{left:0;border-width:11px 11px 10px 11px;border-color:#0b1b30 #0b1b30 transparent transparent}aside#announcement div.tri-right{right:0;border-width:11px 11px 11px 10px;border-color:#0b1b30 transparent transparent #0b1b30}aside#announcement a,aside#announcement a:visited{color:#eee;text-decoration:underline}aside#announcement span.date{font-style:italic;font-size:0.8em}#feedlink{display:inline-block;height:16px;width:16px;background:url(/static/blog.png?etag=oPHrQ5qo)}#feedlink span{display:none}dt{font-weight:400;font-size:1.05em;margin-bottom:0.7em;margin-top:2.3em}dd,p{margin:0;font-size:1em;line-height:155%;margin-bottom:0.5em}p.what{display:none;font-size:1.4em;padding:0 200px}#instantclick{display:none}@media print, (max-width: 700px) {body{background-color:#fff;padding:3px}.googleplus,.feedlink,.headergroup,#announcement,#comments,#disqus_thread,#spotlight,#license,.github-link,.oreilly,.main-listing{display:none}div .headergroup{display:none}#container > nav{background-color:#fff;box-shadow:none}#container > nav > ul{text-align:left}#container > nav > ul a,#container > nav > ul a:visited{color:#00f}#main,div#container,section.why > article{width:auto;min-width:0}#main{box-shadow:none;position:static;margin:0}section.why,section.getting-started{display:block;width:auto;padding:0;background-color:#fff}hgroup h1[itemprop=name],hgroup h2,hgroup h3{margin:0}hgroup h1[itemprop=name] img,hgroup h2 img,hgroup h3 img{display:none}dd,p,dt{margin:12px}}@media print {nav{display:none}section.getting-started{display:none}}</style><!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]--><link href="//fonts.googleapis.com/css?family=Crimson+Text:400,400italic,600,600italic,700,700italic" rel="stylesheet" type="text/css"><link href="//fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet" type="text/css"><script>document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/,'js');</script></head><body itemscope itemtype="http://schema.org/Product"><div id="spotlight"></div><div id="container"><nav><ul><li><a href="/book">book</a></li><li><a href="/wiki">cookbook</a></li><li><a href="/blog">blog</a></li><li><a href="/wiki/Home">wiki</a></li><li class="feedlink"><a href="/feed" id="feedlink"><span>newsfeed</span></a></li></ul></nav><div class="headergroup"><a href="/"><div class="homepage-logo"><div class="logo-image"></div><div class="logo-text">Yesod Web Framework</div></div><div class="homepage-info">Yesod is a Haskell web framework for productive development of type-safe, RESTful, high performance web applications.</div></a></div><aside id="announcement"><div class="tri-left"></div><div class="tri-right"></div><div class="msg"><span class="subject">Persistent :: Yesod Web Framework Book- Version 1.2</span></div></aside><div id="main" role="main"><section class="why"><p class="github-link"><a href="https://github.com/yesodweb/yesodweb.com-content/tree/version1.2/book/persistent.asciidoc">View source on Github</a>
+</p>
+<article><h1>Persistent</h1>
+
+
+<aside class="note"><p>This chapter currently covers persistent version 1.3. It will be updated to
+cover persistent version 2.0 in the next iteration of the book (covering Yesod 1.4).</p></aside>
+<p>Forms deal with the boundary between the user and the application. Another
+boundary we need to deal with is between the application and the storage layer.
+Whether it be a SQL database, a YAML file, or a binary blob, odds are your
+storage layer does not natively understand your applications data types, and
+you’ll need to perform some marshaling.  Persistent is Yesod’s answer to data
+storage- a type-safe, universal data store interface for Haskell.</p>
+<p>Haskell has many different database bindings available. However, most of these
+have little knowledge of a schema and therefore do not provide useful static
+guarantees. They also force database-dependent APIs and data types on the
+programmer.</p>
+<p>Some Haskellers have attempted a more revolutionary route: creating Haskell
+specific data stores that allow one to easily store any strongly typed Haskell
+data. These options are great for certain use cases, but they constrain one to
+the storage techniques provided by the library and do not interface well with
+other languages.</p>
+<p>In contrast, Persistent allows us to choose among existing databases that are
+highly tuned for different data storage use cases, interoperate with other
+programming languages, and to use a safe and productive query interface, while
+still keeping the type safety of Haskell datatypes.</p>
+<p>Persistent follows the guiding principles of type safety and concise,
+declarative syntax. Some other nice features are:</p>
+<ul>
+<li>
+<p>
+Database-agnostic. There is first class support for PostgreSQL, SQLite, MySQL
+  and MongoDB, with experimental Redis support.
+</p>
+</li>
+<li>
+<p>
+Convenient data modeling.
+  Persistent lets you model relationships and use them in type-safe ways.
+  The default type-safe persistent API does not support joins, allowing support for a
+  wider number of storage layers.
+  Joins and other SQL specific functionality can be achieved through using
+  a raw SQL layer (with very little type safety).
+  An additional library, <a href="http://hackage.haskell.org/package/esqueleto">Esqueleto</a>,
+  builds on top of the Persistent data model, adding type-safe joins and SQL functionality.
+</p>
+</li>
+<li>
+<p>
+Automatically perform database migrations
+</p>
+</li>
+</ul>
+<p>Persistent works well with Yesod, but it is quite
+usable on its own as a standalone library. Most of this chapter will address
+Persistent on its own.</p>
+<section id="persistent_synopsis">
+<h1>Synopsis</h1>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE EmptyDataDecls    #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE GADTs             #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Control.Monad.IO.Class  (liftIO)
+import           Database.Persist
+import           Database.Persist.Sqlite
+import           Database.Persist.TH
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    name String
+    age Int Maybe
+    deriving Show
+BlogPost
+    title String
+    authorId PersonId
+    deriving Show
+|]
+
+main :: IO ()
+main = runSqlite &quot;:memory:&quot; $ do
+    runMigration migrateAll
+
+    johnId &lt;- insert $ Person &quot;John Doe&quot; $ Just 35
+    janeId &lt;- insert $ Person &quot;Jane Doe&quot; Nothing
+
+    insert $ BlogPost &quot;My fr1st p0st&quot; johnId
+    insert $ BlogPost &quot;One more for good measure&quot; johnId
+
+    oneJohnPost &lt;- selectList [BlogPostAuthorId ==. johnId] [LimitTo 1]
+    liftIO $ print (oneJohnPost :: [Entity BlogPost])
+
+    john &lt;- get johnId
+    liftIO $ print (john :: Maybe Person)
+
+    delete janeId
+    deleteWhere [BlogPostAuthorId ==. johnId]</code></pre>
+</section>
+<section id="persistent_solving_the_boundary_issue">
+<h1>Solving the boundary issue</h1>
+<p>Suppose you are storing information on people in a SQL database. Your table
+might look something like:</p>
+<pre language="sql" linenumbering="unnumbered"><code>CREATE TABLE person(id SERIAL PRIMARY KEY, name VARCHAR NOT NULL, age INTEGER)</code></pre>
+<p>And if you are using a database like PostgreSQL, you can be guaranteed that the
+database will never store some arbitrary text in your age field. (The same
+cannot be said of SQLite, but let’s forget about that for now.) To mirror this
+database table, you would likely create a Haskell datatype that looks something
+like:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data Person = Person
+    { personName :: Text
+    , personAge :: Int
+    }</code></pre>
+<p>It looks like everything is type safe: the database schema matches our Haskell
+datatypes, the database ensures that invalid data can never make it into our
+data store, and everything is generally awesome. Well, until:</p>
+<ul>
+<li>
+<p>
+You want to pull data from the database, and the database layer gives you the
+  data in an untyped format.
+</p>
+</li>
+<li>
+<p>
+You want to find everyone older than 32, and you accidentally write &quot;thirtytwo&quot;
+  in your SQL statement. Guess what: that will compile just fine, and you won’t
+  find out you have a problem until runtime.
+</p>
+</li>
+<li>
+<p>
+You decide you want to find the first 10 people alphabetically. No problem…
+  until you make a typo in your SQL. Once again, you don’t find out until
+  runtime.
+</p>
+</li>
+</ul>
+<p>In dynamic languages, the answer to these issues is unit testing. For
+everything that <em>can</em> go wrong, make sure you write a test case. But as I am
+sure you are aware by now, that doesn’t jive well with the Yesod approach to
+things. We like to take advantage of Haskell’s strong typing to save us
+wherever possible, and data storage is no exception.</p>
+<p>So the question remains: how can we use Haskell’s type system to save the day?</p>
+<section id="persistent_types">
+<h1>Types</h1>
+<p>Like routing, there is nothing intrinsically difficult about type-safe data
+access. It just requires a lot of monotonous, error prone, boiler plate code.
+As usual, this means we can use the type system to keep us honest. And to avoid
+some of the drudgery, we’ll use a sprinkling of Template Haskell.</p>
+<aside class="note"><p>Earlier versions of Persistent made much heavier usage of Template
+Haskell. Starting with 0.6, there is a new architecture inspired by the
+groundhog package. This approach uses phantom types to carry a lot of the
+burden.</p></aside>
+<p><code>PersistValue</code> is the basic building block of Persistent. It is a sum type that
+can represent data that gets sent to and from a database. Its definition is:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data PersistValue = PersistText Text
+                  | PersistByteString ByteString
+                  | PersistInt64 Int64
+                  | PersistDouble Double
+                  | PersistRational Rational
+                  | PersistBool Bool
+                  | PersistDay Day
+                  | PersistTimeOfDay TimeOfDay
+                  | PersistUTCTime UTCTime
+                  | PersistZonedTime ZT
+                  | PersistNull
+                  | PersistList [PersistValue]
+                  | PersistMap [(Text, PersistValue)]
+                  | PersistObjectId ByteString -- ^ intended especially for MongoDB backend</code></pre>
+<p>Each Persistent backend needs to know how to translate the relevant values into
+something the database can understand. However, it would be awkward to have to
+express all of our data simply in terms of these basic types. The next layer is
+the <code>PersistField</code> typeclass, which defines how an arbitrary Haskell datatype
+can be marshaled to and from a <code>PersistValue</code>. A <code>PersistField</code> correlates to a
+column in a SQL database. In our person example above, name and age would be
+our <code>PersistField</code>s.</p>
+<p>To tie up the user side of the code, our last typeclass is <code>PersistEntity</code>. An
+instance of <code>PersistEntity</code> correlates with a table in a SQL database. This
+typeclass defines a number of functions and some associated types. To review,
+we have the following correspondence between Persistent and SQL:</p>
+<table colsep="1" frame="all" rowsep="1">
+<tgroup cols="2">
+
+
+<thead>
+<tr>
+<td align="left" valign="top">SQL</td>
+<td align="left" valign="top">Persistent</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left" valign="top"><p>Datatypes (VARCHAR, INTEGER, etc)</p></td>
+<td align="left" valign="top"><p>PersistValue</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p>Column</p></td>
+<td align="left" valign="top"><p>PersistField</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p>Table</p></td>
+<td align="left" valign="top"><p>PersistEntity</p></td>
+</tr>
+</tbody>
+</tgroup>
+</table>
+</section>
+<section id="persistent_code_generation">
+<h1>Code Generation</h1>
+<p>In order to ensure that the PersistEntity instances match up properly with your
+Haskell datatypes, Persistent takes responsibility for both. This is also good
+from a DRY (Don’t Repeat Yourself) perspective: you only need to define your
+entities once. Let’s see a quick example:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell, OverloadedStrings, GADTs #-}
+import Database.Persist
+import Database.Persist.TH
+import Database.Persist.Sqlite
+import Control.Monad.IO.Class (liftIO)
+
+mkPersist sqlSettings [persistLowerCase|
+Person
+    name String
+    age Int
+    deriving Show
+|]</code></pre>
+<p>We use a combination of Template Haskell and Quasi-Quotation (like when
+defining routes): <code>persistLowerCase</code> is a quasi-quoter which converts a
+whitespace-sensitive syntax into a list of entity definitions. &quot;Lower case&quot;
+refers to the format of the generated table names. In this scheme, an
+entity like <code>SomeTable</code> would become the SQL table <code>some_table</code>. You can also
+declare your entities in a separate file using <code>persistFileWith</code>. <code>mkPersist</code>
+takes that list of entities and declares:</p>
+<ul>
+<li>
+<p>
+One Haskell datatype for each entity.
+</p>
+</li>
+<li>
+<p>
+A <code>PersistEntity</code> instance for each datatype defined.
+</p>
+</li>
+</ul>
+<p>The example above generates code that looks like the following:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">{-# LANGUAGE TypeFamilies, GeneralizedNewtypeDeriving, OverloadedStrings, GADTs #-}
+import Database.Persist
+import Database.Persist.Sqlite
+import Control.Monad.IO.Class (liftIO)
+import Control.Applicative
+
+data Person = Person
+    { personName :: !String
+    , personAge :: !Int
+    }
+  deriving (Show, Read, Eq)
+
+type PersonId = Key Person
+
+instance PersistEntity Person where
+    -- A Generalized Algebraic Datatype (GADT).
+    -- This gives us a type-safe approach to matching fields with
+    -- their datatypes.
+    data EntityField Person typ where
+        PersonId   :: EntityField Person PersonId
+        PersonName :: EntityField Person String
+        PersonAge  :: EntityField Person Int
+
+    data Unique Person
+    type PersistEntityBackend Person = SqlBackend
+
+    toPersistFields (Person name age) =
+        [ SomePersistField name
+        , SomePersistField age
+        ]
+
+    fromPersistValues [nameValue, ageValue] = Person
+        &lt;$&gt; fromPersistValue nameValue
+        &lt;*&gt; fromPersistValue ageValue
+    fromPersistValues _ = Left &quot;Invalid fromPersistValues input&quot;
+
+    -- Information on each field, used internally to generate SQL statements
+    persistFieldDef PersonId = FieldDef
+        (HaskellName &quot;Id&quot;)
+        (DBName &quot;id&quot;)
+        (FTTypeCon Nothing &quot;PersonId&quot;)
+        SqlInt64
+        []
+        True
+        Nothing
+    persistFieldDef PersonName = FieldDef
+        (HaskellName &quot;name&quot;)
+        (DBName &quot;name&quot;)
+        (FTTypeCon Nothing &quot;String&quot;)
+        SqlString
+        []
+        True
+        Nothing
+    persistFieldDef PersonAge = FieldDef
+        (HaskellName &quot;age&quot;)
+        (DBName &quot;age&quot;)
+        (FTTypeCon Nothing &quot;Int&quot;)
+        SqlInt64
+        []
+        True
+        Nothing</code></pre>
+<p>As you might expect, our <code>Person</code> datatype closely matches the definition we
+gave in the original Template Haskell version. We also have a Generalized
+Algebraic Datatype (GADT) which gives a separate constructor for each field.
+This GADT encodes both the type of the entity and the type of the field. We use
+its constructors throughout Persistent, such as to ensure that when we apply a
+filter, the types of the filtering value match the field.</p>
+<p>We can use the generated <code>Person</code> type like any other Haskell type, and then
+pass it off to other Persistent functions.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE EmptyDataDecls    #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE GADTs             #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Control.Monad.IO.Class  (liftIO)
+import           Database.Persist
+import           Database.Persist.Sqlite
+import           Database.Persist.TH
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    name String
+    age Int Maybe
+    deriving Show
+|]
+
+main :: IO ()
+main = runSqlite &quot;:memory:&quot; $ do
+    michaelId &lt;- insert $ Person &quot;Michael&quot; $ Just 26
+    michael &lt;- get michaelId
+    liftIO $ print michael</code></pre>
+<p>We start off with some standard database connection code. In this case, we used
+the single-connection functions. Persistent also comes built in with connection
+pool functions, which we will generally want to use in production.</p>
+<p>In this example, we have seen two functions: <code>insert</code> creates a new record in
+the database and returns its ID. Like everything else in Persistent, IDs are
+type safe. We’ll get into more details of how these IDs work later. So when you
+call <code>insert $ Person &quot;Michael&quot; 26</code>, it gives you a value back of type
+<code>PersonId</code>.</p>
+<p>The next function we see is <code>get</code>, which attempts to load a value from the
+database using an <code>Id</code>. In Persistent, you never need to worry that you are
+using the key from the wrong table: trying to load up a different entity (like
+<code>House</code>) using a <code>PersonId</code> will never compile.</p>
+</section>
+<section id="persistent_persiststore">
+<h1>PersistStore</h1>
+<p>One last detail is left unexplained from the previous example: what exactly
+does <code>runSqlite</code> do, and what is that monad that our database actions are
+running in?</p>
+<p>All database actions need to occur within an instance of <code>PersistStore</code>. As its
+name implies, every data store (PostgreSQL, SQLite, MongoDB) has an instance of
+<code>PersistStore</code>. This is where all the translations from <code>PersistValue</code> to
+database-specific values occur, where SQL query generation happens, and so on.</p>
+<aside class="note"><p>As you can imagine, even though <code>PersistStore</code> provides a safe,
+well-typed interface to the outside world, there are a lot of database
+interactions that could go wrong. However, by testing this code automatically
+and thoroughly in a single location, we can centralize our error-prone code and
+make sure it is as bug-free as possible.</p></aside>
+<p><code>runSqlite</code> creates a single connection to a database using its supplied
+connection string. For our test cases, we will use <code>:memory:</code>, which uses an
+in-memory database. All of the SQL backends share the same instance of
+<code>PersistStore</code>: <code>SqlPersist</code>. <code>runSqlite</code> runs the <code>SqlPersist</code> action by
+providing it with the connection value it generated.</p>
+<aside class="note"><p>There are actually a few other typeclasses: <code>PersistUpdate</code> and
+<code>PersistQuery</code>. Different typeclasses provide different functionality, which
+allows us to write backends that use simpler data stores (e.g., Redis) even
+though they can’t provide us all the high-level functionality available in
+Persistent.</p></aside>
+<p>One important thing to note is that everything which occurs inside a single
+call to <code>runSqlite</code> runs in a single transaction. This has two important
+implications:</p>
+<ul>
+<li>
+<p>
+For many databases, committing a transaction can be a costly activity. By
+  putting multiple steps into a single transaction, you can speed up code
+  dramatically.
+</p>
+</li>
+<li>
+<p>
+If an exception is thrown anywhere inside a single call to <code>runSqlite</code>, all
+  actions will be rolled back (assuming your backend has rollback support).
+</p>
+<aside class="note"><p>This actually has farther-reaching impact than it may initially seem. A
+number of the short-circuit functions in Yesod, such as redirects, are
+implemented using exceptions. If you use such a call from inside a Persistent
+block, it will roll back the entire transaction.</p></aside>
+</li>
+</ul>
+</section>
+</section>
+<section id="persistent_migrations">
+<h1>Migrations</h1>
+<p>I’m sorry to tell you, but so far I have lied to you a bit: the example from
+the previous section does not actually work. If you try to run it, you will get
+an error message about a missing table.</p>
+<p>For SQL databases, one of the major pains can be managing schema changes.
+Instead of leaving this to the user, Persistent steps in to help, but you have
+to <em>ask</em> it to help. Let’s see what this looks like:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+             OverloadedStrings, GADTs, FlexibleContexts #-}
+import Database.Persist
+import Database.Persist.TH
+import Database.Persist.Sqlite
+import Control.Monad.IO.Class (liftIO)
+
+share [mkPersist sqlSettings, mkSave &quot;entityDefs&quot;] [persistLowerCase|
+Person
+    name String
+    age Int
+    deriving Show
+|]
+
+main :: IO ()
+main = runSqlite &quot;:memory:&quot; $ do
+    -- this line added: that&#39;s it!
+    runMigration $ migrate entityDefs $ entityDef (Nothing :: Maybe Person)
+    michaelId &lt;- insert $ Person &quot;Michael&quot; 26
+    michael &lt;- get michaelId
+    liftIO $ print michael</code></pre>
+<p>With this one little code change, Persistent will automatically create your
+<code>Person</code> table for you. This split between <code>runMigration</code> and <code>migrate</code> allows
+you to migrate multiple tables simultaneously.</p>
+<p>This works when dealing with just a few entities, but can quickly get tiresome
+once we are dealing with a dozen entities. Instead of repeating yourself,
+Persistent provides a helper function, <code>mkMigrate</code>:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+             OverloadedStrings, GADTs, FlexibleContexts #-}
+import Database.Persist
+import Database.Persist.Sqlite
+import Database.Persist.TH
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    name String
+    age Int
+    deriving Show
+Car
+    color String
+    make String
+    model String
+    deriving Show
+|]
+
+main :: IO ()
+main = runSqlite &quot;:memory:&quot; $ do runMigration migrateAll</code></pre>
+<p><code>mkMigrate</code> is a Template Haskell function which creates a new function that
+will automatically call <code>migrate</code> on all entities defined in the <code>persist</code>
+block. The <code>share</code> function is just a little helper that passes the information
+from the persist block to each Template Haskell function and concatenates the
+results.</p>
+<p>Persistent has very conservative rules about what it will do during a
+migration. It starts by loading up table information from the database,
+complete with all defined SQL datatypes. It then compares that against the
+entity definition given in the code. For the following cases, it will
+automatically alter the schema:</p>
+<ul>
+<li>
+<p>
+The datatype of a field changed. However, the database may object to this
+  modification if the data cannot be translated.
+</p>
+</li>
+<li>
+<p>
+A field was added. However, if the field is not null, no default value is
+  supplied (we’ll discuss defaults later) and there is already data in the
+  database, the database will not allow this to happen.
+</p>
+</li>
+<li>
+<p>
+A field is converted from not null to null. In the opposite case, Persistent
+  will attempt the conversion, contingent upon the database’s approval.
+</p>
+</li>
+<li>
+<p>
+A brand new entity is added.
+</p>
+</li>
+</ul>
+<p>However, there are some cases that Persistent will not handle:</p>
+<ul>
+<li>
+<p>
+Field or entity renames: Persistent has no way of knowing that &quot;name&quot; has now
+  been renamed to &quot;fullName&quot;: all it sees is an old field called name and a new
+  field called fullName.
+</p>
+</li>
+<li>
+<p>
+Field removals: since this can result in data loss, Persistent by default
+  will refuse to perform the action (you can force the issue by using
+  <code>runMigrationUnsafe</code> instead of <code>runMigration</code>, though it is <em role="strong">not</em>
+  recommended).
+</p>
+</li>
+</ul>
+<p><code>runMigration</code> will print out the migrations it is running on <code>stderr</code> (you can
+bypass this by using <code>runMigrationSilent</code>). Whenever possible, it uses <code>ALTER
+TABLE</code> calls. However, in SQLite, <code>ALTER TABLE</code> has very limited abilities, and
+therefore Persistent must resort to copying the data from one table to another.</p>
+<p>Finally, if instead of <em>performing</em> a migration, you want Persistent to give
+you hints about what migrations are necessary, use the <code>printMigration</code>
+function. This function will print out the migrations which <code>runMigration</code>
+would perform for you. This may be useful for performing migrations that
+Persistent is not capable of, for adding arbitrary SQL to a migration, or just
+to log what migrations occurred.</p>
+</section>
+<section id="persistent_uniqueness">
+<h1>Uniqueness</h1>
+<p>In addition to declaring fields within an entity, you can also declare
+uniqueness constraints. A typical example would be requiring that a username be
+unique.</p>
+<pre language="persistent" linenumbering="unnumbered"><code>User
+    username Text
+    UniqueUsername username</code></pre>
+<p>While each field name must begin with a lowercase letter, the uniqueness
+constraints must begin with an uppercase letter, since it will be represented
+in Haskell as a data constructor.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+             OverloadedStrings, GADTs, FlexibleContexts #-}
+import Database.Persist
+import Database.Persist.Sqlite
+import Database.Persist.TH
+import Data.Time
+import Control.Monad.IO.Class (liftIO)
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    firstName String
+    lastName String
+    age Int
+    PersonName firstName lastName
+    deriving Show
+|]
+
+main :: IO ()
+main = runSqlite &quot;:memory:&quot; $ do
+    runMigration migrateAll
+    insert $ Person &quot;Michael&quot; &quot;Snoyman&quot; 26
+    michael &lt;- getBy $ PersonName &quot;Michael&quot; &quot;Snoyman&quot;
+    liftIO $ print michael</code></pre>
+<p>To declare a unique combination of fields, we add an extra line to our
+declaration. Persistent knows that it is defining a unique constructor, since
+the line begins with a capital letter. Each following word must be a field in
+this entity.</p>
+<p>The main restriction on uniqueness is that it can only be applied non-null
+fields. The reason for this is that the SQL standard is ambiguous on how
+uniqueness should be applied to <code>NULL</code> (e.g., is <code>NULL=NULL</code> true or false?).
+Besides that ambiguity, most SQL engines in fact implement rules which would be
+<em>contrary</em> to what the Haskell datatypes anticipate (e.g., PostgreSQL says that
+<code>NULL=NULL</code> is false, whereas Haskell says <code>Nothing == Nothing</code> is <code>True</code>).</p>
+<p>In addition to providing nice guarantees at the database level about
+consistency of your data, uniqueness constraints can also be used to perform
+some specific queries within your Haskell code, like the <code>getBy</code> demonstrated
+above. This happens via the <code>Unique</code> associated type. In the example above, we
+end up with a new constructor:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">PersonName :: String -&gt; String -&gt; Unique Person</code></pre>
+<aside class="note"><p>With the MongoDB backend, a uniqueness constraint cannot be created: you
+must place a unique index on the field.</p></aside>
+</section>
+<section id="persistent_queries">
+<h1>Queries</h1>
+<p>Depending on what your goal is, there are different approaches to querying the
+database. Some commands query based on a numeric ID, while others will filter.
+Queries also differ in the number of results they return: some lookups should
+return no more than one result (if the lookup key is unique) while others can
+return many results.</p>
+<p>Persistent therefore provides a few different query functions. As usual, we try
+to encode as many invariants in the types as possible. For example, a query
+that can return only 0 or 1 results will use a <code>Maybe</code> wrapper, whereas a query
+returning many results will return a list.</p>
+<section id="persistent_fetching_by_id">
+<h1>Fetching by ID</h1>
+<p>The simplest query you can perform in Persistent is getting based on an ID.
+Since this value may or may not exist, its return type is wrapped in a <code>Maybe</code>.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">    personId &lt;- insert $ Person &quot;Michael&quot; &quot;Snoyman&quot; 26
+    maybePerson &lt;- get personId
+    case maybePerson of
+        Nothing -&gt; liftIO $ putStrLn &quot;Just kidding, not really there&quot;
+        Just person -&gt; liftIO $ print person</code></pre>
+<p>This can be very useful for sites that provide URLs like <em>/person/5</em>. However,
+in such a case, we don’t usually care about the <code>Maybe</code> wrapper, and just want
+the value, returning a 404 message if it is not found. Fortunately, the
+<code>get404</code> (provided by the yesod-persistent package) function helps us out here.
+We’ll go into more details when we see integration with Yesod.</p>
+</section>
+<section id="persistent_fetching_by_unique_constraint">
+<h1>Fetching by unique constraint</h1>
+<p><code>getBy</code> is almost identical to <code>get</code>, except:</p>
+<ol numeration="arabic">
+<li>
+<p>
+it takes a uniqueness constraint; that is, instead of an ID it takes a <code>Unique</code> value.
+</p>
+</li>
+<li>
+<p>
+it returns an <code>Entity</code> instead of a value. An <code>Entity</code> is a combination of database ID and value.
+</p>
+</li>
+</ol>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">    personId &lt;- insert $ Person &quot;Michael&quot; &quot;Snoyman&quot; 26
+    maybePerson &lt;- getBy $ UniqueName &quot;Michael&quot; &quot;Snoyman&quot;
+    case maybePerson of
+        Nothing -&gt; liftIO $ putStrLn &quot;Just kidding, not really there&quot;
+        Just (Entity personId person) -&gt; liftIO $ print person</code></pre>
+<p>Like <code>get404</code>, there is also a <code>getBy404</code> function.</p>
+</section>
+<section id="persistent_select_functions">
+<h1>Select functions</h1>
+<p>Most likely, you’re going to want more powerful queries. You’ll want to find
+everyone over a certain age; all cars available in blue; all users without a
+registered email address. For this, you need one of the select functions.</p>
+<p>All the select functions use a similar interface, with slightly different outputs:</p>
+<table colsep="1" frame="all" rowsep="1">
+<tgroup cols="2">
+
+
+<thead>
+<tr>
+<td align="left" valign="top">Function</td>
+<td align="left" valign="top">Returns</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left" valign="top"><p>selectSource</p></td>
+<td align="left" valign="top"><p>A <code>Source</code> containing all the IDs and values from the database. This allows you to write streaming code.</p>
+<p>NOTE: A <code>Source</code> is a stream of data, and is part of the <code>conduit</code> package. I
+recommend reading the
+<a href="https://www.fpcomplete.com/user/snoyberg/library-documentation/conduit-overview">School
+of Haskell conduit tutorial</a> to get started.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p>selectList</p></td>
+<td align="left" valign="top"><p>A list containing all the IDs and values from the database. All records will
+     be loaded into memory.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p>selectFirst</p></td>
+<td align="left" valign="top"><p>Takes just the first ID and value from the database, if available</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p>selectKeys</p></td>
+<td align="left" valign="top"><p>Returns only the keys, without the values, as a <code>Source</code>.</p></td>
+</tr>
+</tbody>
+</tgroup>
+</table>
+<p><code>selectList</code> is the most commonly used, so we will cover it specifically. Understanding the others should be trivial after that.</p>
+<p><code>selectList</code> takes two arguments: a list of <code>Filter</code>s, and a list of
+<code>SelectOpt</code>s. The former is what limits your results based on
+characteristics; it allows for equals, less than, is member of, and such.
+<code>SelectOpt</code>s provides for three different features: sorting, limiting output
+to a certain number of rows, and offsetting results by a certain number of
+rows.</p>
+<aside class="note"><p>The combination of limits and offsets is very important; it allows for
+efficient pagination in your webapps.</p></aside>
+<p>Let’s jump straight into an example of filtering, and then analyze it.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">    people &lt;- selectList [PersonAge &gt;. 25, PersonAge &lt;=. 30] []
+    liftIO $ print people</code></pre>
+<p>As simple as that example is, we really need to cover three points:</p>
+<ol numeration="arabic">
+<li>
+<p>
+<code>PersonAge</code> is a constructor for an associated phantom type. That might sound
+scary, but what’s important is that it uniquely identifies the &quot;age&quot; column of
+the &quot;person&quot; table, and that it knows that the age field is an <code>Int</code>. (That’s
+the phantom part.)
+</p>
+</li>
+<li>
+<p>
+We have a bunch of Persistent filtering operators. They’re all pretty
+straight-forward: just tack a period to the end of what you’d expect. There are
+three gotchas here, I’ll explain below.
+</p>
+</li>
+<li>
+<p>
+The list of filters is ANDed together, so that our constraint means &quot;age is
+greater than 25 AND age is less than or equal to 30&quot;. We’ll describe ORing
+later.
+</p>
+</li>
+</ol>
+<p>The one operator that’s surprisingly named is &quot;not equals.&quot; We use <code>!=.</code>, since
+<code>/=.</code> is used for updates (for &quot;divide-and-set&quot;, described later). Don’t worry:
+if you use the wrong one, the compiler will catch you. The other two surprising
+operators are the &quot;is member&quot; and &quot;is not member&quot;. They are, respectively,
+<code>←.</code> and <code>/←.</code> (both end with a period).</p>
+<p>And regarding ORs, we use the <code>||.</code> operator. For example:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">    people &lt;- selectList
+        (       [PersonAge &gt;. 25, PersonAge &lt;=. 30]
+            ||. [PersonFirstName /&lt;-. [&quot;Adam&quot;, &quot;Bonny&quot;]]
+            ||. ([PersonAge ==. 50] ||. [PersonAge ==. 60])
+        )
+        []
+    liftIO $ print people</code></pre>
+<p>This (completely nonsensical) example means: find people who are 26-30,
+inclusive, OR whose names are neither Adam or Bonny, OR whose age is either 50
+or 60.</p>
+<section id="persistent_selectopt">
+<h1>SelectOpt</h1>
+<p>All of our <code>selectList</code> calls have included an empty list as the second
+parameter. That specifies no options, meaning: sort however the database wants,
+return all results, and don’t skip any results. A <code>SelectOpt</code> has four
+constructors that can be used to change all that.</p>
+<dl>
+<dt>
+Asc
+</dt><dd>
+<p>
+Sort by the given column in ascending order. This uses the same phantom type as filtering, such as <code>PersonAge</code>.
+</p>
+</dd>
+<dt>
+Desc
+</dt><dd>
+<p>
+Same as <code>Asc</code>, in descending order.
+</p>
+</dd>
+<dt>
+LimitTo
+</dt><dd>
+<p>
+Takes an <code>Int</code> argument. Only return up to the specified number of results.
+</p>
+</dd>
+<dt>
+OffsetBy
+</dt><dd>
+<p>
+Takes an <code>Int</code> argument. Skip the specified number of results.
+</p>
+</dd>
+</dl>
+<p>The following code defines a function that will break down results into pages.
+It returns all people aged 18 and over, and then sorts them by age (oldest
+person first). For people with the same age, they are sorted alphabetically by
+last name, then first name.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">resultsForPage pageNumber = do
+    let resultsPerPage = 10
+    selectList
+        [ PersonAge &gt;=. 18
+        ]
+        [ Desc PersonAge
+        , Asc PersonLastName
+        , Asc PersonFirstName
+        , LimitTo resultsPerPage
+        , OffsetBy $ (pageNumber - 1) * resultsPerPage
+        ]</code></pre>
+</section>
+</section>
+</section>
+<section id="persistent_manipulation">
+<h1>Manipulation</h1>
+<p>Querying is only half the battle. We also need to be able to add data to and
+modify existing data in the database.</p>
+<section id="persistent_insert">
+<h1>Insert</h1>
+<p>It’s all well and good to be able to play with data in the database, but how
+does it get there in the first place? The answer is the <code>insert</code> function. You
+just give it a value, and it gives back an ID.</p>
+<p>At this point, it makes sense to explain a bit of the philosophy behind
+Persistent. In many other ORM solutions, the datatypes used to hold data are
+opaque: you need to go through their defined interfaces to get at and modify
+the data. That’s not the case with Persistent: we’re using plain old Algebraic
+Data Types for the whole thing. This means you still get all the great benefits
+of pattern matching, currying and everything else you’re used to.</p>
+<p>However, there are a few things we <em>can’t</em> do. For one, there’s no way to
+automatically update values in the database every time the record is updated in
+Haskell. Of course, with Haskell’s normal stance of purity and immutability,
+this wouldn’t make much sense anyway, so I don’t shed any tears over it.</p>
+<p>However, there is one issue that newcomers are often bothered by: why are IDs
+and values completely separate? It seems like it would be very logical to embed
+the ID inside the value. In other words, instead of having:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data Person = Person { name :: String }</code></pre>
+<p>have</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data Person = Person { personId :: PersonId, name :: String }</code></pre>
+<p>Well, there’s one problem with this right off the bat: how do we do an <code>insert</code>? If a Person needs to have an ID, and we get the ID by inserting, and an insert needs a Person, we have an impossible loop. We could solve this with <code>undefined</code>, but that’s just asking for trouble.</p>
+<p>OK, you say, let’s try something a bit safer:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data Person = Person { personId :: Maybe PersonId, name :: String }</code></pre>
+<p>I definitely prefer <code>insert $ Person Nothing &quot;Michael&quot;</code> to <code>insert $ Person
+undefined &quot;Michael&quot;</code>. And now our types will be much simpler, right? For
+example, <code>selectList</code> could return a simple <code>[Person]</code> instead of that ugly
+<code>[Entity SqlPersist Person]</code>.</p>
+<p>The problem is that the &quot;ugliness&quot; is incredibly useful. Having <code>Entity Person</code>
+makes it obvious, at the type level, that we’re dealing with a value that
+exists in the database. Let’s say we want to create a link to another page that
+requires the <code>PersonId</code> (not an uncommon occurrence as we’ll discuss later).
+The <code>Entity Person</code> form gives us unambiguous access to that information;
+embedding <code>PersonId</code> within <code>Person</code> with a <code>Maybe</code> wrapper means an extra
+runtime check for <code>Just</code>, instead of a more error-proof compile time check.</p>
+<p>Finally, there’s a semantic mismatch with embedding the ID within the value.
+The <code>Person</code> is the value. Two people are identical (in the context of a
+database) if all their fields are the same. By embedding the ID in the value,
+we’re no longer talking about a person, but about a row in the database.
+Equality is no longer really equality, it’s identity: is this the <em>same
+person</em>, as opposed to an equivalent person.</p>
+<p>In other words, there are some annoyances with having the ID separated out, but
+overall, it’s the <em>right</em> approach, which in the grand scheme of things leads
+to better, less buggy code.</p>
+</section>
+<section id="persistent_update">
+<h1>Update</h1>
+<p>Now, in the context of that discussion, let’s think about updating. The simplest way to update is:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">let michael = Person &quot;Michael&quot; 26
+    michaelAfterBirthday = michael { personAge = 27 }</code></pre>
+<p>But that’s not actually updating anything, it’s just creating a new <code>Person</code>
+value based on the old one. When we say update, we’re <em>not</em> talking about
+modifications to the values in Haskell. (We better not be of course, since
+data in Haskell is immutable.)</p>
+<p>Instead, we’re looking at ways of modifying rows in a table. And the simplest
+way to do that is with the <code>update</code> function.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">    personId &lt;- insert $ Person &quot;Michael&quot; &quot;Snoyman&quot; 26
+    update personId [PersonAge =. 27]</code></pre>
+<p><code>update</code> takes two arguments: an ID, and a list of <code>Update</code>s. The simplest
+update is assignment, but it’s not always the best. What if you want to
+increase someone’s age by 1, but you don’t have their current age? Persistent
+has you covered:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">haveBirthday personId = update personId [PersonAge +=. 1]</code></pre>
+<p>And as you might expect, we have all the basic mathematical operators:
+<code>+=.</code>, <code>-=.</code>, <code>\*=.</code>, and <code>/=.</code> (full stop). These can be convenient for
+updating a single record, but they are also essential for proper ACID
+guarantees. Imagine the alternative: pull out a <code>Person</code>, increment the age,
+and update the new value. If you have two threads/processes working on this
+database at the same time, you’re in for a world of hurt (hint: race
+conditions).</p>
+<p>Sometimes you’ll want to update many rows at once (give all your employees a
+5% pay increase, for example). <code>updateWhere</code> takes two parameters: a list of
+filters, and a list of updates to apply.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">    updateWhere [PersonFirstName ==. &quot;Michael&quot;] [PersonAge *=. 2] -- it&#39;s been a long day</code></pre>
+<p>Occasionally, you’ll just want to completely replace the value in a database
+with a different value. For that, you use (surprise) the <code>replace</code> function.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">    personId &lt;- insert $ Person &quot;Michael&quot; &quot;Snoyman&quot; 26
+    replace personId $ Person &quot;John&quot; &quot;Doe&quot; 20</code></pre>
+</section>
+<section id="persistent_delete">
+<h1>Delete</h1>
+<p>As much as it pains us, sometimes we must part with our data. To do so, we have three functions:</p>
+<dl>
+<dt>
+delete
+</dt><dd>
+<p>
+Delete based on an ID
+</p>
+</dd>
+<dt>
+deleteBy
+</dt><dd>
+<p>
+Delete based on a unique constraint
+</p>
+</dd>
+<dt>
+deleteWhere
+</dt><dd>
+<p>
+Delete based on a set of filters
+</p>
+</dd>
+</dl>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">    personId &lt;- insert $ Person &quot;Michael&quot; &quot;Snoyman&quot; 26
+    delete personId
+    deleteBy $ UniqueName &quot;Michael&quot; &quot;Snoyman&quot;
+    deleteWhere [PersonFirstName ==. &quot;Michael&quot;]</code></pre>
+<p>We can even use deleteWhere to wipe out all the records in a table, we just
+need to give some hints to GHC as to what table we’re interested in:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">    deleteWhere ([] :: [Filter Person])</code></pre>
+</section>
+</section>
+<section id="persistent_attributes">
+<h1>Attributes</h1>
+<p>So far, we have seen a basic syntax for our <code>persistLowerCase</code> blocks: a line
+for the name of our entities, and then an indented line for each field with two
+words: the name of the field and the datatype of the field. Persistent handles
+more than this: you can assign an arbitrary list of attributes after the first
+two words on a line.</p>
+<p>Suppose we want to have a <code>Person</code> entity with an (optional) age and the
+timestamp of when he/she was added to the system. For entities already in the
+database, we want to just use the current date-time for that timestamp.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+             OverloadedStrings, GADTs, FlexibleContexts #-}
+import Database.Persist
+import Database.Persist.Sqlite
+import Database.Persist.TH
+import Data.Time
+import Control.Monad.IO.Class
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    name String
+    age Int Maybe
+    created UTCTime default=CURRENT_TIME
+    deriving Show
+|]
+
+main :: IO ()
+main = runSqlite &quot;:memory:&quot; $ do
+    time &lt;- liftIO getCurrentTime
+    runMigration migrateAll
+    insert $ Person &quot;Michael&quot; (Just 26) time
+    insert $ Person &quot;Greg&quot; Nothing time
+    return ()</code></pre>
+<p><code>Maybe</code> is a built in, single word attribute. It makes the field optional. In
+Haskell, this means it is wrapped in a <code>Maybe</code>. In SQL, it makes the column
+nullable.</p>
+<p>The <code>default</code> attribute is backend specific, and uses whatever syntax is
+understood by the database. In this case, it uses the database’s built-in
+<code>CURRENT_TIME</code> function. Suppose that we now want to add a field for a person’s
+favorite programming language:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+             OverloadedStrings, GADTs, FlexibleContexts #-}
+import Database.Persist
+import Database.Persist.Sqlite
+import Database.Persist.TH
+import Data.Time
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    name String
+    age Int Maybe
+    created UTCTime default=CURRENT_TIME
+    language String default=&#39;Haskell&#39;
+    deriving Show
+|]
+
+main :: IO ()
+main = runSqlite &quot;:memory:&quot; $ do
+    runMigration migrateAll</code></pre>
+<aside class="note"><p>The <code>default</code> attribute has absolutely no impact on the Haskell code
+itself; you still need to fill in all values. This will only affect the
+database schema and automatic migrations.</p></aside>
+<p>We need to surround the string with single quotes so that the database can
+properly interpret it. Finally, Persistent can use double quotes for containing
+white space, so if we want to set someone’s default home country to be El
+Salvador:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+             OverloadedStrings, GADTs, FlexibleContexts #-}
+import Database.Persist
+import Database.Persist.Sqlite
+import Database.Persist.TH
+import Data.Time
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    name String
+    age Int Maybe
+    created UTCTime default=CURRENT_TIME
+    language String default=&#39;Haskell&#39;
+    country String &quot;default=&#39;El Salvador&#39;&quot;
+    deriving Show
+|]
+
+main :: IO ()
+main = runSqlite &quot;:memory:&quot; $ do
+    runMigration migrateAll</code></pre>
+<p>One last trick you can do with attributes is to specify the names to be used
+for the SQL tables and columns. This can be convenient when interacting with
+existing databases.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person sql=the-person-table id=numeric_id
+    firstName String sql=first_name
+    lastName String sql=fldLastName
+    age Int &quot;sql=The Age of the Person&quot;
+    UniqueName firstName lastName
+    deriving Show
+|]</code></pre>
+<p>There are a number of other features to the entity definition syntax. An
+up-to-date list is maintained
+<a href="https://github.com/yesodweb/yesod/wiki/Persistent-entity-syntax">on the
+Yesod wiki</a>.</p>
+</section>
+<section id="persistent_relations">
+<h1>Relations</h1>
+<p>Persistent allows references between your data types in a manner that is
+consistent with supporting non-SQL databases. We do this by embedding an ID in
+the related entity. So if a person has many cars:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+             OverloadedStrings, GADTs, FlexibleContexts #-}
+import Database.Persist
+import Database.Persist.Sqlite
+import Database.Persist.TH
+import Control.Monad.IO.Class (liftIO)
+import Data.Time
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    name String
+    deriving Show
+Car
+    ownerId PersonId
+    name String
+    deriving Show
+|]
+
+main :: IO ()
+main = runSqlite &quot;:memory:&quot; $ do
+    runMigration migrateAll
+    bruce &lt;- insert $ Person &quot;Bruce Wayne&quot;
+    insert $ Car bruce &quot;Bat Mobile&quot;
+    insert $ Car bruce &quot;Porsche&quot;
+    -- this could go on a while
+    cars &lt;- selectList [CarOwnerId ==. bruce] []
+    liftIO $ print cars</code></pre>
+<p>Using this technique, you can define one-to-many relationships. To define
+many-to-many relationships, we need a join entity, which has a one-to-many
+relationship with each of the original tables. It is also a good idea to use
+uniqueness constraints on these. For example, to model a situation where we
+want to track which people have shopped in which stores:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+             OverloadedStrings, GADTs, FlexibleContexts #-}
+import Database.Persist
+import Database.Persist.Sqlite
+import Database.Persist.TH
+import Data.Time
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    name String
+Store
+    name String
+PersonStore
+    personId PersonId
+    storeId StoreId
+    UniquePersonStore personId storeId
+|]
+
+main :: IO ()
+main = runSqlite &quot;:memory:&quot; $ do
+    runMigration migrateAll
+
+    bruce &lt;- insert $ Person &quot;Bruce Wayne&quot;
+    michael &lt;- insert $ Person &quot;Michael&quot;
+
+    target &lt;- insert $ Store &quot;Target&quot;
+    gucci &lt;- insert $ Store &quot;Gucci&quot;
+    sevenEleven &lt;- insert $ Store &quot;7-11&quot;
+
+    insert $ PersonStore bruce gucci
+    insert $ PersonStore bruce sevenEleven
+
+    insert $ PersonStore michael target
+    insert $ PersonStore michael sevenEleven
+
+    return ()</code></pre>
+<aside class="note">
+<p>Since the <code>Id</code> suffix on a type is used to indicate a foreign key relationship
+to Persistent, you currently cannot use non-key types that end in <code>Id</code>. A
+simple workaround is to define a type synonym with a different suffix, e.g.:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data MyExistingTypeEndingInId = ...
+type IdIsNotTheSuffix = MyExistingTypeEndingInId
+[persist|
+Person
+    someField IdIsNotTheSuffix</code></pre>
+</aside>
+</section>
+<section id="persistent_closer_look_at_types">
+<h1>Closer look at types</h1>
+<p>So far, we’ve spoken about <code>Person</code> and <code>PersonId</code> without really explaining
+what they are. In the simplest sense, for a SQL-only system, the <code>PersonId</code>
+could just be <code>type PersonId = Int64</code>. However, that means there is nothing
+binding a <code>PersonId</code> at the type level to the <code>Person</code> entity. As a result, you
+could accidentally use a <code>PersonId</code> and get a <code>Car</code>. In order to model this
+relationship, we use phantom types. So, our next naive step would be:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">newtype Key entity = Key Int64
+type PersonId = Key Person</code></pre>
+<p>And that works out really well, until you get to a backend that doesn’t use
+Int64 for its IDs. And that’s not just a theoretical question; MongoDB uses
+<code>ByteString</code>s instead. So what we need is a key value that can contain an
+<code>Int</code> and a <code>ByteString</code>. Seems like a great time for a sum type:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data Key entity = KeyInt Int64 | KeyByteString ByteString</code></pre>
+<p>But that’s just asking for trouble. Next we’ll have a backend that uses
+timestamps, so we’ll need to add another constructor to <code>Key</code>. This could go on
+for a while. Fortunately, we already have a sum type intended for representing
+arbitrary data: <code>PersistValue</code>:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">newtype Key entity = Key PersistValue</code></pre>
+<p>But this has another problem. Let’s say we have a web application that takes an
+ID as a parameter from the user. It will need to receive that parameter as
+<code>Text</code> and then try to convert it to a <code>Key</code>. Well, that’s simple: write a
+function to convert a <code>Text</code> to a <code>PersistValue</code>, and then wrap the result in
+the <code>Key</code> constructor, right?</p>
+<p>Wrong. We tried this, and there’s a big problem. We end up getting <code>Key</code>s
+that could never be. For example, if we’re dealing with SQL, a key must be an
+integer. But the approach described above would allow arbitrary textual data
+in. The result was a bunch of 500 server errors as the database choked on
+comparing an integer column to text.</p>
+<p>So what we need is a way to convert text to a <code>Key</code>, but have it dependent on
+the rules of the backend in question. And once phrased that way, the answer is
+simple: just add another phantom. The real, actual definition of <code>Key</code> in
+Persistent is:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">newtype KeyBackend backend entity = Key { unKey :: PersistValue }
+type Key val = KeyBackend (PersistEntityBackend val) val</code></pre>
+<p>What this slightly intimidating formulation says is: we have a type
+<code>KeyBackend</code> which is parameterized on both the backend and entity. However, we
+<em role="strong">also</em> have a simplified type <code>Key</code> which assumes the same backend for both the
+entity and the key, which is almost always the correct assumption.</p>
+<p>In practice, this works great: we can have a <code>Text → KeyBackend MongoDB
+entity</code> function and a <code>Text → KeyBackend SqlPersist entity</code> function, and
+everything runs smoothly.</p>
+<section id="persistent_more_complicated_more_generic">
+<h1>More complicated, more generic</h1>
+<p>By default, Persistent will hard-code your datatypes to work with a specific
+database backend. When using <code>sqlSettings</code>, this is the <code>SqlBackend</code> type. But
+if you want to write Persistent code that can be used on multiple backends, you
+can enable more generic types by replacing <code>sqlSettings</code> with <code>sqlSettings {
+mpsGeneric = True }</code>.</p>
+<p>To understand why this is necessary, consider relations.  Let’s say we want to
+represent blogs and blog posts. We would use the entity definition:</p>
+<pre>Blog
+    title Text
+Post
+    title Text
+    blogId BlogId</pre>
+<p>But what would that look like in terms of our <code>Key</code> datatype?</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data Blog = Blog { blogTitle :: Text }
+data Post = Post { postTitle :: Text, postBlogId :: KeyBackend &lt;what goes here?&gt; Blog }</code></pre>
+<p>We need something to fill in as the backend. In theory, we could hardcode this
+to <code>SqlPersist</code>, or <code>Mongo</code>, but then our datatypes will only work for a single
+backend. For an individual application, that might be acceptable, but what
+about libraries defining datatypes to be used by multiple applications, using
+multiple backends?</p>
+<p>So things got a little more complicated. Our types are actually:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data BlogGeneric backend = Blog { blogTitle :: Text }
+data PostGeneric backend = Post { postTitle :: Text, postBlogId :: KeyBackend backend (BlogGeneric backend) }</code></pre>
+<p>Notice that we still keep the short names for the constructors and the records.
+Finally, to give a simple interface for normal code, we define some type
+synonyms:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">type Blog = BlogGeneric SqlPersist
+type BlogId = Key SqlPersist Blog
+type Post = PostGeneric SqlPersist
+type PostId = Key SqlPersist Post</code></pre>
+<p>And no, <code>SqlPersist</code> isn’t hard-coded into Persistent anywhere. That
+<code>sqlSettings</code> parameter you’ve been passing to <code>mkPersist</code> is what tells us to
+use <code>SqlPersist</code>. Mongo code will use <code>mongoSettings</code> instead.</p>
+<p>This might be quite complicated under the surface, but user code hardly ever
+touches this. Look back through this whole chapter: not once did we need to
+deal with the <code>Key</code> or <code>Generic</code> stuff directly. The most common place for it
+to pop up is in compiler error messages. So it’s important to be aware that
+this exists, but it shouldn’t affect you on a day-to-day basis.</p>
+</section>
+</section>
+<section id="persistent_custom_fields">
+<h1>Custom Fields</h1>
+<p>Occasionally, you will want to define a custom field to be used in your
+datastore. The most common case is an enumeration, such as employment status.
+For this, Persistent provides a helper Template Haskell function:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">-- @Employment.hs
+{-# LANGUAGE TemplateHaskell #-}
+module Employment where
+
+import Database.Persist.TH
+
+data Employment = Employed | Unemployed | Retired
+    deriving (Show, Read, Eq)
+derivePersistField &quot;Employment&quot;</code></pre>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell,
+             OverloadedStrings, GADTs, FlexibleContexts #-}
+import Database.Persist.Sqlite
+import Database.Persist.TH
+import Employment
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    name String
+    employment Employment
+|]
+
+main :: IO ()
+main = runSqlite &quot;:memory:&quot; $ do
+    runMigration migrateAll
+
+    insert $ Person &quot;Bruce Wayne&quot; Retired
+    insert $ Person &quot;Peter Parker&quot; Unemployed
+    insert $ Person &quot;Michael&quot; Employed
+
+    return ()</code></pre>
+<p><code>derivePersistField</code> stores the data in the database using a string field, and
+performs marshaling using the <code>Show</code> and <code>Read</code> instances of the datatype. This
+may not be as efficient as storing via an integer, but it is much more future
+proof: even if you add extra constructors in the future, your data will still
+be valid.</p>
+<aside class="note"><p>We split our definition into two separate modules in this case. This is
+necessary due to the GHC stage restriction, which essentially means that, in
+many cases, Template Haskell generated code cannot be used in the same module
+it was created in.</p></aside>
+</section>
+<section id="persistent_persistent_raw_sql">
+<h1>Persistent: Raw SQL</h1>
+<p>The Persistent package provides a type safe interface to data stores. It tries
+to be backend-agnostic, such as not relying on relational features of SQL. My
+experience has been you can easily perform 95% of what you need to do with the
+high-level interface. (In fact, most of my web apps use the high level
+interface exclusively.)</p>
+<p>But occassionally you’ll want to use a feature that’s specific to a backend. One feature I’ve used in the past is full text search. In this case, we’ll use the SQL &quot;LIKE&quot; operator, which is not modeled in Persistent. We’ll get all people with the last name &quot;Snoyman&quot; and print the records out.</p>
+<aside class="note"><p>Actually, you <em>can</em> express a LIKE operator directly in the normal syntax
+due to a feature added in Persistent 0.6, which allows backend-specific
+operators. But this is still a good example, so let’s roll with it.</p></aside>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE OverloadedStrings, TemplateHaskell, QuasiQuotes, TypeFamilies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, GADTs, FlexibleContexts #-}
+import Database.Persist.TH
+import Data.Text (Text)
+import Database.Persist.Sqlite
+import Control.Monad.IO.Class (liftIO)
+import Data.Conduit
+import qualified Data.Conduit.List as CL
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    name Text
+|]
+
+main :: IO ()
+main = runSqlite &quot;:memory:&quot; $ do
+    runMigration migrateAll
+    insert $ Person &quot;Michael Snoyman&quot;
+    insert $ Person &quot;Miriam Snoyman&quot;
+    insert $ Person &quot;Eliezer Snoyman&quot;
+    insert $ Person &quot;Gavriella Snoyman&quot;
+    insert $ Person &quot;Greg Weber&quot;
+    insert $ Person &quot;Rick Richardson&quot;
+
+    -- Persistent does not provide the LIKE keyword, but we&#39;d like to get the
+    -- whole Snoyman family...
+    let sql = &quot;SELECT name FROM Person WHERE name LIKE &#39;%Snoyman&#39;&quot;
+    rawQuery sql [] $$ CL.mapM_ (liftIO . print)</code></pre>
+<p>There is also higher-level support that allows for automated data marshaling.
+Please see the Haddock API docs for more details.</p>
+</section>
+<section id="persistent_integration_with_yesod">
+<h1>Integration with Yesod</h1>
+<p>So you’ve been convinced of the power of Persistent. How do you integrate it
+with your Yesod application? If you use the scaffolding, most of the work is
+done for you already. But as we normally do, we’ll build up everything manually
+here to point out how it works under the surface.</p>
+<p>The yesod-persistent package provides the meeting point between Persistent and
+Yesod. It provides the <code>YesodPersist</code> typeclass, which standardizes access to
+the database via the <code>runDB</code> method. Let’s see this in action.</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving, FlexibleContexts #-}
+{-# LANGUAGE TemplateHaskell, OverloadedStrings, GADTs, MultiParamTypeClasses #-}
+import Yesod
+import Database.Persist.Sqlite
+import Control.Monad.Trans.Resource (runResourceT)
+import Control.Monad.Logger (runStderrLoggingT)
+
+-- Define our entities as usual
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    firstName String
+    lastName String
+    age Int
+    deriving Show
+|]
+
+-- We keep our connection pool in the foundation. At program initialization, we
+-- create our initial pool, and each time we need to perform an action we check
+-- out a single connection from the pool.
+data PersistTest = PersistTest ConnectionPool
+
+-- We&#39;ll create a single route, to access a person. It&#39;s a very common
+-- occurrence to use an Id type in routes.
+mkYesod &quot;PersistTest&quot; [parseRoutes|
+/ HomeR GET
+/person/#PersonId PersonR GET
+|]
+
+-- Nothing special here
+instance Yesod PersistTest
+
+-- Now we need to define a YesodPersist instance, which will keep track of
+-- which backend we&#39;re using and how to run an action.
+instance YesodPersist PersistTest where
+    type YesodPersistBackend PersistTest = SqlPersistT
+
+    runDB action = do
+        PersistTest pool &lt;- getYesod
+        runSqlPool action pool
+
+-- List all people in the database
+getHomeR :: Handler Html
+getHomeR = do
+    people &lt;- runDB $ selectList [] [Asc PersonAge]
+    defaultLayout
+        [whamlet|
+            &lt;ul&gt;
+                $forall Entity personid person &lt;- people
+                    &lt;li&gt;
+                        &lt;a href=@{PersonR personid}&gt;#{personFirstName person}
+        |]
+
+-- We&#39;ll just return the show value of a person, or a 404 if the Person doesn&#39;t
+-- exist.
+getPersonR :: PersonId -&gt; Handler String
+getPersonR personId = do
+    person &lt;- runDB $ get404 personId
+    return $ show person
+
+openConnectionCount :: Int
+openConnectionCount = 10
+
+main :: IO ()
+main = withSqlitePool &quot;test.db3&quot; openConnectionCount $ \pool -&gt; do
+    runResourceT $ runStderrLoggingT $ flip runSqlPool pool $ do
+        runMigration migrateAll
+        insert $ Person &quot;Michael&quot; &quot;Snoyman&quot; 26
+    warp 3000 $ PersistTest pool</code></pre>
+<p>There are two important pieces here for general use. <code>runDB</code> is used to run a
+DB action from within a <code>Handler</code>. Within the <code>runDB</code>, you can use any of the
+functions we’ve spoken about so far, such as <code>insert</code> and <code>selectList</code>.</p>
+<aside class="note">
+<p>The type of <code>runDB</code> is <code>YesodDB site a → HandlerT site IO a</code>. <code>YesodDB</code> is defined as:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">type YesodDB site = YesodPersistBackend site (HandlerT site IO)</code></pre>
+<p>Since it is built on top of the <code>YesodPersistBackend</code> associated type, it uses
+the appropriate database backend based on the current site.</p>
+</aside>
+<p>The other new feature is <code>get404</code>. It works just like <code>get</code>, but instead of
+returning a <code>Nothing</code> when a result can’t be found, it returns a 404 message
+page. The <code>getPersonR</code> function is a very common approach used in real-world
+Yesod applications: <code>get404</code> a value and then return a response based on it.</p>
+</section>
+<section id="persistent_more_complex_sql">
+<h1>More complex SQL</h1>
+<p>Persistent strives to be backend-agnostic. The advantage of this approach is
+code which easily moves from different backend types. The downside is that you
+lose out on some backend-specific features. Probably the biggest casualty is
+SQL join support.</p>
+<p>Fortunately, thanks to Felipe Lessa, you can have your cake and eat it too. The
+<a href="http://hackage.haskell.org/package/esqueleto">Esqueleto</a> library provides
+support for writing type safe SQL queries, using the existing Persistent
+infrastructure. The Haddocks for that package provide a good introduction to
+its usage. And since it uses many Persistent concepts, most of your existing
+Persistent knowledge should transfer over easily.</p>
+</section>
+<section id="persistent_something_besides_sqlite">
+<h1>Something besides SQLite</h1>
+<p>To keep the examples in this chapter simple, we’ve used the SQLite backend. Just to round things out, here’s our original synopsis rewritten to work with PostgreSQL:</p>
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell active">{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE GADTs             #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+import           Control.Monad.IO.Class  (liftIO)
+import           Database.Persist
+import           Database.Persist.Postgresql
+import           Database.Persist.TH
+
+share [mkPersist sqlSettings, mkMigrate &quot;migrateAll&quot;] [persistLowerCase|
+Person
+    name String
+    age Int Maybe
+    deriving Show
+BlogPost
+    title String
+    authorId PersonId
+    deriving Show
+|]
+
+connStr = &quot;host=localhost dbname=test user=test password=test port=5432&quot;
+
+main :: IO ()
+main = withPostgresqlPool connStr 10 $ \pool -&gt; do
+    flip runSqlPersistMPool pool $ do
+        runMigration migrateAll
+
+        johnId &lt;- insert $ Person &quot;John Doe&quot; $ Just 35
+        janeId &lt;- insert $ Person &quot;Jane Doe&quot; Nothing
+
+        insert $ BlogPost &quot;My fr1st p0st&quot; johnId
+        insert $ BlogPost &quot;One more for good measure&quot; johnId
+
+        oneJohnPost &lt;- selectList [BlogPostAuthorId ==. johnId] [LimitTo 1]
+        liftIO $ print (oneJohnPost :: [Entity BlogPost])
+
+        john &lt;- get johnId
+        liftIO $ print (john :: Maybe Person)
+
+        delete janeId
+        deleteWhere [BlogPostAuthorId ==. johnId]</code></pre>
+</section>
+<section id="persistent_summary">
+<h1>Summary</h1>
+<p>Persistent brings the type safety of Haskell to your data access layer. Instead
+of writing error-prone, untyped data access, or manually writing boilerplate
+marshal code, you can rely on Persistent to automate the process for you.</p>
+<p>The goal is to provide everything you need, <em>most</em> of the time. For the times
+when you need something a bit more powerful, Persistent gives you direct access
+to the underlying data store, so you can write whatever 5-way joins you want.</p>
+<p>Persistent integrates directly into the general Yesod workflow. Not only do
+helper packages like <code>yesod-persistent</code> provide a nice layer, but packages like
+<code>yesod-form</code> and <code>yesod-auth</code> also leverage Persistent’s features as well.</p>
+</section>
+</article>
+</section>
+<section class="getting-started"><p class="warning">Note: You are looking at version 1.2 of the book, which is two versions behind</p>
+<h2> Chapters</h2>
+<ul><li>Basics
+<ul><li><a href="/book-1.2/introduction">Introduction</a>
+</li>
+<li><a href="/book-1.2/haskell">Haskell</a>
+</li>
+<li><a href="/book-1.2/basics">Basics</a>
+</li>
+<li><a href="/book-1.2/shakespearean-templates">Shakespearean Templates</a>
+</li>
+<li><a href="/book-1.2/widgets">Widgets</a>
+</li>
+<li><a href="/book-1.2/yesod-typeclass">Yesod Typeclass</a>
+</li>
+<li><a href="/book-1.2/routing-and-handlers">Routing and Handlers</a>
+</li>
+<li><a href="/book-1.2/forms">Forms</a>
+</li>
+<li><a href="/book-1.2/sessions">Sessions</a>
+</li>
+<li><a href="/book-1.2/persistent">Persistent</a>
+</li>
+<li><a href="/book-1.2/deploying-your-webapp">Deploying your Webapp</a>
+</li>
+</ul>
+</li>
+<li>Advanced
+<ul><li><a href="/book-1.2/restful-content">RESTful Content</a>
+</li>
+<li><a href="/book-1.2/yesods-monads">Yesod’s Monads</a>
+</li>
+<li><a href="/book-1.2/authentication-and-authorization">Authentication and Authorization</a>
+</li>
+<li><a href="/book-1.2/scaffolding-and-the-site-template">Scaffolding and the Site Template</a>
+</li>
+<li><a href="/book-1.2/internationalization">Internationalization</a>
+</li>
+<li><a href="/book-1.2/creating-a-subsite">Creating a Subsite</a>
+</li>
+<li><a href="/book-1.2/understanding-request">Understanding a Request</a>
+</li>
+<li><a href="/book-1.2/yesod-for-haskellers">Yesod for Haskellers</a>
+</li>
+</ul>
+</li>
+<li>Examples
+<ul><li><a href="/book-1.2/initializing-foundation-data">Initializing data in the foundation datatype</a>
+</li>
+<li><a href="/book-1.2/blog-example-advanced">Blog: i18n, authentication, authorization, and database</a>
+</li>
+<li><a href="/book-1.2/wiki-chat-example">Wiki: markdown, chat subsite, event source</a>
+</li>
+<li><a href="/book-1.2/json-web-service">JSON Web Service</a>
+</li>
+<li><a href="/book-1.2/case-study-sphinx">Case Study: Sphinx-based Search</a>
+</li>
+<li><a href="/book-1.2/visitor-counter">Visitor counter</a>
+</li>
+<li><a href="/book-1.2/single-process-pubsub">Single process pub-sub</a>
+</li>
+<li><a href="/book-1.2/environment-variables">Environment variables for configuration</a>
+</li>
+<li><a href="/book-1.2/route-attributes">Route attributes</a>
+</li>
+</ul>
+</li>
+<li>Appendices
+<ul><li><a href="/book-1.2/monad-control">monad-control</a>
+</li>
+<li><a href="/book-1.2/conduits">Conduit</a>
+</li>
+<li><a href="/book-1.2/web-application-interface">Web Application Interface</a>
+</li>
+<li><a href="/book-1.2/settings-types">Settings Types</a>
+</li>
+<li><a href="/book-1.2/http-conduit">http-conduit</a>
+</li>
+<li><a href="/book-1.2/xml">xml-conduit</a>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script><script src="//ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script><script>var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function c(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function j(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function g(t,s){var r="";for(var q=0;q<t.childNodes.length;q++){if(t.childNodes[q].nodeType==3){var p=t.childNodes[q].nodeValue;if(s){p=p.replace(/\n/g,"")}r+=p}else{if(t.childNodes[q].nodeName=="BR"){r+="\n"}else{r+=g(t.childNodes[q])}}}if(/MSIE [678]/.test(navigator.userAgent)){r=r.replace(/\r/g,"\n")}return r}function a(s){var q=s.className.split(/\s+/);q=q.concat(s.parentNode.className.split(/\s+/));for(var p=0;p<q.length;p++){var r=q[p].replace(/^language-/,"");if(d[r]||r=="no-highlight"){return r}}}function b(p){var q=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{q.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);q.push({event:"stop",offset:t,node:s.childNodes[r]})}}}return t})(p,0);return q}function l(y,z,x){var r=0;var w="";var t=[];function u(){if(y.length&&z.length){if(y[0].offset!=z[0].offset){return(y[0].offset<z[0].offset)?y:z}else{return z[0].event=="start"?y:z}}else{return y.length?y:z}}function s(C){var D="<"+C.nodeName.toLowerCase();for(var A=0;A<C.attributes.length;A++){var B=C.attributes[A];D+=" "+B.nodeName.toLowerCase();if(B.nodeValue!=undefined&&B.nodeValue!=false&&B.nodeValue!=null){D+='="'+m(B.nodeValue)+'"'}}return D+">"}while(y.length||z.length){var v=u().splice(0,1)[0];w+=m(x.substr(r,v.offset-r));r=v.offset;if(v.event=="start"){w+=s(v.node);t.push(v.node)}else{if(v.event=="stop"){var q=t.length;do{q--;var p=t[q];w+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);t.splice(q,1);while(q<t.length){w+=s(t[q]);q++}}}}w+=x.substr(r);return w}function i(){function p(u,t,v){if(u.compiled){return}if(!v){u.bR=c(t,u.b?u.b:"\\B|\\b");if(!u.e&&!u.eW){u.e="\\B|\\b"}if(u.e){u.eR=c(t,u.e)}}if(u.i){u.iR=c(t,u.i)}if(u.r==undefined){u.r=1}if(u.k){u.lR=c(t,u.l||hljs.IR,true)}for(var s in u.k){if(!u.k.hasOwnProperty(s)){continue}if(u.k[s] instanceof Object){u.kG=u.k}else{u.kG={keyword:u.k}}break}if(!u.c){u.c=[]}u.compiled=true;for(var r=0;r<u.c.length;r++){p(u.c[r],t,false)}if(u.starts){p(u.starts,t,false)}}for(var q in d){if(!d.hasOwnProperty(q)){continue}p(d[q].dM,d[q],true)}}function e(J,D){if(!i.called){i();i.called=true}function z(r,M){for(var L=0;L<M.c.length;L++){if(M.c[L].bR.test(r)){return M.c[L]}}}function w(L,r){if(C[L].e&&C[L].eR.test(r)){return 1}if(C[L].eW){var M=w(L-1,r);return M?M+1:0}return 0}function x(r,L){return L.iR&&L.iR.test(r)}function A(O,N){var M=[];for(var L=0;L<O.c.length;L++){M.push(O.c[L].b)}var r=C.length-1;do{if(C[r].e){M.push(C[r].e)}r--}while(C[r+1].eW);if(O.i){M.push(O.i)}return c(N,"("+M.join("|")+")",true)}function s(M,L){var N=C[C.length-1];if(!N.t){N.t=A(N,H)}N.t.lastIndex=L;var r=N.t.exec(M);if(r){return[M.substr(L,r.index-L),r[0],false]}else{return[M.substr(L),"",true]}}function p(O,r){var L=H.cI?r[0].toLowerCase():r[0];for(var N in O.kG){if(!O.kG.hasOwnProperty(N)){continue}var M=O.kG[N].hasOwnProperty(L);if(M){return[N,M]}}return false}function F(M,O){if(!O.k){return m(M)}var N="";var P=0;O.lR.lastIndex=0;var L=O.lR.exec(M);while(L){N+=m(M.substr(P,L.index-P));var r=p(O,L);if(r){t+=r[1];N+='<span class="'+r[0]+'">'+m(L[0])+"</span>"}else{N+=m(L[0])}P=O.lR.lastIndex;L=O.lR.exec(M)}N+=m(M.substr(P,M.length-P));return N}function K(r,M){if(M.sL&&d[M.sL]){var L=e(M.sL,r);t+=L.keyword_count;return L.value}else{return F(r,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){q+=L;M.buffer=""}else{if(M.eB){q+=m(r)+L;M.buffer=""}else{q+=L;M.buffer=r}}C.push(M);B+=M.r}function E(O,L,Q){var R=C[C.length-1];if(Q){q+=K(R.buffer+O,R);return false}var M=z(L,R);if(M){q+=K(R.buffer+O,R);I(M,L);return M.rB}var r=w(C.length-1,L);if(r){var N=R.cN?"</span>":"";if(R.rE){q+=K(R.buffer+O,R)+N}else{if(R.eE){q+=K(R.buffer+O,R)+N+m(L)}else{q+=K(R.buffer+O+L,R)+N}}while(r>1){N=C[C.length-2].cN?"</span>":"";q+=N;r--;C.length--}var P=C[C.length-1];C.length--;C[C.length-1].buffer="";if(P.starts){I(P.starts,"")}return R.rE}if(x(L,R)){throw"Illegal"}}var H=d[J];var C=[H.dM];var B=0;var t=0;var q="";try{var v=0;H.dM.buffer="";do{var y=s(D,v);var u=E(y[0],y[1],y[2]);v+=y[0].length;if(!u){v+=y[1].length}}while(!y[2]);if(C.length>1){throw"Illegal"}return{r:B,keyword_count:t,value:q}}catch(G){if(G=="Illegal"){return{r:0,keyword_count:0,value:m(D)}}else{throw G}}}function f(t){var r={keyword_count:0,r:0,value:m(t)};var q=r;for(var p in d){if(!d.hasOwnProperty(p)){continue}var s=e(p,t);s.language=p;if(s.keyword_count+s.r>q.keyword_count+q.r){q=s}if(s.keyword_count+s.r>r.keyword_count+r.r){q=r;r=s}}if(q.language){r.second_best=q}return r}function h(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function o(u,x,q){var y=g(u,q);var s=a(u);if(s=="no-highlight"){return}if(s){var w=e(s,y)}else{var w=f(y);s=w.language}var p=b(u);if(p.length){var r=document.createElement("pre");r.innerHTML=w.value;w.value=l(p,b(r),y)}w.value=h(w.value,x,q);var t=u.className;if(!t.match("(\\s|^)(language-)?"+s+"(\\s|$)")){t=t?(t+" "+s):s}if(/MSIE [678]/.test(navigator.userAgent)&&u.tagName=="CODE"&&u.parentNode.tagName=="PRE"){var r=u.parentNode;var v=document.createElement("div");v.innerHTML="<pre><code>"+w.value+"</code></pre>";u=v.firstChild.firstChild;v.firstChild.cN=r.cN;r.parentNode.replaceChild(v.firstChild,r)}else{u.innerHTML=w.value}u.className=t;u.result={language:s,kw:w.keyword_count,re:w.r};if(w.second_best){u.second_best={language:w.second_best.language,kw:w.second_best.keyword_count,re:w.second_best.r}}}function k(){if(k.called){return}k.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=j(r[p]);if(q){o(q,hljs.tabReplace)}}}function n(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",k,false);window.addEventListener("load",k,false)}else{if(window.attachEvent){window.attachEvent("onload",k)}else{window.onload=k}}}var d={};this.LANGUAGES=d;this.highlight=e;this.highlightAuto=f;this.fixMarkup=h;this.highlightBlock=o;this.initHighlighting=k;this.initHighlightingOnLoad=n;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0x[A-Za-z0-9]+|\\d+(\\.\\d+)?)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.inherit=function(p,s){var r={};for(var q in p){r[q]=p[q]}if(s){for(var q in s){r[q]=s[q]}}return r}}();hljs.LANGUAGES.bash=function(){var d={"true":1,"false":1};var b={cN:"variable",b:"\\$([a-zA-Z0-9_]+)\\b"};var a={cN:"variable",b:"\\$\\{(([^}])|(\\\\}))+\\}",c:[hljs.CNM]};var c={cN:"string",b:'"',e:'"',i:"\\n",c:[hljs.BE,b,a],r:0};var e={cN:"test_condition",b:"",e:"",c:[c,b,a,hljs.CNM],k:{literal:d},r:0};return{dM:{k:{keyword:{"if":1,then:1,"else":1,fi:1,"for":1,"break":1,"continue":1,"while":1,"in":1,"do":1,done:1,echo:1,exit:1,"return":1,set:1,declare:1},literal:d},c:[{cN:"shebang",b:"(#!\\/bin\\/bash)|(#!\\/bin\\/sh)",r:10},hljs.HCM,hljs.CNM,c,b,a,hljs.inherit(e,{b:"\\[ ",e:" \\]",r:0}),hljs.inherit(e,{b:"\\[\\[ ",e:" \\]\\]"})]}}}();hljs.LANGUAGES.javascript={dM:{k:{keyword:{"in":1,"if":1,"for":1,"while":1,"finally":1,"var":1,"new":1,"function":1,"do":1,"return":1,"void":1,"else":1,"break":1,"catch":1,"instanceof":1,"with":1,"throw":1,"case":1,"default":1,"try":1,"this":1,"switch":1,"continue":1,"typeof":1,"delete":1},literal:{"true":1,"false":1,"null":1}},c:[hljs.ASM,hljs.QSM,hljs.CLCM,hljs.CBLCLM,hljs.CNM,{b:"("+hljs.RSR+"|case|return|throw)\\s*",k:{"return":1,"throw":1,"case":1},c:[hljs.CLCM,hljs.CBLCLM,{cN:"regexp",b:"/",e:"/[gim]*",c:[{b:"\\\\/"}]}],r:0},{cN:"function",b:"\\bfunction\\b",e:"{",k:{"function":1},c:[{cN:"title",b:"[A-Za-z$_][0-9A-Za-z$_]*"},{cN:"params",b:"\\(",e:"\\)",c:[hljs.ASM,hljs.QSM,hljs.CLCM,hljs.CBLCLM]}]}]}};hljs.LANGUAGES.css=function(){var a={cN:"function",b:hljs.IR+"\\(",e:"\\)",c:[{eW:true,eE:true,c:[hljs.NM,hljs.ASM,hljs.QSM]}]};return{cI:true,dM:{i:"[=/|']",c:[hljs.CBLCLM,{cN:"id",b:"\\#[A-Za-z0-9_-]+"},{cN:"class",b:"\\.[A-Za-z0-9_-]+",r:0},{cN:"attr_selector",b:"\\[",e:"\\]",i:"$"},{cN:"pseudo",b:":(:)?[a-zA-Z0-9\\_\\-\\+\\(\\)\\\"\\']+"},{cN:"at_rule",b:"@(font-face|page)",l:"[a-z-]+",k:{"font-face":1,page:1}},{cN:"at_rule",b:"@",e:"[{;]",eE:true,k:{"import":1,page:1,media:1,charset:1},c:[a,hljs.ASM,hljs.QSM,hljs.NM]},{cN:"tag",b:hljs.IR,r:0},{cN:"rules",b:"{",e:"}",i:"[^\\s]",r:0,c:[hljs.CBLCLM,{cN:"rule",b:"[^\\s]",rB:true,e:";",eW:true,c:[{cN:"attribute",b:"[A-Z\\_\\.\\-]+",e:":",eE:true,i:"[^\\s]",starts:{cN:"value",eW:true,eE:true,c:[a,hljs.NM,hljs.QSM,hljs.ASM,hljs.CBLCLM,{cN:"hexcolor",b:"\\#[0-9A-F]+"},{cN:"important",b:"!important"}]}}]}]}]}}}();hljs.LANGUAGES.xml=function(){var b="[A-Za-z0-9\\._:-]+";var a={eW:true,c:[{cN:"attribute",b:b,r:0},{b:'="',rB:true,e:'"',c:[{cN:"value",b:'"',eW:true}]},{b:"='",rB:true,e:"'",c:[{cN:"value",b:"'",eW:true}]},{b:"=",c:[{cN:"value",b:"[^\\s/>]+"}]}]};return{cI:true,dM:{c:[{cN:"pi",b:"<\\?",e:"\\?>",r:10},{cN:"doctype",b:"<!DOCTYPE",e:">",r:10,c:[{b:"\\[",e:"\\]"}]},{cN:"comment",b:"<!--",e:"-->",r:10},{cN:"cdata",b:"<\\!\\[CDATA\\[",e:"\\]\\]>",r:10},{cN:"tag",b:"<style",e:">",k:{title:{style:1}},c:[a],starts:{cN:"css",e:"</style>",rE:true,sL:"css"}},{cN:"tag",b:"<script",e:">",k:{title:{script:1}},c:[a],starts:{cN:"javascript",e:"<\/script>",rE:true,sL:"javascript"}},{cN:"vbscript",b:"<%",e:"%>",sL:"vbscript"},{cN:"tag",b:"</?",e:"/?>",c:[{cN:"title",b:"[^ />]+"},a]}]}}}();hljs.LANGUAGES.java={dM:{k:{"false":1,"synchronized":1,"int":1,"abstract":1,"float":1,"private":1,"char":1,"interface":1,"boolean":1,"static":1,"null":1,"if":1,"const":1,"for":1,"true":1,"while":1,"long":1,"throw":1,strictfp:1,"finally":1,"protected":1,"extends":1,"import":1,"native":1,"final":1,"implements":1,"return":1,"void":1,"enum":1,"else":1,"break":1,"transient":1,"new":1,"catch":1,"instanceof":1,"byte":1,"super":1,"class":1,"volatile":1,"case":1,assert:1,"short":1,"package":1,"default":1,"double":1,"public":1,"try":1,"this":1,"switch":1,"continue":1,"throws":1},c:[{cN:"javadoc",b:"/\\*\\*",e:"\\*/",c:[{cN:"javadoctag",b:"@[A-Za-z]+"}],r:10},hljs.CLCM,hljs.CBLCLM,hljs.ASM,hljs.QSM,{cN:"class",b:"(class |interface )",e:"{",k:{"class":1,"interface":1},i:":",c:[{b:"(implements|extends)",k:{"extends":1,"implements":1},r:10},{cN:"title",b:hljs.UIR}]},hljs.CNM,{cN:"annotation",b:"@[A-Za-z]+"}]}};hljs.LANGUAGES.haskell=function(){var a={cN:"label",b:"\\b[A-Z][\\w']*",r:0};var b={cN:"container",b:"\\(",e:"\\)",c:[{cN:"label",b:"\\b[A-Z][\\w\\(\\)\\.']*"},{cN:"title",b:"[_a-z][\\w']*"}]};return{dM:{k:{keyword:{let:1,"in":1,"if":1,then:1,"else":1,"case":1,of:1,where:1,"do":1,module:1,"import":1,hiding:1,qualified:1,type:1,data:1,newtype:1,deriving:1,"class":1,instance:1,"null":1,not:1,as:1}},c:[{cN:"comment",b:"--",e:"$"},{cN:"comment",b:"{-",e:"-}"},{cN:"string",b:"\\s+'",e:"'",c:[hljs.BE],r:0},hljs.QSM,{cN:"import",b:"\\bimport",e:"$",k:{"import":1,qualified:1,as:1,hiding:1},c:[b]},{cN:"module",b:"\\bmodule",e:"where",k:{module:1,where:1},c:[b]},{cN:"class",b:"\\b(class|instance|data|(new)?type)",e:"(where|$)",k:{"class":1,where:1,instance:1,data:1,type:1,newtype:1,deriving:1},c:[a]},hljs.CNM,{cN:"shebang",b:"#!\\/usr\\/bin\\/env runhaskell",e:"$"},a,{cN:"title",b:"^[_a-z][\\w']*"}]}}}();hljs.LANGUAGES.sql={cI:true,dM:{i:"[^\\s]",c:[{cN:"operator",b:"(begin|start|commit|rollback|savepoint|lock|alter|create|drop|rename|call|delete|do|handler|insert|load|replace|select|truncate|update|set|show|pragma)\\b",e:";|$",k:{keyword:{all:1,partial:1,global:1,month:1,current_timestamp:1,using:1,go:1,revoke:1,smallint:1,indicator:1,"end-exec":1,disconnect:1,zone:1,"with":1,character:1,assertion:1,to:1,add:1,current_user:1,usage:1,input:1,local:1,alter:1,match:1,collate:1,real:1,then:1,rollback:1,get:1,read:1,timestamp:1,session_user:1,not:1,integer:1,bit:1,unique:1,day:1,minute:1,desc:1,insert:1,execute:1,like:1,ilike:2,level:1,decimal:1,drop:1,"continue":1,isolation:1,found:1,where:1,constraints:1,domain:1,right:1,national:1,some:1,module:1,transaction:1,relative:1,second:1,connect:1,escape:1,close:1,system_user:1,"for":1,deferred:1,section:1,cast:1,current:1,sqlstate:1,allocate:1,intersect:1,deallocate:1,numeric:1,"public":1,preserve:1,full:1,"goto":1,initially:1,asc:1,no:1,key:1,output:1,collation:1,group:1,by:1,union:1,session:1,both:1,last:1,language:1,constraint:1,column:1,of:1,space:1,foreign:1,deferrable:1,prior:1,connection:1,unknown:1,action:1,commit:1,view:1,or:1,first:1,into:1,"float":1,year:1,primary:1,cascaded:1,except:1,restrict:1,set:1,references:1,names:1,table:1,outer:1,open:1,select:1,size:1,are:1,rows:1,from:1,prepare:1,distinct:1,leading:1,create:1,only:1,next:1,inner:1,authorization:1,schema:1,corresponding:1,option:1,declare:1,precision:1,immediate:1,"else":1,timezone_minute:1,external:1,varying:1,translation:1,"true":1,"case":1,exception:1,join:1,hour:1,"default":1,"double":1,scroll:1,value:1,cursor:1,descriptor:1,values:1,dec:1,fetch:1,procedure:1,"delete":1,and:1,"false":1,"int":1,is:1,describe:1,"char":1,as:1,at:1,"in":1,varchar:1,"null":1,trailing:1,any:1,absolute:1,current_time:1,end:1,grant:1,privileges:1,when:1,cross:1,check:1,write:1,current_date:1,pad:1,begin:1,temporary:1,exec:1,time:1,update:1,catalog:1,user:1,sql:1,date:1,on:1,identity:1,timezone_hour:1,natural:1,whenever:1,interval:1,work:1,order:1,cascade:1,diagnostics:1,nchar:1,having:1,left:1,call:1,"do":1,handler:1,load:1,replace:1,truncate:1,start:1,lock:1,show:1,pragma:1},aggregate:{count:1,sum:1,min:1,max:1,avg:1}},c:[{cN:"string",b:"'",e:"'",c:[hljs.BE,{b:"''"}],r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE,{b:'""'}],r:0},{cN:"string",b:"`",e:"`",c:[hljs.BE]},hljs.CNM,{b:"\\n"}]},hljs.CBLCLM,{cN:"comment",b:"--",e:"$"}]}};hljs.LANGUAGES.nginx=function(){var c={cN:"variable",b:"\\$\\d+"};var b={cN:"variable",b:"\\${",e:"}"};var a={cN:"variable",b:"[\\$\\@]"+hljs.UIR};return{dM:{c:[hljs.HCM,{b:hljs.UIR,e:";|{",rE:true,k:{accept_mutex:1,accept_mutex_delay:1,access_log:1,add_after_body:1,add_before_body:1,add_header:1,addition_types:1,alias:1,allow:1,ancient_browser:1,ancient_browser:1,ancient_browser_value:1,ancient_browser_value:1,auth_basic:1,auth_basic_user_file:1,autoindex:1,autoindex_exact_size:1,autoindex_localtime:1,"break":1,charset:1,charset:1,charset_map:1,charset_map:1,charset_types:1,charset_types:1,client_body_buffer_size:1,client_body_in_file_only:1,client_body_in_single_buffer:1,client_body_temp_path:1,client_body_timeout:1,client_header_buffer_size:1,client_header_timeout:1,client_max_body_size:1,connection_pool_size:1,connections:1,create_full_put_path:1,daemon:1,dav_access:1,dav_methods:1,debug_connection:1,debug_points:1,default_type:1,deny:1,directio:1,directio_alignment:1,echo:1,echo_after_body:1,echo_before_body:1,echo_blocking_sleep:1,echo_duplicate:1,echo_end:1,echo_exec:1,echo_flush:1,echo_foreach_split:1,echo_location:1,echo_location_async:1,echo_read_request_body:1,echo_request_body:1,echo_reset_timer:1,echo_sleep:1,echo_subrequest:1,echo_subrequest_async:1,empty_gif:1,empty_gif:1,env:1,error_log:1,error_log:1,error_page:1,events:1,expires:1,fastcgi_bind:1,fastcgi_buffer_size:1,fastcgi_buffers:1,fastcgi_busy_buffers_size:1,fastcgi_cache:1,fastcgi_cache_key:1,fastcgi_cache_methods:1,fastcgi_cache_min_uses:1,fastcgi_cache_path:1,fastcgi_cache_use_stale:1,fastcgi_cache_valid:1,fastcgi_catch_stderr:1,fastcgi_connect_timeout:1,fastcgi_hide_header:1,fastcgi_ignore_client_abort:1,fastcgi_ignore_headers:1,fastcgi_index:1,fastcgi_intercept_errors:1,fastcgi_max_temp_file_size:1,fastcgi_next_upstream:1,fastcgi_param:1,fastcgi_pass:1,fastcgi_pass_header:1,fastcgi_pass_request_body:1,fastcgi_pass_request_headers:1,fastcgi_read_timeout:1,fastcgi_send_lowat:1,fastcgi_send_timeout:1,fastcgi_split_path_info:1,fastcgi_store:1,fastcgi_store_access:1,fastcgi_temp_file_write_size:1,fastcgi_temp_path:1,fastcgi_upstream_fail_timeout:1,fastcgi_upstream_max_fails:1,flv:1,geo:1,geo:1,geoip_city:1,geoip_country:1,gzip:1,gzip_buffers:1,gzip_comp_level:1,gzip_disable:1,gzip_hash:1,gzip_http_version:1,gzip_min_length:1,gzip_no_buffer:1,gzip_proxied:1,gzip_static:1,gzip_types:1,gzip_vary:1,gzip_window:1,http:1,"if":1,if_modified_since:1,ignore_invalid_headers:1,image_filter:1,image_filter_buffer:1,image_filter_jpeg_quality:1,image_filter_transparency:1,include:1,index:1,internal:1,ip_hash:1,js:1,js_load:1,js_require:1,js_utf8:1,keepalive_requests:1,keepalive_timeout:1,kqueue_changes:1,kqueue_events:1,large_client_header_buffers:1,limit_conn:1,limit_conn_log_level:1,limit_except:1,limit_rate:1,limit_rate_after:1,limit_req:1,limit_req_log_level:1,limit_req_zone:1,limit_zone:1,lingering_time:1,lingering_timeout:1,listen:1,location:1,lock_file:1,log_format:1,log_not_found:1,log_subrequest:1,map:1,map_hash_bucket_size:1,map_hash_max_size:1,master_process:1,memcached_bind:1,memcached_buffer_size:1,memcached_connect_timeout:1,memcached_next_upstream:1,memcached_pass:1,memcached_read_timeout:1,memcached_send_timeout:1,memcached_upstream_fail_timeout:1,memcached_upstream_max_fails:1,merge_slashes:1,min_delete_depth:1,modern_browser:1,modern_browser:1,modern_browser_value:1,modern_browser_value:1,more_clear_headers:1,more_clear_input_headers:1,more_set_headers:1,more_set_input_headers:1,msie_padding:1,msie_refresh:1,multi_accept:1,open_file_cache:1,open_file_cache_errors:1,open_file_cache_events:1,open_file_cache_min_uses:1,open_file_cache_retest:1,open_file_cache_valid:1,open_log_file_cache:1,optimize_server_names:1,output_buffers:1,override_charset:1,override_charset:1,perl:1,perl_modules:1,perl_require:1,perl_set:1,pid:1,port_in_redirect:1,post_action:1,postpone_gzipping:1,postpone_output:1,proxy_bind:1,proxy_buffer_size:1,proxy_buffering:1,proxy_buffers:1,proxy_busy_buffers_size:1,proxy_cache:1,proxy_cache_key:1,proxy_cache_methods:1,proxy_cache_min_uses:1,proxy_cache_path:1,proxy_cache_use_stale:1,proxy_cache_valid:1,proxy_connect_timeout:1,proxy_headers_hash_bucket_size:1,proxy_headers_hash_max_size:1,proxy_hide_header:1,proxy_ignore_client_abort:1,proxy_ignore_headers:1,proxy_intercept_errors:1,proxy_max_temp_file_size:1,proxy_method:1,proxy_next_upstream:1,proxy_pass:1,proxy_pass_header:1,proxy_pass_request_body:1,proxy_pass_request_headers:1,proxy_read_timeout:1,proxy_redirect:1,proxy_send_lowat:1,proxy_send_timeout:1,proxy_set_body:1,proxy_set_header:1,proxy_store:1,proxy_store_access:1,proxy_temp_file_write_size:1,proxy_temp_path:1,proxy_upstream_fail_timeout:1,proxy_upstream_max_fails:1,push_authorized_channels_only:1,push_channel_group:1,push_max_channel_id_length:1,push_max_channel_subscribers:1,push_max_message_buffer_length:1,push_max_reserved_memory:1,push_message_buffer_length:1,push_message_timeout:1,push_min_message_buffer_length:1,push_min_message_recipients:1,push_publisher:1,push_store_messages:1,push_subscriber:1,push_subscriber_concurrency:1,random_index:1,read_ahead:1,real_ip_header:1,recursive_error_pages:1,request_pool_size:1,reset_timedout_connection:1,resolver:1,resolver_timeout:1,"return":1,rewrite:1,rewrite_log:1,root:1,satisfy:1,satisfy_any:1,send_lowat:1,send_timeout:1,sendfile:1,sendfile_max_chunk:1,server:1,server:1,server_name:1,server_name_in_redirect:1,server_names_hash_bucket_size:1,server_names_hash_max_size:1,server_tokens:1,set:1,set_real_ip_from:1,source_charset:1,source_charset:1,ssi:1,ssi_ignore_recycled_buffers:1,ssi_min_file_chunk:1,ssi_silent_errors:1,ssi_types:1,ssi_value_length:1,ssl:1,ssl_certificate:1,ssl_certificate_key:1,ssl_ciphers:1,ssl_client_certificate:1,ssl_crl:1,ssl_dhparam:1,ssl_prefer_server_ciphers:1,ssl_protocols:1,ssl_session_cache:1,ssl_session_timeout:1,ssl_verify_client:1,ssl_verify_depth:1,sub_filter:1,sub_filter_once:1,sub_filter_types:1,tcp_nodelay:1,tcp_nopush:1,timer_resolution:1,try_files:1,types:1,types_hash_bucket_size:1,types_hash_max_size:1,underscores_in_headers:1,uninitialized_variable_warn:1,upstream:1,use:1,user:1,userid:1,userid:1,userid_domain:1,userid_domain:1,userid_expires:1,userid_expires:1,userid_mark:1,userid_name:1,userid_name:1,userid_p3p:1,userid_p3p:1,userid_path:1,userid_path:1,userid_service:1,userid_service:1,valid_referers:1,variables_hash_bucket_size:1,variables_hash_max_size:1,worker_connections:1,worker_cpu_affinity:1,worker_priority:1,worker_processes:1,worker_rlimit_core:1,worker_rlimit_nofile:1,worker_rlimit_sigpending:1,working_directory:1,xml_entities:1,xslt_stylesheet:1,xslt_types:1},r:0,c:[hljs.HCM,{b:"\\s",e:"[;{]",rB:true,rE:true,l:"[a-z/]+",k:{built_in:{on:1,off:1,yes:1,no:1,"true":1,"false":1,none:1,blocked:1,debug:1,info:1,notice:1,warn:1,error:1,crit:1,select:1,permanent:1,redirect:1,kqueue:1,rtsig:1,epoll:1,poll:1,"/dev/poll":1}},r:0,c:[hljs.HCM,{cN:"string",b:'"',e:'"',c:[hljs.BE,c,b,a],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE,c,b,a],r:0},{cN:"string",b:"([a-z]+):/",e:"[;\\s]",rE:true},{cN:"regexp",b:"\\s\\^",e:"\\s|{|;",rE:true,c:[hljs.BE,c,b,a]},{cN:"regexp",b:"~\\*?\\s+",e:"\\s|{|;",rE:true,c:[hljs.BE,c,b,a]},{cN:"regexp",b:"\\*(\\.[a-z\\-]+)+",c:[hljs.BE,c,b,a]},{cN:"regexp",b:"([a-z\\-]+\\.)+\\*",c:[hljs.BE,c,b,a]},{cN:"number",b:"\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b"},{cN:"number",b:"\\s\\d+[kKmMgGdshdwy]*\\b",r:0},c,b,a]}]}]}}}();$(function(){
+    $.each($("section[id] > h1"), function(i, e){
+        var $e = $(e),
+            link = $("<a class='permalink'>¶</a>");
+        link.attr("href", "#" + $e.parent().attr("id"));
+
+        $e.prepend(link);
+    });
+});
+hljs.initHighlightingOnLoad();
+</script><footer id="license" style="text-align:center;font-size:0.8em">All content on this site is available under the
+<a href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
+<br>
+Content outside the book section is available under
+<a href="https://raw.github.com/yesodweb/yesodweb.com/master/LICENSE">the MIT license</a>
+as well.</footer>
+</div></div><script>window._gaq = [['_setAccount','UA-1434510-13'],['_trackPageview'],['_trackPageLoadTime']];(function() {var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true; ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);})();</script><!-- Prompt IE 6 users to install Chrome Frame. Remove this if you want to support IE 6.  chromium.org/developers/how-tos/chrome-frame-getting-started --><!--[if lt IE 7 ]><script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script><script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script><![endif]--></body></html>
