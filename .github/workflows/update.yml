@@ -24,8 +24,9 @@ jobs:
 
 
       - name: Generate XML from Asciidoc
-        run: just generate
-      # Other steps that change files in the repository
+        run: just generate-xml
+      - uses: stefanzweifel/git-auto-commit-action@v5
 
-      # Commit all changed files back to the repository
+      - name: Generate static HTML
+        run: just generate-static
       - uses: stefanzweifel/git-auto-commit-action@v5
