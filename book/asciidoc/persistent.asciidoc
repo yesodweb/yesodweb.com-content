@@ -337,6 +337,8 @@ pass it off to other Persistent functions.
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE FlexibleInstances          #-}
 
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
