@@ -467,7 +467,7 @@ import           Control.Monad.Reader
 import           Control.Monad.Logger
 import           Conduit
 
-share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+share [mkPersist sqlSettings, mkEntityDefList "entityDefs", mkMigrate "migrateAll"] [persistLowerCase|
 Person
     name String
     age Int Maybe
