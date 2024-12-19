@@ -35,10 +35,10 @@ main = warp 3000 HelloWorld
 ----
 
 If you save that code in +helloworld.hs+ and run it with +runhaskell
-helloworld.hs+, you'll get a web server running on port 3000. Note, 
+helloworld.hs+, you'll get a web server running on port 3000. Note,
 if you followed the quick start guide and installed yesod with +stack+
-then you will not have +runhaskell+ and will need to run +stack runghc 
-helloworld.hs+ instead. If you point your browser to http://localhost:3000, 
+then you will not have +runhaskell+ and will need to run +stack runghc
+helloworld.hs+ instead. If you point your browser to http://localhost:3000,
 you'll get the following HTML:
 
 [source, html]
@@ -112,7 +112,7 @@ instance YesodDispatch HelloWorld where
                         "GET" -> getHomeR
                         _     -> badMethod
 
-type Handler = HandlerT HelloWorld IO
+type Handler = HandlerFor HelloWorld
 ----
 
 NOTE: In addition to using +-ddump-splices+, it can often be useful to generate
@@ -174,11 +174,11 @@ In our example, we pass +[whamlet|Hello World!|]+ to +defaultLayout+.
 +whamlet+ is another quasi-quoter. In this case, it converts Hamlet syntax into
 a Widget. Hamlet is the default HTML templating engine in Yesod. Together with
 its siblings Cassius, Lucius and Julius, you can create HTML, CSS and
-Javascript in a fully type-safe and compile-time-checked manner. We'll see much
+JavaScript in a fully type-safe and compile-time-checked manner. We'll see much
 more about this in the Shakespeare chapter.
 
 Widgets are another cornerstone of Yesod. They allow you to create modular
-components of a site consisting of HTML, CSS and Javascript and reuse them
+components of a site consisting of HTML, CSS and JavaScript and reuse them
 throughout your site. We'll get into more detail on them in the widgets
 chapter.
 
@@ -212,7 +212,7 @@ NOTE: By the way, the word Yesod (יסוד) means _foundation_ in Hebrew.
 Once again we mention +HelloWorld+ in our main function. Our foundation
 contains all the information we need to route and respond to requests in our
 application; now we just need to convert it into something that can run. A
-useful function for this in Yesod is +warp+, which runs the Warp webserver with
+useful function for this in Yesod is +warp+, which runs the Warp web server with
 a number of default settings enabled on the specified port (here, it's 3000).
 
 One of the features of Yesod is that you aren't tied down to a single

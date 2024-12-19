@@ -12,7 +12,7 @@ which are available for reading online:
 * link:http://book.realworldhaskell.org/read[Real World Haskell]
 
 Additionally, there are a number of great articles on
-link:https://www.fpcomplete.com/school[School of Haskell].
+link:https://tech.fpcomplete.com/haskell/learn/[FP Complete's Haskell's hub].
 
 In order to use Yesod, you're going to have to know at least the basics of
 Haskell. Additionally, Yesod uses some features of Haskell that aren't covered
@@ -36,10 +36,10 @@ This is one of the core building blocks for a strongly typed
 language like Haskell. Some data types, like +Int+, can be treated as primitive
 values, while other data types will build on top of these to create more
 complicated values. For example, you might represent a person with:
-+   
++
 [source, haskell]
 data Person = Person Text Int
-+    
++
 Here, the +Text+ would give the person's name, and the +Int+ would give the
 person's age. Due to its simplicity, this specific example type will recur
 throughout the book. There are essentially three ways you can create a new data
@@ -128,7 +128,7 @@ are two other common approaches:
 * In your +cabal+ file, add an +default-extensions+ block.
 
 I personally never use the GHC command line argument approach. It's a personal
-preference, but I like to have my settings clearly stated in a file. In general
+preference, but I like to have my settings clearly stated in a file. In general,
 it's recommended to avoid putting extensions in your +cabal+ file; however,
 this rule mostly applies when writing publicly available libraries. When you're
 writing an application that you and your team will be working on, having all of
@@ -287,7 +287,7 @@ with this].
 A nice trick is that TH code is allowed to perform arbitrary +IO+ actions, and
 therefore we can place some input in external files and have it parsed at
 compile time. One example usage is to have compile-time checked HTML, CSS, and
-Javascript templates.
+JavaScript templates.
 
 If your Template Haskell code is being used to generate declarations, and is
 being placed at the top level of our file, we can leave off the dollar sign and
