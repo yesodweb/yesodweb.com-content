@@ -6,7 +6,7 @@
 
 
 <p>Yesod uses the Shakespearean family of template languages as its standard
-approach to HTML, CSS and Javascript creation. This language family shares some
+approach to HTML, CSS and JavaScript creation. This language family shares some
 common syntax, as well as overarching principles:</p>
 <ul>
 <li>
@@ -45,7 +45,7 @@ Julius is for Javascript, and Cassius and Lucius are both for CSS. Hamlet and
 Cassius are both whitespace-sensitive formats, using indentation to denote
 nesting. By contrast, Lucius is a superset of CSS, keeping CSS’s braces for
 denoting nesting. Julius is a simple passthrough language for producing
-Javascript; the only added feature is variable interpolation.</p>
+JavaScript; the only added feature is variable interpolation.</p>
 <aside class="note"><p>Cassius is in fact just an alternate syntax for Lucius. They both use the
 same processing engine underneath, but Cassius files have indentation converted
 into braces before processing. The choice between the two is purely one of
@@ -90,7 +90,7 @@ syntactical preference.</p></aside>
         background-image: url(@{MyBackgroundR})</code></pre>
 </section>
 <section id="shakespearean-templates_julius_javascript">
-<h1>Julius (Javascript)</h1>
+<h1>Julius (JavaScript)</h1>
 <p>String interpolation works slightly differently in Julius. This is important
 from a security standpoint — all interpolated values are valid JSON by default
 which helps prevent XSS attacks. You’ll need to use the <code>rawJS</code> function to get
@@ -229,7 +229,7 @@ surface. Supposing we had a template:</p>
 <h1>Syntax</h1>
 <p>All Shakespearean languages share the same interpolation syntax, and are able
 to utilize type-safe URLs. They differ in the syntax specific for their target
-language (HTML, CSS, or Javascript). Let’s explore each language in turn.</p>
+language (HTML, CSS, or JavaScript). Let’s explore each language in turn.</p>
 <section id="shakespearean-templates_hamlet_syntax">
 <h1>Hamlet Syntax</h1>
 <p>Hamlet is the most sophisticated of the languages. Not only does it provide
@@ -617,11 +617,11 @@ simple example:</p>
 <section id="shakespearean-templates_julius_syntax">
 <h1>Julius Syntax</h1>
 <p>Julius is the simplest of the languages discussed here. In fact, some might
-even say it’s really just Javascript. Julius allows the three forms of
+even say it’s really just JavaScript. Julius allows the three forms of
 interpolation we’ve mentioned so far, and otherwise applies no transformations
 to your content.</p>
 <aside class="note"><p>If you use Julius with the scaffolded Yesod site, you may notice that
-your Javascript is automatically minified. This is not a feature of Julius;
+your JavaScript is automatically minified. This is not a feature of Julius;
 instead, Yesod uses the hjsmin package to minify Julius output.</p></aside>
 </section>
 </section>
@@ -790,7 +790,7 @@ There are a few changes:</p>
 <p>
 We use a different set of functions, prefixed with an &quot;s&quot;. So the quasiquoter
   is <code>shamlet</code> and the external file function is <code>shamletFile</code>. How we
-  pronounce those is still up for debate.
+  pronounce this is still up for debate.
 </p>
 </li>
 <li>
@@ -881,7 +881,7 @@ main = putStrLn $ renderHtml
 </section>
 <section id="shakespearean-templates_other_shakespeare">
 <h1>Other Shakespeare</h1>
-<p>In addition to HTML, CSS and Javascript helpers, there is also some more
+<p>In addition to HTML, CSS and JavaScript helpers, there is also some more
 general-purpose Shakespeare available. shakespeare-text provides a simple way
 to create interpolated strings, much like people are accustomed to in scripting
 languages like Ruby and Python. This package’s utility is definitely not

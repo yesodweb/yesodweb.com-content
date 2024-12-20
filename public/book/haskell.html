@@ -22,7 +22,7 @@ which are available for reading online:</p>
 </li>
 </ul>
 <p>Additionally, there are a number of great articles on
-<a href="https://www.fpcomplete.com/school">School of Haskell</a>.</p>
+<a href="https://tech.fpcomplete.com/haskell/learn/">FP Complete’s Haskell’s hub</a>.</p>
 <p>In order to use Yesod, you’re going to have to know at least the basics of
 Haskell. Additionally, Yesod uses some features of Haskell that aren’t covered
 in most introductory texts. While this book assumes the reader has a basic
@@ -150,7 +150,7 @@ In your <code>cabal</code> file, add an <code>default-extensions</code> block.
 </li>
 </ul>
 <p>I personally never use the GHC command line argument approach. It’s a personal
-preference, but I like to have my settings clearly stated in a file. In general
+preference, but I like to have my settings clearly stated in a file. In general,
 it’s recommended to avoid putting extensions in your <code>cabal</code> file; however,
 this rule mostly applies when writing publicly available libraries. When you’re
 writing an application that you and your team will be working on, having all of
@@ -281,7 +281,7 @@ with this</a>.</p>
 <p>A nice trick is that TH code is allowed to perform arbitrary <code>IO</code> actions, and
 therefore we can place some input in external files and have it parsed at
 compile time. One example usage is to have compile-time checked HTML, CSS, and
-Javascript templates.</p>
+JavaScript templates.</p>
 <p>If your Template Haskell code is being used to generate declarations, and is
 being placed at the top level of our file, we can leave off the dollar sign and
 parentheses. In other words:</p>

@@ -90,7 +90,7 @@ instance YesodDispatch HelloWorld where
                         &quot;GET&quot; -&gt; getHomeR
                         _     -&gt; badMethod
 
-type Handler = HandlerT HelloWorld IO</code></pre>
+type Handler = HandlerFor HelloWorld</code></pre>
 <aside class="note"><p>In addition to using <code>-ddump-splices</code>, it can often be useful to generate
 Haddock documentation for your application to see which functions and data
 types were generated for you.</p></aside>
@@ -154,10 +154,10 @@ much more.</p>
 <code>whamlet</code> is another quasi-quoter. In this case, it converts Hamlet syntax into
 a Widget. Hamlet is the default HTML templating engine in Yesod. Together with
 its siblings Cassius, Lucius and Julius, you can create HTML, CSS and
-Javascript in a fully type-safe and compile-time-checked manner. We’ll see much
+JavaScript in a fully type-safe and compile-time-checked manner. We’ll see much
 more about this in the Shakespeare chapter.</p>
 <p>Widgets are another cornerstone of Yesod. They allow you to create modular
-components of a site consisting of HTML, CSS and Javascript and reuse them
+components of a site consisting of HTML, CSS and JavaScript and reuse them
 throughout your site. We’ll get into more detail on them in the widgets
 chapter.</p>
 </section>
@@ -204,7 +204,7 @@ A random number generator.
 <p>Once again we mention <code>HelloWorld</code> in our main function. Our foundation
 contains all the information we need to route and respond to requests in our
 application; now we just need to convert it into something that can run. A
-useful function for this in Yesod is <code>warp</code>, which runs the Warp webserver with
+useful function for this in Yesod is <code>warp</code>, which runs the Warp web server with
 a number of default settings enabled on the specified port (here, it’s 3000).</p>
 <p>One of the features of Yesod is that you aren’t tied down to a single
 deployment strategy. Yesod is built on top of the Web Application Interface
