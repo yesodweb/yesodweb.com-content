@@ -47,7 +47,7 @@ still need to deal with ports. And even if we get the port number from the
 request, are we using HTTP or HTTPS? And even if you know _that_, such an
 approach would mean that, depending on how the user submitted a request would
 generate different URLs. For example, we would generate different URLs
-depending if the user connected to "example.com" or "www.example.com". For
+depending on if the user connected to "example.com" or "www.example.com". For
 Search Engine Optimization, we want to be able to consolidate on a single
 canonical URL.
 
@@ -368,13 +368,13 @@ In fact, you could even use special responses like redirects:
 NOTE: Even though you _can_ do this, I don't actually recommend such practices.
 A 404 should be a 404.
 
-=== External CSS and Javascript
+=== External CSS and JavaScript
 
 NOTE: The functionality described here is automatically included in the scaffolded site, so you don't need to worry about implementing this yourself.
 
 One of the most powerful, and most intimidating, methods in the Yesod typeclass
 is +addStaticContent+. Remember that a Widget consists of multiple components,
-including CSS and Javascript. How exactly does that CSS/JS arrive in the user's
+including CSS and JavaScript. How exactly does that CSS/JS arrive in the user's
 browser? By default, they are served in the +<head>+ of the page, inside
 +<style>+ and +<script>+ tags, respectively.
 
@@ -412,7 +412,7 @@ The scaffolded +addStaticContent+ does a number of intelligent things to help
 you out:
 
 
-* It automatically minifies your Javascript using the hjsmin package.
+* It automatically minifies your JavaScript using the hjsmin package.
 * It names the output files based on a hash of the file contents. This means
   you can set your cache headers to far in the future without fears of stale
   content.
@@ -461,9 +461,9 @@ Yesod, it's just plain old Haskell. There are three methods involved:
 isWriteRequest:: Determine if the current request is a "read" or "write" operations. By default, Yesod follows RESTful principles, and assumes +GET+, +HEAD+, +OPTIONS+, and +TRACE+ requests are read-only, while all others are writable.
 
 isAuthorized:: Takes a route (i.e., type-safe URL) and a boolean indicating whether or not the request is a write request. It returns an +AuthResult+, which can have one of three values:
-*  +Authorized+ 
-*  +AuthenticationRequired+ 
-*  +Unauthorized+ 
+*  +Authorized+
+*  +AuthenticationRequired+
+*  +Unauthorized+
 
 By default, it returns +Authorized+ for all requests.
 
@@ -471,9 +471,9 @@ authRoute:: If +isAuthorized+ returns +AuthenticationRequired+, then redirect
 to the given route. If no route is provided (the default), return a 401
 ``authentication required'' message.
 
-These methods tie in nicely with the yesod-auth package, which is used by the
-scaffolded site to provide a number of authentication options, such as OpenID,
-Mozilla Persona, email, username and Twitter. We'll cover more concrete
+These methods tie in nicely with the yesod-auth package, which is used
+by the scaffolded site to provide a number of authentication options,
+such as OpenID, email, username and Twitter. We'll cover more concrete
 examples in the auth chapter.
 
 === Some Simple Settings
