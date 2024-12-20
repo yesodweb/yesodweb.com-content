@@ -1,7 +1,7 @@
 == Shakespearean Templates
 
 Yesod uses the Shakespearean family of template languages as its standard
-approach to HTML, CSS and Javascript creation. This language family shares some
+approach to HTML, CSS and JavaScript creation. This language family shares some
 common syntax, as well as overarching principles:
 
 * As little interference to the underlying language as possible, while
@@ -28,7 +28,7 @@ Julius is for Javascript, and Cassius and Lucius are both for CSS. Hamlet and
 Cassius are both whitespace-sensitive formats, using indentation to denote
 nesting. By contrast, Lucius is a superset of CSS, keeping CSS's braces for
 denoting nesting. Julius is a simple passthrough language for producing
-Javascript; the only added feature is variable interpolation.
+JavaScript; the only added feature is variable interpolation.
 
 NOTE: Cassius is in fact just an alternate syntax for Lucius. They both use the
 same processing engine underneath, but Cassius files have indentation converted
@@ -84,7 +84,7 @@ section.blog
         background-image: url(@{MyBackgroundR})
 ----
 
-==== Julius (Javascript)
+==== Julius (JavaScript)
 
 String interpolation works slightly differently in Julius. This is important
 from a security standpoint — all interpolated values are valid JSON by default
@@ -121,7 +121,7 @@ name. It might look like this:
 <p>Hello, my name is #{name}
 ----
 
- 
+
 NOTE: +#{...}+ is how we do variable interpolation in Shakespeare.
 
 What should happen to +name+, and what should its datatype be? A naive approach
@@ -189,11 +189,11 @@ _http://example.com/display/time_ displays the current time. And let's say we
 want to link from the homepage to the time. I can think of three different ways
 of constructing the URL:
 
-. As a relative link: _../display/time_ 
+. As a relative link: _../display/time_
 
-. As an absolute link, without a domain: _/display/time_ 
+. As an absolute link, without a domain: _/display/time_
 
-. As an absolute link, with a domain: _http://example.com/display/time_ 
+. As an absolute link, with a domain: _http://example.com/display/time_
 
 There are problems with each approach: the first will break if either URL
 changes. Also, it's not suitable for all use cases; RSS and Atom feeds, for
@@ -230,7 +230,7 @@ renderMyRoute :: MyRoute -> Text
 renderMyRoute Home = "http://example.com/profile/home"
 renderMyRoute Time = "http://example.com/display/time"
 ----
- 
+
 [NOTE]
 ====
 URL rendering functions are actually a bit more complicated than this. They
@@ -273,7 +273,7 @@ this would translate roughly into the Haskell code:
 
 All Shakespearean languages share the same interpolation syntax, and are able
 to utilize type-safe URLs. They differ in the syntax specific for their target
-language (HTML, CSS, or Javascript). Let's explore each language in turn.
+language (HTML, CSS, or JavaScript). Let's explore each language in turn.
 
 ==== Hamlet Syntax
 
@@ -635,7 +635,7 @@ $doctype 5
         <p>All done.
 ----
 
- 
+
 NOTE: There is an older and still supported syntax: three exclamation points
 (+!!!+). You may still see this in code out there. We have no plans to remove
 support for this, but in general find the +$doctype+ approach easier to read.
@@ -653,7 +653,7 @@ in a few more features.
 * You can declare variables in your templates.
 
 * A set of CSS properties can be created as a mixin, and reused in multiple
-  declarations. 
+  declarations.
 
 Starting with the second point: let's say you want to have some special styling
 for some tags within your +article+. In plain ol' CSS, you'd have to write:
@@ -743,12 +743,12 @@ simple example:
 ==== Julius Syntax
 
 Julius is the simplest of the languages discussed here. In fact, some might
-even say it's really just Javascript. Julius allows the three forms of
+even say it's really just JavaScript. Julius allows the three forms of
 interpolation we've mentioned so far, and otherwise applies no transformations
 to your content.
 
 NOTE: If you use Julius with the scaffolded Yesod site, you may notice that
-your Javascript is automatically minified. This is not a feature of Julius;
+your JavaScript is automatically minified. This is not a feature of Julius;
 instead, Yesod uses the hjsmin package to minify Julius output.
 
 === Calling Shakespeare
@@ -873,7 +873,7 @@ There are a few changes:
 
 * We use a different set of functions, prefixed with an "s". So the quasiquoter
   is +shamlet+ and the external file function is +shamletFile+. How we
-  pronounce those is still up for debate.
+  pronounce this is still up for debate.
 
 * No URL interpolation is allowed. Doing so will result in a compile-time
   error.
@@ -920,7 +920,7 @@ $doctype 5
         <p>_{Apples count}
 ----
 
- 
+
 
 This kind of a template now needs some way to turn those values into HTML. So
 just like type-safe URLs, we pass in a render function. To represent this, we
@@ -981,7 +981,7 @@ main = putStrLn $ renderHtml
 
 === Other Shakespeare
 
-In addition to HTML, CSS and Javascript helpers, there is also some more
+In addition to HTML, CSS and JavaScript helpers, there is also some more
 general-purpose Shakespeare available. shakespeare-text provides a simple way
 to create interpolated strings, much like people are accustomed to in scripting
 languages like Ruby and Python. This package's utility is definitely not
