@@ -91,7 +91,7 @@ instance YesodDispatch HelloWorld where
                         "GET" -&gt; getHomeR
                         _     -&gt; badMethod
 
-type Handler = HandlerT HelloWorld IO</programlisting>
+type Handler = HandlerFor HelloWorld</programlisting>
 <note><simpara>In addition to using <literal>-ddump-splices</literal>, it can often be useful to generate
 Haddock documentation for your application to see which functions and data
 types were generated for you.</simpara></note>
@@ -155,10 +155,10 @@ much more.</simpara>
 <literal>whamlet</literal> is another quasi-quoter. In this case, it converts Hamlet syntax into
 a Widget. Hamlet is the default HTML templating engine in Yesod. Together with
 its siblings Cassius, Lucius and Julius, you can create HTML, CSS and
-Javascript in a fully type-safe and compile-time-checked manner. We&#8217;ll see much
+JavaScript in a fully type-safe and compile-time-checked manner. We&#8217;ll see much
 more about this in the Shakespeare chapter.</simpara>
 <simpara>Widgets are another cornerstone of Yesod. They allow you to create modular
-components of a site consisting of HTML, CSS and Javascript and reuse them
+components of a site consisting of HTML, CSS and JavaScript and reuse them
 throughout your site. We&#8217;ll get into more detail on them in the widgets
 chapter.</simpara>
 </section>
@@ -205,7 +205,7 @@ A random number generator.
 <simpara>Once again we mention <literal>HelloWorld</literal> in our main function. Our foundation
 contains all the information we need to route and respond to requests in our
 application; now we just need to convert it into something that can run. A
-useful function for this in Yesod is <literal>warp</literal>, which runs the Warp webserver with
+useful function for this in Yesod is <literal>warp</literal>, which runs the Warp web server with
 a number of default settings enabled on the specified port (here, it&#8217;s 3000).</simpara>
 <simpara>One of the features of Yesod is that you aren&#8217;t tied down to a single
 deployment strategy. Yesod is built on top of the Web Application Interface

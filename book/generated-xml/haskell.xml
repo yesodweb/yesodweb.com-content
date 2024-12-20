@@ -23,7 +23,7 @@ which are available for reading online:</simpara>
 </listitem>
 </itemizedlist>
 <simpara>Additionally, there are a number of great articles on
-<ulink url="https://www.fpcomplete.com/school">School of Haskell</ulink>.</simpara>
+<ulink url="https://tech.fpcomplete.com/haskell/learn/">FP Complete&#8217;s Haskell&#8217;s hub</ulink>.</simpara>
 <simpara>In order to use Yesod, you&#8217;re going to have to know at least the basics of
 Haskell. Additionally, Yesod uses some features of Haskell that aren&#8217;t covered
 in most introductory texts. While this book assumes the reader has a basic
@@ -163,7 +163,7 @@ In your <literal>cabal</literal> file, add an <literal>default-extensions</liter
 </listitem>
 </itemizedlist>
 <simpara>I personally never use the GHC command line argument approach. It&#8217;s a personal
-preference, but I like to have my settings clearly stated in a file. In general
+preference, but I like to have my settings clearly stated in a file. In general,
 it&#8217;s recommended to avoid putting extensions in your <literal>cabal</literal> file; however,
 this rule mostly applies when writing publicly available libraries. When you&#8217;re
 writing an application that you and your team will be working on, having all of
@@ -294,7 +294,7 @@ with this</ulink>.</simpara>
 <simpara>A nice trick is that TH code is allowed to perform arbitrary <literal>IO</literal> actions, and
 therefore we can place some input in external files and have it parsed at
 compile time. One example usage is to have compile-time checked HTML, CSS, and
-Javascript templates.</simpara>
+JavaScript templates.</simpara>
 <simpara>If your Template Haskell code is being used to generate declarations, and is
 being placed at the top level of our file, we can leave off the dollar sign and
 parentheses. In other words:</simpara>

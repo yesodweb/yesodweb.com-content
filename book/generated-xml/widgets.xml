@@ -7,13 +7,13 @@
 <section id="widgets_widgets">
 <title>Widgets</title>
 <simpara>One of the challenges in web development is that we have to coordinate three
-different client-side technologies: HTML, CSS and Javascript. Worse still, we
+different client-side technologies: HTML, CSS and JavaScript. Worse still, we
 have to place these components in different locations on the page: CSS in a
-style tag in the head, Javascript in a script tag before the closing body tag, and HTML in the
-body. And never mind if you want to put your CSS and Javascript in separate
+style tag in the head, JavaScript in a script tag before the closing body tag, and HTML in the
+body. And never mind if you want to put your CSS and JavaScript in separate
 files!</simpara>
 <simpara>In practice, this works out fairly nicely when building a single page, because
-we can separate our structure (HTML), style (CSS) and logic (Javascript). But
+we can separate our structure (HTML), style (CSS) and logic (JavaScript). But
 when we want to build modular pieces of code that can be easily composed, it
 can be a headache to coordinate all three pieces separately. Widgets are
 Yesod&#8217;s solution to the problem. They also help with the issue of including
@@ -127,7 +127,7 @@ CSS declarations
 </listitem>
 <listitem>
 <simpara>
-Javascript code
+JavaScript code
 </simpara>
 </listitem>
 <listitem>
@@ -163,7 +163,7 @@ inside a <literal>&lt;script&gt;</literal>, and Cassius and Lucius in a <literal
 style code appear in a separate file. The scaffolded site provides this for you
 automatically.</simpara></note>
 <simpara>But what if you want to add some <literal>&lt;meta&gt;</literal> tags, which need to appear in
-the head? Or if you want some Javascript to appear in the body instead of the
+the head? Or if you want some JavaScript to appear in the body instead of the
 head? For these purposes, Yesod provides two additional type classes:
 <literal>ToWidgetHead</literal> and <literal>ToWidgetBody</literal>. These work exactly as they seem they should. One example use case for this is to have fine-grained control of where your <literal>&lt;script&gt;</literal> tags end up getting inserted.</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">{-# LANGUAGE OverloadedStrings #-}
@@ -266,7 +266,7 @@ referring to files hosted on a CDN, like Google&#8217;s jQuery.
 <section id="widgets_combining_widgets">
 <title>Combining Widgets</title>
 <simpara>The whole idea of widgets is to increase composability. You can take these
-individual pieces of HTML, CSS and Javascript, combine them together into
+individual pieces of HTML, CSS and JavaScript, combine them together into
 something more complicated, and then combine these larger entities into
 complete pages. This all works naturally through the <literal>Monad</literal> instance of
 <literal>Widget</literal>, meaning you can use do-notation to compose pieces together.</simpara>
@@ -352,20 +352,18 @@ We&#8217;ll cover that in the scaffolding chapter.</simpara></note>
 answer is that each widget is a value of type <literal>Widget</literal>. But if you look through
 the Yesod libraries, you&#8217;ll find no definition of the <literal>Widget</literal> type. What
 gives?</simpara>
-<simpara>Yesod defines a very similar type: <literal>data WidgetT site m a</literal>. This data type is a
-<emphasis role="strong">monad transformer</emphasis>. The last two arguments are the underlying monad and the
-monadic value, respectively. The site parameter is the specific foundation
-type for your individual application. Since this type varies for each and every
-site, it&#8217;s impossible for the libraries to define a single <literal>Widget</literal> datatype
-which would work for every application.</simpara>
+<simpara>Yesod defines a very similar type: <literal>data WidgetFor site a</literal>. This data
+type is a <emphasis role="strong">monad transformer</emphasis>. The last argument <literal>a</literal> is the monadic
+value.  The site parameter is the specific foundation type for your
+individual application. Since this type varies for each and every
+site, it&#8217;s impossible for the libraries to define a single <literal>Widget</literal>
+datatype which would work for every application.</simpara>
 <simpara>Instead, the <literal>mkYesod</literal> Template Haskell function generates this type synonym
 for you. Assuming your foundation data type is called <literal>MyApp</literal>, your <literal>Widget</literal>
 synonym is defined as:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">type Widget = WidgetT MyApp IO ()</programlisting>
+<programlisting language="haskell" linenumbering="unnumbered">type Widget = WidgetFor MyApp ()</programlisting>
 <simpara>We set the monadic value to be <literal>()</literal>, since a widget&#8217;s value will ultimately be
-thrown away. <literal>IO</literal> is the standard base monad, and will be used in almost all
-cases. The only exception is when writing a <emphasis role="strong">subsite</emphasis>. Subsites are a more
-advanced topic, and will be covered later in their own chapter.</simpara>
+thrown away.</simpara>
 <simpara>Once we know about our <literal>Widget</literal> type synonym, it&#8217;s easy to add signatures to
 our previous code samples:</simpara>
 <programlisting language="haskell" linenumbering="unnumbered">footer :: Widget
@@ -390,7 +388,7 @@ page =
         ^{footer}
     |]</programlisting>
 <simpara>When we start digging into handler functions some more, we&#8217;ll encounter a
-similar situation with the <literal>HandlerT</literal> and <literal>Handler</literal> types.</simpara>
+similar situation with the <literal>HandlerFor</literal> and <literal>Handler</literal> types.</simpara>
 </section>
 </section>
 <section id="widgets_using_widgets">
@@ -398,7 +396,7 @@ similar situation with the <literal>HandlerT</literal> and <literal>Handler</lit
 <simpara>It&#8217;s all well and good that we have these beautiful Widget datatypes, but how
 exactly do we turn them into something the user can interact with? The most
 commonly used function is <literal>defaultLayout</literal>, which essentially has the type
-signature <literal>Widget &#8594; Handler Html</literal>.</simpara>
+signature <literal>WidgetFor &#8594; HandlerFor Html</literal>.</simpara>
 <simpara><literal>defaultLayout</literal> is actually a typeclass method, which can be overridden for
 each application. This is how Yesod apps are themed. So we&#8217;re still left with
 the question: when we&#8217;re inside <literal>defaultLayout</literal>, how do we unwrap a <literal>Widget</literal>?
@@ -544,7 +542,7 @@ tricks which were previously employed.</simpara></note>
 <section id="widgets_summary">
 <title>Summary</title>
 <simpara>The basic building block of each page is a widget. Individual snippets of HTML,
-CSS, and Javascript can be turned into widgets via the polymorphic <literal>toWidget</literal>
+CSS, and JavaScript can be turned into widgets via the polymorphic <literal>toWidget</literal>
 function. Using do-notation, you can combine these individual widgets into
 larger widgets, eventually containing all the content of your page.</simpara>
 <simpara>Unwrapping these widgets is usually performed within the defaultLayout
