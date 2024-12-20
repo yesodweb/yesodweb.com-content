@@ -1,14 +1,14 @@
 == Widgets
 
 One of the challenges in web development is that we have to coordinate three
-different client-side technologies: HTML, CSS and Javascript. Worse still, we
+different client-side technologies: HTML, CSS and JavaScript. Worse still, we
 have to place these components in different locations on the page: CSS in a
-style tag in the head, Javascript in a script tag before the closing body tag, and HTML in the
-body. And never mind if you want to put your CSS and Javascript in separate
+style tag in the head, JavaScript in a script tag before the closing body tag, and HTML in the
+body. And never mind if you want to put your CSS and JavaScript in separate
 files!
 
 In practice, this works out fairly nicely when building a single page, because
-we can separate our structure (HTML), style (CSS) and logic (Javascript). But
+we can separate our structure (HTML), style (CSS) and logic (JavaScript). But
 when we want to build modular pieces of code that can be easily composed, it
 can be a headache to coordinate all three pieces separately. Widgets are
 Yesod's solution to the problem. They also help with the issue of including
@@ -118,7 +118,7 @@ page. In particular:
 * External stylesheets
 * External Javascript
 * CSS declarations
-* Javascript code
+* JavaScript code
 * Arbitrary +<head>+ content
 * Arbitrary +<body>+ content
 
@@ -148,7 +148,7 @@ style code appear in a separate file. The scaffolded site provides this for you
 automatically.
 
 But what if you want to add some +<meta>+ tags, which need to appear in
-the head? Or if you want some Javascript to appear in the body instead of the
+the head? Or if you want some JavaScript to appear in the body instead of the
 head? For these purposes, Yesod provides two additional type classes:
 +ToWidgetHead+ and +ToWidgetBody+. These work exactly as they seem they should. One example use case for this is to have fine-grained control of where your +<script>+ tags end up getting inserted.
 
@@ -207,7 +207,7 @@ referring to files hosted on a CDN, like Google's jQuery.
 === Combining Widgets
 
 The whole idea of widgets is to increase composability. You can take these
-individual pieces of HTML, CSS and Javascript, combine them together into
+individual pieces of HTML, CSS and JavaScript, combine them together into
 something more complicated, and then combine these larger entities into
 complete pages. This all works naturally through the +Monad+ instance of
 +Widget+, meaning you can use do-notation to compose pieces together.
@@ -322,12 +322,12 @@ answer is that each widget is a value of type +Widget+. But if you look through
 the Yesod libraries, you'll find no definition of the +Widget+ type. What
 gives?
 
-Yesod defines a very similar type: +data WidgetT site m a+. This data type is a
-*monad transformer*. The last two arguments are the underlying monad and the
-monadic value, respectively. The site parameter is the specific foundation
-type for your individual application. Since this type varies for each and every
-site, it's impossible for the libraries to define a single +Widget+ datatype
-which would work for every application.
+Yesod defines a very similar type: +data WidgetFor site a+. This data
+type is a *monad transformer*. The last argument +a+ is the monadic
+value.  The site parameter is the specific foundation type for your
+individual application. Since this type varies for each and every
+site, it's impossible for the libraries to define a single +Widget+
+datatype which would work for every application.
 
 Instead, the +mkYesod+ Template Haskell function generates this type synonym
 for you. Assuming your foundation data type is called +MyApp+, your +Widget+
@@ -335,13 +335,11 @@ synonym is defined as:
 
 [source, haskell]
 --------
-type Widget = WidgetT MyApp IO ()
+type Widget = WidgetFor MyApp ()
 --------
 
 We set the monadic value to be +()+, since a widget's value will ultimately be
-thrown away. +IO+ is the standard base monad, and will be used in almost all
-cases. The only exception is when writing a *subsite*. Subsites are a more
-advanced topic, and will be covered later in their own chapter.
+thrown away.
 
 Once we know about our +Widget+ type synonym, it's easy to add signatures to
 our previous code samples:
@@ -372,14 +370,14 @@ page =
 ----
 
 When we start digging into handler functions some more, we'll encounter a
-similar situation with the +HandlerT+ and +Handler+ types.
+similar situation with the +HandlerFor+ and +Handler+ types.
 
 === Using Widgets
 
 It's all well and good that we have these beautiful Widget datatypes, but how
 exactly do we turn them into something the user can interact with? The most
 commonly used function is +defaultLayout+, which essentially has the type
-signature +Widget -> Handler Html+.
+signature +WidgetFor -> HandlerFor Html+.
 
 +defaultLayout+ is actually a typeclass method, which can be overridden for
 each application. This is how Yesod apps are themed. So we're still left with
@@ -535,7 +533,7 @@ tricks which were previously employed.
 === Summary
 
 The basic building block of each page is a widget. Individual snippets of HTML,
-CSS, and Javascript can be turned into widgets via the polymorphic +toWidget+
+CSS, and JavaScript can be turned into widgets via the polymorphic +toWidget+
 function. Using do-notation, you can combine these individual widgets into
 larger widgets, eventually containing all the content of your page.
 

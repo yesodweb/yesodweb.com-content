@@ -6,7 +6,7 @@ Since web programming began, people have been trying to make the development
 process a more pleasant one. As a community, we have continually pushed new
 techniques to try and solve some of the lingering difficulties of security
 threats, the stateless nature of HTTP, the multiple languages (HTML, CSS,
-Javascript) necessary to create a powerful web application, and more.
+JavaScript) necessary to create a powerful web application, and more.
 
 Yesod attempts to ease the web development process by playing to the strengths
 of the Haskell programming language. Haskell&#8217;s strong compile-time guarantees
