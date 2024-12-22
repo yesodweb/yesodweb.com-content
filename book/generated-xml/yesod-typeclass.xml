@@ -50,7 +50,7 @@ still need to deal with ports. And even if we get the port number from the
 request, are we using HTTP or HTTPS? And even if you know <emphasis>that</emphasis>, such an
 approach would mean that, depending on how the user submitted a request would
 generate different URLs. For example, we would generate different URLs
-depending if the user connected to "example.com" or "www.example.com". For
+depending on if the user connected to "example.com" or "www.example.com". For
 Search Engine Optimization, we want to be able to consolidate on a single
 canonical URL.</simpara>
 <simpara>And finally, Yesod doesn&#8217;t make any assumption about <emphasis>where</emphasis> you host your
@@ -369,11 +369,11 @@ error type. Due to type constraints, we need to start off our methods with
 A 404 should be a 404.</simpara></note>
 </section>
 <section id="yesod-typeclass_external_css_and_javascript">
-<title>External CSS and Javascript</title>
+<title>External CSS and JavaScript</title>
 <note><simpara>The functionality described here is automatically included in the scaffolded site, so you don&#8217;t need to worry about implementing this yourself.</simpara></note>
 <simpara>One of the most powerful, and most intimidating, methods in the Yesod typeclass
 is <literal>addStaticContent</literal>. Remember that a Widget consists of multiple components,
-including CSS and Javascript. How exactly does that CSS/JS arrive in the user&#8217;s
+including CSS and JavaScript. How exactly does that CSS/JS arrive in the user&#8217;s
 browser? By default, they are served in the <literal>&lt;head&gt;</literal> of the page, inside
 <literal>&lt;style&gt;</literal> and <literal>&lt;script&gt;</literal> tags, respectively.</simpara>
 <simpara>That might be simple, but it&#8217;s far from efficient. Every page load will now
@@ -433,7 +433,7 @@ you out:</simpara>
 <itemizedlist>
 <listitem>
 <simpara>
-It automatically minifies your Javascript using the hjsmin package.
+It automatically minifies your JavaScript using the hjsmin package.
 </simpara>
 </listitem>
 <listitem>
@@ -537,9 +537,9 @@ to the given route. If no route is provided (the default), return a 401
 </listitem>
 </varlistentry>
 </variablelist>
-<simpara>These methods tie in nicely with the yesod-auth package, which is used by the
-scaffolded site to provide a number of authentication options, such as OpenID,
-Mozilla Persona, email, username and Twitter. We&#8217;ll cover more concrete
+<simpara>These methods tie in nicely with the yesod-auth package, which is used
+by the scaffolded site to provide a number of authentication options,
+such as OpenID, email, username and Twitter. We&#8217;ll cover more concrete
 examples in the auth chapter.</simpara>
 </section>
 <section id="yesod-typeclass_some_simple_settings">

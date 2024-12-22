@@ -304,21 +304,19 @@ analyze each in more depth.</simpara>
 <title>Handler monad</title>
 <simpara>Like the <literal>Widget</literal> type, the <literal>Handler</literal> data type is not defined anywhere in the
 Yesod libraries. Instead, the libraries provide the data type:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">data HandlerT site m a</programlisting>
-<simpara>And like <literal>WidgetT</literal>, this has three arguments: a base monad <literal>m</literal>, a monadic value
-<literal>a</literal>, and the foundation data type <literal>site</literal>. Each application defines a <literal>Handler</literal>
-synonym which constrains <literal>site</literal> to that application&#8217;s foundation data type, and
-sets <literal>m</literal> to <literal>IO</literal>. If your foundation is <literal>MyApp</literal>, in other words, you&#8217;d have the
+<programlisting language="haskell" linenumbering="unnumbered">data HandlerFor site a</programlisting>
+<simpara>And like <literal>WidgetFor</literal>, this has two arguments: a monadic value <literal>a</literal>, and
+the foundation data type <literal>site</literal>. Each application defines a <literal>Handler</literal>
+synonym which constrains <literal>site</literal> to that application&#8217;s foundation data
+type. If your foundation is <literal>MyApp</literal>, in other words, you&#8217;d have the
 synonym:</simpara>
-<programlisting language="haskell" linenumbering="unnumbered">type Handler = HandlerT MyApp IO</programlisting>
-<simpara>We need to be able to modify the underlying monad when writing subsites, but
-otherwise we&#8217;ll use <literal>IO</literal>.</simpara>
-<simpara>The <literal>HandlerT</literal> monad provides access to information about the user request
+<programlisting language="haskell" linenumbering="unnumbered">type Handler = HandlerFor MyApp</programlisting>
+<simpara>The <literal>HandlerFor</literal> monad provides access to information about the user request
 (e.g. query-string parameters), allows modifying the response (e.g., response
 headers), and more. This is the monad that most of your Yesod code will live
 in.</simpara>
-<simpara>In addition, there&#8217;s a type class called <literal>MonadHandler</literal>. Both <literal>HandlerT</literal> and
-<literal>WidgetT</literal> are instances of this type class, allowing many common functions to
+<simpara>In addition, there&#8217;s a type class called <literal>MonadHandler</literal>. Both <literal>HandlerFor</literal> and
+<literal>WidgetFor</literal> are instances of this type class, allowing many common functions to
 be used in both monads. If you see <literal>MonadHandler</literal> in any API documentation, you
 should remember that the function can be used in your <literal>Handler</literal> functions.</simpara>
 </section>
@@ -648,7 +646,7 @@ Sets the Expires header to the specified date/time.
 </section>
 <section id="routing-and-handlers_i_o_and_debugging">
 <title>I/O and debugging</title>
-<simpara>The <literal>HandlerT</literal> and <literal>WidgetT</literal> monad transformers are both instances of a number
+<simpara>The <literal>HandlerFor</literal> and <literal>WidgetFor</literal> monad transformers are both instances of a number
 of typeclasses. For this section, the important typeclasses are <literal>MonadIO</literal> and
 <literal>MonadLogger</literal>. The former allows you to perform arbitrary <literal>IO</literal> actions inside
 your handler, such as reading from a file. In order to achieve this, you just
@@ -658,7 +656,7 @@ customize this system, including what messages get logged and where logs are
 sent. By default, logs are sent to standard output, in development all messages
 are logged, and in production, warnings and errors are logged.</simpara>
 <simpara>Often times when logging, we want to know where in the source code the logging
-occured. For this, <literal>MonadLogger</literal> provides a number of convenience Template
+occurred. For this, <literal>MonadLogger</literal> provides a number of convenience Template
 Haskell functions which will automatically insert source code location into the
 log messages. These functions are <literal>$logDebug</literal>, <literal>$logInfo</literal>, <literal>$logWarn</literal>, and
 <literal>$logError</literal>. Let&#8217;s look at a short example of some of these functions.</simpara>
