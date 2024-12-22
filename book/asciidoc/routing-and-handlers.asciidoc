@@ -324,30 +324,27 @@ Yesod libraries. Instead, the libraries provide the data type:
 
 [source, haskell]
 ----
-data HandlerT site m a
+data HandlerFor site a
 ----
 
-And like +WidgetT+, this has three arguments: a base monad +m+, a monadic value
-+a+, and the foundation data type +site+. Each application defines a +Handler+
-synonym which constrains +site+ to that application's foundation data type, and
-sets +m+ to +IO+. If your foundation is +MyApp+, in other words, you'd have the
+And like +WidgetFor+, this has two arguments: a monadic value +a+, and
+the foundation data type +site+. Each application defines a +Handler+
+synonym which constrains +site+ to that application's foundation data
+type. If your foundation is +MyApp+, in other words, you'd have the
 synonym:
 
 [source, haskell]
 ----
-type Handler = HandlerT MyApp IO
+type Handler = HandlerFor MyApp
 ----
 
-We need to be able to modify the underlying monad when writing subsites, but
-otherwise we'll use +IO+.
-
-The +HandlerT+ monad provides access to information about the user request
+The +HandlerFor+ monad provides access to information about the user request
 (e.g. query-string parameters), allows modifying the response (e.g., response
 headers), and more. This is the monad that most of your Yesod code will live
 in.
 
-In addition, there's a type class called +MonadHandler+. Both +HandlerT+ and
-+WidgetT+ are instances of this type class, allowing many common functions to
+In addition, there's a type class called +MonadHandler+. Both +HandlerFor+ and
++WidgetFor+ are instances of this type class, allowing many common functions to
 be used in both monads. If you see +MonadHandler+ in any API documentation, you
 should remember that the function can be used in your +Handler+ functions.
 
@@ -546,7 +543,7 @@ expiresAt:: Sets the Expires header to the specified date/time.
 
 === I/O and debugging
 
-The +HandlerT+ and +WidgetT+ monad transformers are both instances of a number
+The +HandlerFor+ and +WidgetFor+ monad transformers are both instances of a number
 of typeclasses. For this section, the important typeclasses are +MonadIO+ and
 +MonadLogger+. The former allows you to perform arbitrary +IO+ actions inside
 your handler, such as reading from a file. In order to achieve this, you just
@@ -558,7 +555,7 @@ sent. By default, logs are sent to standard output, in development all messages
 are logged, and in production, warnings and errors are logged.
 
 Often times when logging, we want to know where in the source code the logging
-occured. For this, +MonadLogger+ provides a number of convenience Template
+occurred. For this, +MonadLogger+ provides a number of convenience Template
 Haskell functions which will automatically insert source code location into the
 log messages. These functions are +$logDebug+, +$logInfo+, +$logWarn+, and
 +$logError+. Let's look at a short example of some of these functions.
