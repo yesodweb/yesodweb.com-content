@@ -294,21 +294,19 @@ analyze each in more depth.</p>
 <h1>Handler monad</h1>
 <p>Like the <code>Widget</code> type, the <code>Handler</code> data type is not defined anywhere in the
 Yesod libraries. Instead, the libraries provide the data type:</p>
-<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data HandlerT site m a</code></pre>
-<p>And like <code>WidgetT</code>, this has three arguments: a base monad <code>m</code>, a monadic value
-<code>a</code>, and the foundation data type <code>site</code>. Each application defines a <code>Handler</code>
-synonym which constrains <code>site</code> to that application’s foundation data type, and
-sets <code>m</code> to <code>IO</code>. If your foundation is <code>MyApp</code>, in other words, you’d have the
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">data HandlerFor site a</code></pre>
+<p>And like <code>WidgetFor</code>, this has two arguments: a monadic value <code>a</code>, and
+the foundation data type <code>site</code>. Each application defines a <code>Handler</code>
+synonym which constrains <code>site</code> to that application’s foundation data
+type. If your foundation is <code>MyApp</code>, in other words, you’d have the
 synonym:</p>
-<pre language="haskell" linenumbering="unnumbered"><code class="haskell">type Handler = HandlerT MyApp IO</code></pre>
-<p>We need to be able to modify the underlying monad when writing subsites, but
-otherwise we’ll use <code>IO</code>.</p>
-<p>The <code>HandlerT</code> monad provides access to information about the user request
+<pre language="haskell" linenumbering="unnumbered"><code class="haskell">type Handler = HandlerFor MyApp</code></pre>
+<p>The <code>HandlerFor</code> monad provides access to information about the user request
 (e.g. query-string parameters), allows modifying the response (e.g., response
 headers), and more. This is the monad that most of your Yesod code will live
 in.</p>
-<p>In addition, there’s a type class called <code>MonadHandler</code>. Both <code>HandlerT</code> and
-<code>WidgetT</code> are instances of this type class, allowing many common functions to
+<p>In addition, there’s a type class called <code>MonadHandler</code>. Both <code>HandlerFor</code> and
+<code>WidgetFor</code> are instances of this type class, allowing many common functions to
 be used in both monads. If you see <code>MonadHandler</code> in any API documentation, you
 should remember that the function can be used in your <code>Handler</code> functions.</p>
 </section>
@@ -584,7 +582,7 @@ Sets the Expires header to the specified date/time.
 </section>
 <section id="routing-and-handlers_i_o_and_debugging">
 <h1>I/O and debugging</h1>
-<p>The <code>HandlerT</code> and <code>WidgetT</code> monad transformers are both instances of a number
+<p>The <code>HandlerFor</code> and <code>WidgetFor</code> monad transformers are both instances of a number
 of typeclasses. For this section, the important typeclasses are <code>MonadIO</code> and
 <code>MonadLogger</code>. The former allows you to perform arbitrary <code>IO</code> actions inside
 your handler, such as reading from a file. In order to achieve this, you just
@@ -594,7 +592,7 @@ customize this system, including what messages get logged and where logs are
 sent. By default, logs are sent to standard output, in development all messages
 are logged, and in production, warnings and errors are logged.</p>
 <p>Often times when logging, we want to know where in the source code the logging
-occured. For this, <code>MonadLogger</code> provides a number of convenience Template
+occurred. For this, <code>MonadLogger</code> provides a number of convenience Template
 Haskell functions which will automatically insert source code location into the
 log messages. These functions are <code>$logDebug</code>, <code>$logInfo</code>, <code>$logWarn</code>, and
 <code>$logError</code>. Let’s look at a short example of some of these functions.</p>

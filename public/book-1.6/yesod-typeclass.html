@@ -49,7 +49,7 @@ still need to deal with ports. And even if we get the port number from the
 request, are we using HTTP or HTTPS? And even if you know <em>that</em>, such an
 approach would mean that, depending on how the user submitted a request would
 generate different URLs. For example, we would generate different URLs
-depending if the user connected to &quot;example.com&quot; or &quot;www.example.com&quot;. For
+depending on if the user connected to &quot;example.com&quot; or &quot;www.example.com&quot;. For
 Search Engine Optimization, we want to be able to consolidate on a single
 canonical URL.</p>
 <p>And finally, Yesod doesn’t make any assumption about <em>where</em> you host your
@@ -368,11 +368,11 @@ error type. Due to type constraints, we need to start off our methods with
 A 404 should be a 404.</p></aside>
 </section>
 <section id="yesod-typeclass_external_css_and_javascript">
-<h1>External CSS and Javascript</h1>
+<h1>External CSS and JavaScript</h1>
 <aside class="note"><p>The functionality described here is automatically included in the scaffolded site, so you don’t need to worry about implementing this yourself.</p></aside>
 <p>One of the most powerful, and most intimidating, methods in the Yesod typeclass
 is <code>addStaticContent</code>. Remember that a Widget consists of multiple components,
-including CSS and Javascript. How exactly does that CSS/JS arrive in the user’s
+including CSS and JavaScript. How exactly does that CSS/JS arrive in the user’s
 browser? By default, they are served in the <code>&lt;head&gt;</code> of the page, inside
 <code>&lt;style&gt;</code> and <code>&lt;script&gt;</code> tags, respectively.</p>
 <p>That might be simple, but it’s far from efficient. Every page load will now
@@ -423,7 +423,7 @@ you out:</p>
 <ul>
 <li>
 <p>
-It automatically minifies your Javascript using the hjsmin package.
+It automatically minifies your JavaScript using the hjsmin package.
 </p>
 </li>
 <li>
@@ -518,9 +518,9 @@ to the given route. If no route is provided (the default), return a 401
 </p>
 </dd>
 </dl>
-<p>These methods tie in nicely with the yesod-auth package, which is used by the
-scaffolded site to provide a number of authentication options, such as OpenID,
-Mozilla Persona, email, username and Twitter. We’ll cover more concrete
+<p>These methods tie in nicely with the yesod-auth package, which is used
+by the scaffolded site to provide a number of authentication options,
+such as OpenID, email, username and Twitter. We’ll cover more concrete
 examples in the auth chapter.</p>
 </section>
 <section id="yesod-typeclass_some_simple_settings">
