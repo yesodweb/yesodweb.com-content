@@ -20,7 +20,7 @@ jobs:
           tool: just@1.16.0
 
       - name: Setup tools
-        run: sudo apt-get install -y asciidoc
+        run: sudo apt-get update && sudo apt-get install -y asciidoc
 
 
       - name: Generate XML from Asciidoc
