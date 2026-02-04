@@ -11,6 +11,7 @@ generate-static:
     rm -rf yesodweb.com
     git clone https://github.com/yesodweb/yesodweb.com
     cd yesodweb.com && stack build
+    cd yesodweb.com && git clone https://github.com/yesodweb/yesodweb.com-content.git content
     cd yesodweb.com/make-it-static && cargo run
     mv yesodweb.com/public .
     git add public
